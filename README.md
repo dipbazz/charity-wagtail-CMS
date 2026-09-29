@@ -52,7 +52,9 @@ contact/     editor-built form pages
 search/      search view with promoted results
 ```
 
-Dependencies point one way: feature apps depend on `core`, never the reverse.
+Dependencies point one way: feature apps depend on `core`, and `core`'s code never imports them
+(a test enforces this). `core` has no page types of its own, so its tests render pages from `home`
+and `campaigns`.
 
 ## Testing and quality
 
