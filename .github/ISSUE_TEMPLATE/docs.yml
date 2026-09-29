@@ -1,0 +1,51 @@
+name: Docs
+description: The README, deployment notes or code comments are missing something or are wrong.
+labels: ["documentation"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Public site
+        - Wagtail admin / editor experience
+        - Demo content (seed_demo)
+        - API
+        - Deployment / CI
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: whats-missing
+    attributes:
+      label: What's missing?
+      description: What the docs say now, or don't say, and where.
+    validations:
+      required: true
+  - type: textarea
+    id: why-it-matters
+    attributes:
+      label: Why it matters
+      description: What goes wrong for someone who follows the docs as they are.
+    validations:
+      required: true
+  - type: textarea
+    id: what-needs-to-be-done
+    attributes:
+      label: What needs to be done
+      description: The change to make, and in which file.
+    validations:
+      required: true
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: Checks that must all pass before the issue is closed.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Screenshots and notes

@@ -1,0 +1,52 @@
+name: Feature
+description: Something the site, the admin or the demo should do but doesn't yet.
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Public site
+        - Wagtail admin / editor experience
+        - Demo content (seed_demo)
+        - API
+        - Deployment / CI
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: whats-missing
+    attributes:
+      label: What's missing?
+      description: What the application does now, and where it falls short.
+    validations:
+      required: true
+  - type: textarea
+    id: why-it-matters
+    attributes:
+      label: Why it matters
+      description: Who needs it (visitors, editors, reviewers) and what it gives them.
+    validations:
+      required: true
+  - type: textarea
+    id: what-needs-to-be-done
+    attributes:
+      label: What needs to be done
+      description: The feature to build. Name the Wagtail features, models or templates involved.
+    validations:
+      required: true
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: Checks that must all pass before the issue is closed.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Screenshots and notes
+      description: Mockups, examples from other sites, links.
