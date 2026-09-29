@@ -96,8 +96,7 @@ def test_shows_editor_promoted_results_first(client, home_page):
 
 
 def test_paginated_links_keep_the_query(client, campaign_index):
-    for n in range(11):
-        CampaignPageFactory(parent=campaign_index, summary="Clean water project")
+    CampaignPageFactory.create_batch(11, parent=campaign_index, summary="Clean water project")
 
     response = search(client, "water")
 
