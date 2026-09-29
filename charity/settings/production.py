@@ -14,6 +14,12 @@ CSRF_TRUSTED_ORIGINS = [
 WAGTAILADMIN_BASE_URL = os.environ.get("WAGTAILADMIN_BASE_URL", WAGTAILADMIN_BASE_URL)
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = True
+# Start short and raise once HTTPS is confirmed everywhere; browsers cache HSTS for this long.
+SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_SECURE_HSTS_SECONDS", 3600))
+# HSTS for subdomains and preload are hard to undo and can break other services on the
+# charity's domain (shops, donation platforms), so they are a per-deployment decision.
+SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
