@@ -37,3 +37,13 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Local-only files: version control, virtualenvs, tool caches and private notes
+.git/
+.venv/
+.github/
+.gstack/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+NOTES.local.md
