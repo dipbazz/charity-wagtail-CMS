@@ -1,5 +1,16 @@
 import pytest
+from django.core.cache import cache
 from wagtail.models import Site
+
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """The test database rolls back after each test but the cache doesn't.
+
+    Wagtail caches Site root URLs there, so a test that changes the Site would leak into the next.
+    """
+    yield
+    cache.clear()
 
 
 @pytest.fixture
