@@ -1,12 +1,18 @@
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
 
 DEBUG = False
 
 # Fail loudly at startup rather than run with a missing secret.
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h]
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")]
+ALLOWED_HOSTS = [h for h in ALLOWED_HOSTS if h]
+if not ALLOWED_HOSTS:
+    # Otherwise every request is rejected with a bare 400 Bad Request.
+    raise ImproperlyConfigured("Set DJANGO_ALLOWED_HOSTS to the site's comma-separated hostnames.")
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o
 ]
