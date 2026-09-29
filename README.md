@@ -75,7 +75,7 @@ Production settings (`charity.settings.production`) read configuration from the 
 | Variable | Purpose |
 |---|---|
 | `DJANGO_SECRET_KEY` | Required; the app refuses to start without it |
-| `DJANGO_ALLOWED_HOSTS` | Comma-separated hostnames |
+| `DJANGO_ALLOWED_HOSTS` | Required; comma-separated hostnames. The app refuses to start without it |
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated origins, e.g. `https://example.org` |
 | `WAGTAILADMIN_BASE_URL` | Base URL used in admin notification emails |
 | `DJANGO_SECURE_HSTS_SECONDS` | HSTS duration; defaults to one hour until HTTPS is confirmed |
