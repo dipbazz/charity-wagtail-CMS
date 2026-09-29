@@ -1,41 +1,32 @@
 
-# This stage installs build dependencies and compiles Python packages.
-# It will be discarded in the final image, keeping only the compiled packages.
-FROM python:3.14-slim-bookworm AS builder
+# This stage installs the Python packages into a virtualenv.
+# It will be discarded in the final image, keeping only the virtualenv.
+FROM python:3.14-slim-trixie AS builder
 
-# Install system packages required to build Python packages.
-RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    libmariadb-dev \
-    libjpeg62-turbo-dev \
-    zlib1g-dev \
-    libwebp-dev \
- && rm -rf /var/lib/apt/lists/* \
- && python -m venv /opt/venv
+RUN python -m venv /opt/venv
 
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install the project requirements.
+# Install the project requirements and the application server. Every package
+# ships as a prebuilt wheel (Pillow bundles its own image libraries), so no
+# compilers or system -dev packages are needed; --only-binary fails the build
+# instead of silently compiling if that ever changes.
 COPY requirements.txt /
-RUN pip install -r /requirements.txt
-
-# Install the application server.
-RUN pip install "gunicorn==25.1.0"
+RUN pip install --no-cache-dir --only-binary=:all: -r /requirements.txt "gunicorn==25.1.0" \
+ && pip uninstall --yes pip
 
 
 # RUNTIME STAGE
-# Use an official Python runtime based on Debian 12 "bookworm" as a parent image.
-FROM python:3.14-slim-bookworm AS runtime
+# Use an official Python runtime based on Debian 13 "trixie" as a parent image.
+FROM python:3.14-slim-trixie AS runtime
 
-# Install runtime system packages required by Wagtail and Django.
-# These are the runtime libraries needed by the compiled Python packages.
-RUN apt-get update --yes --quiet && apt-get install --yes --quiet --no-install-recommends \
-    libpq5 \
-    libmariadb3 \
-    libjpeg62-turbo \
-    libwebp7 \
- && rm -rf /var/lib/apt/lists/*
+# Apply Debian security fixes published since the base image was built.
+# Remove pip: nothing installs packages at runtime, and it vendors libraries
+# of its own (e.g. msgpack) that would need patching separately.
+RUN apt-get update --yes --quiet \
+ && apt-get upgrade --yes --quiet \
+ && rm -rf /var/lib/apt/lists/* \
+ && python -m pip uninstall --yes --root-user-action=ignore pip
 
 # Add user that will be used in the container.
 RUN useradd wagtail
