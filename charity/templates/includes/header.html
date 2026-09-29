@@ -12,15 +12,17 @@
 <header class="site-header">
     <div class="container">
         <a class="brand" href="/">{{ current_site.site_name|default:"Charity" }}</a>
-        {% main_menu %}
-        <div class="header-actions">
+        {# Hidden until charity.js runs, so without JavaScript the menu simply stays open. #}
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu" hidden>Menu</button>
+        <div class="site-menu" id="site-menu">
+            {% main_menu %}
             <form class="search-form" action="{% url 'search' %}" method="get" role="search">
                 <label class="visually-hidden" for="header-search">Search</label>
                 <input id="header-search" type="search" name="query" placeholder="Search">
             </form>
-            {% if settings.core.SiteSettings.donate_page %}
-                <a class="button" href="{% pageurl settings.core.SiteSettings.donate_page %}">Donate</a>
-            {% endif %}
         </div>
+        {% if settings.core.SiteSettings.donate_page %}
+            <a class="button" href="{% pageurl settings.core.SiteSettings.donate_page %}">Donate</a>
+        {% endif %}
     </div>
 </header>
