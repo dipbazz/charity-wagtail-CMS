@@ -92,7 +92,14 @@ yourself, because `manage.py` and `wsgi.py` fall back to the dev settings.
 | `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD` | SMTP credentials |
 | `DJANGO_DEFAULT_FROM_EMAIL` | Sender address for workflow and error emails |
 | `DJANGO_DATA_DIR` | Directory for `db.sqlite3` and uploaded media; must be persistent storage. The Docker image uses a `/data` volume |
-| `DJANGO_SERVE_MEDIA` | `true` serves uploads from Django (the Docker image's default). Turn it off when a web server or object storage serves `/media/` |
+| `DJANGO_SERVE_MEDIA` | `true` serves uploads from Django (the Docker image's default). Turn it off when a web server or object storage serves `/media/`, and have it refuse `/media/documents/` (see below) |
+
+Documents are downloaded only through `/documents/<id>/<filename>`, because that is where
+Wagtail checks a private collection's password or login. Django never serves them from
+`/media/documents/`. If a web server serves `/media/` in front of the app, it must return 404
+for `/media/documents/` too, or anyone who knows a private document's filename can skip the
+password. With object storage such as S3, keep the documents in a private bucket or prefix and
+set `WAGTAILDOCS_SERVE_METHOD = "serve_view"`.
 
 Static files are compressed and served by [WhiteNoise](https://whitenoise.readthedocs.io/), so
 no separate web server is needed for them.
