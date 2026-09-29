@@ -72,7 +72,9 @@ uv run ruff check . && uv run ruff format --check .
 
 ## Deployment notes
 
-Production settings (`charity.settings.production`) read configuration from the environment:
+Production settings (`charity.settings.production`) read configuration from the environment.
+The Docker image selects them with `DJANGO_SETTINGS_MODULE`; anywhere else, set that variable
+yourself, because `manage.py` and `wsgi.py` fall back to the dev settings.
 
 | Variable | Purpose |
 |---|---|
@@ -92,7 +94,8 @@ Static files are compressed and served by [WhiteNoise](https://whitenoise.readth
 no separate web server is needed for them.
 
 Scheduled publishing needs a cron job running `python manage.py publish_scheduled` every few
-minutes. A Dockerfile from the Wagtail project template is included.
+minutes, with the same environment as the web process. The Dockerfile is based on the Wagtail
+project template; CI builds it and runs Django's deployment checks inside the image.
 
 ## Notes
 
