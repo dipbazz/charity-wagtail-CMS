@@ -1,0 +1,35 @@
+[project]
+name = "charity-cms"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "wagtail>=8.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-django>=4.14.0",
+    "ruff>=0.16.9",
+    "wagtail-factories>=4.5.0",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "charity.settings.test"
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"
+
+[tool.coverage.run]
+source = ["."]
+omit = ["*/migrations/*", "*/tests/*", ".venv/*", "manage.py", "charity/wsgi.py", "charity/settings/*"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DJ"]
+
+[tool.ruff.lint.per-file-ignores]
+"charity/settings/*" = ["F403", "F405"]
