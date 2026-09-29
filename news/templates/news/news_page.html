@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags wagtailroutablepage_tags %}
+
+{% block body_class %}template-newspage{% endblock %}
+
+{% block content %}
+    {% with index=page.news_index %}
+        <article class="container narrow">
+            <p class="meta"><a href="{% pageurl index %}">{{ index.title }}</a> &middot; <time datetime="{{ page.date|date:'Y-m-d' }}">{{ page.date|date:"j F Y" }}</time></p>
+            <h1>{{ page.title }}</h1>
+            <p class="lead">{{ page.introduction }}</p>
+            {% if page.hero_image %}
+                <figure class="block-image">
+                    {% image page.hero_image width-1000 %}
+                    {% if page.hero_image.credit %}<figcaption><span class="credit">{{ page.hero_image.credit }}</span></figcaption>{% endif %}
+                </figure>
+            {% endif %}
+
+            {% include "includes/streamfield.html" with stream=page.body %}
+
+            {% with categories=page.categories.all tags=page.tags.all %}
+                {% if categories or tags %}
+                    <footer>
+                        <ul class="tag-list" aria-label="Categories and tags">
+                            {% for category in categories %}
+                                <li><a href="{% routablepageurl index 'category' category.slug %}">{{ category.name }}</a></li>
+                            {% endfor %}
+                            {% for tag in tags %}
+                                <li><a href="{% routablepageurl index 'tag' tag.slug %}">#{{ tag.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </footer>
+                {% endif %}
+            {% endwith %}
+        </article>
+    {% endwith %}
+{% endblock %}

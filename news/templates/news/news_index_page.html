@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load wagtailroutablepage_tags %}
+
+{% block body_class %}template-newsindexpage{% endblock %}
+
+{% block extra_meta %}
+    <link rel="alternate" type="application/rss+xml" title="{{ page.title }}" href="{% routablepageurl page 'feed' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>{{ page.title }}{% if active_filter %}: {{ active_filter }}{% endif %}</h1>
+        {% if page.introduction and not active_filter %}<p class="lead">{{ page.introduction }}</p>{% endif %}
+
+        {% if categories %}
+            <nav aria-label="News categories">
+                <ul class="tag-list">
+                    <li><a href="{{ page.url }}">All news</a></li>
+                    {% for category in categories %}
+                        <li><a href="{% routablepageurl page 'category' category.slug %}">{{ category.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </nav>
+        {% endif %}
+
+        {% if stories %}
+            <ul class="card-grid">
+                {% for story in stories %}
+                    <li>{% include "news/includes/news_card.html" %}</li>
+                {% endfor %}
+            </ul>
+            {% include "includes/pagination.html" with items=stories %}
+        {% else %}
+            <p>No news to show yet.</p>
+        {% endif %}
+
+        <p><a href="{% routablepageurl page 'feed' %}">Subscribe via RSS</a></p>
+    </div>
+{% endblock %}
