@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "home",
     "campaigns",
     "news",
+    "contact",
     "search",
     "wagtail.contrib.forms",
     "wagtail.contrib.settings",

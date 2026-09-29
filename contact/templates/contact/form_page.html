@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block body_class %}template-formpage form-page{% endblock %}
+
+{% block content %}
+    <div class="container narrow">
+        <h1>{{ page.title }}</h1>
+        {{ page.intro|richtext }}
+
+        <form action="{% pageurl page %}" method="post" novalidate>
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="button button-large" type="submit">Send</button>
+        </form>
+    </div>
+{% endblock %}
