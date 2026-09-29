@@ -30,7 +30,7 @@ Site: <http://localhost:8000> · Admin: <http://localhost:8000/admin/> · API: <
 | Forms | Build volunteer and enquiry forms, receive email (Reply-To the sender), export submissions to CSV | `wagtail.contrib.forms` |
 | Supporters | Partners (drag to reorder) and testimonials with drafts, revisions, locking and preview | Snippets, `SnippetViewSet(Group)`, `DraftStateMixin`, `RevisionMixin`, `PreviewableMixin` |
 | Site-wide | Charity number, contact details, donate page, social links, emergency-appeal banner | `wagtail.contrib.settings` (site and generic settings) |
-| Images | Photo credit and a safeguarding consent flag on every image; focal-point crops; alt text from the image description | Custom image model, renditions |
+| Images | Photo credit and a safeguarding consent flag on every image, which keeps unconsented images out of the API; focal-point crops; alt text from the image description | Custom image model, renditions, custom API viewset |
 | Search | Full-text search over page content, excluding drafts and private pages; editor-pinned results | `search_fields`, `wagtail.contrib.search_promotions` |
 | SEO | Sitemap, robots.txt, canonical and Open Graph tags, social sharing image, redirects (including automatic ones on slug change) | `wagtail.contrib.sitemaps`, `wagtail.contrib.redirects`, promote panels |
 | Headless | Read-only JSON for pages, images and documents, e.g. for a mobile app | `wagtail.api.v2` |
@@ -79,6 +79,10 @@ Production settings (`charity.settings.production`) read configuration from the 
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated origins, e.g. `https://example.org` |
 | `WAGTAILADMIN_BASE_URL` | Base URL used in admin notification emails |
 | `DJANGO_SECURE_HSTS_SECONDS` | HSTS duration; defaults to one hour until HTTPS is confirmed |
+| `DJANGO_EMAIL_HOST` | SMTP server for form notifications and workflow emails. If it's unreachable, submissions are still saved and the error is logged |
+| `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_USE_TLS` | Defaults: `587` and `true` |
+| `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD` | SMTP credentials |
+| `DJANGO_DEFAULT_FROM_EMAIL` | Sender address for workflow and error emails |
 | `DJANGO_DATA_DIR` | Directory for `db.sqlite3` and uploaded media; must be persistent storage. The Docker image uses a `/data` volume |
 | `DJANGO_SERVE_MEDIA` | `true` serves uploads from Django (the Docker image's default). Turn it off when a web server or object storage serves `/media/` |
 
