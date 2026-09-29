@@ -79,6 +79,11 @@ Production settings (`charity.settings.production`) read configuration from the 
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated origins, e.g. `https://example.org` |
 | `WAGTAILADMIN_BASE_URL` | Base URL used in admin notification emails |
 | `DJANGO_SECURE_HSTS_SECONDS` | HSTS duration; defaults to one hour until HTTPS is confirmed |
+| `DJANGO_DATA_DIR` | Directory for `db.sqlite3` and uploaded media; must be persistent storage. The Docker image uses a `/data` volume |
+| `DJANGO_SERVE_MEDIA` | `true` serves uploads from Django (the Docker image's default). Turn it off when a web server or object storage serves `/media/` |
+
+Static files are compressed and served by [WhiteNoise](https://whitenoise.readthedocs.io/), so
+no separate web server is needed for them.
 
 Scheduled publishing needs a cron job running `python manage.py publish_scheduled` every few
 minutes. A Dockerfile from the Wagtail project template is included.

@@ -7,7 +7,7 @@ from wagtail.contrib.sitemaps.views import sitemap
 from wagtail.documents import urls as wagtaildocs_urls
 
 from charity.api import api_router
-from core.views import robots_txt
+from core.views import robots_txt, serve_media
 from search import views as search_views
 
 urlpatterns = [
@@ -30,6 +30,7 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns = urlpatterns + [
+    path("media/<path:path>", serve_media, name="media"),
     # For anything not caught by a more specific rule above, hand over to
     # Wagtail's page serving mechanism. This should be the last pattern in
     # the list:

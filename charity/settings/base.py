@@ -154,6 +154,8 @@ STATIC_URL = "/static/"
 
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
+# Serve uploads through Django when DEBUG is off (see core.views.serve_media).
+SERVE_MEDIA = False
 
 # Default storage settings
 # See https://docs.djangoproject.com/en/6.1/ref/settings/#std-setting-STORAGES
