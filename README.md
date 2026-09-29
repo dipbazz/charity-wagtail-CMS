@@ -79,6 +79,10 @@ Production settings (`charity.settings.production`) read configuration from the 
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated origins, e.g. `https://example.org` |
 | `WAGTAILADMIN_BASE_URL` | Base URL used in admin notification emails |
 | `DJANGO_SECURE_HSTS_SECONDS` | HSTS duration; defaults to one hour until HTTPS is confirmed |
+| `DJANGO_EMAIL_HOST` | SMTP server for form notifications and workflow emails. If it's unreachable, submissions are still saved and the error is logged |
+| `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_USE_TLS` | Defaults: `587` and `true` |
+| `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD` | SMTP credentials |
+| `DJANGO_DEFAULT_FROM_EMAIL` | Sender address for workflow and error emails |
 
 Scheduled publishing needs a cron job running `python manage.py publish_scheduled` every few
 minutes. A Dockerfile from the Wagtail project template is included.

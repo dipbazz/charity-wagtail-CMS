@@ -52,3 +52,35 @@ def test_hsts_duration_is_configurable(monkeypatch):
     monkeypatch.setenv("DJANGO_SECURE_HSTS_SECONDS", "31536000")
 
     assert load_settings()["SECURE_HSTS_SECONDS"] == 31536000
+
+
+def test_sends_email_through_the_configured_smtp_server(monkeypatch):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.setenv("DJANGO_EMAIL_HOST", "smtp.example.org")
+    monkeypatch.setenv("DJANGO_EMAIL_HOST_USER", "website")
+    monkeypatch.setenv("DJANGO_EMAIL_HOST_PASSWORD", "hunter2")
+    monkeypatch.setenv("DJANGO_DEFAULT_FROM_EMAIL", "website@example.org")
+
+    settings = load_settings()
+
+    mailer = settings["MAILERS"]["default"]
+    assert mailer["BACKEND"] == "django.core.mail.backends.smtp.EmailBackend"
+    assert mailer["OPTIONS"]["host"] == "smtp.example.org"
+    assert mailer["OPTIONS"]["port"] == 587
+    assert mailer["OPTIONS"]["username"] == "website"
+    assert mailer["OPTIONS"]["password"] == "hunter2"
+    assert mailer["OPTIONS"]["use_tls"] is True
+    # A hung mail server must not hold a web worker indefinitely.
+    assert mailer["OPTIONS"]["timeout"]
+    assert settings["DEFAULT_FROM_EMAIL"] == "website@example.org"
+
+
+def test_smtp_port_and_tls_are_configurable(monkeypatch):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.setenv("DJANGO_EMAIL_PORT", "25")
+    monkeypatch.setenv("DJANGO_EMAIL_USE_TLS", "false")
+
+    options = load_settings()["MAILERS"]["default"]["OPTIONS"]
+
+    assert options["port"] == 25
+    assert options["use_tls"] is False
