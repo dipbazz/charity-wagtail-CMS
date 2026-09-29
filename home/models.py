@@ -6,9 +6,10 @@ from wagtail.search import index
 
 from campaigns.models import CampaignPage
 from core.blocks import BaseStreamBlock
+from core.models import SocialMetaMixin
 
 
-class HomePage(Page):
+class HomePage(SocialMetaMixin, Page):
     hero_heading = models.CharField(max_length=255, blank=True)
     hero_text = models.TextField(blank=True)
     hero_image = models.ForeignKey(
@@ -57,7 +58,7 @@ class HomePage(Page):
         return context
 
 
-class StandardPage(Page):
+class StandardPage(SocialMetaMixin, Page):
     """A general-purpose content page, e.g. About us or Our work."""
 
     introduction = models.TextField(blank=True)

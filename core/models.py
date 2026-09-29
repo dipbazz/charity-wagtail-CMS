@@ -6,6 +6,7 @@ from wagtail.models import (
     DraftStateMixin,
     LockableMixin,
     Orderable,
+    Page,
     PreviewableMixin,
     RevisionMixin,
 )
@@ -26,6 +27,27 @@ class CustomImage(AbstractImage):
     )
 
     admin_form_fields = Image.admin_form_fields + ("credit", "consent_confirmed")
+
+
+class SocialMetaMixin(models.Model):
+    """Adds a social sharing image to a page's Promote tab."""
+
+    social_image = models.ForeignKey(
+        "core.CustomImage",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Shown when the page is shared on social media. Defaults to the main image.",
+    )
+
+    promote_panels = Page.promote_panels + [FieldPanel("social_image")]
+
+    class Meta:
+        abstract = True
+
+    def get_social_image(self):
+        return self.social_image or getattr(self, "hero_image", None)
 
 
 class CustomRendition(AbstractRendition):

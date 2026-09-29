@@ -21,6 +21,7 @@ from wagtail.query import PageQuerySet
 from wagtail.search import index
 
 from core.blocks import BaseStreamBlock
+from core.models import SocialMetaMixin
 
 
 class CampaignIndexPage(Page):
@@ -72,7 +73,7 @@ class CampaignPageQuerySet(PageQuerySet):
 CampaignPageManager = PageManager.from_queryset(CampaignPageQuerySet)
 
 
-class CampaignPage(Page):
+class CampaignPage(SocialMetaMixin, Page):
     summary = models.TextField(max_length=300, help_text="Shown on listing cards and in search.")
     hero_image = models.ForeignKey(
         "core.CustomImage",
@@ -121,7 +122,7 @@ class CampaignPage(Page):
         [
             ObjectList(content_panels, heading="Content"),
             ObjectList(fundraising_panels, heading="Fundraising"),
-            ObjectList(Page.promote_panels, heading="Promote"),
+            ObjectList(SocialMetaMixin.promote_panels, heading="Promote"),
             ObjectList(Page.settings_panels, heading="Settings"),
         ]
     )
