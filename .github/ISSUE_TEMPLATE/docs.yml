@@ -9,7 +9,7 @@ body:
       options:
         - Public site
         - Wagtail admin / editor experience
-        - Demo content (seed_demo)
+        - Page content (text, images, pages)
         - API
         - Deployment / CI
         - Docs
