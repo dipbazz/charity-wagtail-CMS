@@ -27,12 +27,12 @@ def test_refuses_to_start_without_a_site_url(monkeypatch):
 
 def test_site_url_is_the_base_for_admin_email_links(monkeypatch):
     monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
-    monkeypatch.setenv("DJANGO_SITE_URL", "https://brightwell.org/")
+    monkeypatch.setenv("DJANGO_SITE_URL", "https://brightwell.example/")
 
     settings = load_settings()
 
-    assert settings["SITE_URL"] == "https://brightwell.org"
-    assert settings["WAGTAILADMIN_BASE_URL"] == "https://brightwell.org"
+    assert settings["SITE_URL"] == "https://brightwell.example"
+    assert settings["WAGTAILADMIN_BASE_URL"] == "https://brightwell.example"
 
 
 def test_refuses_to_start_without_a_secret_key(monkeypatch):

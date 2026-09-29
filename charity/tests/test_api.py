@@ -121,13 +121,13 @@ class TestImageConsent:
 
 
 def test_links_point_at_the_site_url(client, settings, campaign):
-    settings.SITE_URL = "https://brightwell.org"
+    settings.SITE_URL = "https://brightwell.example"
     call_command("update_site_url", stdout=io.StringIO())
 
     [item] = client.get(f"{API}/pages/", {"type": "campaigns.CampaignPage"}).json()["items"]
 
-    assert item["meta"]["html_url"] == f"https://brightwell.org{campaign.url}"
-    assert item["meta"]["detail_url"] == f"https://brightwell.org{API}/pages/{campaign.pk}/"
+    assert item["meta"]["html_url"] == f"https://brightwell.example{campaign.url}"
+    assert item["meta"]["detail_url"] == f"https://brightwell.example{API}/pages/{campaign.pk}/"
 
 
 def test_api_is_read_only(client, campaign):

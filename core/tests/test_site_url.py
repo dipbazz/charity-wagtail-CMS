@@ -15,8 +15,8 @@ def update_site_url():
     [
         ("http://localhost:8000", "localhost", 8000),
         ("http://example.org", "example.org", 80),
-        ("https://brightwell.org", "brightwell.org", 443),
-        ("https://brightwell.org/", "brightwell.org", 443),
+        ("https://brightwell.example", "brightwell.example", 443),
+        ("https://brightwell.example/", "brightwell.example", 443),
     ],
 )
 def test_points_the_default_site_at_the_site_url(settings, site, url, hostname, port):
@@ -31,11 +31,11 @@ def test_points_the_default_site_at_the_site_url(settings, site, url, hostname, 
 @pytest.mark.parametrize(
     "url",
     [
-        "brightwell.org",
-        "ftp://brightwell.org",
-        "https://brightwell.org/charity/",
+        "brightwell.example",
+        "ftp://brightwell.example",
+        "https://brightwell.example/charity/",
         # Wagtail treats every port except 443 as http, so it can't store https on another port.
-        "https://brightwell.org:8443",
+        "https://brightwell.example:8443",
     ],
 )
 def test_rejects_urls_a_wagtail_site_cannot_represent(settings, site, url):
@@ -46,8 +46,8 @@ def test_rejects_urls_a_wagtail_site_cannot_represent(settings, site, url):
 
 
 def test_full_urls_use_the_site_url(client, settings, home_page):
-    settings.SITE_URL = "https://brightwell.org"
+    settings.SITE_URL = "https://brightwell.example"
     update_site_url()
 
-    assert home_page.full_url == "https://brightwell.org/"
-    assert "<loc>https://brightwell.org/</loc>" in client.get("/sitemap.xml").content.decode()
+    assert home_page.full_url == "https://brightwell.example/"
+    assert "<loc>https://brightwell.example/</loc>" in client.get("/sitemap.xml").content.decode()
