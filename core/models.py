@@ -2,6 +2,14 @@ from django.db import models
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.contrib.settings.models import BaseGenericSetting, BaseSiteSetting, register_setting
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
+from wagtail.models import (
+    DraftStateMixin,
+    LockableMixin,
+    Orderable,
+    PreviewableMixin,
+    RevisionMixin,
+)
+from wagtail.search import index
 
 
 class CustomImage(AbstractImage):
@@ -95,3 +103,61 @@ class AnnouncementBanner(BaseGenericSetting):
 
     class Meta:
         verbose_name = "Announcement banner"
+
+
+class Partner(Orderable):
+    """An organisation that funds or works with the charity."""
+
+    name = models.CharField(max_length=255)
+    url = models.URLField(blank=True)
+    logo = models.ForeignKey(
+        "core.CustomImage",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+
+    panels = [FieldPanel("name"), FieldPanel("url"), FieldPanel("logo")]
+
+    def __str__(self):
+        return self.name
+
+
+class Testimonial(
+    PreviewableMixin,
+    LockableMixin,
+    DraftStateMixin,
+    RevisionMixin,
+    index.Indexed,
+    models.Model,
+):
+    """A quote from a beneficiary, volunteer or supporter.
+
+    Uses drafts and revisions because quotes from real people need sign-off before going live.
+    """
+
+    quote = models.TextField()
+    name = models.CharField(max_length=255)
+    role = models.CharField(max_length=255, blank=True, help_text="e.g. Volunteer, Kisumu")
+    photo = models.ForeignKey(
+        "core.CustomImage",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+
+    panels = [FieldPanel("quote"), FieldPanel("name"), FieldPanel("role"), FieldPanel("photo")]
+
+    search_fields = [
+        index.SearchField("quote"),
+        index.SearchField("name"),
+        index.AutocompleteField("name"),
+    ]
+
+    def __str__(self):
+        return f"{self.name}: {self.quote[:40]}"
+
+    def get_preview_template(self, request, mode_name):
+        return "core/previews/testimonial.html"

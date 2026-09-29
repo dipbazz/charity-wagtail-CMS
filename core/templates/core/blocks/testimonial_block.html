@@ -1,0 +1,10 @@
+{% load wagtailimages_tags %}
+{% if value.live %}
+    <figure class="testimonial">
+        {% if value.photo %}{% image value.photo fill-120x120 class="testimonial-photo" %}{% endif %}
+        <blockquote><p>{{ value.quote }}</p></blockquote>
+        <figcaption>
+            <strong>{{ value.name }}</strong>{% if value.role %}, <span class="meta">{{ value.role }}</span>{% endif %}
+        </figcaption>
+    </figure>
+{% endif %}

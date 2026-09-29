@@ -18,6 +18,17 @@
     </section>
 
     <div class="container">
+        {% if featured_campaigns %}
+            <section class="featured-campaigns" aria-labelledby="featured-heading">
+                <h2 id="featured-heading">Current appeals</h2>
+                <ul class="card-grid">
+                    {% for campaign in featured_campaigns %}
+                        <li>{% include "campaigns/includes/campaign_card.html" %}</li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+
         {% include "includes/streamfield.html" with stream=page.body %}
     </div>
 {% endblock %}

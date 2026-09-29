@@ -1,0 +1,13 @@
+{% load wagtailimages_tags %}
+<section class="block-partners">
+    {% if value.heading %}<h2>{{ value.heading }}</h2>{% endif %}
+    <ul class="partner-logos">
+        {% for partner in partners %}
+            <li>
+                {% if partner.url %}<a href="{{ partner.url }}">{% endif %}
+                {% if partner.logo %}{% image partner.logo max-240x80 %}{% else %}{{ partner.name }}{% endif %}
+                {% if partner.url %}</a>{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</section>

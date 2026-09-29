@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block body_class %}template-campaignindexpage{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>{{ page.title }}</h1>
+        {% if page.introduction %}<p class="lead">{{ page.introduction }}</p>{% endif %}
+
+        <nav aria-label="Filter appeals">
+            <ul class="tag-list">
+                <li><a href="{{ page.url }}"{% if not status %} aria-current="true"{% endif %}>All appeals</a></li>
+                {% for value, label in status_filters.items %}
+                    <li><a href="?status={{ value }}"{% if status == value %} aria-current="true"{% endif %}>{{ label }}</a></li>
+                {% endfor %}
+            </ul>
+        </nav>
+
+        {% if campaigns %}
+            <ul class="card-grid">
+                {% for campaign in campaigns %}
+                    <li>{% include "campaigns/includes/campaign_card.html" %}</li>
+                {% endfor %}
+            </ul>
+            {% include "includes/pagination.html" with items=campaigns %}
+        {% else %}
+            <p>There are no appeals to show right now.</p>
+        {% endif %}
+    </div>
+{% endblock %}

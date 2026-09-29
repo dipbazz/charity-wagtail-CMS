@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block body_class %}template-campaignpage{% endblock %}
+
+{% block content %}
+    <article class="container">
+        <header class="campaign-header">
+            <div>
+                <h1>{{ page.title }}</h1>
+                <p class="lead">{{ page.summary }}</p>
+                {% include "campaigns/includes/progress.html" with campaign=page %}
+                <p class="meta">
+                    {% if page.is_active %}
+                        {% if page.end_date %}Appeal closes {{ page.end_date|date:"j F Y" }}{% else %}Ongoing appeal{% endif %}
+                    {% else %}
+                        This appeal closed on {{ page.end_date|date:"j F Y" }}. Thank you to everyone who gave.
+                    {% endif %}
+                </p>
+            </div>
+            {% if page.hero_image %}{% image page.hero_image fill-800x500 %}{% endif %}
+        </header>
+
+        {% with amounts=page.donation_amounts.all %}
+            {% if amounts and page.is_active %}
+                <section class="donation-amounts" aria-labelledby="give-heading">
+                    <h2 id="give-heading">What your gift can do</h2>
+                    <ul>
+                        {% for option in amounts %}
+                            <li><strong>£{{ option.amount }}</strong> {{ option.impact }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% if settings.core.SiteSettings.donate_page %}
+                        <a class="button button-large" href="{% pageurl settings.core.SiteSettings.donate_page %}">Donate to this appeal</a>
+                    {% endif %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        <div class="narrow">
+            {% include "includes/streamfield.html" with stream=page.body %}
+        </div>
+    </article>
+{% endblock %}

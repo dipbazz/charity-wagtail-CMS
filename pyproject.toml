@@ -19,6 +19,10 @@ dev = [
 DJANGO_SETTINGS_MODULE = "charity.settings.test"
 python_files = ["test_*.py"]
 addopts = "-ra --strict-markers"
+filterwarnings = [
+    # Wagtail 8.0 still calls the email API deprecated in Django 6.1; not fixable from our code.
+    "ignore:get_connection:django.utils.deprecation.RemovedInDjango70Warning:wagtail.admin.mail",
+]
 
 [tool.coverage.run]
 source = ["."]

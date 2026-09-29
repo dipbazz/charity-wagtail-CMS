@@ -1,0 +1,6 @@
+<div class="campaign-progress">
+    <p class="meta"><strong>£{{ campaign.amount_raised|floatformat:"0g" }} raised of £{{ campaign.target_amount|floatformat:"0g" }}</strong></p>
+    <div class="progress" role="progressbar" aria-label="Fundraising progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ campaign.progress_percent }}">
+        <div class="progress-bar" style="width: {{ campaign.progress_percent }}%"></div>
+    </div>
+</div>
