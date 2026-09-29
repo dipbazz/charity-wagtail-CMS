@@ -140,7 +140,7 @@ h4 {
     font-weight: 600;
 }
 
-.main-nav a[aria-current="page"],
+.main-nav a[aria-current],
 .main-nav a:hover {
     color: var(--colour-primary);
     text-decoration: underline;
@@ -410,4 +410,16 @@ h4 {
     gap: 1rem;
     padding: 0;
     list-style: none;
+}
+
+/* Announcement banner */
+.announcement {
+    padding: 0.6rem 0;
+    background: var(--colour-accent);
+    font-weight: 700;
+    text-align: center;
+}
+
+.announcement a {
+    color: var(--colour-text);
 }
