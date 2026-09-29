@@ -471,3 +471,31 @@ h4 {
 .featured-campaigns {
     margin-block: 3rem;
 }
+
+/* Search */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.search-promotions {
+    margin: 2rem 0 0;
+    padding: 1rem 1.5rem;
+    border-left: 6px solid var(--colour-accent);
+    background: var(--colour-surface);
+    list-style: none;
+}
+
+.search-results ul {
+    padding: 0;
+    list-style: none;
+}
+
+.search-results h2 {
+    margin-bottom: 0.25rem;
+    font-size: 1.25rem;
+}

@@ -1,45 +1,29 @@
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.core.paginator import Paginator
 from django.template.response import TemplateResponse
+from wagtail.contrib.search_promotions.models import Query
 from wagtail.models import Page
 
-# To enable logging of search queries for use with the "Promoted search results" module
-# <https://docs.wagtail.org/en/stable/reference/contrib/searchpromotions.html>
-# uncomment the following line and the lines indicated in the search function
-# (after adding wagtail.contrib.search_promotions to INSTALLED_APPS):
-
-# from wagtail.contrib.search_promotions.models import Query
+RESULTS_PER_PAGE = 10
 
 
 def search(request):
-    search_query = request.GET.get("query", None)
-    page = request.GET.get("page", 1)
+    search_query = request.GET.get("query", "").strip()
 
-    # Search
     if search_query:
-        search_results = Page.objects.live().search(search_query)
-
-        # To log this query for use with the "Promoted search results" module:
-
-        # query = Query.get(search_query)
-        # query.add_hit()
-
+        # public() drops pages behind a password, login or group restriction.
+        search_results = Page.objects.live().public().search(search_query)
+        # Log the query so editors can see what people look for and add promotions.
+        Query.get(search_query).add_hit()
     else:
         search_results = Page.objects.none()
 
-    # Pagination
-    paginator = Paginator(search_results, 10)
-    try:
-        search_results = paginator.page(page)
-    except PageNotAnInteger:
-        search_results = paginator.page(1)
-    except EmptyPage:
-        search_results = paginator.page(paginator.num_pages)
+    paginator = Paginator(search_results, RESULTS_PER_PAGE)
 
     return TemplateResponse(
         request,
         "search/search.html",
         {
             "search_query": search_query,
-            "search_results": search_results,
+            "search_results": paginator.get_page(request.GET.get("page")),
         },
     )
