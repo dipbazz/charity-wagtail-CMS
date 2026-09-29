@@ -1,0 +1,71 @@
+name: Bug
+description: Something on the site or in the admin doesn't work or looks wrong.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Public site
+        - Wagtail admin / editor experience
+        - Demo content (seed_demo)
+        - API
+        - Deployment / CI
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: The problem as it is now. Describe what you see, not the fix.
+    validations:
+      required: true
+  - type: textarea
+    id: why-it-matters
+    attributes:
+      label: Why it matters
+      description: Who is affected (visitors, editors, reviewers) and how.
+    validations:
+      required: true
+  - type: textarea
+    id: what-needs-to-be-done
+    attributes:
+      label: What needs to be done
+      description: The change that fixes it. Name files or templates if you know them.
+    validations:
+      required: true
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: Checks that must all pass before the issue is closed.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: how-to-reproduce
+    attributes:
+      label: How to reproduce
+      description: Steps from a fresh `seed_demo`.
+      placeholder: |
+        1. Run `uv run python manage.py seed_demo`
+        2. Open /...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: platform
+    attributes:
+      label: Platform
+      description: Device, OS, browser and version, viewport width, page URL.
+      placeholder: Windows 11, Chrome 140, 1440×900, /volunteer/
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Screenshots and notes
+      description: Anything else that helps. Paste screenshots here.
