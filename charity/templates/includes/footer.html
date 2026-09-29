@@ -1,7 +1,19 @@
 {% load wagtailcore_tags %}
 {% wagtail_site as current_site %}
+{% with site_settings=settings.core.SiteSettings %}
 <footer class="site-footer">
     <div class="container">
-        <p>&copy; {% now "Y" %} {{ current_site.site_name|default:"Charity" }}</p>
+        <p><strong>{{ current_site.site_name|default:"Charity" }}</strong></p>
+        {% if site_settings.address %}<address>{{ site_settings.address|linebreaksbr }}</address>{% endif %}
+        <ul>
+            {% if site_settings.contact_email %}<li><a href="mailto:{{ site_settings.contact_email }}">{{ site_settings.contact_email }}</a></li>{% endif %}
+            {% if site_settings.phone %}<li>{{ site_settings.phone }}</li>{% endif %}
+            {% for name, url in site_settings.social_links %}<li><a href="{{ url }}">{{ name }}</a></li>{% endfor %}
+        </ul>
+        <p class="meta">
+            &copy; {% now "Y" %} {{ current_site.site_name|default:"Charity" }}.
+            {% if site_settings.charity_number %}Registered charity number {{ site_settings.charity_number }}.{% endif %}
+        </p>
     </div>
 </footer>
+{% endwith %}

@@ -1,7 +1,22 @@
-{% load wagtailcore_tags %}
+{% load wagtailcore_tags navigation_tags %}
 {% wagtail_site as current_site %}
+{% with banner=settings.core.AnnouncementBanner %}
+    {% if banner.enabled and banner.message %}
+        <div class="announcement" role="region" aria-label="Announcement">
+            <div class="container">
+                {% if banner.link_page %}<a href="{% pageurl banner.link_page %}">{{ banner.message }}</a>{% else %}{{ banner.message }}{% endif %}
+            </div>
+        </div>
+    {% endif %}
+{% endwith %}
 <header class="site-header">
     <div class="container">
         <a class="brand" href="/">{{ current_site.site_name|default:"Charity" }}</a>
+        {% main_menu %}
+        <div class="header-actions">
+            {% if settings.core.SiteSettings.donate_page %}
+                <a class="button" href="{% pageurl settings.core.SiteSettings.donate_page %}">Donate</a>
+            {% endif %}
+        </div>
     </div>
 </header>
