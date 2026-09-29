@@ -12,7 +12,7 @@ def site_settings(site):
     settings = SiteSettings.for_site(site)
     settings.charity_number = "1234567"
     settings.contact_email = "hello@example.org"
-    settings.instagram_url = "https://instagram.com/example"
+    settings.instagram_url = "https://instagram.example/brightwell"
     settings.save()
     return settings
 
@@ -22,7 +22,7 @@ def test_footer_shows_charity_details_from_site_settings(client, home_page, site
 
     assert "Registered charity number 1234567" in html
     assert 'href="mailto:hello@example.org"' in html
-    assert 'href="https://instagram.com/example"' in html
+    assert 'href="https://instagram.example/brightwell"' in html
 
 
 def test_header_donate_button_links_to_the_chosen_donate_page(client, home_page, site_settings):

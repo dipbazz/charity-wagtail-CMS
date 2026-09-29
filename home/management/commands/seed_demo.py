@@ -315,7 +315,7 @@ class Command(BaseCommand):
         settings.phone = "0123 456 7890"
         settings.address = "1 Example Street\nBirmingham\nB1 1AA"
         settings.donate_page = donate
-        settings.instagram_url = "https://instagram.com/example"
+        settings.instagram_url = "https://instagram.example/brightwell"
         settings.save()
 
         banner = AnnouncementBanner.load()
