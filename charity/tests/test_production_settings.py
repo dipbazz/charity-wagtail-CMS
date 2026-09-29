@@ -12,8 +12,27 @@ def load_settings():
 
 
 @pytest.fixture(autouse=True)
-def allowed_hosts(monkeypatch):
-    monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "example.org")
+def required_environment(monkeypatch):
+    monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "brightwell.example")
+    monkeypatch.setenv("DJANGO_SITE_URL", "https://brightwell.example")
+
+
+def test_refuses_to_start_without_a_site_url(monkeypatch):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.delenv("DJANGO_SITE_URL")
+
+    with pytest.raises(KeyError, match="DJANGO_SITE_URL"):
+        load_settings()
+
+
+def test_site_url_is_the_base_for_admin_email_links(monkeypatch):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.setenv("DJANGO_SITE_URL", "https://brightwell.example/")
+
+    settings = load_settings()
+
+    assert settings["SITE_URL"] == "https://brightwell.example"
+    assert settings["WAGTAILADMIN_BASE_URL"] == "https://brightwell.example"
 
 
 def test_refuses_to_start_without_a_secret_key(monkeypatch):
@@ -25,12 +44,12 @@ def test_refuses_to_start_without_a_secret_key(monkeypatch):
 
 def test_reads_secrets_and_hosts_from_the_environment(monkeypatch):
     monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
-    monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "example.org, www.example.org")
+    monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "brightwell.example, www.brightwell.example")
 
     settings = load_settings()
 
     assert settings["SECRET_KEY"] == "from-env"
-    assert settings["ALLOWED_HOSTS"] == ["example.org", "www.example.org"]
+    assert settings["ALLOWED_HOSTS"] == ["brightwell.example", "www.brightwell.example"]
 
 
 @pytest.mark.parametrize("value", [None, "", " , "])

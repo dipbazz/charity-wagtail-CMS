@@ -3,6 +3,7 @@ import io
 from decimal import Decimal
 
 from django.core.files.images import ImageFile
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from PIL import Image, ImageDraw
@@ -53,11 +54,14 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        # Also on re-runs, so an existing local database gets working full URLs.
+        call_command("update_site_url", stdout=self.stdout)
+
         site = Site.objects.get(is_default_site=True)
         home = site.root_page.specific
 
         if CampaignIndexPage.objects.exists():
-            self.stdout.write("Demo content already exists; nothing to do.")
+            self.stdout.write("Demo content already exists; nothing else to do.")
             return
 
         site.site_name = SITE_NAME

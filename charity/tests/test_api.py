@@ -1,6 +1,8 @@
+import io
 from decimal import Decimal
 
 import pytest
+from django.core.management import call_command
 from wagtail.models import PageViewRestriction
 from wagtail_factories import DocumentFactory, ImageFactory
 
@@ -116,6 +118,16 @@ class TestImageConsent:
         response = client.get(f"{API}/images/{image.pk}/")
 
         assert response.status_code == 404
+
+
+def test_links_point_at_the_site_url(client, settings, campaign):
+    settings.SITE_URL = "https://brightwell.example"
+    call_command("update_site_url", stdout=io.StringIO())
+
+    [item] = client.get(f"{API}/pages/", {"type": "campaigns.CampaignPage"}).json()["items"]
+
+    assert item["meta"]["html_url"] == f"https://brightwell.example{campaign.url}"
+    assert item["meta"]["detail_url"] == f"https://brightwell.example{API}/pages/{campaign.pk}/"
 
 
 def test_api_is_read_only(client, campaign):

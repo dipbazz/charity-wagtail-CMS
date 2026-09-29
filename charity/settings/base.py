@@ -185,9 +185,13 @@ WAGTAILSEARCH_BACKENDS = {
     }
 }
 
-# Base URL to use when referring to full URLs within the Wagtail admin backend -
-# e.g. in notification emails. Don't include '/admin' or a trailing slash
-WAGTAILADMIN_BASE_URL = "http://example.com"
+# The site's public address, without a trailing slash. `manage.py update_site_url` copies it into
+# the default Wagtail Site, which every full URL is built from: API links, feeds, the sitemap and
+# canonical / social tags. Defaults to where `runserver` listens.
+SITE_URL = "http://localhost:8000"
+
+# Base URL for full URLs in the Wagtail admin, e.g. in notification emails.
+WAGTAILADMIN_BASE_URL = SITE_URL
 
 # Allowed file extensions for documents in the document library.
 # This can be omitted to allow all files, but note that this may present a security risk

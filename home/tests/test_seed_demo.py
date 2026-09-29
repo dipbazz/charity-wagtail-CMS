@@ -52,3 +52,13 @@ def test_running_twice_does_not_duplicate_content(seeded):
     call_command("seed_demo", verbosity=0)
 
     assert Page.objects.count() == page_count
+
+
+def test_points_the_site_at_the_site_url_even_when_content_exists(site, settings):
+    call_command("seed_demo", verbosity=0)
+    settings.SITE_URL = "http://localhost:9000"
+
+    call_command("seed_demo", verbosity=0)
+
+    site.refresh_from_db()
+    assert site.root_url == "http://localhost:9000"
