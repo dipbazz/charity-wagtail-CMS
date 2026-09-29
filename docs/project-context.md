@@ -130,7 +130,12 @@ Root
   explains *why*. Include `Closes #N` when the commit fixes an issue.
 - **Issues:** use the forms in `.github/ISSUE_TEMPLATE/` (bug, feature, docs), written from the
   point of view of the person using the site or admin. Labels: `P1`–`P3`, `bug`, `enhancement`,
-  `documentation`, `accessibility`, `security`.
+  `documentation`, `accessibility`, `security`, `epic`.
+- **Tracking:** each feature track is an issue labelled `epic` (titled `Epic: …`), with the work as
+  its sub-issues; attach every new issue to an epic. The project board
+  (<https://github.com/users/dipbazz/projects/1>) plans the work: Status (Backlog → Ready →
+  In progress → In review → Done), a weekly Iteration field for sprints, and Priority. New and
+  updated repo issues are added to the board automatically.
 - **Demo data:** the charity and its people are fictional. Use `brightwell.example` for the
   charity's own addresses and `example.org` / `example.com` for third parties. The Nepal flood
   appeal is real, so it links to the Government of Nepal's fund and takes no donations.
