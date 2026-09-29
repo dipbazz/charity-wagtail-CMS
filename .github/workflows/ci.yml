@@ -44,3 +44,19 @@ jobs:
 
       - name: Test
         run: uv run pytest --cov --cov-report=term-missing:skip-covered
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build image
+        run: docker build --tag charity-cms .
+
+      # The image must run production settings; dev settings fail this check.
+      - name: Django deployment checklist inside the image
+        run: >
+          docker run --rm
+          --env DJANGO_SECRET_KEY=ci-only-${{ github.run_id }}-not-a-real-secret-key-padding-for-length
+          --env DJANGO_ALLOWED_HOSTS=example.org
+          charity-cms python manage.py check --deploy --fail-level WARNING
