@@ -14,7 +14,7 @@ def update_site_url():
     ("url", "hostname", "port"),
     [
         ("http://localhost:8000", "localhost", 8000),
-        ("http://example.org", "example.org", 80),
+        ("http://brightwell.example", "brightwell.example", 80),
         ("https://brightwell.example", "brightwell.example", 443),
         ("https://brightwell.example/", "brightwell.example", 443),
     ],

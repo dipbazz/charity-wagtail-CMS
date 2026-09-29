@@ -13,8 +13,8 @@ def load_settings():
 
 @pytest.fixture(autouse=True)
 def required_environment(monkeypatch):
-    monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "example.org")
-    monkeypatch.setenv("DJANGO_SITE_URL", "https://example.org")
+    monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "brightwell.example")
+    monkeypatch.setenv("DJANGO_SITE_URL", "https://brightwell.example")
 
 
 def test_refuses_to_start_without_a_site_url(monkeypatch):
@@ -44,12 +44,12 @@ def test_refuses_to_start_without_a_secret_key(monkeypatch):
 
 def test_reads_secrets_and_hosts_from_the_environment(monkeypatch):
     monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
-    monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "example.org, www.example.org")
+    monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "brightwell.example, www.brightwell.example")
 
     settings = load_settings()
 
     assert settings["SECRET_KEY"] == "from-env"
-    assert settings["ALLOWED_HOSTS"] == ["example.org", "www.example.org"]
+    assert settings["ALLOWED_HOSTS"] == ["brightwell.example", "www.brightwell.example"]
 
 
 @pytest.mark.parametrize("value", [None, "", " , "])

@@ -75,8 +75,8 @@ USER wagtail
 # Collect static files. Production settings refuse to load without these
 # variables; the placeholder values exist only for this build step and are
 # not stored in the image. Real values are passed at "docker run".
-RUN DJANGO_SECRET_KEY=collectstatic-build-only DJANGO_ALLOWED_HOSTS=localhost \
-    DJANGO_SITE_URL=http://localhost \
+RUN DJANGO_SECRET_KEY=collectstatic-build-only DJANGO_ALLOWED_HOSTS=brightwell.example \
+    DJANGO_SITE_URL=https://brightwell.example \
     python manage.py collectstatic --noinput --clear
 
 # Runtime command that executes when "docker run" is called, it does the
