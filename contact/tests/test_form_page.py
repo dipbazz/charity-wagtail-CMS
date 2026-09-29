@@ -16,8 +16,8 @@ def volunteer_form(home_page):
         slug="volunteer",
         intro="<p>Give a few hours a month.</p>",
         thank_you_text="<p>Thanks! Our volunteer team will be in touch.</p>",
-        to_address="volunteers@example.org",
-        from_address="website@example.org",
+        to_address="volunteers@brightwell.example",
+        from_address="website@brightwell.example",
         subject="New volunteer sign-up",
     )
     page.form_fields = [
@@ -71,7 +71,7 @@ class TestFormPage:
 
         assert len(mail.outbox) == 1
         message = mail.outbox[0]
-        assert message.to == ["volunteers@example.org"]
+        assert message.to == ["volunteers@brightwell.example"]
         assert message.subject == "New volunteer sign-up"
         assert message.reply_to == ["sam@example.com"]
         assert "Your name: Sam" in message.body

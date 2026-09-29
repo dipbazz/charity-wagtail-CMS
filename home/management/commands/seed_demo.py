@@ -251,8 +251,8 @@ class Command(BaseCommand):
             show_in_menus=True,
             intro="<p>Give a few hours a month at events, in our shops or from home.</p>",
             thank_you_text="<p>Thank you! Our volunteer team will be in touch within a week.</p>",
-            to_address="volunteers@example.org",
-            from_address="website@example.org",
+            to_address="volunteers@brightwell.example",
+            from_address="website@brightwell.example",
             subject="New volunteer sign-up",
         )
         volunteer.form_fields = [
@@ -315,11 +315,11 @@ class Command(BaseCommand):
 
         settings = SiteSettings.for_site(site)
         settings.charity_number = "1234567 (fictional)"
-        settings.contact_email = "hello@example.org"
+        settings.contact_email = "hello@brightwell.example"
         settings.phone = "0123 456 7890"
         settings.address = "1 Example Street\nBirmingham\nB1 1AA"
         settings.donate_page = donate
-        settings.instagram_url = "https://instagram.com/example"
+        settings.instagram_url = "https://instagram.example/brightwell"
         settings.save()
 
         banner = AnnouncementBanner.load()
