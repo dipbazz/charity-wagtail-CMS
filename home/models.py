@@ -2,6 +2,7 @@ from django.db import models
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.fields import StreamField
 from wagtail.models import Page
+from wagtail.search import index
 
 from campaigns.models import CampaignPage
 from core.blocks import BaseStreamBlock
@@ -68,3 +69,8 @@ class StandardPage(Page):
     ]
 
     parent_page_types = ["home.HomePage", "home.StandardPage"]
+
+    search_fields = Page.search_fields + [
+        index.SearchField("introduction"),
+        index.SearchField("body"),
+    ]

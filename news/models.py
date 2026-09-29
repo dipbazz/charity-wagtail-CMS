@@ -12,6 +12,7 @@ from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 from wagtail.fields import StreamField
 from wagtail.models import Page
+from wagtail.search import index
 
 from core.blocks import BaseStreamBlock
 
@@ -144,6 +145,13 @@ class NewsPage(Page):
 
     parent_page_types = ["news.NewsIndexPage"]
     subpage_types = []
+
+    search_fields = Page.search_fields + [
+        index.SearchField("introduction"),
+        index.SearchField("body"),
+        index.RelatedFields("tags", [index.SearchField("name")]),
+        index.FilterField("date"),
+    ]
 
     @property
     def news_index(self):

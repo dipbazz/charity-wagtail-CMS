@@ -18,6 +18,7 @@ from wagtail.admin.panels import (
 from wagtail.fields import StreamField
 from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
+from wagtail.search import index
 
 from core.blocks import BaseStreamBlock
 
@@ -129,6 +130,12 @@ class CampaignPage(Page):
     subpage_types = []
 
     preview_modes = [("", "Full page"), ("card", "Listing card")]
+
+    search_fields = Page.search_fields + [
+        index.SearchField("summary"),
+        index.SearchField("body"),
+        index.FilterField("end_date"),
+    ]
 
     @property
     def progress_percent(self):

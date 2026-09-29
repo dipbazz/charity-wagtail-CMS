@@ -1,38 +1,57 @@
 {% extends "base.html" %}
-{% load static wagtailcore_tags %}
+{% load wagtailcore_tags wagtailsearchpromotions_tags %}
 
 {% block body_class %}template-searchresults{% endblock %}
 
-{% block title %}Search{% endblock %}
+{% block title %}{% if search_query %}Search results for “{{ search_query }}”{% else %}Search{% endif %}{% endblock %}
 
 {% block content %}
-<h1>Search</h1>
+    <div class="container narrow">
+        <h1>Search</h1>
 
-<form action="{% url 'search' %}" method="get">
-    <input type="text" name="query"{% if search_query %} value="{{ search_query }}"{% endif %}>
-    <input type="submit" value="Search" class="button">
-</form>
+        <form class="search-form" action="{% url 'search' %}" method="get" role="search">
+            <label class="visually-hidden" for="search-page-query">Search</label>
+            <input id="search-page-query" type="search" name="query" value="{{ search_query }}">
+            <button type="submit" class="button">Search</button>
+        </form>
 
-{% if search_results %}
-<ul>
-    {% for result in search_results %}
-    <li>
-        <h4><a href="{% pageurl result %}">{{ result }}</a></h4>
-        {% if result.search_description %}
-        {{ result.search_description }}
+        {% if search_query %}
+            {% get_search_promotions search_query as promotions %}
+            {% if promotions %}
+                <ul class="search-promotions">
+                    {% for promotion in promotions %}
+                        <li>
+                            <h2><a href="{% if promotion.page %}{% pageurl promotion.page %}{% else %}{{ promotion.external_link_url }}{% endif %}">{{ promotion.title }}</a></h2>
+                            {% if promotion.description %}<p>{{ promotion.description }}</p>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <div class="search-results">
+                {% if search_results %}
+                    <p class="meta">{{ search_results.paginator.count }} result{{ search_results.paginator.count|pluralize }}</p>
+                    <ul>
+                        {% for result in search_results %}
+                            {% with specific=result.specific %}
+                                <li>
+                                    <h2><a href="{% pageurl result %}">{{ result.title }}</a></h2>
+                                    {% if specific.search_description %}
+                                        <p>{{ specific.search_description }}</p>
+                                    {% elif specific.summary %}
+                                        <p>{{ specific.summary }}</p>
+                                    {% elif specific.introduction %}
+                                        <p>{{ specific.introduction|striptags|truncatewords:30 }}</p>
+                                    {% endif %}
+                                </li>
+                            {% endwith %}
+                        {% endfor %}
+                    </ul>
+                    {% include "includes/pagination.html" with items=search_results %}
+                {% else %}
+                    <p>No results found for “{{ search_query }}”.</p>
+                {% endif %}
+            </div>
         {% endif %}
-    </li>
-    {% endfor %}
-</ul>
-
-{% if search_results.has_previous %}
-<a href="{% url 'search' %}?query={{ search_query|urlencode }}&amp;page={{ search_results.previous_page_number }}">Previous</a>
-{% endif %}
-
-{% if search_results.has_next %}
-<a href="{% url 'search' %}?query={{ search_query|urlencode }}&amp;page={{ search_results.next_page_number }}">Next</a>
-{% endif %}
-{% elif search_query %}
-No results found
-{% endif %}
+    </div>
 {% endblock %}

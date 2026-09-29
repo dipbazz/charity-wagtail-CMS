@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "wagtail.contrib.forms",
     "wagtail.contrib.settings",
     "wagtail.contrib.routable_page",
+    "wagtail.contrib.search_promotions",
     "wagtail.contrib.table_block",
     "wagtail.contrib.redirects",
     "wagtail.embeds",
