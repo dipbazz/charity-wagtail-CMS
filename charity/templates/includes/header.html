@@ -1,0 +1,7 @@
+{% load wagtailcore_tags %}
+{% wagtail_site as current_site %}
+<header class="site-header">
+    <div class="container">
+        <a class="brand" href="/">{{ current_site.site_name|default:"Charity" }}</a>
+    </div>
+</header>

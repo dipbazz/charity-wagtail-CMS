@@ -1,0 +1,7 @@
+{% load wagtailcore_tags %}
+{% wagtail_site as current_site %}
+<footer class="site-footer">
+    <div class="container">
+        <p>&copy; {% now "Y" %} {{ current_site.site_name|default:"Charity" }}</p>
+    </div>
+</footer>

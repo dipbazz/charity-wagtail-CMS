@@ -1,21 +1,23 @@
 {% extends "base.html" %}
-{% load static %}
+{% load wagtailcore_tags wagtailimages_tags %}
 
 {% block body_class %}template-homepage{% endblock %}
 
-{% block extra_css %}
-
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-<link rel="stylesheet" href="{% static 'css/welcome_page.css' %}">
-{% endblock extra_css %}
-
 {% block content %}
+    <section class="hero">
+        {% if page.hero_image %}
+            {% image page.hero_image fill-1600x700 class="hero-image" %}
+        {% endif %}
+        <div class="hero-content container">
+            <h1>{{ page.hero_heading|default:page.title }}</h1>
+            {% if page.hero_text %}<p class="lead">{{ page.hero_text }}</p>{% endif %}
+            {% if page.hero_cta_text %}
+                <a class="button button-large" href="{% if page.hero_cta_page %}{% pageurl page.hero_cta_page %}{% else %}#{% endif %}">{{ page.hero_cta_text }}</a>
+            {% endif %}
+        </div>
+    </section>
 
-{% comment %}
-Delete the line below if you're just getting started and want to remove the welcome screen!
-{% endcomment %}
-{% include 'home/welcome_page.html' %}
-
-{% endblock content %}
+    <div class="container">
+        {% include "includes/streamfield.html" with stream=page.body %}
+    </div>
+{% endblock %}
