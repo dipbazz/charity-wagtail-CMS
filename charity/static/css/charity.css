@@ -161,6 +161,7 @@ h4 {
     padding: 0.45rem 0.6rem;
     border: 1px solid var(--colour-border);
     border-radius: var(--radius);
+    font: inherit;
 }
 
 /* Hero */
@@ -391,15 +392,15 @@ h4 {
 }
 
 /* Forms */
-.form-page form p {
+.form-page main form p {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
 }
 
-.form-page input:not([type="checkbox"]):not([type="radio"]),
-.form-page textarea,
-.form-page select {
+.form-page main input:not([type="checkbox"]):not([type="radio"]),
+.form-page main textarea,
+.form-page main select {
     padding: 0.6rem;
     border: 1px solid var(--colour-border);
     border-radius: var(--radius);
