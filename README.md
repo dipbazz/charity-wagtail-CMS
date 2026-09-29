@@ -4,7 +4,7 @@ A content-managed website for **Brightwell Water Trust**, a fictional water char
 Django 6.1 and Wagtail 8.0. Editors run fundraising appeals, news, forms and site-wide messages
 from the Wagtail admin. Every feature was built test-first with pytest.
 
-![Homepage](docs/screenshots/home.png)
+![Homepage](docs/screenshots/home.jpg)
 
 ## Quick start
 
