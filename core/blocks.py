@@ -5,6 +5,9 @@ from wagtail.contrib.table_block.blocks import TableBlock
 from wagtail.documents.blocks import DocumentChooserBlock
 from wagtail.embeds.blocks import EmbedBlock
 from wagtail.images.blocks import ImageChooserBlock
+from wagtail.snippets.blocks import SnippetChooserBlock
+
+from core.models import Partner
 
 RICH_TEXT_FEATURES = ["h2", "h3", "bold", "italic", "link", "document-link", "ol", "ul"]
 
@@ -86,6 +89,30 @@ class DocumentBlock(blocks.StructBlock):
         template = "core/blocks/document_block.html"
 
 
+class TestimonialBlock(SnippetChooserBlock):
+    def __init__(self, target_model="core.Testimonial", **kwargs):
+        super().__init__(target_model, **kwargs)
+
+    class Meta:
+        icon = "openquote"
+        template = "core/blocks/testimonial_block.html"
+
+
+class PartnersBlock(blocks.StructBlock):
+    """Shows every partner snippet, so the list is managed in one place."""
+
+    heading = blocks.CharBlock(required=False, default="Our partners")
+
+    class Meta:
+        icon = "group"
+        template = "core/blocks/partners_block.html"
+
+    def get_context(self, value, parent_context=None):
+        context = super().get_context(value, parent_context)
+        context["partners"] = Partner.objects.select_related("logo")
+        return context
+
+
 class BaseStreamBlock(blocks.StreamBlock):
     heading = HeadingBlock()
     paragraph = blocks.RichTextBlock(features=RICH_TEXT_FEATURES, icon="pilcrow")
@@ -96,3 +123,5 @@ class BaseStreamBlock(blocks.StreamBlock):
     embed = EmbedBlock(help_text="A YouTube or Vimeo link", icon="media")
     table = TableBlock()
     document = DocumentBlock()
+    testimonial = TestimonialBlock()
+    partners = PartnersBlock()

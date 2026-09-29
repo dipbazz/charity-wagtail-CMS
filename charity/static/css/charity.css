@@ -423,3 +423,24 @@ h4 {
 .announcement a {
     color: var(--colour-text);
 }
+
+/* Testimonials */
+.testimonial {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 1.5rem;
+    margin: 0;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    background: var(--colour-surface);
+}
+
+.testimonial-photo {
+    grid-row: span 2;
+    border-radius: 50%;
+}
+
+.testimonial blockquote {
+    margin: 0;
+    font-size: 1.2rem;
+}

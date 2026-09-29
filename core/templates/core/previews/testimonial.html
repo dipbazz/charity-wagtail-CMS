@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block title %}Preview: {{ object }}{% endblock %}
+
+{% block content %}
+    <div class="container narrow">
+        {# Preview shows drafts too, so render the fields directly rather than via the live-only block. #}
+        <figure class="testimonial">
+            <blockquote><p>{{ object.quote }}</p></blockquote>
+            <figcaption><strong>{{ object.name }}</strong>{% if object.role %}, <span class="meta">{{ object.role }}</span>{% endif %}</figcaption>
+        </figure>
+    </div>
+{% endblock %}

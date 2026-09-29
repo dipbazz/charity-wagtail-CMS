@@ -28,6 +28,8 @@ def test_base_stream_block_offers_every_content_block():
         "embed",
         "table",
         "document",
+        "testimonial",
+        "partners",
     }
 
 
