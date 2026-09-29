@@ -3,6 +3,7 @@ from wagtail.admin.panels import FieldPanel, MultiFieldPanel
 from wagtail.fields import StreamField
 from wagtail.models import Page
 
+from campaigns.models import CampaignPage
 from core.blocks import BaseStreamBlock
 
 
@@ -43,6 +44,16 @@ class HomePage(Page):
 
     max_count = 1
     parent_page_types = ["wagtailcore.Page"]
+
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+        context["featured_campaigns"] = (
+            CampaignPage.objects.live()
+            .active()
+            .select_related("hero_image")
+            .order_by("-start_date")[:3]
+        )
+        return context
 
 
 class StandardPage(Page):

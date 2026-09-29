@@ -444,3 +444,30 @@ h4 {
     margin: 0;
     font-size: 1.2rem;
 }
+
+/* Campaigns */
+.campaign-header {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 2rem;
+    align-items: center;
+    margin-block: 2rem;
+}
+
+.campaign-progress {
+    margin-block: 1rem;
+}
+
+.donation-amounts {
+    padding: 1.5rem 2rem;
+    border-radius: var(--radius);
+    background: var(--colour-surface);
+}
+
+.donation-amounts ul {
+    padding-left: 1.2rem;
+}
+
+.featured-campaigns {
+    margin-block: 3rem;
+}
