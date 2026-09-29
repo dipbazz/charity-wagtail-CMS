@@ -48,9 +48,11 @@ EXPOSE 8000
 # 2. Set PORT variable that is used by Gunicorn. This should match "EXPOSE"
 #    command.
 # 3. Add the virtual environment to PATH.
+# 4. Run the production settings; manage.py and wsgi.py default to dev.
 ENV PYTHONUNBUFFERED=1 \
     PORT=8000 \
-    PATH="/opt/venv/bin:$PATH"
+    PATH="/opt/venv/bin:$PATH" \
+    DJANGO_SETTINGS_MODULE=charity.settings.production
 
 
 
@@ -74,7 +76,8 @@ USER wagtail
 # Collect static files. Production settings refuse to load without these
 # variables; the placeholder values exist only for this build step and are
 # not stored in the image. Real values are passed at "docker run".
-RUN DJANGO_SECRET_KEY=collectstatic-build-only DJANGO_ALLOWED_HOSTS=localhost     python manage.py collectstatic --noinput --clear
+RUN DJANGO_SECRET_KEY=collectstatic-build-only DJANGO_ALLOWED_HOSTS=localhost \
+    python manage.py collectstatic --noinput --clear
 
 # Runtime command that executes when "docker run" is called, it does the
 # following:
