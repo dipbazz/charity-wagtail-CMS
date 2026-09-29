@@ -89,7 +89,7 @@ def test_news_endpoint_includes_date_tags_and_categories(client, home_page):
 
 
 def test_images_and_documents_endpoints(client, db):
-    ImageFactory(title="Well photo")
+    ImageFactory(title="Well photo", consent_confirmed=True)
     DocumentFactory(title="Annual report")
 
     images = client.get(f"{API}/images/").json()["items"]
@@ -97,6 +97,25 @@ def test_images_and_documents_endpoints(client, db):
 
     assert [image["title"] for image in images] == ["Well photo"]
     assert [document["title"] for document in documents] == ["Annual report"]
+
+
+class TestImageConsent:
+    """Photos of people must not be published until consent has been recorded."""
+
+    def test_images_without_consent_are_not_listed(self, client, db):
+        ImageFactory(title="Consented", consent_confirmed=True)
+        ImageFactory(title="Awaiting consent", consent_confirmed=False)
+
+        images = client.get(f"{API}/images/").json()["items"]
+
+        assert [image["title"] for image in images] == ["Consented"]
+
+    def test_image_without_consent_has_no_detail_or_download_url(self, client, db):
+        image = ImageFactory(consent_confirmed=False)
+
+        response = client.get(f"{API}/images/{image.pk}/")
+
+        assert response.status_code == 404
 
 
 def test_api_is_read_only(client, campaign):
