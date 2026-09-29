@@ -15,6 +15,7 @@ from wagtail.models import Page
 from wagtail.search import index
 
 from core.blocks import BaseStreamBlock
+from core.models import SocialMetaMixin
 
 
 class NewsCategory(models.Model):
@@ -118,7 +119,7 @@ class NewsPageTag(TaggedItemBase):
     )
 
 
-class NewsPage(Page):
+class NewsPage(SocialMetaMixin, Page):
     date = models.DateField("Post date", default=datetime.date.today)
     introduction = models.TextField(max_length=300)
     hero_image = models.ForeignKey(

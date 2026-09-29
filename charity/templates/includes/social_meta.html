@@ -1,0 +1,18 @@
+{% load wagtailcore_tags wagtailimages_tags seo_tags %}
+{% if page %}
+    {% wagtail_site as current_site %}
+    <link rel="canonical" href="{{ page.full_url }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ current_site.site_name|default:'Charity' }}">
+    <meta property="og:title" content="{{ page.seo_title|default:page.title }}">
+    {% if page.search_description %}<meta property="og:description" content="{{ page.search_description }}">{% endif %}
+    <meta property="og:url" content="{{ page.full_url }}">
+    {% with social_image=page.get_social_image %}
+        {% if social_image %}
+            {% image social_image fill-1200x630 as og_image %}
+            <meta property="og:image" content="{% absolute_url og_image.url %}">
+            <meta property="og:image:alt" content="{{ social_image.default_alt_text }}">
+            <meta name="twitter:card" content="summary_large_image">
+        {% endif %}
+    {% endwith %}
+{% endif %}
