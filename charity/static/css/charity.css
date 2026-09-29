@@ -351,6 +351,45 @@ h4 {
     text-decoration: none;
 }
 
+/* Follow our news */
+.follow-news {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    background: var(--colour-surface);
+}
+
+.follow-news h2 {
+    margin-top: 0;
+}
+
+.follow-news label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+.copy-field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.copy-field input {
+    flex: 1 1 18rem;
+    min-width: 0;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--colour-border);
+    border-radius: var(--radius);
+    font: inherit;
+}
+
+.copy-status {
+    min-height: 1.5em;
+    margin: 0.5rem 0 0;
+    color: var(--colour-muted);
+}
+
 /* Forms */
 .form-page form p {
     display: flex;

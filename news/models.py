@@ -93,6 +93,9 @@ class NewsIndexPage(RoutablePageMixin, Page):
                 "stories": paginator.get_page(request.GET.get("page")),
                 "active_filter": active_filter,
                 "categories": NewsCategory.objects.all(),
+                "feed_url": request.build_absolute_uri(
+                    self.get_url(request) + self.reverse_subpage("feed")
+                ),
             },
         )
 
