@@ -34,6 +34,18 @@
             <p>No news to show yet.</p>
         {% endif %}
 
-        <p><a href="{% routablepageurl page 'feed' %}">Subscribe via RSS</a></p>
+        <section class="follow-news" aria-labelledby="follow-news-heading">
+            <h2 id="follow-news-heading">Follow our news</h2>
+            <p>
+                Get new stories as soon as we publish them in a news reader app, such as Feedly,
+                Inoreader or NetNewsWire. Copy this address and add it in the app.
+            </p>
+            <label for="feed-url">News feed address</label>
+            <div class="copy-field">
+                <input id="feed-url" type="text" value="{{ feed_url }}" readonly>
+                <button type="button" class="button" data-copy="feed-url" hidden>Copy link</button>
+            </div>
+            <p class="copy-status" role="status" data-copy-status="feed-url"></p>
+        </section>
     </div>
 {% endblock %}

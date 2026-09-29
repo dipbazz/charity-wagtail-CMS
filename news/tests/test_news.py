@@ -1,4 +1,5 @@
 import datetime
+import re
 
 import pytest
 from django.urls import reverse
@@ -82,6 +83,27 @@ class TestNewsIndex:
         body = response.content.decode()
         assert "Well opens in Kisumu" in body
         assert "A big day." in body
+
+
+class TestFollowNews:
+    """Visitors copy the feed address into a news reader rather than opening raw XML."""
+
+    def test_offers_the_full_feed_address_to_copy(self, client, news_index):
+        html = client.get(news_index.url).content.decode()
+
+        assert "Follow our news" in html
+        assert 'value="http://testserver/news/feed/"' in html
+        assert "Copy link" in html
+
+    def test_no_visible_link_opens_the_raw_feed(self, client, news_index):
+        html = client.get(news_index.url).content.decode()
+
+        assert not re.search(r'<a [^>]*href="[^"]*/feed/"', html)
+
+    def test_feed_readers_can_still_discover_the_feed(self, client, news_index):
+        html = client.get(news_index.url).content.decode()
+
+        assert '<link rel="alternate" type="application/rss+xml"' in html
 
 
 class TestNewsPage:
