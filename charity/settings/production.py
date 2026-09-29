@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -47,11 +48,25 @@ MAILERS = {
 DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "webmaster@localhost")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-# ManifestStaticFilesStorage is recommended in production, to prevent
-# outdated JavaScript / CSS assets being served from cache
+# Settings below build new objects rather than mutating the ones imported from base, which
+# other settings modules share.
+
+# WhiteNoise serves static files from the app itself, compressed and with far-future cache headers.
+# Manifest storage gives each file a hashed name, so browsers never keep stale CSS / JavaScript
 # (e.g. after a Wagtail upgrade).
-# See https://docs.djangoproject.com/en/6.1/ref/contrib/staticfiles/#manifeststaticfilesstorage
-STORAGES["staticfiles"]["BACKEND"] = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+MIDDLEWARE = [MIDDLEWARE[0], "whitenoise.middleware.WhiteNoiseMiddleware", *MIDDLEWARE[1:]]
+STORAGES = {
+    **STORAGES,
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
+
+# The SQLite database and editors' uploads live together in one directory that must outlive the
+# app's code, e.g. a mounted volume.
+DATA_DIR = Path(os.environ.get("DJANGO_DATA_DIR", BASE_DIR))
+DATABASES = {"default": {**DATABASES["default"], "NAME": DATA_DIR / "db.sqlite3"}}
+MEDIA_ROOT = DATA_DIR / "media"
+# Turn on when no web server or object storage serves MEDIA_URL in front of the app.
+SERVE_MEDIA = os.environ.get("DJANGO_SERVE_MEDIA", "false").lower() == "true"
 
 try:
     from .local import *

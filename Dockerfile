@@ -60,10 +60,18 @@ COPY --from=builder /opt/venv /opt/venv
 # Use /app folder as a directory where the source code is stored.
 WORKDIR /app
 
-# Set this directory to be owned by the "wagtail" user. This Wagtail project
-# uses SQLite, the folder needs to be owned by the user that
-# will be writing to the database file.
+# Set this directory to be owned by the "wagtail" user, who writes collected
+# static files into it at build time.
 RUN chown wagtail:wagtail /app
+
+# The SQLite database and editors' uploads live on a volume, so they survive
+# rebuilds and redeploys. Django serves the uploads because nothing else in
+# this image does; set DJANGO_SERVE_MEDIA=false when a web server or object
+# storage serves /media/ instead.
+ENV DJANGO_DATA_DIR=/data \
+    DJANGO_SERVE_MEDIA=true
+RUN mkdir /data && chown wagtail:wagtail /data
+VOLUME /data
 
 # Copy the source code of the project into the container.
 COPY --chown=wagtail:wagtail . .

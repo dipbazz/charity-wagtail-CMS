@@ -83,6 +83,11 @@ Production settings (`charity.settings.production`) read configuration from the 
 | `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_USE_TLS` | Defaults: `587` and `true` |
 | `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD` | SMTP credentials |
 | `DJANGO_DEFAULT_FROM_EMAIL` | Sender address for workflow and error emails |
+| `DJANGO_DATA_DIR` | Directory for `db.sqlite3` and uploaded media; must be persistent storage. The Docker image uses a `/data` volume |
+| `DJANGO_SERVE_MEDIA` | `true` serves uploads from Django (the Docker image's default). Turn it off when a web server or object storage serves `/media/` |
+
+Static files are compressed and served by [WhiteNoise](https://whitenoise.readthedocs.io/), so
+no separate web server is needed for them.
 
 Scheduled publishing needs a cron job running `python manage.py publish_scheduled` every few
 minutes. A Dockerfile from the Wagtail project template is included.

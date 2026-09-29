@@ -102,3 +102,37 @@ def test_smtp_port_and_tls_are_configurable(monkeypatch):
 
     assert options["port"] == 25
     assert options["use_tls"] is False
+
+
+def test_serves_compressed_static_files_itself(monkeypatch):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+
+    settings = load_settings()
+
+    assert settings["MIDDLEWARE"][:2] == [
+        "django.middleware.security.SecurityMiddleware",
+        "whitenoise.middleware.WhiteNoiseMiddleware",
+    ]
+    assert (
+        settings["STORAGES"]["staticfiles"]["BACKEND"]
+        == "whitenoise.storage.CompressedManifestStaticFilesStorage"
+    )
+
+
+def test_database_and_uploads_live_in_the_data_directory(monkeypatch, tmp_path):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.setenv("DJANGO_DATA_DIR", str(tmp_path))
+
+    settings = load_settings()
+
+    assert settings["DATABASES"]["default"]["NAME"] == tmp_path / "db.sqlite3"
+    assert settings["MEDIA_ROOT"] == tmp_path / "media"
+
+
+def test_serving_uploads_from_django_is_opt_in(monkeypatch):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.delenv("DJANGO_SERVE_MEDIA", raising=False)
+    assert load_settings()["SERVE_MEDIA"] is False
+
+    monkeypatch.setenv("DJANGO_SERVE_MEDIA", "true")
+    assert load_settings()["SERVE_MEDIA"] is True
