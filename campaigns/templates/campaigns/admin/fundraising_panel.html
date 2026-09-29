@@ -1,0 +1,18 @@
+{% load wagtailadmin_tags %}
+{% panel id="fundraising" heading="Fundraising overview" classname="w-panel--dashboard" %}
+    <p>
+        <strong>£{{ total_raised|floatformat:"0g" }}</strong> raised of £{{ total_target|floatformat:"0g" }}
+        across {{ open_count }} open appeal{{ open_count|pluralize }}.
+    </p>
+    {% if closing_soon %}
+        <h3>Closing soon</h3>
+        <ul>
+            {% for campaign in closing_soon %}
+                <li>
+                    <a href="{% url 'wagtailadmin_pages:edit' campaign.pk %}">{{ campaign.title }}</a>
+                    closes {{ campaign.end_date|date:"j M" }} ({{ campaign.progress_percent }}% of target)
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endpanel %}
