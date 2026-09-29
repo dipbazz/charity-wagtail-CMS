@@ -41,6 +41,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: charity.settings.production
           DJANGO_SECRET_KEY: ci-only-${{ github.run_id }}-not-a-real-secret-key-padding-for-length
           DJANGO_ALLOWED_HOSTS: example.org
+          DJANGO_SITE_URL: https://example.org
 
       - name: Test
         run: uv run pytest --cov --cov-report=term-missing:skip-covered
@@ -59,4 +60,5 @@ jobs:
           docker run --rm
           --env DJANGO_SECRET_KEY=ci-only-${{ github.run_id }}-not-a-real-secret-key-padding-for-length
           --env DJANGO_ALLOWED_HOSTS=example.org
+          --env DJANGO_SITE_URL=https://example.org
           charity-cms python manage.py check --deploy --fail-level WARNING

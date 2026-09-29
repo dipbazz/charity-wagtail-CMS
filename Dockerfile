@@ -76,12 +76,15 @@ USER wagtail
 # variables; the placeholder values exist only for this build step and are
 # not stored in the image. Real values are passed at "docker run".
 RUN DJANGO_SECRET_KEY=collectstatic-build-only DJANGO_ALLOWED_HOSTS=localhost \
+    DJANGO_SITE_URL=http://localhost \
     python manage.py collectstatic --noinput --clear
 
 # Runtime command that executes when "docker run" is called, it does the
 # following:
 #   1. Migrate the database.
-#   2. Start the application server. "exec" replaces the shell with gunicorn,
+#   2. Point the Wagtail Site at DJANGO_SITE_URL, so API, feed, sitemap and
+#      canonical links use the real address.
+#   3. Start the application server. "exec" replaces the shell with gunicorn,
 #      so gunicorn runs as PID 1 and receives "docker stop"'s SIGTERM, letting
 #      it finish in-flight requests instead of being killed after a timeout.
 # WARNING:
@@ -89,4 +92,4 @@ RUN DJANGO_SECRET_KEY=collectstatic-build-only DJANGO_ALLOWED_HOSTS=localhost \
 #   PRACTICE. The database should be migrated manually or using the release
 #   phase facilities of your hosting platform. This is used only so the
 #   Wagtail instance can be started with a simple "docker run" command.
-CMD ["/bin/sh", "-c", "set -xe; python manage.py migrate --noinput; exec gunicorn charity.wsgi:application"]
+CMD ["/bin/sh", "-c", "set -xe; python manage.py migrate --noinput; python manage.py update_site_url; exec gunicorn charity.wsgi:application"]

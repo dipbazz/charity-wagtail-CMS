@@ -20,6 +20,10 @@ uv run python manage.py runserver
 
 Site: <http://localhost:8000> · Admin: <http://localhost:8000/admin/> · API: <http://localhost:8000/api/v2/pages/>
 
+Full URLs in the API, news feed and sitemap come from the `SITE_URL` setting (`http://localhost:8000`
+in development), which `seed_demo` copies into Wagtail's Site record. On a database created
+before that, run `uv run python manage.py update_site_url` once.
+
 ## What editors can do
 
 | Area | What it does | Wagtail features |
@@ -81,7 +85,7 @@ yourself, because `manage.py` and `wsgi.py` fall back to the dev settings.
 | `DJANGO_SECRET_KEY` | Required; the app refuses to start without it |
 | `DJANGO_ALLOWED_HOSTS` | Required; comma-separated hostnames. The app refuses to start without it |
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated origins, e.g. `https://example.org` |
-| `WAGTAILADMIN_BASE_URL` | Base URL used in admin notification emails |
+| `DJANGO_SITE_URL` | Required; the public address, e.g. `https://example.org`. The Docker image copies it into Wagtail's Site record on every start (`manage.py update_site_url`), which all full URLs are built from: API links, the news feed, the sitemap, canonical and social tags. Admin emails use it too |
 | `DJANGO_SECURE_HSTS_SECONDS` | HSTS duration; defaults to one hour until HTTPS is confirmed |
 | `DJANGO_EMAIL_HOST` | SMTP server for form notifications and workflow emails. If it's unreachable, submissions are still saved and the error is logged |
 | `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_USE_TLS` | Defaults: `587` and `true` |
