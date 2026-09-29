@@ -15,7 +15,9 @@ from wagtail.admin.panels import (
     ObjectList,
     TabbedInterface,
 )
+from wagtail.api import APIField
 from wagtail.fields import StreamField
+from wagtail.images.api.fields import ImageRenditionField
 from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
 from wagtail.search import index
@@ -138,6 +140,19 @@ class CampaignPage(SocialMetaMixin, Page):
         index.FilterField("end_date"),
     ]
 
+    api_fields = [
+        APIField("summary"),
+        APIField("hero_image", serializer=ImageRenditionField("fill-800x450")),
+        APIField("body"),
+        APIField("target_amount"),
+        APIField("amount_raised"),
+        APIField("progress_percent"),
+        APIField("start_date"),
+        APIField("end_date"),
+        APIField("is_active"),
+        APIField("donation_amounts"),
+    ]
+
     @property
     def progress_percent(self):
         if not self.target_amount:
@@ -167,6 +182,7 @@ class DonationAmount(Orderable):
     impact = models.CharField(max_length=255)
 
     panels = [FieldPanel("amount"), FieldPanel("impact")]
+    api_fields = [APIField("amount"), APIField("impact")]
 
     def __str__(self):
         return f"£{self.amount}: {self.impact}"

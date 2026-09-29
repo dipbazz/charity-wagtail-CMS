@@ -9,8 +9,10 @@ from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from taggit.models import TaggedItemBase
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
+from wagtail.api import APIField
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 from wagtail.fields import StreamField
+from wagtail.images.api.fields import ImageRenditionField
 from wagtail.models import Page
 from wagtail.search import index
 
@@ -153,6 +155,19 @@ class NewsPage(SocialMetaMixin, Page):
         index.RelatedFields("tags", [index.SearchField("name")]),
         index.FilterField("date"),
     ]
+
+    api_fields = [
+        APIField("date"),
+        APIField("introduction"),
+        APIField("hero_image", serializer=ImageRenditionField("fill-800x450")),
+        APIField("body"),
+        APIField("tags"),
+        APIField("category_names"),
+    ]
+
+    @property
+    def category_names(self):
+        return [category.name for category in self.categories.all()]
 
     @property
     def news_index(self):
