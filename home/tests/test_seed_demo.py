@@ -80,6 +80,8 @@ def test_flood_appeal_points_people_to_a_real_relief_fund(seeded, client):
     assert "Nepal" in flood.title
     assert "demo charity" in html
     assert "https://rescue.opmcm.gov.np/donations" in html
+    # The photo isn't of this flood, so the page has to say so.
+    assert "Representative image" in html
     assert "Nepal" in AnnouncementBanner.load().message
 
 
