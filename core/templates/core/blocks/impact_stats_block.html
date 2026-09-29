@@ -1,0 +1,11 @@
+<section class="block-stats">
+    {% if value.heading %}<h2>{{ value.heading }}</h2>{% endif %}
+    <dl>
+        {% for stat in value.stats %}
+            <div class="stat">
+                <dt>{{ stat.label }}</dt>
+                <dd>{{ stat.figure }}</dd>
+            </div>
+        {% endfor %}
+    </dl>
+</section>

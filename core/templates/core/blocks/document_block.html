@@ -1,0 +1,6 @@
+<p class="block-document">
+    <a href="{{ value.document.url }}">
+        {{ value.link_text|default:value.document.title }}
+        <span class="meta">({{ value.document.file_extension|upper }})</span>
+    </a>
+</p>
