@@ -57,7 +57,7 @@ Dependencies point one way: feature apps depend on `core`, never the reverse.
 ## Testing and quality
 
 ```bash
-uv run pytest                  # 118 tests
+uv run pytest
 uv run pytest --cov            # with coverage
 uv run ruff check . && uv run ruff format --check .
 ```
