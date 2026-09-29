@@ -23,6 +23,24 @@ SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
+# Form notifications and moderation workflow emails.
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+        "OPTIONS": {
+            "host": os.environ.get("DJANGO_EMAIL_HOST", "localhost"),
+            "port": int(os.environ.get("DJANGO_EMAIL_PORT", 587)),
+            "username": os.environ.get("DJANGO_EMAIL_HOST_USER", ""),
+            "password": os.environ.get("DJANGO_EMAIL_HOST_PASSWORD", ""),
+            "use_tls": os.environ.get("DJANGO_EMAIL_USE_TLS", "true").lower() == "true",
+            # Sending happens inside the request, so a hung mail server must not hold a worker.
+            "timeout": 10,
+        },
+    }
+}
+DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "webmaster@localhost")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
 # ManifestStaticFilesStorage is recommended in production, to prevent
 # outdated JavaScript / CSS assets being served from cache
 # (e.g. after a Wagtail upgrade).

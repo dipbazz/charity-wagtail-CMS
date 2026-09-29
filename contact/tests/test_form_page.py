@@ -76,6 +76,21 @@ class TestFormPage:
         assert message.reply_to == ["sam@example.com"]
         assert "Your name: Sam" in message.body
 
+    def test_submission_is_kept_and_thanked_when_the_mail_server_is_down(
+        self, client, volunteer_form, monkeypatch, caplog
+    ):
+        def mail_server_down(*args, **kwargs):
+            raise ConnectionRefusedError("[Errno 111] Connection refused")
+
+        monkeypatch.setattr("contact.models.send_mail", mail_server_down)
+
+        response = client.post(volunteer_form.url, VALID_DATA)
+
+        assert response.status_code == 200
+        assert "Our volunteer team will be in touch." in response.content.decode()
+        assert FormSubmission.objects.filter(page=volunteer_form).exists()
+        assert "Could not email the submission" in caplog.text
+
     def test_invalid_submission_shows_errors_and_stores_nothing(self, client, volunteer_form):
         response = client.post(volunteer_form.url, {"your_name": "Sam"})
 
