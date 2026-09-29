@@ -9,7 +9,7 @@ from wagtail.snippets.blocks import SnippetChooserBlock
 
 from core.models import Partner
 
-RICH_TEXT_FEATURES = ["h2", "h3", "bold", "italic", "link", "document-link", "ol", "ul"]
+RICH_TEXT_FEATURES = ["h2", "h3", "bold", "italic", "mark", "link", "document-link", "ol", "ul"]
 
 
 class HeadingBlock(blocks.StructBlock):

@@ -499,3 +499,9 @@ h4 {
     margin-bottom: 0.25rem;
     font-size: 1.25rem;
 }
+
+mark {
+    padding: 0 0.15em;
+    background: #fde7b4;
+    color: inherit;
+}
