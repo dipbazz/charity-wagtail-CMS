@@ -1,12 +1,14 @@
 import datetime
 import io
 from decimal import Decimal
+from pathlib import Path
 
 from django.core.files.images import ImageFile
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
+from wagtail.images.rect import Rect
 from wagtail.models import Site
 
 from campaigns.models import CampaignIndexPage, CampaignPage
@@ -17,30 +19,114 @@ from news.models import NewsCategory, NewsIndexPage, NewsPage
 
 SITE_NAME = "Brightwell Water Trust"
 TODAY = datetime.date.today()
+IMAGES_DIR = Path(__file__).parent / "demo_images"
 RELIEF_FUND_URL = "https://rescue.opmcm.gov.np/donations"
 
+# Licences and source links are listed in the README.
+# Focal points are (centre x, centre y, width, height) in pixels of the 1600px-wide file.
+PHOTOS = {
+    "hero": {
+        "file": "hero.jpg",
+        "title": "Family at a stone well",
+        "description": "A woman and a young boy looking into a stone well in a garden",
+        "credit": "Photo: Maxime Bouffard / Unsplash",
+        "focal_point": (930, 640, 320, 520),
+    },
+    "well": {
+        "file": "well.jpg",
+        "title": "Boy at a hand pump",
+        "description": "A young boy working the handle of a village hand pump",
+        "credit": "Photo: bradford zak / Unsplash",
+        "focal_point": (1000, 560, 700, 700),
+    },
+    "grace": {
+        "file": "grace.jpg",
+        "title": "Pupils in class",
+        "description": "Pupils in school uniform raising their hands in a classroom",
+        "credit": "Photo: Emmanuel Ikwuegbu / Unsplash",
+        "focal_point": (770, 620, 500, 500),
+    },
+    "flood": {
+        "file": "flood.jpg",
+        "title": "Flooded camp (representative image)",
+        "description": (
+            "Flooded tents and shelters in a camp for displaced families. "
+            "Representative image, not taken in Nepal"
+        ),
+        "credit": "Photo: Salah Darwish / Unsplash. Representative image, not taken in Nepal",
+        "focal_point": (800, 720, 1400, 520),
+    },
+    "school": {
+        "file": "school.jpg",
+        "title": "Handwashing at an outdoor tap",
+        "description": "A young child washing their hands under an outdoor tap",
+        "credit": "Photo: Jonathan Shembere / Pexels",
+        "focal_point": (720, 520, 700, 700),
+    },
+    "volunteers": {
+        "file": "volunteers.jpg",
+        "title": "Volunteers handing out aid",
+        "description": "Volunteers in matching T-shirts handing out bottled water and aid boxes",
+        "credit": "Photo: RDNE Stock project / Pexels",
+        "focal_point": (720, 520, 900, 560),
+    },
+}
 
-def make_image(title, colours, description, credit="Photo: Brightwell field team"):
-    """Generate a simple gradient placeholder so the demo needs no binary assets."""
-    width, height = 1600, 900
-    image = Image.new("RGB", (width, height))
+# Fictional partners: (name, logo colour, logo shape).
+PARTNERS = [
+    ("Rivers Foundation", (29, 111, 163), "wave"),
+    ("Northgate Council", (46, 125, 50), "arch"),
+    ("Tapwell Ltd", (199, 92, 18), "drop"),
+]
+
+
+def load_photo(file, title, description, credit, focal_point):
+    """Create an image from a photo in demo_images.
+
+    Stock licences cover copyright, not consent from the people pictured,
+    so the photos are left unconsented and stay out of the API.
+    """
+    with open(IMAGES_DIR / file, "rb") as source:
+        image = CustomImage(
+            title=title,
+            description=description,
+            credit=credit,
+            consent_confirmed=False,
+            file=ImageFile(source, name=file),
+        )
+        if focal_point:
+            image.set_focal_point(Rect.from_point(*focal_point))
+        image.save()
+    return image
+
+
+def make_logo(name, colour, shape):
+    """Draw a simple logo for a fictional partner, so the demo needs no brand assets."""
+    image = Image.new("RGBA", (480, 160), (255, 255, 255, 0))
     draw = ImageDraw.Draw(image)
-    (r1, g1, b1), (r2, g2, b2) = colours
-    for y in range(height):
-        t = y / height
-        draw.line(
-            [(0, y), (width, y)],
-            fill=(int(r1 + (r2 - r1) * t), int(g1 + (g2 - g1) * t), int(b1 + (b2 - b1) * t)),
+    if shape == "wave":
+        for top in (40, 80, 120):
+            draw.arc((10, top - 30, 65, top + 12), 200, 340, fill=colour, width=12)
+            draw.arc((65, top - 12, 120, top + 30), 20, 160, fill=colour, width=12)
+    elif shape == "arch":
+        draw.rectangle((15, 65, 120, 145), fill=colour)
+        draw.pieslice((15, 12, 120, 117), 180, 360, fill=colour)
+        draw.rectangle((47, 82, 88, 145), fill=(255, 255, 255, 0))
+    else:
+        draw.polygon([(67, 8), (27, 88), (107, 88)], fill=colour)
+        draw.ellipse((27, 58, 107, 138), fill=colour)
+    font = ImageFont.load_default(size=52)
+    for line, text in enumerate(name.split(" ", 1)):
+        draw.text(
+            (140, 18 + line * 64), text, font=font, fill=colour, stroke_width=1, stroke_fill=colour
         )
     buffer = io.BytesIO()
-    image.save(buffer, format="JPEG", quality=85)
-    filename = title.lower().replace(" ", "-") + ".jpg"
+    image.save(buffer, format="PNG")
+    slug = name.lower().replace(" ", "-")
     return CustomImage.objects.create(
-        title=title,
-        description=description,
-        credit=credit,
-        consent_confirmed=True,
-        file=ImageFile(buffer, name=filename),
+        title=f"{name} logo",
+        description=f"{name} logo",
+        file=ImageFile(buffer, name=f"{slug}-logo.png"),
     )
 
 
@@ -68,23 +154,7 @@ class Command(BaseCommand):
         site.site_name = SITE_NAME
         site.save()
 
-        images = {
-            "hero": make_image(
-                "Hero water", ((11, 85, 99), (7, 59, 69)), "A child drinking clean water from a tap"
-            ),
-            "well": make_image(
-                "New well", ((42, 157, 143), (11, 85, 99)), "Villagers gathered around a new well"
-            ),
-            "flood": make_image(
-                "Flood relief", ((69, 123, 157), (29, 53, 87)), "Volunteers handing out supplies"
-            ),
-            "school": make_image(
-                "School taps", ((233, 196, 106), (244, 162, 97)), "Pupils washing hands at school"
-            ),
-            "logo": make_image(
-                "Partner logo", ((230, 230, 230), (200, 200, 200)), "Partner logo", credit=""
-            ),
-        }
+        images = {key: load_photo(**photo) for key, photo in PHOTOS.items()}
 
         about = publish(
             home,
@@ -252,7 +322,7 @@ class Command(BaseCommand):
             news,
             "The well that brought Grace back to school",
             "Grace used to spend every morning fetching water. Now she spends it in class.",
-            images["well"],
+            images["grace"],
             ["water", "education"],
             [stories],
             days_ago=2,
@@ -270,7 +340,7 @@ class Command(BaseCommand):
             news,
             "Volunteers of the year",
             "Meet the supporters who ran, baked and cycled for clean water.",
-            images["school"],
+            images["volunteers"],
             ["volunteering"],
             [stories],
             days_ago=15,
@@ -298,9 +368,12 @@ class Command(BaseCommand):
         ]
         publish(home, volunteer)
 
-        for order, name in enumerate(["Rivers Foundation", "Northgate Council", "Tapwell Ltd"]):
+        for order, (name, colour, shape) in enumerate(PARTNERS):
             Partner.objects.create(
-                name=name, url="https://example.org", logo=images["logo"], sort_order=order
+                name=name,
+                url="https://example.org",
+                logo=make_logo(name, colour, shape),
+                sort_order=order,
             )
         testimonial = Testimonial(
             quote="The new well means my daughter is back at school.",
