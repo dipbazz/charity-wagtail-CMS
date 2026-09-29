@@ -1,6 +1,6 @@
 {% load wagtailimages_tags %}
 {% if value.live %}
-    <figure class="testimonial">
+    <figure class="testimonial{% if value.photo %} has-photo{% endif %}">
         {% if value.photo %}{% image value.photo fill-120x120 class="testimonial-photo" %}{% endif %}
         <blockquote><p>{{ value.quote }}</p></blockquote>
         <figcaption>
