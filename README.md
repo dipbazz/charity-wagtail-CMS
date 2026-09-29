@@ -104,4 +104,6 @@ project template; CI builds it and runs Django's deployment checks inside the im
 ## Notes
 
 - Brightwell Water Trust, its people, figures and charity number are fictional.
+- The flood appeal describes the real flash flood in Nepal on 26 August 2026. The page says
+  Brightwell takes no donations and links to the Government of Nepal's relief fund instead.
 - Built with a feature-branch workflow; see the merged pull requests for the history of each feature.

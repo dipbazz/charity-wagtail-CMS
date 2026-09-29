@@ -17,6 +17,7 @@ from news.models import NewsCategory, NewsIndexPage, NewsPage
 
 SITE_NAME = "Brightwell Water Trust"
 TODAY = datetime.date.today()
+RELIEF_FUND_URL = "https://rescue.opmcm.gov.np/donations"
 
 
 def make_image(title, colours, description, credit="Photo: Brightwell field team"):
@@ -159,9 +160,39 @@ class Command(BaseCommand):
         )
         flood = self.add_campaign(
             campaigns,
-            title="Flood relief in Tana River",
+            title="Flash flood relief in Nepal",
             slug="flood-relief",
-            summary="Families have lost their homes and their water supply to flooding.",
+            summary=(
+                "A flash flood down the Bhote Koshi has destroyed homes and water supplies "
+                "in Rasuwa, Nuwakot and Dhading."
+            ),
+            body=[
+                ("heading", {"heading_text": "What happened", "size": "h2"}),
+                (
+                    "paragraph",
+                    "<p>On 26 August 2026 part of the Langtang Lirung glacier collapsed. "
+                    "The debris and floodwater that followed swept down the Bhote Koshi and "
+                    "Trishuli rivers, carrying away bridges, roads and around 7,570 homes. "
+                    "By 21 September, at least 1,451 people had died and 5,745 were still "
+                    "missing.</p>",
+                ),
+                ("heading", {"heading_text": "Why clean water matters now", "size": "h2"}),
+                (
+                    "paragraph",
+                    "<p>The flood damaged water supplies and toilets across the valley. "
+                    "In early tests, five of fifteen water sources were contaminated with "
+                    "E. coli, and families in crowded shelters are at risk of cholera and "
+                    "other waterborne diseases.</p>",
+                ),
+                ("heading", {"heading_text": "How to help today", "size": "h2"}),
+                (
+                    "paragraph",
+                    "<p>Brightwell is a demo charity and takes no donations. To help people "
+                    "affected by this flood, give to the "
+                    f'<a href="{RELIEF_FUND_URL}">Prime Minister\'s Disaster Relief Fund</a>, '
+                    "run by the Government of Nepal.</p>",
+                ),
+            ],
             hero_image=images["flood"],
             target=Decimal("50000"),
             raised=Decimal("31250"),
@@ -228,8 +259,8 @@ class Command(BaseCommand):
         )
         self.add_story(
             news,
-            "Brightwell responds to Tana River flooding",
-            "Our teams are distributing hygiene kits and purification tablets.",
+            "What we know about the Bhote Koshi flash flood",
+            "A glacier collapse in Langtang sent a flash flood through three districts of Nepal.",
             images["flood"],
             ["emergency"],
             [press],
@@ -324,20 +355,21 @@ class Command(BaseCommand):
 
         banner = AnnouncementBanner.load()
         banner.enabled = True
-        banner.message = "Emergency appeal: help families affected by flooding in Tana River"
+        banner.message = "Emergency appeal: help families hit by the flash flood in Nepal"
         banner.link_page = flood
         banner.save()
 
         self.stdout.write(self.style.SUCCESS(f"Created demo content for {SITE_NAME}."))
         self.stdout.write(f"About page: {about.url}")
 
-    def add_campaign(self, parent, *, amounts, target, raised, start, end, **fields):
+    def add_campaign(self, parent, *, amounts, target, raised, start, end, body=None, **fields):
         campaign = CampaignPage(
             target_amount=target,
             amount_raised=raised,
             start_date=start,
             end_date=end,
-            body=[
+            body=body
+            or [
                 ("heading", {"heading_text": "Why it matters", "size": "h2"}),
                 ("paragraph", f"<p>{fields['summary']} Your gift makes a lasting difference.</p>"),
             ],

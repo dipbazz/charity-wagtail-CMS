@@ -46,6 +46,17 @@ def test_every_live_page_renders(seeded, client):
     assert failures and all(code == 200 for code in failures.values()), failures
 
 
+def test_flood_appeal_points_people_to_a_real_relief_fund(seeded, client):
+    flood = CampaignPage.objects.get(slug="flood-relief")
+
+    html = client.get(flood.url).content.decode()
+
+    assert "Nepal" in flood.title
+    assert "demo charity" in html
+    assert "https://rescue.opmcm.gov.np/donations" in html
+    assert "Nepal" in AnnouncementBanner.load().message
+
+
 def test_running_twice_does_not_duplicate_content(seeded):
     page_count = Page.objects.count()
 
