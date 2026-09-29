@@ -46,6 +46,45 @@ def test_every_live_page_renders(seeded, client):
     assert failures and all(code == 200 for code in failures.values()), failures
 
 
+def test_every_photo_is_a_credited_real_photograph(seeded):
+    photos = core_models.CustomImage.objects.exclude(pk__in=Partner.objects.values("logo"))
+
+    assert photos.count() >= 5
+    for photo in photos:
+        assert photo.file.name.endswith(".jpg"), photo.title
+        assert photo.credit.startswith("Photo: "), photo.title
+        assert " / Unsplash" in photo.credit or " / Pexels" in photo.credit, photo.title
+        assert photo.description, photo.title
+        assert photo.width <= 1600, photo.title
+
+
+def test_stock_photos_are_not_marked_as_consented(seeded):
+    # Stock licences cover copyright, not consent from the people pictured.
+    assert not core_models.CustomImage.objects.filter(consent_confirmed=True).exists()
+
+
+def test_each_partner_has_its_own_logo(seeded):
+    partners = Partner.objects.all()
+
+    assert all(partner.logo for partner in partners)
+    assert len({partner.logo_id for partner in partners}) == partners.count()
+    for partner in partners:
+        assert partner.logo.description == f"{partner.name} logo"
+
+
+def test_flood_appeal_points_people_to_a_real_relief_fund(seeded, client):
+    flood = CampaignPage.objects.get(slug="flood-relief")
+
+    html = client.get(flood.url).content.decode()
+
+    assert "Nepal" in flood.title
+    assert "demo charity" in html
+    assert "https://rescue.opmcm.gov.np/donations" in html
+    # The photo isn't of this flood, so the page has to say so.
+    assert "Representative image" in html
+    assert "Nepal" in AnnouncementBanner.load().message
+
+
 def test_running_twice_does_not_duplicate_content(seeded):
     page_count = Page.objects.count()
 
