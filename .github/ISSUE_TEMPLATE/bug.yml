@@ -9,7 +9,7 @@ body:
       options:
         - Public site
         - Wagtail admin / editor experience
-        - Demo content (seed_demo)
+        - Page content (text, images, pages)
         - API
         - Deployment / CI
         - Docs
@@ -19,14 +19,14 @@ body:
     id: what-happened
     attributes:
       label: What happened?
-      description: The problem as it is now. Describe what you see, not the fix.
+      description: What you saw while using the site or the admin, in your own words. Describe the problem, not the fix.
     validations:
       required: true
   - type: textarea
     id: why-it-matters
     attributes:
       label: Why it matters
-      description: Who is affected (visitors, editors, reviewers) and how.
+      description: Who is affected (visitors, donors, volunteers, editors) and how it gets in their way.
     validations:
       required: true
   - type: textarea
@@ -49,10 +49,10 @@ body:
     id: how-to-reproduce
     attributes:
       label: How to reproduce
-      description: Steps from a fresh `seed_demo`.
+      description: The steps that show the problem, starting from the page you were on.
       placeholder: |
-        1. Run `uv run python manage.py seed_demo`
-        2. Open /...
+        1. Open /...
+        2. Click ...
         3. See ...
     validations:
       required: true

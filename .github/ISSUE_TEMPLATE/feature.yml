@@ -1,5 +1,5 @@
 name: Feature
-description: Something the site, the admin or the demo should do but doesn't yet.
+description: Something the site or the admin should let you do but doesn't yet.
 labels: ["enhancement"]
 body:
   - type: dropdown
@@ -9,7 +9,7 @@ body:
       options:
         - Public site
         - Wagtail admin / editor experience
-        - Demo content (seed_demo)
+        - Page content (text, images, pages)
         - API
         - Deployment / CI
         - Docs
@@ -19,14 +19,14 @@ body:
     id: whats-missing
     attributes:
       label: What's missing?
-      description: What the application does now, and where it falls short.
+      description: What you were trying to do on the site or in the admin, and what stopped you.
     validations:
       required: true
   - type: textarea
     id: why-it-matters
     attributes:
       label: Why it matters
-      description: Who needs it (visitors, editors, reviewers) and what it gives them.
+      description: Who needs it (visitors, donors, volunteers, editors) and what it lets them do.
     validations:
       required: true
   - type: textarea
