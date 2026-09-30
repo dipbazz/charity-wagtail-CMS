@@ -11,6 +11,12 @@ ALLOWED_HOSTS = ["*"]
 
 MAILERS = {"default": {"BACKEND": "django.core.mail.backends.console.EmailBackend"}}
 
+# Debug toolbar: the queries, templates and timings behind each page, shown to requests from this
+# machine. It's a dev dependency only, so production and test settings leave it out.
+INSTALLED_APPS = [*INSTALLED_APPS, "debug_toolbar"]
+MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware", *MIDDLEWARE]
+INTERNAL_IPS = ["127.0.0.1"]
+
 
 try:
     from .local import *

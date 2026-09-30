@@ -46,6 +46,53 @@ jobs:
       - name: Test
         run: uv run pytest --cov --cov-report=term-missing:skip-covered
 
+  lighthouse:
+    runs-on: ubuntu-latest
+    env:
+      # Production settings, as deployed, with the demo content in a throwaway data directory.
+      DJANGO_SETTINGS_MODULE: charity.settings.production
+      DJANGO_SECRET_KEY: ci-only-${{ github.run_id }}-not-a-real-secret-key-padding-for-length
+      DJANGO_ALLOWED_HOSTS: 127.0.0.1
+      DJANGO_SITE_URL: http://127.0.0.1:8000
+      DJANGO_DATA_DIR: /tmp/charity-data
+      DJANGO_SERVE_MEDIA: "true"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Load the demo site
+        run: |
+          mkdir -p "$DJANGO_DATA_DIR"
+          uv run python manage.py migrate --noinput
+          uv run python manage.py seed_demo
+          uv run python manage.py collectstatic --noinput
+
+      - name: Start the site with gunicorn, as in the Docker image
+        run: |
+          uv run --with gunicorn==25.1.0 gunicorn charity.wsgi:application             --bind 127.0.0.1:8000 --workers 2 --daemon
+          # Visit each page once so image renditions exist before anything is measured.
+          for path in / /appeals/ /appeals/flood-relief/ /news/; do
+            curl --silent --show-error --fail --retry 10 --retry-connrefused               --header "X-Forwarded-Proto: https" --output /dev/null "http://127.0.0.1:8000$path"
+          done
+
+      # Budgets live in lighthouserc.json. Reports go to an artifact, not to a public server.
+      - name: Check page weight and layout shift on a phone
+        run: npx --yes @lhci/cli@0.15.1 autorun
+
+      - name: Keep the Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/reports
+          if-no-files-found: ignore
+
   docker:
     runs-on: ubuntu-latest
     steps:
