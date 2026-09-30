@@ -1,6 +1,6 @@
 {% load wagtailcore_tags wagtailimages_tags %}
 <article class="card campaign-card">
-    {% if campaign.hero_image %}{% image campaign.hero_image fill-640x360 %}{% endif %}
+    {% if campaign.hero_image %}{% picture campaign.hero_image fill-{640x360,320x180} format-{avif,webp,jpeg} sizes="(min-width: 59rem) 22rem, (min-width: 40rem) 50vw, 100vw" loading="lazy" %}{% endif %}
     <div class="card-body">
         <h3><a href="{% pageurl campaign %}">{{ campaign.title }}</a></h3>
         <p>{{ campaign.summary }}</p>

@@ -6,6 +6,7 @@ from wagtail.search import index
 
 from campaigns.models import CampaignPage
 from core.blocks import BaseStreamBlock
+from core.images import with_card_images
 from core.models import SocialMetaMixin
 
 
@@ -49,12 +50,9 @@ class HomePage(SocialMetaMixin, Page):
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
-        context["featured_campaigns"] = (
-            CampaignPage.objects.live()
-            .active()
-            .select_related("hero_image")
-            .order_by("-start_date")[:3]
-        )
+        context["featured_campaigns"] = with_card_images(
+            CampaignPage.objects.live().active().order_by("-start_date")
+        )[:3]
         return context
 
 

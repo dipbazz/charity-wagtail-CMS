@@ -1,6 +1,6 @@
 {% load wagtailcore_tags wagtailimages_tags %}
 <article class="card news-card">
-    {% if story.hero_image %}{% image story.hero_image fill-640x360 %}{% endif %}
+    {% if story.hero_image %}{% picture story.hero_image fill-{640x360,320x180} format-{avif,webp,jpeg} sizes="(min-width: 59rem) 22rem, (min-width: 40rem) 50vw, 100vw" loading="lazy" %}{% endif %}
     <div class="card-body">
         <p class="meta"><time datetime="{{ story.date|date:'Y-m-d' }}">{{ story.date|date:"j F Y" }}</time></p>
         <h2><a href="{% pageurl story %}">{{ story.title }}</a></h2>

@@ -17,6 +17,7 @@ from wagtail.models import Page
 from wagtail.search import index
 
 from core.blocks import BaseStreamBlock
+from core.images import with_card_images
 from core.models import SocialMetaMixin
 
 
@@ -80,13 +81,12 @@ class NewsIndexPage(RoutablePageMixin, Page):
         return (
             NewsPage.objects.child_of(self)
             .live()
-            .select_related("hero_image")
             .prefetch_related("tags", "categories")
             .order_by("-date", "-pk")
         )
 
     def render_listing(self, request, stories, active_filter=None):
-        paginator = Paginator(stories, self.stories_per_page)
+        paginator = Paginator(with_card_images(stories), self.stories_per_page)
         return self.render(
             request,
             context_overrides={

@@ -1,6 +1,6 @@
 {% load wagtailimages_tags %}
 <figure class="block-image">
-    {% image value.image width-1000 %}
+    {% picture value.image width-{1000,800,480} format-{avif,webp,jpeg} sizes="(min-width: 66rem) 1000px, calc(100vw - 2rem)" loading="lazy" %}
     {% if value.caption or value.image.credit %}
         <figcaption>
             {{ value.caption }}
