@@ -43,6 +43,22 @@ class TestHeroPicture:
         assert widths(img["srcset"]) == [1200, 1600]
         assert (img["width"], img["height"]) == ("1600", "700")
 
+    def test_phone_crops_are_compressed_harder_than_the_wide_banner(self):
+        # On phones the banner sits under a 75% dark overlay that hides the detail a higher
+        # quality would keep; on wider screens the photo shows clearly on the right.
+        picture = render_hero(ImageFactory(file__width=2000, file__height=1500)).picture
+        phone = [s["srcset"] for s in picture.find_all("source", media=True)]
+        wide = [s["srcset"] for s in picture.find_all("source", media=False)]
+        wide.append(picture.img["srcset"])
+
+        qualities = ("avifquality-40", "webpquality-50", "jpegquality-50")
+        assert [[quality in s for quality in qualities] for s in phone] == [
+            [True, False, False],
+            [False, True, False],
+            [False, False, True],
+        ]
+        assert not any("quality-" in s for s in wide)
+
     def test_offers_avif_and_webp_before_the_jpeg_fallback(self):
         picture = render_hero(ImageFactory(file__width=2000, file__height=1500)).picture
 
