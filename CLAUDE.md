@@ -19,7 +19,9 @@ Every pull request gets a QA pass before it is reported as ready. This is mandat
    - commit the test and the fix together, one bug per commit, on the PR's branch.
    If pytest can't catch a bug (purely visual, such as spacing), say so in the QA section rather
    than skipping it silently.
-3. Add a **QA** section to the PR description: pages and widths checked, bugs found and fixed
-   (with their tests), and anything deferred.
+3. Post the results as a **PR comment**, one per QA run, starting with the commit it checked
+   (`QA on abc1234`): pages and widths, bugs found and fixed (with their tests), and anything
+   deferred. The PR description keeps the author's own testing; QA is a later event tied to a
+   commit, so a comment shows when new pushes make it stale and keeps a history of re-runs.
 
 @docs/project-context.md
