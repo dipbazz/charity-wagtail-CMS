@@ -1,0 +1,60 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "http://127.0.0.1:8000/",
+        "http://127.0.0.1:8000/appeals/",
+        "http://127.0.0.1:8000/appeals/flood-relief/",
+        "http://127.0.0.1:8000/news/"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "extraHeaders": "{\"X-Forwarded-Proto\": \"https\"}"
+      }
+    },
+    "assert": {
+      "assertMatrix": [
+        {
+          "matchingUrlPattern": ".*",
+          "assertions": {
+            "cumulative-layout-shift": ["error", {"maxNumericValue": 0.1, "aggregationMethod": "median"}],
+            "largest-contentful-paint": ["warn", {"maxNumericValue": 4000, "aggregationMethod": "median"}],
+            "categories:performance": ["warn", {"minScore": 0.8, "aggregationMethod": "median"}]
+          }
+        },
+        {
+          "matchingUrlPattern": "^http://127\\.0\\.0\\.1:8000/$",
+          "assertions": {
+            "resource-summary:total:size": ["error", {"maxNumericValue": 560000, "aggregationMethod": "median"}],
+            "resource-summary:image:size": ["error", {"maxNumericValue": 540000, "aggregationMethod": "median"}]
+          }
+        },
+        {
+          "matchingUrlPattern": "/appeals/$",
+          "assertions": {
+            "resource-summary:total:size": ["error", {"maxNumericValue": 235000, "aggregationMethod": "median"}],
+            "resource-summary:image:size": ["error", {"maxNumericValue": 225000, "aggregationMethod": "median"}]
+          }
+        },
+        {
+          "matchingUrlPattern": "/appeals/flood-relief/$",
+          "assertions": {
+            "resource-summary:total:size": ["error", {"maxNumericValue": 80000, "aggregationMethod": "median"}],
+            "resource-summary:image:size": ["error", {"maxNumericValue": 70000, "aggregationMethod": "median"}]
+          }
+        },
+        {
+          "matchingUrlPattern": "/news/$",
+          "assertions": {
+            "resource-summary:total:size": ["error", {"maxNumericValue": 140000, "aggregationMethod": "median"}],
+            "resource-summary:image:size": ["error", {"maxNumericValue": 130000, "aggregationMethod": "median"}]
+          }
+        }
+      ]
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci/reports"
+    }
+  }
+}
