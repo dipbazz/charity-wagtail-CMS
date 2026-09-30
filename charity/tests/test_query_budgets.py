@@ -10,11 +10,13 @@ from django.core.management import call_command
 
 pytestmark = pytest.mark.django_db
 
+# The card listings (/, /appeals/, /news/) each spend one query prefetching card image renditions
+# (core.images.with_card_images). On a just-started server that one query replaces one per card.
 BUDGETS = {
-    "/": 15,
-    "/appeals/": 13,
+    "/": 16,
+    "/appeals/": 14,
     "/appeals/flood-relief/": 15,
-    "/news/": 16,
+    "/news/": 17,
     "/news/feed/": 9,
     "/about/": 11,
     "/volunteer/": 12,
