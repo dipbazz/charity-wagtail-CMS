@@ -90,7 +90,10 @@ Root
   takes its `width`/`height` from the first filter, and a smaller one stops it filling its
   column. Lazy-load everything below the first screen. The homepage banner uses
   `{% hero_picture %}` (`core/templatetags/picture_tags.py`), which serves phones a square crop
-  and is marked `fetchpriority="high"`. Partner logos stay PNG through `{% image %}`.
+  at a lower quality (it sits under a 75% dark overlay there, so the loss doesn't show) and is
+  marked `fetchpriority="high"`. Partner logos stay PNG through `{% image %}`.
+- Page weight is measured by the Lighthouse job at phone emulation (412px, pixel density 1.75).
+  Measure image savings that way, not in a browser at density 1, which picks smaller files.
 - Listings that show cards wrap their queryset in `core.images.with_card_images()`, which
   prefetches the card renditions in one query. Its filters must match the card templates, or
   each card runs a query of its own (the listing tests catch this).
