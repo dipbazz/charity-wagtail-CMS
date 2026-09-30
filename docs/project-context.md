@@ -85,6 +85,17 @@ Root
   `hidden` in the HTML and the JS shows them, so the page works without JavaScript.
 - Accessibility is a requirement: skip link, `aria-current` in the menu, visible focus, tap
   targets of at least 44px, and alt text on every image.
+- **Images:** photos use Wagtail's `{% picture %}` with `format-{avif,webp,jpeg}`, several
+  widths and a `sizes` that matches the CSS layout. List the **largest** size first: the `<img>`
+  takes its `width`/`height` from the first filter, and a smaller one stops it filling its
+  column. Lazy-load everything below the first screen. The homepage banner uses
+  `{% hero_picture %}` (`core/templatetags/picture_tags.py`), which serves phones a square crop
+  and is marked `fetchpriority="high"`. Partner logos stay PNG through `{% image %}`.
+- Listings that show cards wrap their queryset in `core.images.with_card_images()`, which
+  prefetches the card renditions in one query. Its filters must match the card templates, or
+  each card runs a query of its own (the listing tests catch this).
+- `picture { display: contents }` in `charity.css` makes grid and flex rules apply to the `<img>`
+  as before; `<source>` elements are hidden explicitly, or they become empty grid rows.
 
 ## Settings and environments
 
@@ -102,7 +113,9 @@ Root
 
 - Test-first, with pytest. Each app has a `tests/` package; factories are in
   `campaigns/tests/factories.py` and `news/tests/factories.py`.
-- Root `conftest.py` provides `site` and `home_page` and clears the cache after every test.
+- Root `conftest.py` provides `site`, `home_page` and `cold_cache_queries` (counts a page's queries
+  as on a just-started server, with image renditions looked up in the database), and clears the
+  cache after every test.
 - Admin editing is tested through the real admin with Wagtail's form-data helpers
   (`campaigns/tests/test_editorial.py`).
 - **Gotcha:** tests use `InMemoryStorage`, which has no file paths. Tests of anything that
