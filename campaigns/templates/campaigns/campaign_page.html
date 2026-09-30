@@ -20,7 +20,7 @@
             </div>
             {% if page.hero_image %}
                 <figure class="block-image">
-                    {% image page.hero_image fill-800x500 %}
+                    {% picture page.hero_image fill-{800x500,400x250} format-{avif,webp,jpeg} sizes="(min-width: 70rem) 33rem, (min-width: 44rem) calc(50vw - 2rem), calc(100vw - 2rem)" %}
                     {% if page.hero_image.credit %}<figcaption><span class="credit">{{ page.hero_image.credit }}</span></figcaption>{% endif %}
                 </figure>
             {% endif %}

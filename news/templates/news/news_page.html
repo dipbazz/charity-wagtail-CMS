@@ -11,7 +11,7 @@
             <p class="lead">{{ page.introduction }}</p>
             {% if page.hero_image %}
                 <figure class="block-image">
-                    {% image page.hero_image width-1000 %}
+                    {% picture page.hero_image width-{1000,800,480} format-{avif,webp,jpeg} sizes="(min-width: 47.5rem) 728px, calc(100vw - 2rem)" %}
                     {% if page.hero_image.credit %}<figcaption><span class="credit">{{ page.hero_image.credit }}</span></figcaption>{% endif %}
                 </figure>
             {% endif %}

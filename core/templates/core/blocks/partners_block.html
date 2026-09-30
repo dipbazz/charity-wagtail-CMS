@@ -5,7 +5,7 @@
         {% for partner in partners %}
             <li>
                 {% if partner.url %}<a href="{{ partner.url }}">{% endif %}
-                {% if partner.logo %}{% image partner.logo max-240x80 %}{% else %}{{ partner.name }}{% endif %}
+                {% if partner.logo %}{% image partner.logo max-240x80 loading="lazy" %}{% else %}{{ partner.name }}{% endif %}
                 {% if partner.url %}</a>{% endif %}
             </li>
         {% endfor %}

@@ -2,9 +2,11 @@ import datetime
 from decimal import Decimal
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from wagtail.test.utils.form_data import inline_formset, nested_form_data, streamfield
+from wagtail_factories import ImageFactory
 
 from campaigns.models import CampaignIndexPage, CampaignPage
 from campaigns.tests.factories import CampaignIndexPageFactory, CampaignPageFactory
@@ -195,3 +197,34 @@ def test_home_page_features_up_to_three_active_campaigns(client, home_page, camp
     assert len(featured) == 3
     assert all(campaign.is_active for campaign in featured)
     assert "Closed appeal" not in response.content.decode()
+
+
+class TestCardImages:
+    def test_cards_offer_small_modern_images_that_load_lazily(self, client, campaign_index):
+        photo = ImageFactory(file__width=1600, file__height=900, description="A family at a well")
+        CampaignPageFactory(parent=campaign_index, hero_image=photo)
+
+        html = BeautifulSoup(client.get(campaign_index.url).content, "html.parser")
+
+        picture = html.select_one(".campaign-card picture")
+        assert [source["type"] for source in picture.find_all("source")] == [
+            "image/avif",
+            "image/webp",
+        ]
+        img = picture.img
+        assert img["srcset"].count("w, ") == 1  # two widths
+        # The <img> keeps its full size, so it fills the card; the browser picks a smaller file.
+        assert (img["width"], img["height"]) == ("640", "360")
+        assert img["loading"] == "lazy"
+        assert img["alt"] == "A family at a well"
+
+    @pytest.mark.parametrize("listing", ["home page", "appeals page"])
+    def test_card_images_add_no_query_per_card(self, cold_cache_queries, campaign_index, listing):
+        path = "/" if listing == "home page" else campaign_index.url
+
+        CampaignPageFactory(parent=campaign_index, hero_image=ImageFactory())
+        with_one_card = cold_cache_queries(path)
+        for _ in range(2):
+            CampaignPageFactory(parent=campaign_index, hero_image=ImageFactory())
+
+        assert cold_cache_queries(path) == with_one_card

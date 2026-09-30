@@ -2,9 +2,11 @@ import datetime
 import re
 
 import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 from wagtail.snippets.models import get_snippet_models
 from wagtail.test.utils.form_data import nested_form_data, streamfield
+from wagtail_factories import ImageFactory
 
 from news.models import NewsCategory, NewsIndexPage, NewsPage
 from news.tests.factories import NewsCategoryFactory, NewsIndexPageFactory, NewsPageFactory
@@ -84,6 +86,26 @@ class TestNewsIndex:
         assert "Well opens in Kisumu" in body
         assert "A big day." in body
 
+    def test_cards_offer_small_modern_images_that_load_lazily(self, client, news_index):
+        NewsPageFactory(
+            parent=news_index, hero_image=ImageFactory(file__width=1600, file__height=900)
+        )
+
+        html = BeautifulSoup(client.get(news_index.url).content, "html.parser")
+
+        img = html.select_one(".news-card picture img")
+        # The <img> keeps its full size, so it fills the card; the browser picks a smaller file.
+        assert (img["width"], img["height"]) == ("640", "360")
+        assert img["loading"] == "lazy"
+
+    def test_card_images_add_no_query_per_card(self, cold_cache_queries, news_index):
+        NewsPageFactory(parent=news_index, hero_image=ImageFactory())
+        with_one_card = cold_cache_queries(news_index.url)
+        for _ in range(2):
+            NewsPageFactory(parent=news_index, hero_image=ImageFactory())
+
+        assert cold_cache_queries(news_index.url) == with_one_card
+
 
 class TestFollowNews:
     """Visitors copy the feed address into a news reader rather than opening raw XML."""
@@ -107,6 +129,20 @@ class TestFollowNews:
 
 
 class TestNewsPage:
+    def test_main_photo_comes_in_modern_formats_and_is_not_lazy(self, client, news_index):
+        photo = ImageFactory(file__width=1600, file__height=1200, credit="Photo: Amara Okafor")
+        story = publish_story(news_index, hero_image=photo)
+
+        html = BeautifulSoup(client.get(story.url).content, "html.parser")
+
+        picture = html.select_one("article figure picture")
+        assert [source["type"] for source in picture.find_all("source")] == [
+            "image/avif",
+            "image/webp",
+        ]
+        assert "loading" not in picture.img.attrs
+        assert "Photo: Amara Okafor" in html.select_one("article figcaption").text
+
     def test_links_tags_and_categories_to_filtered_listings(self, client, news_index):
         category = NewsCategoryFactory(name="Stories", slug="stories")
         story = publish_story(news_index, title="Well opens", tags=["water"], categories=[category])
