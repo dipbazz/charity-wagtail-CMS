@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load wagtailcore_tags picture_tags %}
 
 {% block body_class %}template-homepage{% endblock %}
 
 {% block content %}
     <section class="hero">
         {% if page.hero_image %}
-            {% image page.hero_image fill-1600x700 class="hero-image" %}
+            {% hero_picture page.hero_image class="hero-image" fetchpriority="high" %}
         {% endif %}
         <div class="hero-content container">
             <h1>{{ page.hero_heading|default:page.title }}</h1>

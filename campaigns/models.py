@@ -23,6 +23,7 @@ from wagtail.query import PageQuerySet
 from wagtail.search import index
 
 from core.blocks import BaseStreamBlock
+from core.images import with_card_images
 from core.models import SocialMetaMixin
 
 
@@ -39,11 +40,8 @@ class CampaignIndexPage(Page):
     status_filters = {"active": "Open appeals", "closed": "Past appeals"}
 
     def get_campaigns(self, status=None):
-        campaigns = (
-            CampaignPage.objects.child_of(self)
-            .live()
-            .select_related("hero_image")
-            .order_by("-start_date", "title")
+        campaigns = with_card_images(
+            CampaignPage.objects.child_of(self).live().order_by("-start_date", "title")
         )
         if status == "active":
             return campaigns.active()
