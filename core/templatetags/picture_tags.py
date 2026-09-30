@@ -9,7 +9,13 @@ register = template.Library()
 # On phones the banner is about as tall as it is wide, so a square crop fills it without being
 # stretched; wider screens get the wide crop. Wagtail's {% picture %} can't switch crops by
 # screen width, so this tag builds the <picture> itself.
-HERO_PHONE_FILTERS = Filter.expand_spec("fill-{480x480,800x800}|format-{avif,webp,jpeg}")
+# The phone crops sit under a 75% dark overlay, which hides the detail a higher quality keeps, so
+# they're compressed harder: the 800px AVIF drops from 110 KB to 50 KB with no visible change.
+HERO_PHONE_FILTERS = [
+    *Filter.expand_spec("fill-{480x480,800x800}|format-avif|avifquality-40"),
+    *Filter.expand_spec("fill-{480x480,800x800}|format-webp|webpquality-50"),
+    *Filter.expand_spec("fill-{480x480,800x800}|format-jpeg|jpegquality-50"),
+]
 HERO_WIDE_FILTERS = Filter.expand_spec("fill-{1200x525,1600x700}|format-{avif,webp,jpeg}")
 HERO_PHONE_MEDIA = "(max-width: 39.99rem)"
 MIME_TYPES = {fmt.name: fmt.mime_type for fmt in Picture.source_format_order}

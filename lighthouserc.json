@@ -25,8 +25,8 @@
         {
           "matchingUrlPattern": "^http://127\\.0\\.0\\.1:8000/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 276000, "aggregationMethod": "median"}],
-            "resource-summary:image:size": ["error", {"maxNumericValue": 259000, "aggregationMethod": "median"}]
+            "resource-summary:total:size": ["error", {"maxNumericValue": 212000, "aggregationMethod": "median"}],
+            "resource-summary:image:size": ["error", {"maxNumericValue": 194000, "aggregationMethod": "median"}]
           }
         },
         {
