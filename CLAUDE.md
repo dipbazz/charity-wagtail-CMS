@@ -17,7 +17,7 @@ Every pull request gets a QA pass before it is reported as ready. This is mandat
      to see it fail for the reason the bug describes;
    - fix the bug, see the test pass, then run the full suite, `ruff check` and `ruff format --check`;
    - commit the test and the fix together, one bug per commit, on the PR's branch.
-   If pytest can't catch a bug (purely visual, such as spacing), say so in the QA section rather
+   If pytest can't catch a bug (purely visual, such as spacing), say so in the QA comment rather
    than skipping it silently.
 3. Post the results as a **PR comment**, one per QA run, starting with the commit it checked
    (`QA on abc1234`): pages and widths, bugs found and fixed (with their tests), and anything
