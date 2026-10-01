@@ -41,7 +41,7 @@ class CampaignIndexPage(Page):
 
     def get_campaigns(self, status=None):
         campaigns = with_card_images(
-            CampaignPage.objects.child_of(self).live().order_by("-start_date", "title")
+            CampaignPage.objects.child_of(self).live().public().order_by("-start_date", "title")
         )
         if status == "active":
             return campaigns.active()
