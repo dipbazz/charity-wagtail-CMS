@@ -1,0 +1,9 @@
+[Unit]
+Description=Publish and unpublish the charity site's scheduled pages
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/charity/app/deploy/aws
+ExecStart=/usr/bin/docker compose exec -T web python manage.py publish_scheduled

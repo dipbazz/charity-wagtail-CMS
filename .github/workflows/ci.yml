@@ -109,3 +109,13 @@ jobs:
           --env DJANGO_ALLOWED_HOSTS=brightwell.example
           --env DJANGO_SITE_URL=https://brightwell.example
           charity-cms python manage.py check --deploy --fail-level WARNING
+
+      # deploy/aws/: the compose file and the Caddyfile both parse.
+      - name: Check the AWS deployment config
+        working-directory: deploy/aws
+        env:
+          SITE_HOST: ci.brightwell.example
+          DJANGO_SECRET_KEY: ci-only-not-a-real-secret
+        run: |
+          docker compose config --quiet
+          docker compose run --rm --no-deps caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
