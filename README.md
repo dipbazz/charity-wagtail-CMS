@@ -4,6 +4,9 @@ A content-managed website for **Brightwell Water Trust**, a fictional water char
 Django 6.1 and Wagtail 8.0. Editors run fundraising appeals, news, forms and site-wide messages
 from the Wagtail admin. Every feature was built test-first with pytest.
 
+**Live site:** <https://16-192-118-94.sslip.io>, running the demo content on AWS EC2 (see
+[Deployment notes](#deployment-notes)).
+
 ![Homepage](docs/screenshots/home.jpg)
 
 ## Quick start
