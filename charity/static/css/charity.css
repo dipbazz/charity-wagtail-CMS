@@ -119,32 +119,78 @@ h4 {
     background: #fff;
 }
 
+/* Narrow screens: name, Menu and Donate on one row; the menu and search open below it. */
 .site-header .container {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    min-height: 4.5rem;
+    gap: 0.5rem;
+    /* Padding rather than a min-height, so the top row doesn't move when the menu opens. */
+    padding-block: 0.625rem;
 }
 
+/* Every link and button in the header is at least 44px tall, so it's easy to tap. */
 .brand {
-    font-size: 1.4rem;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-height: 2.75rem;
+    font-size: 1.125rem;
     font-weight: 800;
+    line-height: 1.2;
     color: var(--colour-primary-dark);
     text-decoration: none;
 }
 
+.menu-toggle {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    border: 2px solid var(--colour-primary);
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--colour-primary);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.menu-toggle[aria-expanded="true"] {
+    background: var(--colour-primary);
+    color: #fff;
+}
+
+.menu-toggle[hidden] {
+    display: none;
+}
+
+.site-header .button {
+    min-height: 2.75rem;
+    padding-inline: 0.9rem;
+}
+
+.site-menu {
+    order: 1;
+    flex-basis: 100%;
+    padding-bottom: 1rem;
+}
+
+/* Collapse the menu only once charity.js has shown the button that opens it. */
+.menu-toggle:not([hidden])[aria-expanded="false"] + .site-menu {
+    display: none;
+}
+
 .main-nav ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem;
-    margin: 0;
+    margin: 0 0 1rem;
     padding: 0;
     list-style: none;
 }
 
 .main-nav a {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    border-bottom: 1px solid var(--colour-border);
     color: var(--colour-text);
     text-decoration: none;
     font-weight: 600;
@@ -156,22 +202,71 @@ h4 {
     text-decoration: underline;
 }
 
-.header-actions {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-}
-
 .search-form {
     display: flex;
     gap: 0.25rem;
 }
 
 .search-form input {
+    width: 100%;
+    min-height: 2.75rem;
     padding: 0.45rem 0.6rem;
     border: 1px solid var(--colour-border);
     border-radius: var(--radius);
     font: inherit;
+}
+
+/* Wide enough for the whole menu, the search box and Donate to fit on one line. */
+@media (min-width: 68rem) {
+    .site-header .container {
+        flex-wrap: nowrap;
+        gap: 1rem;
+        min-height: 4.5rem;
+        padding-block: 0;
+    }
+
+    .brand {
+        flex: none;
+        font-size: 1.4rem;
+    }
+
+    .site-header .button {
+        padding-inline: 1.2rem;
+    }
+
+    .menu-toggle {
+        display: none;
+    }
+
+    .site-menu,
+    .menu-toggle:not([hidden])[aria-expanded="false"] + .site-menu {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        gap: 1rem;
+        order: 0;
+        padding: 0;
+    }
+
+    .main-nav {
+        margin-inline: auto;
+    }
+
+    .main-nav ul {
+        display: flex;
+        gap: 0.5rem;
+        margin: 0;
+    }
+
+    .main-nav a {
+        padding: 0 0.5rem;
+        border: 0;
+        white-space: nowrap;
+    }
+
+    .search-form input {
+        width: 12rem;
+    }
 }
 
 /* Hero */

@@ -27,3 +27,21 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
         }
     });
 });
+
+// Menu button: on narrow screens it opens and closes the menu and search (see charity.css).
+// It stays hidden without JavaScript, and the menu then stays open so every link can be reached.
+const menuToggle = document.querySelector(".menu-toggle");
+if (menuToggle) {
+    const menu = document.getElementById(menuToggle.getAttribute("aria-controls"));
+    const isOpen = () => menuToggle.getAttribute("aria-expanded") === "true";
+    const setOpen = (open) => menuToggle.setAttribute("aria-expanded", String(open));
+
+    menuToggle.hidden = false;
+    menuToggle.addEventListener("click", () => setOpen(!isOpen()));
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape" || !isOpen()) return;
+        setOpen(false);
+        // Focus would otherwise be left on a link that has just been hidden.
+        if (menu.contains(document.activeElement)) menuToggle.focus();
+    });
+}
