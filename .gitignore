@@ -24,8 +24,8 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Local learning notes (not part of the project)
-NOTES.local.md
+# Local notes and personal guides (not part of the project)
+*.local.md
 
 # Local tool state
 .gstack/
