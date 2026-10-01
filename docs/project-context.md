@@ -146,6 +146,10 @@ Root
 - Only Wagtail's document view (`/documents/<id>/<filename>`) checks collection privacy. Never
   serve `MEDIA_ROOT/documents/` directly (#46, fixed in `serve_media` by PR #49).
 - The images API hides unconsented images. Keep any new image endpoint consistent with that.
+- Workflows pin every action to a full commit SHA with the version in a comment
+  (`uses: owner/action@<sha> # v1.2.3`), because a tag can be moved to other code (#48).
+  `charity/tests/test_workflows.py` fails on an unpinned `uses:`. Dependabot
+  (`.github/dependabot.yml`) opens one grouped PR a week when an action has a new release.
 
 ## Conventions
 
