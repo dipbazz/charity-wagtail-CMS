@@ -135,8 +135,10 @@ Root
 ## Security rules already learned
 
 - Public listings must filter `.live().public()`, not just `.live()`, or pages with a password or
-  login restriction leak into listings, feeds and the homepage. Search, the sitemap and the API
-  already do this; #47 covers the news, appeals and homepage listings.
+  login restriction leak into listings, feeds and the homepage. Search, the sitemap, the API, the
+  news listings and feed, the appeals page and the homepage all do (#47). `.public()` costs one
+  query (it reads the restrictions), which the query budgets allow for. The main menu is the
+  exception: it shows whatever editors tick "Show in menus" for, which may be a members-only page.
 - Only Wagtail's document view (`/documents/<id>/<filename>`) checks collection privacy. Never
   serve `MEDIA_ROOT/documents/` directly (#46, fixed in `serve_media` by PR #49).
 - The images API hides unconsented images. Keep any new image endpoint consistent with that.
