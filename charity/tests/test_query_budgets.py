@@ -12,12 +12,14 @@ pytestmark = pytest.mark.django_db
 
 # The card listings (/, /appeals/, /news/) each spend one query prefetching card image renditions
 # (core.images.with_card_images). On a just-started server that one query replaces one per card.
+# Public listings (/, /appeals/, /news/ and its feed) also spend one query reading the page privacy
+# restrictions, so pages behind a password or login stay out of them (`.public()`, #47).
 BUDGETS = {
-    "/": 16,
-    "/appeals/": 14,
+    "/": 17,
+    "/appeals/": 15,
     "/appeals/flood-relief/": 15,
-    "/news/": 17,
-    "/news/feed/": 9,
+    "/news/": 18,
+    "/news/feed/": 10,
     "/about/": 11,
     "/volunteer/": 12,
     "/search/?query=water": 21,

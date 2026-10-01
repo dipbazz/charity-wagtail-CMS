@@ -5,6 +5,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from wagtail.models import PageViewRestriction
 from wagtail.test.utils.form_data import inline_formset, nested_form_data, streamfield
 from wagtail_factories import ImageFactory
 
@@ -197,6 +198,50 @@ def test_home_page_features_up_to_three_active_campaigns(client, home_page, camp
     assert len(featured) == 3
     assert all(campaign.is_active for campaign in featured)
     assert "Closed appeal" not in response.content.decode()
+
+
+class TestPrivateCampaigns:
+    """An appeal behind a password or a login is still being prepared, so lists must hide it."""
+
+    @pytest.fixture
+    def private_campaigns(self, campaign_index):
+        CampaignPageFactory(parent=campaign_index, title="Open public appeal")
+        closed_campaign(campaign_index, title="Closed public appeal")
+        return [
+            CampaignPageFactory(parent=campaign_index, title="Open private appeal"),
+            closed_campaign(campaign_index, title="Closed private appeal"),
+        ]
+
+    @pytest.fixture(params=[PageViewRestriction.PASSWORD, PageViewRestriction.LOGIN])
+    def restricted(self, request, private_campaigns):
+        for campaign in private_campaigns:
+            PageViewRestriction.objects.create(
+                page=campaign, restriction_type=request.param, password="trustees"
+            )
+
+    @pytest.mark.parametrize(
+        ("status", "expected"),
+        [
+            ("", ["Closed public appeal", "Open public appeal"]),
+            ("active", ["Open public appeal"]),
+            ("closed", ["Closed public appeal"]),
+        ],
+    )
+    def test_are_left_out_of_the_appeals_page(
+        self, client, campaign_index, restricted, status, expected
+    ):
+        response = client.get(campaign_index.url, {"status": status})
+
+        assert sorted(campaign.title for campaign in response.context["campaigns"]) == expected
+        assert "private appeal" not in response.content.decode()
+
+    def test_are_left_out_of_the_home_page(self, client, home_page, restricted):
+        response = client.get("/")
+
+        assert [campaign.title for campaign in response.context["featured_campaigns"]] == [
+            "Open public appeal"
+        ]
+        assert "private appeal" not in response.content.decode()
 
 
 class TestCardImages:

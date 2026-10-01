@@ -4,6 +4,7 @@ import re
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
+from wagtail.models import PageViewRestriction
 from wagtail.snippets.models import get_snippet_models
 from wagtail.test.utils.form_data import nested_form_data, streamfield
 from wagtail_factories import ImageFactory
@@ -105,6 +106,42 @@ class TestNewsIndex:
             NewsPageFactory(parent=news_index, hero_image=ImageFactory())
 
         assert cold_cache_queries(news_index.url) == with_one_card
+
+
+class TestPrivateStories:
+    """A story behind a password or a login is held back, so no public list may give it away.
+
+    Feed readers keep their own copy, so a title that reaches the feed can't be taken back.
+    """
+
+    @pytest.fixture
+    def private_story(self, news_index):
+        stories = NewsCategoryFactory(name="Stories", slug="stories")
+        publish_story(news_index, title="Public story", tags=["water"], categories=[stories])
+        return publish_story(
+            news_index,
+            title="Embargoed story",
+            introduction="Waiting for consent.",
+            tags=["water"],
+            categories=[stories],
+        )
+
+    @pytest.mark.parametrize(
+        "restriction_type", [PageViewRestriction.PASSWORD, PageViewRestriction.LOGIN]
+    )
+    @pytest.mark.parametrize("listing", ["", "tag/water/", "category/stories/", "feed/"])
+    def test_is_left_out_of_every_listing_and_the_feed(
+        self, client, news_index, private_story, restriction_type, listing
+    ):
+        PageViewRestriction.objects.create(
+            page=private_story, restriction_type=restriction_type, password="trustees"
+        )
+
+        body = client.get(news_index.url + listing).content.decode()
+
+        assert "Public story" in body
+        assert "Embargoed story" not in body
+        assert "Waiting for consent." not in body
 
 
 class TestFollowNews:

@@ -81,6 +81,7 @@ class NewsIndexPage(RoutablePageMixin, Page):
         return (
             NewsPage.objects.child_of(self)
             .live()
+            .public()
             .prefetch_related("tags", "categories")
             .order_by("-date", "-pk")
         )
