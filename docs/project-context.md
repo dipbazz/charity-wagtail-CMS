@@ -85,7 +85,11 @@ Root
   query). The `mobile-first` skill in `.claude/skills/` has the rules and the widths to check.
 - `charity.css` uses design tokens in `:root`. `charity.js` adds
   progressive enhancements, such as the copy-feed-link button. Controls that need JS start
-  `hidden` in the HTML and the JS shows them, so the page works without JavaScript.
+  `hidden` in the HTML and the JS shows them, so the page works without JavaScript. The one
+  exception is anything that changes layout above the fold, such as the mobile Menu button: an
+  inline script in `base.html`'s `<head>` adds a `js` class to `<html>` before the first paint,
+  and the CSS keys off that, so the page doesn't jump when `charity.js` runs at the end of the
+  body. If `charity.js` fails to download, its `onerror` removes the class again.
 - Accessibility is a requirement: skip link, `aria-current` in the menu, visible focus, tap
   targets of at least 44px, and alt text on every image.
 - **Images:** photos use Wagtail's `{% picture %}` with `format-{avif,webp,jpeg}`, several
