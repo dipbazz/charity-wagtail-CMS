@@ -80,7 +80,10 @@ Root
 
 ## Front end
 
-- `charity.css` uses design tokens in `:root` and mobile-first media queries. `charity.js` adds
+- **Mobile first:** base styles are the phone layout, and wider screens add to them with
+  `min-width` queries in `rem` (`core/tests/test_stylesheet.py` fails on any other width
+  query). The `mobile-first` skill in `.claude/skills/` has the rules and the widths to check.
+- `charity.css` uses design tokens in `:root`. `charity.js` adds
   progressive enhancements, such as the copy-feed-link button. Controls that need JS start
   `hidden` in the HTML and the JS shows them, so the page works without JavaScript.
 - Accessibility is a requirement: skip link, `aria-current` in the menu, visible focus, tap
