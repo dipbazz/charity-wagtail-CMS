@@ -1,9 +1,13 @@
+from pathlib import Path
+
 import pytest
 
 from core.models import SiteSettings
 from home.models import StandardPage
 
 pytestmark = pytest.mark.django_db
+
+STATIC = Path(__file__).resolve().parents[2] / "charity" / "static"
 
 
 def add_page(parent, title, show_in_menus=True, live=True):
@@ -62,8 +66,35 @@ def test_header_has_a_menu_button_that_controls_the_menu(client, home_page):
 
     assert (
         '<button class="menu-toggle" type="button" aria-expanded="false" '
-        'aria-controls="site-menu" hidden>Menu</button>'
+        'aria-controls="site-menu">Menu</button>'
     ) in header
+
+
+def test_menu_is_collapsed_before_the_page_is_first_drawn(client, home_page):
+    """Collapsing the menu after the page appears would move everything below the header up.
+
+    charity.js runs at the end of the body, often after the browser has drawn the page once. So a
+    script in <head> marks the page as having JavaScript before anything is drawn, and the CSS
+    collapses the menu and shows its button from that mark. Without JavaScript there's no mark, so
+    the menu stays open and there's no button that does nothing.
+    """
+    html = client.get("/").content.decode()
+    head = html[: html.index("</head>")]
+    stylesheet = (STATIC / "css" / "charity.css").read_text(encoding="utf-8")
+
+    # Before the stylesheet, so the script doesn't have to wait for it to download.
+    assert head.index('document.documentElement.classList.add("js")') < head.index(
+        'rel="stylesheet"'
+    )
+    assert '.js .menu-toggle[aria-expanded="false"] + .site-menu' in stylesheet
+
+
+def test_menu_reopens_if_its_script_fails_to_download(client, home_page):
+    """Otherwise phones would get a collapsed menu and a Menu button that does nothing."""
+    html = client.get("/").content.decode()
+
+    script = html[html.index('<script src="/static/js/charity') :]
+    assert "onerror=\"document.documentElement.classList.remove('js')\"" in script.split(">")[0]
 
 
 def test_menu_button_opens_both_the_menu_and_the_search(client, home_page):

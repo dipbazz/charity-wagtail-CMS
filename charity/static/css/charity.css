@@ -142,7 +142,9 @@ h4 {
     text-decoration: none;
 }
 
+/* Only pages with JavaScript get a Menu button; without it the menu below stays open. */
 .menu-toggle {
+    display: none;
     min-width: 2.75rem;
     min-height: 2.75rem;
     padding: 0 0.75rem;
@@ -160,8 +162,8 @@ h4 {
     color: #fff;
 }
 
-.menu-toggle[hidden] {
-    display: none;
+.js .menu-toggle {
+    display: block;
 }
 
 .site-header .button {
@@ -175,8 +177,9 @@ h4 {
     padding-bottom: 1rem;
 }
 
-/* Collapse the menu only once charity.js has shown the button that opens it. */
-.menu-toggle:not([hidden])[aria-expanded="false"] + .site-menu {
+/* The "js" class is set in <head>, so the menu is already collapsed when the page is first drawn.
+   Collapsing it later, when charity.js runs, would move everything below the header up. */
+.js .menu-toggle[aria-expanded="false"] + .site-menu {
     display: none;
 }
 
@@ -234,12 +237,12 @@ h4 {
         padding-inline: 1.2rem;
     }
 
-    .menu-toggle {
+    .js .menu-toggle {
         display: none;
     }
 
     .site-menu,
-    .menu-toggle:not([hidden])[aria-expanded="false"] + .site-menu {
+    .js .menu-toggle[aria-expanded="false"] + .site-menu {
         display: flex;
         flex: 1;
         align-items: center;
