@@ -22,12 +22,11 @@ urlpatterns = [
 
 
 if settings.DEBUG:
-    from django.conf.urls.static import static
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
-    # Serve static and media files from development server
+    # Serve static files from the development server. Media goes through serve_media below
+    # (dev settings turn SERVE_MEDIA on), so dev keeps private documents out of /media/ too.
     urlpatterns += staticfiles_urlpatterns()
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
     if "debug_toolbar" in settings.INSTALLED_APPS:
         from debug_toolbar.toolbar import debug_toolbar_urls
