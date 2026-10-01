@@ -5,6 +5,14 @@ and conventions. Don't re-scan the whole repo to learn it. Catch up with
 `git log --oneline <last verified commit>..HEAD --stat` and re-read only what changed, and update the
 doc in any PR that changes what it describes.
 
+## Design mobile first
+
+HTML with no CSS already works on any screen, so that is where every design starts: semantic
+markup in reading order, then styles for a 320px phone with no media query, then `min-width`
+queries (in `rem`) that add layout only where a wider screen needs it. Never design for desktop
+and override down with `max-width` queries. Load the `mobile-first` skill
+(`.claude/skills/mobile-first/`) before writing or reviewing any CSS or layout markup.
+
 ## QA is part of done
 
 Every pull request gets a QA pass before it is reported as ready. This is mandatory.
