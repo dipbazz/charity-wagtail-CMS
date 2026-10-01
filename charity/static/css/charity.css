@@ -31,6 +31,16 @@ img {
     height: auto;
 }
 
+/* Lay out the <img> as if the <picture> around it weren't there, so grid and flex rules apply. */
+picture {
+    display: contents;
+}
+
+/* Browsers don't hide <source> by default, so without this each one becomes an empty grid row. */
+picture > source {
+    display: none;
+}
+
 a {
     color: var(--colour-primary);
 }

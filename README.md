@@ -74,6 +74,27 @@ uv run ruff check . && uv run ruff format --check .
 - GitHub Actions runs lint, `makemigrations --check`, Django's `check --deploy` against
   production settings, and the test suite on every pull request.
 
+### Performance budgets
+
+Pages have to stay fast on a phone, so CI fails a pull request that makes them slower.
+
+- **Database queries:** `charity/tests/test_query_budgets.py` sets the most queries each kind of
+  page may run on the full demo site. A change that adds queries fails with the page and the count.
+  Raise a budget only on purpose, in the same pull request, and lower it when a change saves
+  queries.
+- **Page weight and layout shift:** a Lighthouse CI job loads `seed_demo` into production settings
+  behind gunicorn, then checks the homepage, appeals, an appeal and news with Lighthouse's phone
+  emulation. Budgets are in `lighthouserc.json`. Total and image bytes, and layout shift (CLS),
+  fail the build; largest paint (LCP) and the performance score only warn, because timings vary
+  on shared CI machines. The reports are attached to each run as the `lighthouse-reports`
+  artifact.
+- **While developing:** `runserver` shows [django-debug-toolbar](https://django-debug-toolbar.readthedocs.io/)
+  on every page, with the SQL queries, templates and timings behind it.
+
+To run Lighthouse locally, serve the site with production settings (as in the `lighthouse` job in
+`.github/workflows/ci.yml`), then run `npx @lhci/cli@0.15.1 autorun`. Set `CHROME_PATH` if Chrome
+isn't found; Microsoft Edge works too.
+
 ## Deployment notes
 
 Production settings (`charity.settings.production`) read configuration from the environment.

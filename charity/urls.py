@@ -29,6 +29,11 @@ if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+    if "debug_toolbar" in settings.INSTALLED_APPS:
+        from debug_toolbar.toolbar import debug_toolbar_urls
+
+        urlpatterns += debug_toolbar_urls()
+
 urlpatterns = urlpatterns + [
     path("media/<path:path>", serve_media, name="media"),
     # For anything not caught by a more specific rule above, hand over to

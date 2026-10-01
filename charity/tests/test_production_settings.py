@@ -72,6 +72,7 @@ def test_is_locked_down(monkeypatch):
     assert settings["DEBUG"] is False
     assert settings["SESSION_COOKIE_SECURE"] is True
     assert settings["CSRF_COOKIE_SECURE"] is True
+    assert "debug_toolbar" not in settings["INSTALLED_APPS"]
 
 
 def test_forces_https_with_a_cautious_default_hsts(monkeypatch):
