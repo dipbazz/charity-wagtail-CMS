@@ -1,0 +1,7 @@
+# Caddy answers on ports 80 and 443, gets a certificate for SITE_HOST from Let's Encrypt (or
+# ZeroSSL if that fails), redirects http to https, and passes requests to gunicorn. It sets
+# X-Forwarded-Proto, which Django trusts (SECURE_PROXY_SSL_HEADER in production settings).
+{$SITE_HOST} {
+	encode zstd gzip
+	reverse_proxy web:8000
+}

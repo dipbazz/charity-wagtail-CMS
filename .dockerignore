@@ -38,6 +38,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# Server secrets and the deployment's own files: `COPY . .` must never bake them into the image
+**/.env
+deploy/
+
 # Local-only files: version control, virtualenvs, tool caches and private notes
 .git/
 .venv/
@@ -46,4 +50,4 @@ wheels/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
-NOTES.local.md
+*.local.md

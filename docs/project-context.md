@@ -35,12 +35,15 @@ charity/    settings (base, dev, test, production), urls.py, api.py (Wagtail API
             pagination, 404/500), static/css/charity.css, static/js/charity.js
 core/       shared: StreamField blocks, CustomImage + CustomRendition, SocialMetaMixin,
             SiteSettings, AnnouncementBanner, Partner and Testimonial snippets, template tags,
-            admin hooks, views (robots.txt, serve_media), update_site_url command
+            admin hooks, views (robots.txt, serve_media), update_site_url and backup_site
+            commands
 home/       HomePage, StandardPage, seed_demo command + demo_images/
 campaigns/  CampaignIndexPage, CampaignPage, DonationAmount, dashboard panel hook
 news/       NewsIndexPage (routable: tag, category, RSS feed), NewsPage, NewsCategory snippet
 contact/    FormPage (wagtail.contrib.forms, editor-built forms with email)
 search/     search view with search promotions
+deploy/aws/ single-server deployment: compose.yaml (gunicorn + Caddy), Caddyfile, env.example,
+            backup.sh, systemd timers for backups and publish_scheduled
 ```
 
 Feature apps depend on `core`; `core` never imports them (`core/tests/test_dependencies.py`
@@ -118,6 +121,11 @@ Root
   it on by default).
 - `SITE_URL` is copied into the Wagtail `Site` record by `update_site_url`, which runs on every
   container start. All absolute URLs (API, feed, sitemap, canonical tags) come from that record.
+- **Live server:** `deploy/aws/compose.yaml` builds the Dockerfile's image and puts Caddy in
+  front for HTTPS. Data lives in `/srv/charity/data` on the server. Nightly `backup_site` copies
+  go to S3 under `backups/`, which the server's IAM role can write but not delete. Server
+  secrets live in `deploy/aws/.env`, which is gitignored and dockerignored
+  (`charity/tests/test_deploy.py` checks both). Email isn't configured yet.
 
 ## Testing
 

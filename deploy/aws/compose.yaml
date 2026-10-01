@@ -1,0 +1,55 @@
+# The site on one EC2 server: gunicorn (the Dockerfile's image) behind Caddy, which gets and
+# renews the HTTPS certificate itself.
+#
+# Settings come from .env in this folder (copy env.example; it's gitignored and dockerignored).
+
+name: charity
+
+x-logging: &logging
+  # Docker keeps container logs forever by default, and the server has a 20 GB disk.
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  web:
+    build: ../..
+    image: charity-web
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env}
+      DJANGO_ALLOWED_HOSTS: ${SITE_HOST:?Set SITE_HOST in .env}
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://${SITE_HOST}
+      DJANGO_SITE_URL: https://${SITE_HOST}
+      DJANGO_SECURE_HSTS_SECONDS: ${DJANGO_SECURE_HSTS_SECONDS:-3600}
+      # No SMTP yet: form submissions are still saved in the admin and the failed email is
+      # logged. Add the DJANGO_EMAIL_* variables here when there's a mail service.
+      # gunicorn workers. Each takes roughly 100-150 MB; the server has 1 GB plus swap.
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+    volumes:
+      # The database, uploads and backups, on the server's disk so they outlive the container.
+      - ${DATA_DIR:-/srv/charity/data}:/data
+    logging: *logging
+
+  caddy:
+    image: caddy:2.11.4@sha256:0c994536bddb66445885237f1a5dcc1916bccea922661c76b4e9fc24061f9b52
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_HOST: ${SITE_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and the ACME account. Losing them means asking for new certificates,
+      # which count against Let's Encrypt's rate limits.
+      - caddy_data:/data
+      - caddy_config:/config
+    logging: *logging
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -97,6 +97,12 @@ isn't found; Microsoft Edge works too.
 
 ## Deployment notes
 
+[deploy/aws/](deploy/aws/) runs the site on a single Linux server (an AWS EC2 instance here) with
+Docker Compose: gunicorn behind Caddy, which gets and renews the HTTPS certificate. It includes
+systemd timers for `publish_scheduled` and a nightly backup to S3 (`manage.py backup_site`).
+Copy `deploy/aws/env.example` to `.env` on the server for its settings. The notes below apply
+to any host.
+
 Production settings (`charity.settings.production`) read configuration from the environment.
 The Docker image selects them with `DJANGO_SETTINGS_MODULE`; anywhere else, set that variable
 yourself, because `manage.py` and `wsgi.py` fall back to the dev settings.
