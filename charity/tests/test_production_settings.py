@@ -102,7 +102,7 @@ def test_sends_email_through_the_configured_smtp_server(monkeypatch):
     settings = load_settings()
 
     mailer = settings["MAILERS"]["default"]
-    assert mailer["BACKEND"] == "django.core.mail.backends.smtp.EmailBackend"
+    assert mailer["BACKEND"] == "core.mail.SMTPBackend"
     assert mailer["OPTIONS"]["host"] == "smtp.brightwell.example"
     assert mailer["OPTIONS"]["port"] == 587
     assert mailer["OPTIONS"]["username"] == "website"
