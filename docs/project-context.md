@@ -22,7 +22,10 @@ Django 6.1, Wagtail 8.0, Python 3.13+ (the Docker image uses 3.14), SQLite, uv, 
 pytest-django and wagtail-factories, WhiteNoise, gunicorn. No JavaScript build step: one plain JS
 file and one CSS file.
 
-- Django 6.1 configures email with `MAILERS`, not `EMAIL_BACKEND`.
+- Django 6.1 configures email with `MAILERS`, not `EMAIL_BACKEND`. Production uses
+  `core.mail.SMTPBackend`, which turns any failure to connect into a `ConnectionError`: Wagtail
+  skips moderation emails only on that or `TimeoutError`, and any other error stopped editors
+  submitting pages (#77).
 - Wagtail 8 and Django 6.1 are newer than much published advice. Check the installed source in
   `.venv/Lib/site-packages/wagtail/` (Windows) or `.venv/lib/python3.*/site-packages/wagtail/`
   before relying on an API.
@@ -35,8 +38,8 @@ charity/    settings (base, dev, test, production), urls.py, api.py (Wagtail API
             pagination, 404/500), static/css/charity.css, static/js/charity.js
 core/       shared: StreamField blocks, CustomImage + CustomRendition, SocialMetaMixin,
             SiteSettings, AnnouncementBanner, Partner and Testimonial snippets, template tags,
-            admin hooks, views (robots.txt, serve_media), update_site_url and backup_site
-            commands
+            admin hooks, views (robots.txt, serve_media), SMTPBackend (mail.py),
+            update_site_url and backup_site commands
 home/       HomePage, StandardPage, seed_demo command + demo_images/
 campaigns/  CampaignIndexPage, CampaignPage, DonationAmount, dashboard panel hook
 news/       NewsIndexPage (routable: tag, category, RSS feed), NewsPage, NewsCategory snippet

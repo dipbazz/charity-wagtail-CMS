@@ -117,7 +117,7 @@ yourself, because `manage.py` and `wsgi.py` fall back to the dev settings.
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated origins, e.g. `https://brightwell.example` |
 | `DJANGO_SITE_URL` | Required; the public address, e.g. `https://brightwell.example`. The Docker image copies it into Wagtail's Site record on every start (`manage.py update_site_url`), which all full URLs are built from: API links, the news feed, the sitemap, canonical and social tags. Admin emails use it too |
 | `DJANGO_SECURE_HSTS_SECONDS` | HSTS duration; defaults to one hour until HTTPS is confirmed |
-| `DJANGO_EMAIL_HOST` | SMTP server for form notifications and workflow emails. If it's unreachable, submissions are still saved and the error is logged |
+| `DJANGO_EMAIL_HOST` | SMTP server for form notifications and workflow emails. If it's unreachable, form submissions are still saved, pages can still be submitted and approved, and the error is logged |
 | `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_USE_TLS` | Defaults: `587` and `true` |
 | `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD` | SMTP credentials |
 | `DJANGO_DEFAULT_FROM_EMAIL` | Sender address for workflow and error emails |
