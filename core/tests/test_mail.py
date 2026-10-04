@@ -1,87 +1,112 @@
-"""Editors can still submit pages for moderation when the mail server can't be reached (#77).
+"""The live site's SMTP backend reports every failure to connect as a ConnectionError (#77).
 
-Submitting emails the moderators. Wagtail skips that email on a TimeoutError or ConnectionError,
-but other connection failures (no route to the host, a name that doesn't resolve) used to reach
-the editor as a server error, and the page wasn't submitted.
+Code that sends mail can then catch one error type for "the mail server can't be reached",
+whatever went wrong: the address, the name lookup, TLS or the login.
 """
 
 import errno
-import runpy
+import smtplib
 import socket
+import ssl
 from unittest import mock
 
 import pytest
-from django.contrib.auth.models import Group
-from django.urls import reverse
-from wagtail.models import WorkflowState
+from django.core.mail import EmailMessage
 
-from home.models import StandardPage
-
-pytestmark = pytest.mark.django_db
+from core.mail import SMTPBackend
 
 CONNECTION_FAILURES = {
     # What the live container raises for an SMTP host of localhost with nothing listening.
-    "address not available": OSError(errno.EADDRNOTAVAIL, "Cannot assign requested address"),
-    "host name not resolved": socket.gaierror(socket.EAI_NONAME, "Name or service not known"),
+    "address not available": (
+        "connect",
+        OSError(errno.EADDRNOTAVAIL, "Cannot assign requested address"),
+    ),
+    "host name not resolved": (
+        "connect",
+        socket.gaierror(socket.EAI_NONAME, "Name or service not known"),
+    ),
+    "tls handshake failed": ("starttls", ssl.SSLError("WRONG_VERSION_NUMBER")),
+    "login refused": (
+        "login",
+        smtplib.SMTPAuthenticationError(535, b"Authentication credentials invalid"),
+    ),
 }
 
 
 @pytest.fixture
-def production_mailers(monkeypatch, settings):
-    """Send mail with the live site's mailer, pointed at a mail server that isn't set up."""
-    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
-    monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "brightwell.example")
-    monkeypatch.setenv("DJANGO_SITE_URL", "https://brightwell.example")
-    monkeypatch.delenv("DJANGO_EMAIL_HOST", raising=False)
-    settings.MAILERS = runpy.run_module("charity.settings.production")["MAILERS"]
+def smtp(monkeypatch):
+    """Stands in for smtplib.SMTP; its return value is the connected server."""
+    connect = mock.Mock()
+    monkeypatch.setattr(smtplib, "SMTP", connect)
+    return connect
 
 
-@pytest.fixture
-def moderator_with_email(django_user_model):
-    """A moderator who would be emailed about the submission."""
-    user = django_user_model.objects.create_user(
-        username="moderator", email="moderator@brightwell.example", password="x"
+def make_backend(**options):
+    return SMTPBackend(
+        alias="default",
+        host="smtp.brightwell.example",
+        port=587,
+        username="website",
+        password="secret",
+        use_tls=True,
+        **options,
     )
-    user.groups.add(Group.objects.get(name="Moderators"))
-    return user
 
 
-@pytest.mark.parametrize("failure", CONNECTION_FAILURES.values(), ids=CONNECTION_FAILURES.keys())
-def test_editor_can_submit_a_page_while_mail_is_down(
-    client, home_page, editor, moderator_with_email, production_mailers, failure
-):
-    page = StandardPage(title="About us", slug="about")
-    home_page.add_child(instance=page)
-    client.force_login(editor)
-    data = {"title": "About us", "slug": "about", "body-count": "0", "action-submit": "submit"}
-
-    with mock.patch("socket.create_connection", side_effect=failure):
-        response = client.post(reverse("wagtailadmin_pages:edit", args=[page.pk]), data)
-
-    assert response.status_code == 302
-    page.refresh_from_db()
-    assert page.current_workflow_state.status == WorkflowState.STATUS_IN_PROGRESS
+def fail_at(smtp, step, error):
+    if step == "connect":
+        smtp.side_effect = error
+    else:
+        getattr(smtp.return_value, step).side_effect = error
 
 
-@pytest.mark.parametrize("failure", CONNECTION_FAILURES.values(), ids=CONNECTION_FAILURES.keys())
-def test_moderator_can_approve_a_page_while_mail_is_down(
-    client, home_page, editor, moderator_with_email, production_mailers, failure
-):
-    # Approving emails the editor who submitted the page.
-    editor.email = "editor@brightwell.example"
-    editor.save()
-    page = StandardPage(title="About us", slug="about")
-    home_page.add_child(instance=page)
-    page.save_revision(user=editor)
-    # A refused connection is one Wagtail already skips, so the submission works on its own.
-    with mock.patch("socket.create_connection", side_effect=ConnectionRefusedError):
-        task_state = page.get_workflow().start(page, editor).current_task_state
-    client.force_login(moderator_with_email)
-    url = reverse("wagtailadmin_pages:workflow_action", args=[page.pk, "approve", task_state.pk])
+@pytest.mark.parametrize(
+    ("step", "failure"), CONNECTION_FAILURES.values(), ids=CONNECTION_FAILURES.keys()
+)
+def test_a_failure_to_connect_is_a_connection_error(smtp, step, failure):
+    fail_at(smtp, step, failure)
 
-    with mock.patch("socket.create_connection", side_effect=failure):
-        response = client.post(url, {"comment": ""})
+    with pytest.raises(ConnectionError, match="smtp.brightwell.example:587") as raised:
+        make_backend().open()
 
-    assert response.status_code == 302
-    page.refresh_from_db()
-    assert page.live
+    assert raised.value.__cause__ is failure
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [TimeoutError("timed out"), ConnectionRefusedError(errno.ECONNREFUSED, "Connection refused")],
+    ids=["timeout", "connection refused"],
+)
+def test_timeouts_and_connection_errors_are_raised_unchanged(smtp, failure):
+    smtp.side_effect = failure
+
+    with pytest.raises(type(failure)) as raised:
+        make_backend().open()
+
+    assert raised.value is failure
+
+
+@pytest.mark.parametrize(
+    ("step", "failure"), CONNECTION_FAILURES.values(), ids=CONNECTION_FAILURES.keys()
+)
+def test_failing_silently_still_raises_nothing(smtp, step, failure):
+    fail_at(smtp, step, failure)
+
+    assert make_backend(fail_silently=True).open() is None
+
+
+def test_sends_through_a_reachable_server(smtp):
+    message = EmailMessage(
+        "New volunteer sign-up",
+        "Your name: Sam",
+        "website@brightwell.example",
+        ["volunteers@brightwell.example"],
+    )
+
+    sent = make_backend().send_messages([message])
+
+    assert sent == 1
+    server = smtp.return_value
+    server.starttls.assert_called_once()
+    server.login.assert_called_once_with("website", "secret")
+    server.sendmail.assert_called_once()
