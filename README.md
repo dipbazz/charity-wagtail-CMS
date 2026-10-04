@@ -131,6 +131,11 @@ for `/media/documents/` too, or anyone who knows a private document's filename c
 password. With object storage such as S3, keep the documents in a private bucket or prefix and
 set `WAGTAILDOCS_SERVE_METHOD = "serve_view"`.
 
+Errors and warnings are written to the web container's output: server errors (500s) with their
+traceback, and warnings from Wagtail and the site's own code, such as a form email that couldn't
+be sent. On the server, read them with `sudo docker compose logs --tail 200 web` in
+`deploy/aws/`. Docker keeps the last 30 MB per container. Nothing is emailed: `ADMINS` is empty.
+
 Static files are compressed and served by [WhiteNoise](https://whitenoise.readthedocs.io/), so
 no separate web server is needed for them.
 

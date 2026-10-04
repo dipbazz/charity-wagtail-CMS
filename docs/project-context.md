@@ -133,6 +133,10 @@ Root
   go to S3 under `backups/`, which the server's IAM role can write but not delete. Server
   secrets live in `deploy/aws/.env`, which is gitignored and dockerignored
   (`charity/tests/test_deploy.py` checks both). Email isn't configured yet.
+- **Errors:** production's `LOGGING` writes `django.request` errors (with tracebacks) and
+  WARNING and above from `wagtail` and this project's apps to stderr, so they show in
+  `docker compose logs web` (#78). Django's defaults print nothing with `DEBUG` off. A new app
+  needs its name added to that list. Use `logging.getLogger(__name__)` in app code.
 
 ## Testing
 
