@@ -56,7 +56,7 @@ class TestAnnouncementBanner:
         assert "Emergency appeal: flood relief" in html
 
 
-def test_editors_can_edit_site_settings_in_the_admin(admin_client, site):
+def test_site_settings_open_in_the_admin(admin_client, site):
     url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
 
     assert admin_client.get(url).status_code == 200

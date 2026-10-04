@@ -216,3 +216,24 @@ class TestNewsPage:
 
 def test_news_category_is_a_snippet():
     assert NewsCategory in get_snippet_models()
+
+
+class TestCategoryPermissions:
+    """Editors and moderators manage categories themselves (#72), logged in as group members."""
+
+    @pytest.mark.parametrize("action", ["add", "change", "delete"])
+    @pytest.mark.parametrize("group_member", ["editor", "moderator"])
+    def test_editors_and_moderators_can_manage_categories(self, request, group_member, action):
+        user = request.getfixturevalue(group_member)
+
+        assert user.has_perm(f"news.{action}_newscategory")
+
+    def test_editor_can_add_a_category_in_the_admin(self, client, editor):
+        client.force_login(editor)
+
+        client.post(
+            reverse("wagtailsnippets_news_newscategory:add"),
+            {"name": "Appeals", "slug": "appeals"},
+        )
+
+        assert NewsCategory.objects.filter(slug="appeals").exists()
