@@ -1,7 +1,11 @@
+import logging
+import logging.config
 import runpy
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
+from django.test import Client
+from django.urls import path
 
 MODULE = "charity.settings.production"
 
@@ -11,10 +15,36 @@ def load_settings():
     return runpy.run_module(MODULE)
 
 
+def broken_view(request):
+    raise RuntimeError("the view broke")
+
+
+# Used by tests marked with this module as their URLconf.
+urlpatterns = [path("broken/", broken_view)]
+
+
 @pytest.fixture(autouse=True)
 def required_environment(monkeypatch):
     monkeypatch.setenv("DJANGO_ALLOWED_HOSTS", "brightwell.example")
     monkeypatch.setenv("DJANGO_SITE_URL", "https://brightwell.example")
+
+
+@pytest.fixture
+def use_production_logging(monkeypatch):
+    """Return a function that configures logging as production does; undo it afterwards.
+
+    Tests call it in their body: pytest swaps the captured stderr between fixture setup and the
+    test, and a handler made earlier would write to the old one.
+    """
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    # No LOGGING setting leaves Django's defaults in place.
+    config = load_settings().get("LOGGING", {"version": 1, "disable_existing_loggers": False})
+    loggers = [logging.getLogger(name) for name in [None, *config.get("loggers", {})]]
+    saved = [(lg, lg.handlers[:], lg.level, lg.propagate, lg.disabled) for lg in loggers]
+    yield lambda: logging.config.dictConfig(config)
+    for logger, handlers, level, propagate, disabled in saved:
+        logger.handlers, logger.propagate, logger.disabled = handlers, propagate, disabled
+        logger.setLevel(level)
 
 
 def test_refuses_to_start_without_a_site_url(monkeypatch):
@@ -156,3 +186,45 @@ def test_serving_uploads_from_django_is_opt_in(monkeypatch):
 
     monkeypatch.setenv("DJANGO_SERVE_MEDIA", "true")
     assert load_settings()["SERVE_MEDIA"] is True
+
+
+def test_request_errors_are_written_to_stderr(use_production_logging, capsys):
+    use_production_logging()
+    # With DEBUG off, Django's default logging only emails these to ADMINS, which is empty (#78).
+    logging.getLogger("django.request").error("Internal Server Error: /about/")
+
+    assert "Internal Server Error: /about/" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("logger", ["wagtail.admin", "contact.models", "core.views"])
+def test_warnings_from_wagtail_and_this_project_are_written_to_stderr(
+    use_production_logging, capsys, logger
+):
+    use_production_logging()
+
+    logging.getLogger(logger).warning("Mail connection error, notification sending skipped")
+
+    assert "Mail connection error" in capsys.readouterr().err
+
+
+@pytest.mark.urls(__name__)
+def test_a_failing_request_writes_its_traceback_to_stderr(use_production_logging, capsys):
+    use_production_logging()
+
+    response = Client(raise_request_exception=False).get("/broken/")
+
+    assert response.status_code == 500
+    err = capsys.readouterr().err
+    assert "Internal Server Error: /broken/" in err
+    assert "Traceback" in err
+    assert "RuntimeError: the view broke" in err
+
+
+def test_every_app_in_this_project_has_its_warnings_logged(monkeypatch):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    settings = load_settings()
+
+    own_apps = {app for app in settings["INSTALLED_APPS"] if (settings["BASE_DIR"] / app).is_dir()}
+
+    assert own_apps
+    assert own_apps <= settings["LOGGING"]["loggers"].keys()

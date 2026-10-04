@@ -49,6 +49,37 @@ MAILERS = {
 DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "webmaster@localhost")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
+# Errors and warnings go to stderr, which Docker keeps (`docker compose logs web`). Django's
+# defaults print nothing with DEBUG off and email ADMINS instead, which is empty, so server
+# errors left no trace (#78). Request errors are logged at ERROR only: 404s are WARNINGs and
+# would bury them.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "plain": {"format": "{asctime} {levelname} {name}: {message}", "style": "{"},
+    },
+    "handlers": {
+        "stderr": {"class": "logging.StreamHandler", "formatter": "plain"},
+    },
+    "loggers": {
+        "django.request": {"handlers": ["stderr"], "level": "ERROR"},
+        **{
+            name: {"handlers": ["stderr"], "level": "WARNING"}
+            for name in [
+                "wagtail",
+                "charity",
+                "core",
+                "home",
+                "campaigns",
+                "news",
+                "contact",
+                "search",
+            ]
+        },
+    },
+}
+
 # Settings below build new objects rather than mutating the ones imported from base, which
 # other settings modules share.
 
