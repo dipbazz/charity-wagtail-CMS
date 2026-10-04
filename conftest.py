@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
@@ -43,3 +44,21 @@ def site(db):
 def home_page(site):
     """The HomePage that sits at the root of the default Site."""
     return site.root_page.specific
+
+
+def _user_in_group(django_user_model, group_name):
+    user = django_user_model.objects.create_user(username=group_name.lower(), password="x")
+    user.groups.add(Group.objects.get(name=group_name))
+    return user
+
+
+@pytest.fixture
+def editor(django_user_model):
+    """A user in Wagtail's Editors group, as the charity's editors are: not a superuser."""
+    return _user_in_group(django_user_model, "Editors")
+
+
+@pytest.fixture
+def moderator(django_user_model):
+    """A user in Wagtail's Moderators group, who approves and publishes editors' work."""
+    return _user_in_group(django_user_model, "Moderators")

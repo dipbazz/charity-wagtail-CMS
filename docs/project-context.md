@@ -73,6 +73,13 @@ Root
   `settings.core.SiteSettings` / `settings.core.AnnouncementBanner`.
 - **Snippets:** `Partner` (Orderable), `Testimonial` (draft/revision/lock/preview mixins), grouped
   under "Supporters" in `core/wagtail_hooks.py`; `NewsCategory` in `news/wagtail_hooks.py`.
+- **Editor permissions:** editors draft and moderators publish. Wagtail's Editors and Moderators
+  groups only get permissions for Wagtail's own models; data migrations give them this site's
+  (`core/migrations/0004_…`, `news/migrations/0004_…`; the table is in #72). Editors change the
+  banner directly but only draft testimonials; Site settings are moderators' only. **A new
+  snippet or setting needs a migration like these**, or editors can't see it. Django and Wagtail
+  create permission rows in `post_migrate`, after all migrations, so such a migration must
+  `get_or_create` them.
 - **`CampaignPage`**: target, raised, dates, `progress_percent`, `is_active`, `TabbedInterface`,
   preview modes `""` (full page) and `"card"`. `CampaignPageQuerySet` has `.active()` / `.closed()`.
 - **`BaseStreamBlock`** (`core/blocks.py`): heading, paragraph (`RICH_TEXT_FEATURES` incl. the
@@ -133,9 +140,11 @@ Root
   `campaigns/tests/factories.py` and `news/tests/factories.py`.
 - Root `conftest.py` provides `site`, `home_page` and `cold_cache_queries` (counts a page's queries
   as on a just-started server, with image renditions looked up in the database), and clears the
-  cache after every test.
+  cache after every test. Its `editor` and `moderator` fixtures are users in those groups.
 - Admin editing is tested through the real admin with Wagtail's form-data helpers
-  (`campaigns/tests/test_editorial.py`).
+  (`campaigns/tests/test_editorial.py`). Test what editors can do as `editor`, not with
+  `admin_client`: a superuser can do everything, which hides a missing permission
+  (`core/tests/test_permissions.py`).
 - **Gotcha:** tests use `InMemoryStorage`, which has no file paths. Tests of anything that
   reads files from disk (for example Wagtail's document serve view) must set `MEDIA_ROOT` to
   `tmp_path` and the default storage to `FileSystemStorage` (see `core/tests/test_media.py`).
