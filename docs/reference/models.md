@@ -134,8 +134,10 @@ built by editors. No payment is taken.
 | `thank_you_text` | Shown after someone sends the form, with a link to the appeals |
 
 The form asks for an amount (a suggested one or the supporter's own), one-off or monthly, the
-appeal (open, public appeals, or "Wherever it's needed most"), name, email, address and
-postcode. Choosing "Other amount" reveals "Your own amount", and choosing "Monthly" reveals an
+appeal (open, public appeals, or "Wherever it's needed most"), name, email, and an optional
+address and postcode. Optional fields say "(optional)" in grey after their label
+(`campaigns/templates/campaigns/forms/label.html`, for fields `PledgeForm` marks
+`show_optional`). Choosing "Other amount" reveals "Your own amount", and choosing "Monthly" reveals an
 optional mobile number for a future monthly reminder on WhatsApp or by text (checked and stored
 in E.164 by `core.phone`; a one-off gift never keeps a number). Both are shown and hidden with
 CSS `:has()`, so they work without JavaScript. A pledge is stored with the site's currency code and the

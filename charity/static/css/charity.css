@@ -563,6 +563,12 @@ h4 {
     font-weight: 600;
 }
 
+/* "(optional)" after a label: quieter than the label itself. */
+.optional {
+    color: var(--colour-muted);
+    font-weight: 400;
+}
+
 .helptext {
     color: var(--colour-muted);
     font-size: 0.9375rem;

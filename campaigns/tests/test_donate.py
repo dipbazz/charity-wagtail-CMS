@@ -293,6 +293,28 @@ class TestAddress:
         assert data["postcode"] == "B1 1AA"
 
 
+class TestOptionalLabels:
+    """Optional fields say so after their label, in grey (.optional in charity.css)."""
+
+    def label(self, response, for_id):
+        return soup(response).find("label", attrs={"for": for_id})
+
+    @pytest.mark.parametrize("for_id", ["id_address", "id_postcode"])
+    def test_optional_fields_say_so(self, client, donate_page, for_id):
+        optional = self.label(client.get(donate_page.url), for_id).find(class_="optional")
+
+        assert optional.get_text(strip=True) == "(optional)"
+
+    @pytest.mark.parametrize("for_id", ["id_name", "id_email", "id_phone"])
+    def test_required_fields_and_the_number_do_not(self, client, donate_page, for_id):
+        assert not self.label(client.get(donate_page.url), for_id).find(class_="optional")
+
+    def test_the_mobile_number_says_so_once_for_both_its_fields(self, client, donate_page):
+        legend = soup(client.get(donate_page.url)).find("fieldset", class_="phone-field").legend
+
+        assert legend.find(class_="optional").get_text(strip=True) == "(optional)"
+
+
 class TestNoGiftAid:
     """Gift Aid confused donors, so it's off the form until it's needed (backlog issue)."""
 

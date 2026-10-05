@@ -30,6 +30,9 @@ class AmountLabel:
 class PledgeForm(BaseForm):
     """A pledge to give, saved as a form submission. No payment is taken."""
 
+    # Adds "(optional)" to the labels of fields marked show_optional in __init__.
+    template_name_label = "campaigns/forms/label.html"
+
     # Not required: typing your own amount without choosing "Other amount" is enough (clean()).
     amount = forms.ChoiceField(
         required=False,
@@ -109,6 +112,10 @@ class PledgeForm(BaseForm):
         self.appeal_titles = {"": NEEDED_MOST} | {appeal.slug: appeal.title for appeal in appeals}
         self.fields["appeal"].choices = self.appeal_titles.items()
         self.fields["phone_country"].initial = phone_country
+        # Not every optional field: the appeal has a default, and the mobile number's legend
+        # already says it's optional.
+        for name in ("address", "postcode"):
+            self.fields[name].show_optional = True
         self.initial.setdefault("appeal", "")
         if link is not None:
             self.initial.update(self.initial_from_link(link))
