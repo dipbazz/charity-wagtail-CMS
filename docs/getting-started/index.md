@@ -43,6 +43,7 @@ and canonical tags. On a database created before that, run
 ## Check that everything passes
 
 ```bash
+uv run playwright install chromium   # once: the browser the browser tests drive
 uv run pytest
 uv run ruff check . && uv run ruff format --check .
 ```

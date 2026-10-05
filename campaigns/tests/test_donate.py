@@ -1,55 +1,15 @@
-import datetime
-
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 from wagtail.contrib.forms.models import FormSubmission
-from wagtail.models import PageViewRestriction
 from wagtail.test.utils.form_data import inline_formset, nested_form_data, rich_text, streamfield
 
 from campaigns.models import DonatePage
-from campaigns.tests.factories import (
-    CampaignIndexPageFactory,
-    CampaignPageFactory,
-    DonatePageFactory,
-)
+from campaigns.tests.factories import DonatePageFactory
 from core.models import SiteSettings
 from home.models import StandardPage
 
 pytestmark = pytest.mark.django_db
-
-TODAY = datetime.date.today()
-
-
-@pytest.fixture
-def appeals(home_page):
-    index = CampaignIndexPageFactory(parent=home_page, title="Appeals", slug="appeals")
-    CampaignPageFactory(parent=index, title="Flood relief", slug="flood-relief")
-    CampaignPageFactory(
-        parent=index,
-        title="Last year's appeal",
-        slug="last-year",
-        start_date=TODAY - datetime.timedelta(days=400),
-        end_date=TODAY - datetime.timedelta(days=30),
-    )
-    private = CampaignPageFactory(parent=index, title="Trustees' appeal", slug="trustees")
-    PageViewRestriction.objects.create(
-        page=private, restriction_type=PageViewRestriction.PASSWORD, password="trustees"
-    )
-    return index
-
-
-@pytest.fixture
-def donate_page(home_page, appeals):
-    page = DonatePageFactory(
-        parent=home_page,
-        body=[("paragraph", "<p>Where every Rs 100 goes</p>")],
-    )
-    page.donation_amounts.create(amount=2500, impact="A hygiene kit for a family")
-    page.donation_amounts.create(amount=10000, impact="Water purification for a month")
-    page.save_revision().publish()
-    return page
-
 
 VALID = {
     "amount": "2500",

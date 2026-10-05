@@ -17,6 +17,9 @@ version number.
   It says plainly that no payment is taken online yet, preselects the appeal you came from, and
   pledges appear in the admin and the CSV export
   ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
+- Browser tests (Playwright) for what only happens in a browser, such as focus, scrolling and
+  fields that appear on a choice. Run `uv run playwright install chromium` once
+  ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
 
 ### Changed
 
