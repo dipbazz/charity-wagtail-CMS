@@ -43,7 +43,6 @@ def appeals(home_page):
 def donate_page(home_page, appeals):
     page = DonatePageFactory(
         parent=home_page,
-        offer_gift_aid=True,
         body=[("paragraph", "<p>Where every Rs 100 goes</p>")],
     )
     page.donation_amounts.create(amount=2500, impact="A hygiene kit for a family")
@@ -278,46 +277,35 @@ class TestPreselecting:
         assert not soup(response).find(attrs={"name": "amount", "checked": True})
 
 
-class TestGiftAid:
-    def test_needs_an_address_and_postcode(self, client, donate_page):
-        response = pledge(client, donate_page, gift_aid="on")
-
-        html = response.content.decode()
-        assert "Enter your home address to claim Gift Aid." in html
-        assert "Enter your postcode to claim Gift Aid." in html
-        assert not FormSubmission.objects.exists()
-
-    def test_is_saved_with_the_address(self, client, donate_page):
-        pledge(
-            client,
-            donate_page,
-            gift_aid="on",
-            address="1 Example Street\nBirmingham",
-            postcode="B1 1AA",
-        )
-
-        data = stored(donate_page)
-        assert data["gift_aid"] is True
-        assert data["address"] == "1 Example Street\nBirmingham"
-        assert data["postcode"] == "B1 1AA"
-
-    def test_a_nepali_address_without_a_postal_code_is_fine_without_gift_aid(
-        self, client, donate_page
-    ):
+class TestAddress:
+    def test_a_nepali_address_without_a_postal_code_is_accepted(self, client, donate_page):
         pledge(client, donate_page, address="Ward 4, Thamel, Kathmandu")
 
         data = stored(donate_page)
         assert data["address"] == "Ward 4, Thamel, Kathmandu"
-        assert data["gift_aid"] is False
+        assert data["postcode"] == ""
 
-    def test_is_not_offered_when_switched_off(self, client, donate_page):
-        donate_page.offer_gift_aid = False
-        donate_page.save_revision().publish()
+    def test_a_uk_address_with_a_postcode_is_saved(self, client, donate_page):
+        pledge(client, donate_page, address="1 Example Street\nBirmingham", postcode="B1 1AA")
 
-        assert 'name="gift_aid"' not in client.get(donate_page.url).content.decode()
+        data = stored(donate_page)
+        assert data["address"] == "1 Example Street\nBirmingham"
+        assert data["postcode"] == "B1 1AA"
 
+
+class TestNoGiftAid:
+    """Gift Aid confused donors, so it's off the form until it's needed (backlog issue)."""
+
+    def test_is_not_offered(self, client, donate_page):
+        html = client.get(donate_page.url).content.decode()
+
+        assert 'name="gift_aid"' not in html
+        assert "Gift Aid" not in html
+
+    def test_a_posted_gift_aid_tick_is_not_stored(self, client, donate_page):
         pledge(client, donate_page, gift_aid="on")
-        assert stored(donate_page)["gift_aid"] is False
+
+        assert "gift_aid" not in stored(donate_page)
 
 
 class TestMobileNumber:

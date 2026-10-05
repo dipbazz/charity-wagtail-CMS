@@ -130,7 +130,6 @@ built by editors. No payment is taken.
 | `introduction` | Shown under the title |
 | `donation_amounts` | The suggested amounts (`DonatePageAmount`) |
 | `payment_notice` | Above the form: how payment works and what happens next. Has a default |
-| `offer_gift_aid` | UK charities only: adds the Gift Aid declaration, which then requires a home address and postcode |
 | `body` | Below the form, e.g. a table of where the money goes |
 | `thank_you_text` | Shown after someone sends the form, with a link to the appeals |
 

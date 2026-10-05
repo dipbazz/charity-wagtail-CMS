@@ -71,19 +71,6 @@
                 <div class="field">{{ form.postcode.as_field_group }}</div>
             </fieldset>
 
-            {% if form.gift_aid %}
-                <fieldset class="gift-aid">
-                    <legend>Gift Aid</legend>
-                    <p>If you're a UK taxpayer, Gift Aid lets us claim an extra 25% of your gift from HMRC, at no cost to you. We need your home address and postcode above to claim it.</p>
-                    {{ form.gift_aid.errors }}
-                    <div class="checkbox">
-                        {{ form.gift_aid }}
-                        <label for="{{ form.gift_aid.id_for_label }}">{{ form.gift_aid.label }}</label>
-                    </div>
-                    <p class="helptext" id="{{ form.gift_aid.auto_id }}_helptext">{{ form.gift_aid.help_text }}</p>
-                </fieldset>
-            {% endif %}
-
             <button class="button button-large" type="submit">Send my pledge</button>
         </form>
 

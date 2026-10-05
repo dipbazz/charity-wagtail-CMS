@@ -204,7 +204,6 @@ class Command(BaseCommand):
                 "you about this pledge. To help people affected by the flood in Nepal, give to "
                 f'the <a href="{RELIEF_FUND_URL}">Prime Minister\'s Disaster Relief Fund</a>.</p>'
             ),
-            offer_gift_aid=True,
             thank_you_text=(
                 "<p>Thank you for trying the pledge form. Brightwell is fictional, so nobody will "
                 "contact you, but a real charity would be in touch about how to pay.</p>"

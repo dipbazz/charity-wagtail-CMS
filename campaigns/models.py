@@ -21,7 +21,7 @@ from wagtail.contrib.forms.models import AbstractForm
 from wagtail.contrib.forms.panels import FormSubmissionsPanel
 from wagtail.fields import RichTextField, StreamField
 from wagtail.images.api.fields import ImageRenditionField
-from wagtail.models import Orderable, Page, PageManager, Site
+from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
 from wagtail.search import index
 
@@ -214,10 +214,6 @@ class DonatePage(SocialMetaMixin, AbstractForm):
         default=DEFAULT_PAYMENT_NOTICE,
         help_text="Shown above the form: say plainly how payment works and what happens next.",
     )
-    offer_gift_aid = models.BooleanField(
-        default=False,
-        help_text="UK charities only. Adds the Gift Aid declaration and asks for a home address.",
-    )
     body = StreamField(
         BaseStreamBlock(),
         blank=True,
@@ -230,7 +226,6 @@ class DonatePage(SocialMetaMixin, AbstractForm):
         FieldPanel("introduction"),
         InlinePanel("donation_amounts", heading="Suggested amounts", label="Amount", max_num=6),
         FieldPanel("payment_notice"),
-        FieldPanel("offer_gift_aid"),
         FieldPanel("body"),
         FieldPanel("thank_you_text"),
     ]
@@ -249,7 +244,6 @@ class DonatePage(SocialMetaMixin, AbstractForm):
         ("email", "Email"),
         ("phone", "Mobile number"),
         ("appeal", "Appeal"),
-        ("gift_aid", "Gift Aid"),
         ("address", "Address"),
         ("postcode", "Postcode or postal code"),
     ]
@@ -268,10 +262,8 @@ class DonatePage(SocialMetaMixin, AbstractForm):
 
     def get_form(self, *args, request=None, **kwargs):
         if request is None:  # the admin preview
-            site = self.get_site()
-            site_settings = SiteSettings.for_site(site)
+            site_settings = SiteSettings.for_site(self.get_site())
         else:
-            site = Site.find_for_request(request)
             site_settings = SiteSettings.for_request(request)
         return PledgeForm(
             *args,
@@ -279,8 +271,6 @@ class DonatePage(SocialMetaMixin, AbstractForm):
             appeals=self.get_appeals(),
             currency=site_settings.currency,
             phone_country=site_settings.phone_country,
-            charity_name=site.site_name if site else "",
-            offer_gift_aid=self.offer_gift_aid,
             **kwargs,
         )
 

@@ -12,14 +12,6 @@ NEEDED_MOST = "Wherever it's needed most"
 CHOOSE_AN_AMOUNT = "Choose an amount or enter your own."
 OTHER = "other"
 
-# HMRC's model Gift Aid declaration for one-off and future donations.
-GIFT_AID_DECLARATION = (
-    "I want to Gift Aid this donation and any donations I make in the future or have made in the "
-    "past 4 years to {charity}. I am a UK taxpayer and understand that if I pay less Income Tax "
-    "and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax "
-    "year it is my responsibility to pay any difference."
-)
-
 
 @dataclass(frozen=True)
 class AmountLabel:
@@ -92,7 +84,6 @@ class PledgeForm(BaseForm):
         label="Postcode or postal code",
         widget=forms.TextInput(attrs={"autocomplete": "postal-code"}),
     )
-    gift_aid = forms.BooleanField(required=False, label="Yes, add Gift Aid to my gift")
 
     def __init__(
         self,
@@ -101,8 +92,6 @@ class PledgeForm(BaseForm):
         appeals,
         currency,
         phone_country,
-        charity_name,
-        offer_gift_aid,
         link=None,
         **kwargs,
     ):
@@ -120,10 +109,6 @@ class PledgeForm(BaseForm):
         self.appeal_titles = {"": NEEDED_MOST} | {appeal.slug: appeal.title for appeal in appeals}
         self.fields["appeal"].choices = self.appeal_titles.items()
         self.fields["phone_country"].initial = phone_country
-        if offer_gift_aid:
-            self.fields["gift_aid"].help_text = GIFT_AID_DECLARATION.format(charity=charity_name)
-        else:
-            del self.fields["gift_aid"]
         self.initial.setdefault("appeal", "")
         if link is not None:
             self.initial.update(self.initial_from_link(link))
@@ -165,11 +150,6 @@ class PledgeForm(BaseForm):
             except ValidationError as error:
                 self.add_error("phone", error)
 
-        if cleaned_data.get("gift_aid"):
-            if not cleaned_data.get("address"):
-                self.add_error("address", "Enter your home address to claim Gift Aid.")
-            if not cleaned_data.get("postcode"):
-                self.add_error("postcode", "Enter your postcode to claim Gift Aid.")
         return cleaned_data
 
     def pledge_data(self):
@@ -184,7 +164,6 @@ class PledgeForm(BaseForm):
             "email": data["email"],
             "phone": data["phone"],
             "appeal": self.appeal_titles[data["appeal"]],
-            "gift_aid": data.get("gift_aid", False),
             "address": data["address"],
             "postcode": data["postcode"],
         }
