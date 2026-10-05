@@ -135,9 +135,11 @@ built by editors. No payment is taken.
 | `thank_you_text` | Shown after someone sends the form, with a link to the appeals |
 
 The form asks for an amount (a suggested one or the supporter's own), one-off or monthly, the
-appeal (open, public appeals, or "Wherever it's needed most"), name, email, an optional mobile
-number (checked and stored in E.164 by `core.phone`, for a future monthly reminder on WhatsApp
-or by text), address and postcode. A pledge is stored with the site's currency code and the
+appeal (open, public appeals, or "Wherever it's needed most"), name, email, address and
+postcode. Choosing "Other amount" reveals "Your own amount", and choosing "Monthly" reveals an
+optional mobile number for a future monthly reminder on WhatsApp or by text (checked and stored
+in E.164 by `core.phone`; a one-off gift never keeps a number). Both are shown and hidden with
+CSS `:has()`, so they work without JavaScript. A pledge is stored with the site's currency code and the
 appeal's title.
 
 `?appeal=<slug>&amount=<n>` preselects an appeal and an amount; an appeal page's "Donate to this

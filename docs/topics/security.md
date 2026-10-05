@@ -63,7 +63,7 @@ See [Permissions](permissions.md).
 ## Form submissions hold personal data
 
 Volunteer sign-ups and Donate page pledges are stored as form submissions with names, email
-addresses and, for pledges, mobile numbers and home addresses. Anyone who can edit a form page
+addresses and, for pledges, home addresses and (monthly pledges only) mobile numbers. Anyone who can edit a form page
 can read and export its submissions (`wagtail.contrib.forms` grants it with the page's edit
 permission), so give page editing only to people who may see supporters' details. Exported CSV
 files hold the same data: don't leave them in shared folders.

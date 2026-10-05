@@ -73,8 +73,8 @@ class PledgeForm(BaseForm):
         max_length=30,
         label="Number",
         help_text=(
-            "If you give monthly, we'll only use this to send you a monthly reminder "
-            "on WhatsApp, or by text message if you're in Nepal and not on WhatsApp."
+            "We'll only use this to send you a monthly reminder on WhatsApp, or by text "
+            "message if you're in Nepal and not on WhatsApp."
         ),
         widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel-national"}),
     )
@@ -155,6 +155,9 @@ class PledgeForm(BaseForm):
                 # Saving either one could record a gift the supporter didn't mean.
                 self.add_error("amount", "Choose a suggested amount or type your own, not both.")
 
+        # The number is only for the monthly reminder, so a one-off gift doesn't keep it.
+        if cleaned_data.get("frequency") != "monthly":
+            cleaned_data["phone"] = ""
         phone = cleaned_data.get("phone", "").strip()
         if phone and cleaned_data.get("phone_country"):
             try:

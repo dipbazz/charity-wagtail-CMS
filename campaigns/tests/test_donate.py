@@ -313,10 +313,28 @@ class TestGiftAid:
 
 
 class TestMobileNumber:
+    """Asked for only with a monthly gift, for the monthly reminder; charity.css hides it
+    until Monthly is chosen."""
+
+    def phone_field(self, response):
+        return (
+            soup(response).find("input", attrs={"name": "phone"}).find_parent(class_="phone-field")
+        )
+
     def test_is_optional(self, client, donate_page):
-        pledge(client, donate_page)
+        pledge(client, donate_page, frequency="monthly")
 
         assert stored(donate_page)["phone"] == ""
+
+    def test_comes_straight_after_how_often_and_starts_hidden(self, client, donate_page):
+        response = client.get(donate_page.url)
+        html = response.content.decode()
+
+        assert html.index('id="id_frequency') < html.index('name="phone"')
+        assert html.index('name="phone"') < html.index('name="appeal"')
+        field = self.phone_field(response)
+        assert field.find_parent(class_="giving-frequency")
+        assert "is-shown" not in field["class"]
 
     def test_starts_on_the_country_chosen_in_site_settings(self, client, site, donate_page):
         settings = SiteSettings.for_site(site)
@@ -328,21 +346,29 @@ class TestMobileNumber:
         assert is_checked(response, "phone_country", "GB")
 
     def test_nepali_number_is_saved_with_its_country_code(self, client, donate_page):
-        pledge(client, donate_page, phone="984-1234567")
+        pledge(client, donate_page, frequency="monthly", phone="984-1234567")
 
         assert stored(donate_page)["phone"] == "+9779841234567"
 
     def test_uk_number_is_saved_with_its_country_code(self, client, donate_page):
-        pledge(client, donate_page, phone_country="GB", phone="07400 123456")
+        pledge(client, donate_page, frequency="monthly", phone_country="GB", phone="07400 123456")
 
         assert stored(donate_page)["phone"] == "+447400123456"
 
     @pytest.mark.parametrize("phone", ["01-4567890", "98abc12345"])
     def test_a_number_that_cannot_get_messages_shows_an_error(self, client, donate_page, phone):
-        response = pledge(client, donate_page, phone=phone)
+        response = pledge(client, donate_page, frequency="monthly", phone=phone)
 
         assert "Enter a mobile number, like 984-1234567." in response.content.decode()
+        assert "is-shown" in self.phone_field(response)["class"]
         assert not FormSubmission.objects.exists()
+
+    @pytest.mark.parametrize("phone", ["984-1234567", "not a number"])
+    def test_is_not_kept_for_a_one_off_gift(self, client, donate_page, phone):
+        response = pledge(client, donate_page, frequency="one-off", phone=phone)
+
+        assert response.status_code == 200
+        assert stored(donate_page)["phone"] == ""
 
     def test_says_it_is_only_for_a_whatsapp_or_text_reminder(self, client, donate_page):
         html = client.get(donate_page.url).content.decode()
@@ -364,7 +390,7 @@ class TestPledgesInTheAdmin:
         assert "Mobile number" in html
 
     def test_editors_can_export_pledges_as_csv(self, client, editor, donate_page):
-        pledge(client, donate_page, phone="984-1234567")
+        pledge(client, donate_page, frequency="monthly", phone="984-1234567")
         client.force_login(editor)
 
         url = reverse("wagtailforms:list_submissions", args=[donate_page.pk])
@@ -372,7 +398,7 @@ class TestPledgesInTheAdmin:
 
         csv = b"".join(response.streaming_content).decode()
         assert csv.splitlines()[0].startswith("Submission date,Amount,Currency,Frequency,Name")
-        assert "2500,NPR,One-off,Sita Sharma,sita@example.com,+9779841234567" in csv
+        assert "2500,NPR,Monthly,Sita Sharma,sita@example.com,+9779841234567" in csv
 
     def test_editors_can_draft_a_donate_page_with_amounts(self, client, editor, home_page):
         client.force_login(editor)

@@ -44,15 +44,10 @@
                 <div class="field other-amount{% if form.amount.errors and form.other_amount.value %} is-shown{% endif %}">{{ form.other_amount.as_field_group }}</div>
             </fieldset>
 
-            <div class="field">{{ form.frequency.as_field_group }}</div>
-
-            <div class="field">{{ form.appeal.as_field_group }}</div>
-
-            <fieldset>
-                <legend>Your details</legend>
-                <div class="field">{{ form.name.as_field_group }}</div>
-                <div class="field">{{ form.email.as_field_group }}</div>
-                <fieldset class="phone-field" aria-describedby="{{ form.phone.auto_id }}_helptext">
+            {# charity.css shows the mobile number once Monthly is chosen, or when it has an error. #}
+            <div class="giving-frequency">
+                <div class="field">{{ form.frequency.as_field_group }}</div>
+                <fieldset class="phone-field{% if form.phone.errors %} is-shown{% endif %}" aria-describedby="{{ form.phone.auto_id }}_helptext">
                     <legend>Mobile number (optional)</legend>
                     <p class="helptext" id="{{ form.phone.auto_id }}_helptext">{{ form.phone.help_text }}</p>
                     <div class="phone-row">
@@ -64,6 +59,14 @@
                         </div>
                     </div>
                 </fieldset>
+            </div>
+
+            <div class="field">{{ form.appeal.as_field_group }}</div>
+
+            <fieldset>
+                <legend>Your details</legend>
+                <div class="field">{{ form.name.as_field_group }}</div>
+                <div class="field">{{ form.email.as_field_group }}</div>
                 <div class="field">{{ form.address.as_field_group }}</div>
                 <div class="field">{{ form.postcode.as_field_group }}</div>
             </fieldset>

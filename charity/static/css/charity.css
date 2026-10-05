@@ -696,6 +696,11 @@ h4 {
     margin: 0 0 0.75rem;
 }
 
+/* The mobile number is only for monthly reminders, so it appears once Monthly is chosen. */
+.giving-frequency:not(:has(input[value="monthly"]:checked)) .phone-field:not(.is-shown) {
+    display: none;
+}
+
 /* Country code and number share a row when there's room, and stack on a phone. */
 .phone-row {
     display: flex;
