@@ -116,6 +116,14 @@ class TestDonatePage:
 
         assert "No payment is taken online yet." in html
 
+    # Regression: a two-line {# #} note printed as text above "How often"
+    # Found in review of #89 on 2026-10-05
+    def test_shows_no_template_notes(self, client, donate_page):
+        html = client.get(donate_page.url).content.decode()
+
+        assert "{#" not in html
+        assert "charity.css shows" not in html
+
     def test_shows_the_body_below_the_form(self, client, donate_page):
         html = client.get(donate_page.url).content.decode()
 

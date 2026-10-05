@@ -44,8 +44,7 @@
                 <div class="field other-amount{% if form.amount.errors and form.other_amount.value %} is-shown{% endif %}">{{ form.other_amount.as_field_group }}</div>
             </fieldset>
 
-            {# charity.css shows the mobile number once Monthly is chosen. A number is only checked for
-               monthly gifts, so a form sent back with a number error has Monthly chosen already. #}
+            {# charity.css shows the mobile number once Monthly is chosen; it's only checked for monthly gifts. #}
             <div class="giving-frequency">
                 <div class="field">{{ form.frequency.as_field_group }}</div>
                 <fieldset class="phone-field" aria-describedby="{{ form.phone.auto_id }}_helptext">
