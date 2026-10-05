@@ -360,8 +360,16 @@ class TestMobileNumber:
         response = pledge(client, donate_page, frequency="monthly", phone=phone)
 
         assert "Enter a mobile number, like 984-1234567." in response.content.decode()
-        assert "is-shown" in self.phone_field(response)["class"]
         assert not FormSubmission.objects.exists()
+
+    # Regression: ISSUE-001 — after a mobile number error, choosing One-off left it on screen
+    # Found by /qa on 2026-10-05
+    # Report: .gstack/qa-reports/run-20261005T090524Z/qa-report-127.0.0.1-2026-10-05.md
+    def test_error_leaves_its_visibility_to_the_monthly_choice(self, client, donate_page):
+        response = pledge(client, donate_page, frequency="monthly", phone="12345")
+
+        assert is_checked(response, "frequency", "monthly")
+        assert "is-shown" not in self.phone_field(response)["class"]
 
     @pytest.mark.parametrize("phone", ["984-1234567", "not a number"])
     def test_is_not_kept_for_a_one_off_gift(self, client, donate_page, phone):

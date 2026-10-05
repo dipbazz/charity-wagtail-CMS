@@ -697,7 +697,7 @@ h4 {
 }
 
 /* The mobile number is only for monthly reminders, so it appears once Monthly is chosen. */
-.giving-frequency:not(:has(input[value="monthly"]:checked)) .phone-field:not(.is-shown) {
+.giving-frequency:not(:has(input[value="monthly"]:checked)) .phone-field {
     display: none;
 }
 
