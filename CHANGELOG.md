@@ -3,7 +3,7 @@
 Every notable change to the site, for the people who edit it, host it or work on it. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/) as defined for this site in
-[docs/contributing/releases.md](docs/contributing/releases.md).
+[Versions and releases](docs/contributing/releases.md).
 
 Each pull request adds its line under **Unreleased**. A release moves those lines under a new
 version number.
