@@ -7,7 +7,8 @@ from the Wagtail admin. Every feature was built test-first with pytest.
 **Live site:** <https://16-192-118-94.sslip.io>, running the demo content on AWS EC2.
 
 **Documentation:** [`docs/`](docs/index.md): getting started, how it works, how-to guides,
-reference, the decisions behind it, and how to contribute.
+reference, the decisions behind it, and how to contribute. **What changed:**
+[`CHANGELOG.md`](CHANGELOG.md).
 
 ![Homepage](docs/screenshots/home.jpg)
 

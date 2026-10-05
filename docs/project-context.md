@@ -3,11 +3,11 @@
 A one-page map into these docs for anyone (or any AI session) starting work here, so they can go
 straight to the page that answers their question instead of reading everything.
 
-**Last verified against:** `985bc31` (main, 2026-10-05)
+**Last verified against:** `2083740` (main, 2026-10-05)
 
 ## Keeping the docs current
 
-- **Starting a session:** trust the docs. Run `git log --oneline 985bc31..HEAD --stat` (use the
+- **Starting a session:** trust the docs. Run `git log --oneline 2083740..HEAD --stat` (use the
   commit above) and re-read only the areas those commits touched. Re-scan the whole repo only if
   most areas changed, or if the docs contradict the code.
 - **Before reading code to answer a question,** check whether a docs page already answers it.
@@ -49,6 +49,8 @@ first, and budgeted for queries and page weight in CI.
 | What's the QA pass? | [QA](contributing/qa.md) |
 | Issues, epics and the board? | [Issues and the board](contributing/issues-and-board.md) |
 | How do I build these docs? | [Writing docs](contributing/writing-docs.md) |
+| What changed in each version? What's planned next? | [Changelog](changelog.md), [milestones](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) |
+| What do version numbers mean? How do I release? | [Versions and releases](contributing/releases.md) |
 
 ## Rules that catch people out
 
@@ -65,6 +67,8 @@ before.
 - `{% picture %}` lists the largest size first; card filters must match `CARD_IMAGE_FILTERS`
   ([Images](topics/images.md)).
 - Workflow actions are pinned to a commit SHA ([Security](topics/security.md)).
+- Every pull request adds a line under `Unreleased` in `CHANGELOG.md` or is labelled
+  `no changelog`; new work goes into the next milestone ([Versions and releases](contributing/releases.md)).
 - Tests use `InMemoryStorage`; tests that read files from disk switch storage
   ([Test fixtures](reference/test-fixtures.md)).
 - Django 6.1 uses `MAILERS`, not `EMAIL_BACKEND`; check Wagtail 8's installed source before

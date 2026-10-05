@@ -1,0 +1,110 @@
+# Changelog
+
+Every notable change to the site, for the people who edit it, host it or work on it. The format
+follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
+[Semantic Versioning](https://semver.org/) as defined for this site in
+[Versions and releases](docs/contributing/releases.md).
+
+Each pull request adds its line under **Unreleased**. A release moves those lines under a new
+version number.
+
+## [Unreleased]
+
+## [0.1.0] - 2026-10-05
+
+The first tracked release. It collects everything built before versioning started.
+
+### Added
+
+- Pages built from content blocks: headings, rich text, images with photo credits, quotes,
+  impact statistics, calls to action, video, tables, document downloads, testimonials and
+  partner logos ([#1](https://github.com/dipbazz/Charity-wagtail-CMS/pull/1)).
+- Site settings for the charity number, contact details, donate page and social links, an
+  emergency announcement banner, and a main menu
+  ([#2](https://github.com/dipbazz/Charity-wagtail-CMS/pull/2),
+  [#4](https://github.com/dipbazz/Charity-wagtail-CMS/pull/4)).
+- Partners, and testimonials with drafts, revisions, locking and preview
+  ([#3](https://github.com/dipbazz/Charity-wagtail-CMS/pull/3)).
+- Fundraising appeals with a target, amount raised, dates, suggested gifts, progress bars and
+  open and past filters; the homepage features open appeals
+  ([#5](https://github.com/dipbazz/Charity-wagtail-CMS/pull/5)).
+- News with tags, editor-managed categories and an RSS feed, and a "Follow our news" section
+  ([#6](https://github.com/dipbazz/Charity-wagtail-CMS/pull/6),
+  [#25](https://github.com/dipbazz/Charity-wagtail-CMS/pull/25)).
+- Forms editors build themselves, with email notifications that reply to the sender and CSV
+  export of submissions ([#7](https://github.com/dipbazz/Charity-wagtail-CMS/pull/7)).
+- Site search with results editors can pin to the top
+  ([#8](https://github.com/dipbazz/Charity-wagtail-CMS/pull/8)).
+- Sitemap, robots.txt, canonical and social sharing tags, a sharing image per page, and
+  redirects ([#10](https://github.com/dipbazz/Charity-wagtail-CMS/pull/10)).
+- A read-only JSON API for pages, images and documents
+  ([#11](https://github.com/dipbazz/Charity-wagtail-CMS/pull/11)).
+- A "Highlight" button in rich text, and a fundraising panel on the admin dashboard
+  ([#12](https://github.com/dipbazz/Charity-wagtail-CMS/pull/12)).
+- `seed_demo`, which builds a fictional water charity with licensed photos and partner logos
+  ([#13](https://github.com/dipbazz/Charity-wagtail-CMS/pull/13),
+  [#44](https://github.com/dipbazz/Charity-wagtail-CMS/pull/44)).
+- Smaller images for phones, in AVIF and WebP, with a square homepage banner that's compressed
+  harder under its dark overlay
+  ([#62](https://github.com/dipbazz/Charity-wagtail-CMS/pull/62),
+  [#64](https://github.com/dipbazz/Charity-wagtail-CMS/pull/64)).
+- A single-server deployment with Docker Compose, automatic HTTPS from Caddy, scheduled
+  publishing, and nightly backups to S3 made by the new `backup_site` command
+  ([#70](https://github.com/dipbazz/Charity-wagtail-CMS/pull/70)).
+- Checks on every pull request: lint, migrations, Django's deployment checks and the tests,
+  then query budgets and Lighthouse page-weight budgets
+  ([#9](https://github.com/dipbazz/Charity-wagtail-CMS/pull/9),
+  [#61](https://github.com/dipbazz/Charity-wagtail-CMS/pull/61)).
+- Issue forms for bugs, features and docs
+  ([#28](https://github.com/dipbazz/Charity-wagtail-CMS/pull/28),
+  [#41](https://github.com/dipbazz/Charity-wagtail-CMS/pull/41)).
+- A documentation site for people and AI agents
+  ([#85](https://github.com/dipbazz/Charity-wagtail-CMS/pull/85)).
+- This changelog, version numbers, milestones on the project board and a release process
+  ([#87](https://github.com/dipbazz/Charity-wagtail-CMS/issues/87)).
+
+### Changed
+
+- The Docker image moved to Debian 13 "trixie" and dropped unused packages
+  ([#24](https://github.com/dipbazz/Charity-wagtail-CMS/pull/24)).
+- The demo charity uses reserved example domains for every address
+  ([#27](https://github.com/dipbazz/Charity-wagtail-CMS/pull/27)).
+
+### Fixed
+
+- The Docker image runs the production settings
+  ([#16](https://github.com/dipbazz/Charity-wagtail-CMS/pull/16)).
+- Production sends email, and saves form submissions even when the mail server is down
+  ([#18](https://github.com/dipbazz/Charity-wagtail-CMS/pull/18)).
+- Production serves static files and uploads, and keeps the database and uploads in a
+  persistent data folder ([#19](https://github.com/dipbazz/Charity-wagtail-CMS/pull/19)).
+- Production refuses to start without its allowed hostnames, instead of rejecting every
+  request ([#20](https://github.com/dipbazz/Charity-wagtail-CMS/pull/20)).
+- Links in the API, news feed, sitemap and sharing tags use the site's real address, not
+  localhost ([#26](https://github.com/dipbazz/Charity-wagtail-CMS/pull/26)).
+- The header search box is the same size on every page
+  ([#42](https://github.com/dipbazz/Charity-wagtail-CMS/pull/42)).
+- On phones the header menu sits behind a Menu button instead of wrapping onto several lines,
+  and it's collapsed before the page is first drawn, so nothing jumps
+  ([#45](https://github.com/dipbazz/Charity-wagtail-CMS/pull/45),
+  [#68](https://github.com/dipbazz/Charity-wagtail-CMS/pull/68)).
+- Editors can change the announcement banner and manage partners, testimonials and news
+  categories ([#73](https://github.com/dipbazz/Charity-wagtail-CMS/pull/73)).
+- Editors can submit pages for moderation when the mail server can't be reached
+  ([#79](https://github.com/dipbazz/Charity-wagtail-CMS/pull/79)).
+- Server errors and warnings are written to the container log
+  ([#80](https://github.com/dipbazz/Charity-wagtail-CMS/pull/80)).
+
+### Security
+
+- The images API hides images whose safeguarding consent isn't confirmed
+  ([#17](https://github.com/dipbazz/Charity-wagtail-CMS/pull/17)).
+- Documents in private collections can no longer be downloaded from `/media/` without their
+  password ([#49](https://github.com/dipbazz/Charity-wagtail-CMS/pull/49)).
+- Password- and login-protected stories and appeals stay out of listings, the homepage and the
+  news feed ([#66](https://github.com/dipbazz/Charity-wagtail-CMS/pull/66)).
+- Every CI action is pinned to a commit, and Dependabot proposes updates
+  ([#69](https://github.com/dipbazz/Charity-wagtail-CMS/pull/69)).
+
+[Unreleased]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/dipbazz/Charity-wagtail-CMS/releases/tag/v0.1.0

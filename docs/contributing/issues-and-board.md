@@ -33,6 +33,7 @@ updated issues in the repo are added to it automatically.
 |---|---|
 | Status | Backlog → Ready → In progress → In review → Done |
 | Iteration | Two-week sprints |
+| Milestone | The version the work ships in, e.g. `v0.2.0` |
 | Priority | Mirrors the `P1`–`P3` labels |
 
 - Move an issue to *In progress* when you start it, and to *In review* when its pull request is
@@ -40,3 +41,10 @@ updated issues in the repo are added to it automatically.
 - An epic is *In progress* while any of its sub-issues is being worked on or done, and *Done*
   when all of them are closed.
 - Merged pull requests and closed issues go to *Done*.
+
+## Versions
+
+Each version is a milestone, planned at the start of an iteration. New work found during an
+iteration goes into the next milestone, not the current one, unless it fixes a bug that stops
+people using the live site. [Versions and releases](releases.md#what-goes-into-which-version)
+has the rule and how to show a roadmap view grouped by milestone.
