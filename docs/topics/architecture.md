@@ -26,7 +26,8 @@ core/       shared: StreamField blocks, CustomImage + CustomRendition, SocialMet
             update_site_url and backup_site commands
 home/       HomePage, StandardPage, seed_demo command + demo_images/
 campaigns/  CampaignIndexPage, CampaignPage, DonationAmount, DonatePage, Pledge (+ Frequency
-            choices), PledgeForm (a ModelForm, forms.py), dashboard panel hook
+            choices), PledgeForm (a ModelForm, forms.py), PledgeViewSet (views.py,
+            the Pledges admin), dashboard panel hook
 news/       NewsIndexPage (routable: tag, category, RSS feed), NewsPage, NewsCategory snippet
 contact/    FormPage (wagtail.contrib.forms, editor-built forms with email)
 search/     search view with search promotions

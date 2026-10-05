@@ -20,6 +20,8 @@ superusers.
 | **Partners** | Add, change and delete | ✅ | ✅ |
 | **News categories** | Add, change and delete | ✅ | ✅ |
 | **Site settings** (charity number, donate page, contact details) | Change | ❌ | ✅ |
+| **Pledges** (from the Donate page) | View, filter and export | ✅ | ✅ |
+| | Add, change or delete | ❌ | ❌ |
 | **Users, groups and sites** | Manage | ❌ | ❌ |
 
 Why the differences:
@@ -28,6 +30,9 @@ Why the differences:
 - **Testimonials** quote real people, so a moderator signs them off.
 - **Site settings** hold the charity number and the page the Donate button links to, so only
   moderators change them.
+- **Pledges** come from supporters on the site, so nobody adds or edits them, and only a
+  superuser can delete one: they hold personal details, and a pledge deleted by accident loses
+  the record of a donation.
 
 ## How permissions are granted
 
@@ -36,7 +41,8 @@ This site's models get theirs from data migrations:
 
 - `core/migrations/0004_editor_and_moderator_permissions.py`: the banner, partners,
   testimonials and site settings;
-- `news/migrations/0004_editor_and_moderator_permissions.py`: news categories.
+- `news/migrations/0004_editor_and_moderator_permissions.py`: news categories;
+- `campaigns/migrations/0006_pledge_permissions.py`: viewing pledges.
 
 The full discussion is in issue #72.
 

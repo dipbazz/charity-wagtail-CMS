@@ -1,6 +1,7 @@
 import datetime
 from decimal import Decimal
 
+from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator
@@ -340,5 +341,8 @@ class Pledge(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        amount = format_money(self.amount, self.currency)
-        return f"{self.name}: {amount} {self.get_frequency_display().lower()}"
+        return f"{self.name}: {self.display_amount()} {self.get_frequency_display().lower()}"
+
+    @admin.display(description="Amount")
+    def display_amount(self):
+        return format_money(self.amount, self.currency)

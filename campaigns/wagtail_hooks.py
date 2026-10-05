@@ -5,6 +5,7 @@ from wagtail import hooks
 from wagtail.admin.ui.components import Component
 
 from campaigns.models import CampaignPage
+from campaigns.views import PledgeViewSet
 
 CLOSING_SOON_DAYS = 14
 
@@ -39,3 +40,8 @@ class FundraisingPanel(Component):
 @hooks.register("construct_homepage_panels")
 def add_fundraising_panel(request, panels):
     panels.append(FundraisingPanel())
+
+
+@hooks.register("register_admin_viewset")
+def register_pledge_viewset():
+    return PledgeViewSet()

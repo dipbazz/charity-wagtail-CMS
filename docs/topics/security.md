@@ -60,13 +60,15 @@ image. See the [settings reference](../reference/settings.md).
 Test what editors can do as `editor`, not as a superuser, or a missing permission goes unnoticed.
 See [Permissions](permissions.md).
 
-## Form submissions hold personal data
+## Pledges and form submissions hold personal data
 
-Volunteer sign-ups and Donate page pledges are stored as form submissions with names, email
-addresses and, for pledges, home addresses and (monthly pledges only) mobile numbers. Anyone who can edit a form page
-can read and export its submissions (`wagtail.contrib.forms` grants it with the page's edit
-permission), so give page editing only to people who may see supporters' details. Exported CSV
-files hold the same data: don't leave them in shared folders.
+Donate page pledges (the `Pledge` model) hold names, email addresses, optional home addresses
+and, for monthly pledges only, mobile numbers. Editors and moderators can read and export them
+under **Pledges**; only a superuser can delete one, so a donation's record can't be lost by
+accident. Volunteer sign-ups are form submissions: anyone who can edit a form page can read and
+export them (`wagtail.contrib.forms` grants it with the page's edit permission). Give admin
+access only to people who may see supporters' details, and don't leave exported files in shared
+folders.
 
 The mobile number's help text is the supporter's consent to a monthly reminder on WhatsApp or
 by text. Don't use the numbers for anything else.
