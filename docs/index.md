@@ -27,10 +27,13 @@ agents.
 - **Editing the charity's content?** The [editor guide](editor-guide/index.md) is for the
   charity's own team.
 
+## Contents
+
+<!-- The theme builds every page's sidebar menu from this list, so it must not be :hidden:. -->
+
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
 :titlesonly:
-:hidden:
 
 getting-started/index
 topics/index
