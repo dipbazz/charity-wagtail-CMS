@@ -55,11 +55,17 @@ class PledgeForm(BaseForm):
         initial="one-off",
         label="How often",
     )
+    # Each error says which field it's about, because the summary at the top lists them all.
     name = forms.CharField(
-        max_length=255, label="Your name", widget=forms.TextInput(attrs={"autocomplete": "name"})
+        max_length=255,
+        label="Your name",
+        error_messages={"required": "Enter your name."},
+        widget=forms.TextInput(attrs={"autocomplete": "name"}),
     )
     email = forms.EmailField(
-        label="Email address", widget=forms.EmailInput(attrs={"autocomplete": "email"})
+        label="Email address",
+        error_messages={"required": "Enter your email address."},
+        widget=forms.EmailInput(attrs={"autocomplete": "email"}),
     )
     phone_country = forms.ChoiceField(choices=phone_country_choices, label="Country")
     phone = forms.CharField(

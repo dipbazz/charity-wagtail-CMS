@@ -188,6 +188,17 @@ class TestPledging:
         assert "Choose an amount or enter your own." in response.content.decode()
         assert not FormSubmission.objects.exists()
 
+    # Regression: ISSUE-001 — the error summary said "This field is required." twice
+    # Found by /qa on 2026-10-05
+    # Report: .gstack/qa-reports/run-20261005T080853Z/qa-report-127.0.0.1-2026-10-05.md
+    def test_missing_name_and_email_errors_say_which_field(self, client, donate_page):
+        response = pledge(client, donate_page, name="", email="")
+
+        html = response.content.decode()
+        assert "Enter your name." in html
+        assert "Enter your email address." in html
+        assert "This field is required." not in html
+
     def test_a_closed_appeal_cannot_be_chosen(self, client, donate_page):
         response = pledge(client, donate_page, appeal="last-year")
 
