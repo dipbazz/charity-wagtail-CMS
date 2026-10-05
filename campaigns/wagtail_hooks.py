@@ -23,6 +23,8 @@ class FundraisingPanel(Component):
         totals = open_appeals.aggregate(raised=Sum("amount_raised"), target=Sum("target_amount"))
         context.update(
             {
+                # The money tag reads the currency from the request's Site settings.
+                "request": parent_context["request"],
                 "open_count": open_appeals.count(),
                 "total_raised": totals["raised"] or 0,
                 "total_target": totals["target"] or 0,

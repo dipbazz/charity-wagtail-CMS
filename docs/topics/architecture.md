@@ -21,7 +21,8 @@ charity/    settings (base, dev, test, production), urls.py, api.py (Wagtail API
             pagination, 404/500), static/css/charity.css, static/js/charity.js
 core/       shared: StreamField blocks, CustomImage + CustomRendition, SocialMetaMixin,
             SiteSettings, AnnouncementBanner, Partner and Testimonial snippets, template tags,
-            admin hooks, views (robots.txt, serve_media), the SMTP mail backend,
+            admin hooks, views (robots.txt, serve_media), the SMTP mail backend, money
+            (currency formatting),
             update_site_url and backup_site commands
 home/       HomePage, StandardPage, seed_demo command + demo_images/
 campaigns/  CampaignIndexPage, CampaignPage, DonationAmount, dashboard panel hook

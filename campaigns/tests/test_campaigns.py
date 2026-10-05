@@ -102,10 +102,10 @@ class TestCampaignPage:
         html = client.get(campaign.url).content.decode()
 
         assert "Clean water for Kisumu" in html
-        assert "£2,500 raised of £10,000" in html
+        assert "Rs 2,500 raised of Rs 10,000" in html
         assert 'style="width: 25%"' in html
-        assert "£10" in html and "Clean water for one person" in html
-        assert "£250" in html and "A hand pump repair" in html
+        assert "Rs 10<" in html and "Clean water for one person" in html
+        assert "Rs 250<" in html and "A hand pump repair" in html
         assert "Why it matters" in html
 
     def test_can_preview_the_listing_card(self, campaign_index):

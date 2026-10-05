@@ -173,14 +173,14 @@ class CampaignPage(SocialMetaMixin, Page):
 
 
 class DonationAmount(Orderable):
-    """A suggested gift and what it pays for, e.g. £10 = clean water for one person."""
+    """A suggested gift and what it pays for, e.g. 1,500 = clean water for one person."""
 
     page = ParentalKey(CampaignPage, on_delete=models.CASCADE, related_name="donation_amounts")
-    amount = models.PositiveIntegerField(help_text="In pounds.")
+    amount = models.PositiveIntegerField(help_text="A whole amount in the site's currency.")
     impact = models.CharField(max_length=255)
 
     panels = [FieldPanel("amount"), FieldPanel("impact")]
     api_fields = [APIField("amount"), APIField("impact")]
 
     def __str__(self):
-        return f"£{self.amount}: {self.impact}"
+        return f"{self.amount:,}: {self.impact}"

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load money_tags wagtailcore_tags wagtailimages_tags %}
 
 {% block body_class %}template-campaignpage{% endblock %}
 
@@ -32,7 +32,7 @@
                     <h2 id="give-heading">What your gift can do</h2>
                     <ul>
                         {% for option in amounts %}
-                            <li><strong>£{{ option.amount }}</strong> {{ option.impact }}</li>
+                            <li><strong>{% money option.amount %}</strong> {{ option.impact }}</li>
                         {% endfor %}
                     </ul>
                     {% if settings.core.SiteSettings.donate_page %}

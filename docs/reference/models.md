@@ -32,6 +32,7 @@ Moderators only.
 |---|---|
 | `charity_number`, `contact_email`, `phone`, `address` | Shown in the footer |
 | `donate_page` | The page the header's Donate button links to |
+| `currency` | Shown with every amount (`{% money %}`): `NPR` (Nepalese rupee, the default) or `GBP`. Codes and symbols are in `core/money.py` |
 | `facebook_url`, `instagram_url`, `linkedin_url` | Social links; `social_links` lists the ones that are set |
 
 ### `AnnouncementBanner`
@@ -112,7 +113,7 @@ An appeal, with its editor split into Content, Fundraising, Promote and Settings
 
 ### `DonationAmount`
 
-A suggested gift on a `CampaignPage` (inline, up to four): `amount` in pounds and its `impact`.
+A suggested gift on a `CampaignPage` (inline, up to four): `amount`, a whole number in the site's currency, and its `impact`.
 
 The fundraising dashboard panel (`campaigns/wagtail_hooks.py`) shows open appeals' totals and
 those closing within 14 days.

@@ -10,6 +10,11 @@ version number.
 
 ## [Unreleased]
 
+### Changed
+
+- Amounts across the site (appeal targets, suggested gifts, the dashboard) are shown in the
+  currency chosen in Site settings: Nepalese rupees by default, or pounds sterling.
+
 ## [0.1.0] - 2026-10-05
 
 The first tracked release. It collects everything built before versioning started.

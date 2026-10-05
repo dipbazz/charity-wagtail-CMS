@@ -5,7 +5,8 @@ the live demo all use. See [Management commands](management-commands.md#seed_dem
 
 ## The charity is fictional
 
-- Brightwell Water Trust, its people, figures and charity number are fictional.
+- Brightwell Water Trust, its people, figures and charity number are fictional. Amounts are in
+  Nepalese rupees (Site settings → Currency).
 - Use `brightwell.example` for the charity's own addresses, and `example.org` or `example.com`
   for third parties. These are reserved domains that never reach a real inbox or site.
 - The flood appeal describes the real flash flood in Nepal on 26 August 2026. The page says

@@ -38,6 +38,15 @@ def test_configures_site_settings_and_menu(seeded, client):
     assert seeded.root_page.get_children().live().in_menu().count() >= 3
 
 
+def test_amounts_are_in_rupees_on_every_page(seeded, client):
+    assert SiteSettings.for_site(seeded).currency == "NPR"
+    pages = Page.objects.live().filter(depth__gt=1)
+
+    pounds = [page.url for page in pages if "£" in client.get(page.url).content.decode()]
+
+    assert pounds == []
+
+
 def test_every_live_page_renders(seeded, client):
     pages = Page.objects.live().filter(depth__gt=1)
 
