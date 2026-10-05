@@ -34,7 +34,9 @@ CSRF_COOKIE_SECURE = True
 # Form notifications and moderation workflow emails.
 MAILERS = {
     "default": {
-        "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+        # SMTP that lets the moderation workflow carry on, without its email, when the mail
+        # server can't be reached.
+        "BACKEND": "core.mail.SMTPBackend",
         "OPTIONS": {
             "host": os.environ.get("DJANGO_EMAIL_HOST", "localhost"),
             "port": int(os.environ.get("DJANGO_EMAIL_PORT", 587)),
