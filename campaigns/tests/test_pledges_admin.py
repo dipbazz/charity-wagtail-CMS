@@ -6,6 +6,7 @@ Logged in as group members, not superusers, except where only a superuser may ac
 import importlib
 
 import pytest
+from bs4 import BeautifulSoup
 from django.apps import apps
 from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
@@ -46,6 +47,18 @@ class TestTheTeam:
         assert "Sita Sharma" in html
         assert "Rs 2,500" in html
         assert "Flood relief" in html
+
+    def test_columns_are_headed_for_the_team(self, client, request, member, sent_pledge):
+        client.force_login(request.getfixturevalue(member))
+
+        html = client.get(reverse("pledges:index")).content.decode()
+        headings = [
+            th.get_text(strip=True) for th in BeautifulSoup(html, "html.parser").select("thead th")
+        ]
+
+        for heading in ["Sent", "Name", "Amount", "How often", "Appeal"]:
+            assert heading in headings
+        assert "Your name" not in headings
 
     def test_can_filter_to_monthly_pledges(self, client, request, member, sent_pledge):
         Pledge.objects.create(

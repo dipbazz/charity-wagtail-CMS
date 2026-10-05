@@ -310,7 +310,6 @@ class Pledge(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="pledges",
-        verbose_name="which appeal would you like to support?",
         help_text="Blank means wherever it's needed most.",
     )
     amount = models.PositiveIntegerField(help_text="A whole amount in the pledge's currency.")
@@ -318,17 +317,13 @@ class Pledge(models.Model):
     frequency = models.CharField(
         "how often", max_length=7, choices=Frequency, default=Frequency.ONE_OFF
     )
-    name = models.CharField("your name", max_length=255)
+    name = models.CharField(max_length=255)
     email = models.EmailField("email address")
-    # Stored in E.164 (+9779841234567); only monthly pledges keep one.
     phone = models.CharField(
-        "number",
+        "mobile number",
         max_length=16,
         blank=True,
-        help_text=(
-            "We'll only use this to send you a monthly reminder on WhatsApp, or by text "
-            "message if you're in Nepal and not on WhatsApp."
-        ),
+        help_text="In international form (+9779841234567). Monthly pledges only, for the reminder.",
     )
     address = models.TextField(
         blank=True,

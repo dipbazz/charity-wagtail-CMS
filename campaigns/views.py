@@ -1,3 +1,4 @@
+from wagtail.admin.ui.tables import Column
 from wagtail.admin.viewsets.model import ModelViewSet
 
 from campaigns.models import Pledge
@@ -32,7 +33,13 @@ class PledgeViewSet(ModelViewSet):
         "postcode",
     ]
 
-    list_display = ["created_at", "name", "display_amount", "get_frequency_display", "appeal"]
+    list_display = [
+        "created_at",
+        "name",
+        "display_amount",
+        Column("frequency", label="How often", accessor="get_frequency_display"),
+        "appeal",
+    ]
     list_filter = ["frequency", "appeal", "created_at"]
     search_fields = ["name", "email"]
     search_backend_name = None  # plain database search; pledges aren't in the site search index
@@ -52,7 +59,5 @@ class PledgeViewSet(ModelViewSet):
     export_headings = {
         "created_at": "Sent",
         "get_frequency_display": "How often",
-        "appeal": "Appeal",
-        "phone": "Mobile number",
     }
     export_filename = "pledges"

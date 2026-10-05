@@ -133,9 +133,12 @@ thank-you template (`donate_page_landing.html`) is shown. Preview modes: `""` (t
 | `body` | Below the form, e.g. a table of where the money goes |
 | `thank_you_text` | Shown after someone sends the form, with a link to the appeals |
 
-`PledgeForm` (`campaigns/forms.py`) is a `ModelForm` for `Pledge`: its fields, labels, help
-text and choices come from the model, and the form only adds how the page asks for them (the
-amount cards, the supporter's own amount, the phone country, widgets and error messages).
+`PledgeForm` (`campaigns/forms.py`) is a `ModelForm` for `Pledge`: what each field accepts
+(type, length, choices, required) comes from the model. The model's names are neutral, because
+they head the columns under Pledges in the admin; the form words them for donors with
+`Meta.labels` and `Meta.help_texts` ("Your name", the mobile number's reminder consent), and adds
+how the page asks for them (the amount cards, the supporter's own amount, the phone country,
+widgets and error messages).
 
 - Choosing "Other amount" reveals "Your own amount", a text box with a number keypad that
   accepts "1,00,000"; choosing "Monthly" reveals an optional mobile number for a future monthly

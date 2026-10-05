@@ -96,20 +96,40 @@ class TestDonatePage:
 
 
 class TestPledgeModelAndForm:
-    """PledgeForm builds its fields from Pledge, so labels, help and choices can't drift apart."""
+    """PledgeForm builds its fields from Pledge, so what a field accepts can't drift apart. The
+    model's names are neutral (they head the admin columns); the form words them for donors."""
 
-    @pytest.mark.parametrize("name", ["frequency", "name", "email", "phone", "address", "postcode"])
-    def test_labels_and_help_come_from_the_model(self, name):
+    @pytest.mark.parametrize("name", ["name", "email", "phone", "address", "postcode"])
+    def test_what_each_field_accepts_comes_from_the_model(self, name):
         form_field = PledgeForm.base_fields[name]
         model_field = Pledge._meta.get_field(name)
 
-        assert (
-            form_field.label == model_field.verbose_name[0].upper() + model_field.verbose_name[1:]
-        )
-        assert form_field.help_text == model_field.help_text
+        assert form_field.required == (not model_field.blank)
+        if name != "phone":  # the form allows a longer typed number; clean() normalises it
+            assert form_field.max_length == model_field.max_length
 
     def test_frequency_choices_are_the_shared_frequency_choices(self):
         assert list(PledgeForm.base_fields["frequency"].choices) == Frequency.choices
+
+    @pytest.mark.parametrize(
+        ("name", "model_label", "form_label"),
+        [
+            ("name", "name", "Your name"),
+            ("appeal", "appeal", "Which appeal would you like to support?"),
+            ("phone", "mobile number", "Number"),
+            ("frequency", "how often", "How often"),
+        ],
+    )
+    def test_the_model_is_named_for_the_team_and_the_form_for_donors(
+        self, name, model_label, form_label
+    ):
+        assert Pledge._meta.get_field(name).verbose_name == model_label
+        assert PledgeForm.base_fields[name].label == form_label
+
+    def test_the_mobile_number_help_is_the_reminder_consent(self):
+        help_text = PledgeForm.base_fields["phone"].help_text
+
+        assert "WhatsApp" in help_text and "text message" in help_text
 
 
 class TestPledging:

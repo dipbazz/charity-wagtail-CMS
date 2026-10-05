@@ -72,6 +72,19 @@ class PledgeForm(forms.ModelForm):
             "address": forms.Textarea(attrs={"rows": 3, "autocomplete": "street-address"}),
             "postcode": forms.TextInput(attrs={"autocomplete": "postal-code"}),
         }
+        # The model's names head the admin's columns; donors are asked in their own words.
+        labels = {
+            "name": "Your name",
+            "appeal": "Which appeal would you like to support?",
+            "phone": "Number",  # under its "Mobile number (optional)" legend
+        }
+        help_texts = {
+            # The supporter's consent to the monthly reminder (#90): keep its purpose this clear.
+            "phone": (
+                "We'll only use this to send you a monthly reminder on WhatsApp, or by text "
+                "message if you're in Nepal and not on WhatsApp."
+            ),
+        }
         # Each error says which field it's about, because the summary at the top lists them all.
         error_messages = {
             "name": {"required": "Enter your name."},
@@ -99,7 +112,7 @@ class PledgeForm(forms.ModelForm):
         appeal.queryset = page.get_appeals()
         appeal.to_field_name = "slug"
         appeal.empty_label = NEEDED_MOST
-        appeal.help_text = ""
+        appeal.help_text = ""  # the model's note for the team, not for donors
         if self.initial.get("appeal") is None:
             self.initial["appeal"] = ""  # renders "Wherever it's needed most" as chosen
 
