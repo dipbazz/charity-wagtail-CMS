@@ -40,7 +40,8 @@
                         {% if radio.choice_label.impact %}<span class="amount-impact">{{ radio.choice_label.impact }}</span>{% endif %}
                     </label>
                 {% endfor %}
-                <div class="field other-amount">{{ form.other_amount.as_field_group }}</div>
+                {# charity.css shows this only once "Other amount" is chosen, or when it holds a value the form rejected. #}
+                <div class="field other-amount{% if form.amount.errors and form.other_amount.value %} is-shown{% endif %}">{{ form.other_amount.as_field_group }}</div>
             </fieldset>
 
             <div class="field">{{ form.frequency.as_field_group }}</div>

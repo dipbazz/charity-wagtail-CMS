@@ -213,6 +213,30 @@ class TestPledging:
         assert f'href="{appeals.url}"' in html
 
 
+class TestOwnAmountField:
+    """Only "Other amount" reveals "Your own amount"; charity.css hides it otherwise."""
+
+    def own_amount(self, response):
+        return (
+            soup(response)
+            .find("input", attrs={"name": "other_amount"})
+            .find_parent(class_="other-amount")
+        )
+
+    def test_sits_with_the_amount_cards_and_starts_hidden(self, client, donate_page):
+        field = self.own_amount(client.get(donate_page.url))
+
+        assert field.find_parent(class_="amount-options")
+        assert "is-shown" not in field["class"]
+
+    def test_is_shown_with_its_value_when_both_were_given(self, client, donate_page):
+        response = pledge(client, donate_page, amount="2500", other_amount="4000")
+
+        field = self.own_amount(response)
+        assert "is-shown" in field["class"]
+        assert field.find("input")["value"] == "4000"
+
+
 class TestPreselecting:
     def test_arriving_from_an_appeal_preselects_it(self, client, donate_page):
         response = client.get(donate_page.url, {"appeal": "flood-relief"})

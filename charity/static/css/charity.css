@@ -678,6 +678,12 @@ h4 {
     margin: 0.25rem 0 0;
 }
 
+/* "Your own amount" appears once "Other amount" is chosen. CSS only, so it works without
+   JavaScript; browsers without :has() simply always show it. */
+.amount-options:not(:has(input[value="other"]:checked)) .other-amount:not(.is-shown) {
+    display: none;
+}
+
 .amount-options .other-amount input {
     max-width: 14rem;
 }

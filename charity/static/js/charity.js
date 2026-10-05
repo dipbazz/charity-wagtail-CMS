@@ -45,3 +45,17 @@ if (menuToggle) {
         if (menu.contains(document.activeElement)) menuToggle.focus();
     });
 }
+
+// Donate page: "Your own amount" is hidden unless "Other amount" is chosen (see charity.css), so
+// clear it when a suggested amount is chosen; a forgotten hidden value would otherwise be sent
+// and the form would ask the supporter to choose between two amounts.
+const ownAmount = document.getElementById("id_other_amount");
+if (ownAmount) {
+    document.querySelectorAll('input[name="amount"]').forEach((radio) => {
+        radio.addEventListener("change", () => {
+            if (radio.checked && radio.value !== "other") {
+                ownAmount.value = "";
+            }
+        });
+    });
+}
