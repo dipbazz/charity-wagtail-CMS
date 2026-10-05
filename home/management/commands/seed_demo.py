@@ -22,7 +22,7 @@ TODAY = datetime.date.today()
 IMAGES_DIR = Path(__file__).parent / "demo_images"
 RELIEF_FUND_URL = "https://rescue.opmcm.gov.np/donations"
 
-# Licences and source links are listed in the README.
+# Licences and source links are listed in docs/reference/demo-content.md.
 # Focal points are (centre x, centre y, width, height) in pixels of the 1600px-wide file.
 PHOTOS = {
     "hero": {
