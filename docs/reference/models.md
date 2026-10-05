@@ -121,9 +121,9 @@ for). `DonationAmount` is on a `CampaignPage` (inline, up to four) and `DonatePa
 ### `DonatePage`
 
 The page every Donate button leads to (max 1, under the `HomePage`): suggested amounts and a
-pledge form. It's a `wagtail.contrib.forms` form page, so pledges are listed under Forms in the
-admin and export to CSV, but its fields are fixed in `campaigns/forms.py` (`PledgeForm`), not
-built by editors. No payment is taken.
+pledge form. A plain page with its own `serve()`: a valid form is saved as a `Pledge` and the
+thank-you template (`donate_page_landing.html`) is shown. Preview modes: `""` (the page) and
+`"thank-you"`. No payment is taken.
 
 | Field | |
 |---|---|
@@ -133,18 +133,39 @@ built by editors. No payment is taken.
 | `body` | Below the form, e.g. a table of where the money goes |
 | `thank_you_text` | Shown after someone sends the form, with a link to the appeals |
 
-The form asks for an amount (a suggested one or the supporter's own), one-off or monthly, the
-appeal (open, public appeals, or "Wherever it's needed most"), name, email, and an optional
-address and postcode. Optional fields say "(optional)" in grey after their label
-(`campaigns/templates/campaigns/forms/label.html`, for fields `PledgeForm` marks
-`show_optional`). Choosing "Other amount" reveals "Your own amount", and choosing "Monthly" reveals an
-optional mobile number for a future monthly reminder on WhatsApp or by text (checked and stored
-in E.164 by `core.phone`; a one-off gift never keeps a number). Both are shown and hidden with
-CSS `:has()`, so they work without JavaScript. A pledge is stored with the site's currency code and the
-appeal's title.
+`PledgeForm` (`campaigns/forms.py`) is a `ModelForm` for `Pledge`: its fields, labels, help
+text and choices come from the model, and the form only adds how the page asks for them (the
+amount cards, the supporter's own amount, the phone country, widgets and error messages).
 
-`?appeal=<slug>&amount=<n>` preselects an appeal and an amount; an appeal page's "Donate to this
-appeal" button adds `?appeal=`.
+- Choosing "Other amount" reveals "Your own amount", a text box with a number keypad that
+  accepts "1,00,000"; choosing "Monthly" reveals an optional mobile number for a future monthly
+  reminder on WhatsApp or by text, checked and stored in E.164 by `core.phone` (a one-off gift
+  never keeps a number). Both are shown and hidden with CSS `:has()`, so they work without
+  JavaScript.
+- Optional fields say "(optional)" in grey after their label
+  (`campaigns/templates/campaigns/forms/label.html`, for fields `PledgeForm` marks
+  `show_optional`).
+- `?appeal=<slug>&amount=<n>` preselects an appeal and an amount; an appeal page's "Donate to
+  this appeal" button adds `?appeal=`.
+
+### `Pledge`
+
+A supporter's promise to give, from the Donate page. No payment is taken yet; a payment status
+comes with taking payments (#92).
+
+| Field | |
+|---|---|
+| `page` | The `DonatePage` it was sent from |
+| `appeal` | The `CampaignPage` it's for; blank means wherever it's needed most |
+| `amount`, `currency` | A whole amount, and the site's currency when it was sent |
+| `frequency` | `Frequency.ONE_OFF` or `Frequency.MONTHLY` |
+| `name`, `email` | |
+| `phone` | E.164; monthly pledges only, for the reminder |
+| `address`, `postcode` | Optional |
+| `created_at` | When it was sent |
+
+`Frequency` (`campaigns.models`) is a `TextChoices` shared by the model, the form and anything
+that acts on pledges: compare with `Frequency.MONTHLY`, never the string.
 
 The fundraising dashboard panel (`campaigns/wagtail_hooks.py`) shows open appeals' totals and
 those closing within 14 days.

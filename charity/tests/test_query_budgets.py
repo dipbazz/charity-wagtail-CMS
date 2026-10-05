@@ -15,7 +15,8 @@ pytestmark = pytest.mark.django_db
 # Public listings (/, /appeals/, /news/ and its feed) also spend one query reading the page privacy
 # restrictions, so pages behind a password or login stay out of them (`.public()`, #47).
 # /donate/ spends three more than /about/: its suggested amounts, and the open appeals offered in
-# the form with their privacy restrictions (#31).
+# the form with their privacy restrictions (#31). A link naming an appeal costs one more, to check
+# that appeal is on offer before preselecting it.
 BUDGETS = {
     "/": 17,
     "/appeals/": 15,
@@ -25,7 +26,7 @@ BUDGETS = {
     "/about/": 11,
     "/volunteer/": 12,
     "/donate/": 14,
-    "/donate/?appeal=flood-relief&amount=2500": 14,
+    "/donate/?appeal=flood-relief&amount=2500": 15,
     "/search/?query=water": 21,
     "/api/v2/pages/?type=campaigns.CampaignPage&fields=*": 18,
 }

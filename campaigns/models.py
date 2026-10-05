@@ -17,18 +17,16 @@ from wagtail.admin.panels import (
     TabbedInterface,
 )
 from wagtail.api import APIField
-from wagtail.contrib.forms.models import AbstractForm
-from wagtail.contrib.forms.panels import FormSubmissionsPanel
 from wagtail.fields import RichTextField, StreamField
 from wagtail.images.api.fields import ImageRenditionField
 from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
 from wagtail.search import index
 
-from campaigns.forms import PledgeForm
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
 from core.models import SiteSettings, SocialMetaMixin
+from core.money import CURRENCY_CHOICES, format_money
 
 
 class CampaignIndexPage(Page):
@@ -202,11 +200,10 @@ DEFAULT_PAYMENT_NOTICE = (
 )
 
 
-class DonatePage(SocialMetaMixin, AbstractForm):
+class DonatePage(SocialMetaMixin, Page):
     """The page every Donate button leads to: suggested amounts and a pledge form.
 
-    The form's fields are fixed (`campaigns.forms.PledgeForm`), not built by editors, but pledges
-    are saved as form submissions, so they're listed in the admin and export to CSV.
+    Each pledge it takes is saved as a `Pledge`, listed under Pledges in the admin.
     """
 
     introduction = models.TextField(blank=True)
@@ -221,8 +218,7 @@ class DonatePage(SocialMetaMixin, AbstractForm):
     )
     thank_you_text = RichTextField(blank=True, help_text="Shown after someone sends the form.")
 
-    content_panels = AbstractForm.content_panels + [
-        FormSubmissionsPanel(),
+    content_panels = Page.content_panels + [
         FieldPanel("introduction"),
         InlinePanel("donation_amounts", heading="Suggested amounts", label="Amount", max_num=6),
         FieldPanel("payment_notice"),
@@ -235,60 +231,49 @@ class DonatePage(SocialMetaMixin, AbstractForm):
     subpage_types = []
     max_count = 1
 
-    data_fields = [
-        ("submit_time", "Submission date"),
-        ("amount", "Amount"),
-        ("currency", "Currency"),
-        ("frequency", "Frequency"),
-        ("name", "Name"),
-        ("email", "Email"),
-        ("phone", "Mobile number"),
-        ("appeal", "Appeal"),
-        ("address", "Address"),
-        ("postcode", "Postcode or postal code"),
-    ]
+    landing_page_template = "campaigns/donate_page_landing.html"
+    preview_modes = [("", "Donate page"), ("thank-you", "Thank-you page")]
 
     def get_appeals(self):
         return CampaignPage.objects.live().public().active().order_by("title")
 
-    def get_form_fields(self):
-        return []
+    def get_form(self, *args, site_settings, **kwargs):
+        from campaigns.forms import PledgeForm  # forms imports this module's Pledge
 
-    def get_data_fields(self):
-        return self.data_fields
-
-    def get_form_class(self):
-        return PledgeForm
-
-    def get_form(self, *args, request=None, **kwargs):
-        if request is None:  # the admin preview
-            site_settings = SiteSettings.for_site(self.get_site())
-        else:
-            site_settings = SiteSettings.for_request(request)
         return PledgeForm(
             *args,
-            amounts=self.donation_amounts.all(),
-            appeals=self.get_appeals(),
+            page=self,
             currency=site_settings.currency,
             phone_country=site_settings.phone_country,
             **kwargs,
         )
 
     def serve(self, request, *args, **kwargs):
+        site_settings = SiteSettings.for_request(request)
         if request.method == "POST":
-            form = self.get_form(request.POST, request=request, page=self, user=request.user)
+            form = self.get_form(request.POST, site_settings=site_settings)
             if form.is_valid():
-                submission = self.process_form_submission(form)
-                return self.render_landing_page(request, submission, *args, **kwargs)
+                form.save()
+                return self.render_landing_page(request)
         else:
-            form = self.get_form(request=request, link=request.GET, page=self, user=request.user)
+            form = self.get_form(site_settings=site_settings, link=request.GET)
 
-        context = self.get_context(request)
+        context = self.get_context(request, *args, **kwargs)
         context["form"] = form
         return TemplateResponse(request, self.get_template(request), context)
 
-    def process_form_submission(self, form):
-        return self.get_submission_class().objects.create(form_data=form.pledge_data(), page=self)
+    def render_landing_page(self, request):
+        return TemplateResponse(request, self.landing_page_template, self.get_context(request))
+
+    def serve_preview(self, request, mode_name):
+        if mode_name == "thank-you":
+            return self.render_landing_page(request)
+        return super().serve_preview(request, mode_name)
+
+    def get_preview_context(self, request, mode_name):
+        context = super().get_preview_context(request, mode_name)
+        context["form"] = self.get_form(site_settings=SiteSettings.for_site(self.get_site()))
+        return context
 
     def get_appeals_page(self):
         return CampaignIndexPage.objects.live().public().first()
@@ -302,3 +287,58 @@ class DonatePage(SocialMetaMixin, AbstractForm):
 
 class DonatePageAmount(AbstractDonationAmount):
     page = ParentalKey(DonatePage, on_delete=models.CASCADE, related_name="donation_amounts")
+
+
+class Frequency(models.TextChoices):
+    """How often a supporter gives. Shared by pledges, the pledge form and anything that acts on
+    them (such as monthly reminders), so compare with Frequency.MONTHLY, never the string."""
+
+    ONE_OFF = "one-off", "One-off"
+    MONTHLY = "monthly", "Monthly"
+
+
+class Pledge(models.Model):
+    """A supporter's promise to give, sent from the Donate page. No payment is taken yet."""
+
+    page = models.ForeignKey(
+        DonatePage, null=True, on_delete=models.SET_NULL, related_name="pledges"
+    )
+    appeal = models.ForeignKey(
+        CampaignPage,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="pledges",
+        verbose_name="which appeal would you like to support?",
+        help_text="Blank means wherever it's needed most.",
+    )
+    amount = models.PositiveIntegerField(help_text="A whole amount in the pledge's currency.")
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES)
+    frequency = models.CharField(
+        "how often", max_length=7, choices=Frequency, default=Frequency.ONE_OFF
+    )
+    name = models.CharField("your name", max_length=255)
+    email = models.EmailField("email address")
+    # Stored in E.164 (+9779841234567); only monthly pledges keep one.
+    phone = models.CharField(
+        "number",
+        max_length=16,
+        blank=True,
+        help_text=(
+            "We'll only use this to send you a monthly reminder on WhatsApp, or by text "
+            "message if you're in Nepal and not on WhatsApp."
+        ),
+    )
+    address = models.TextField(
+        blank=True,
+        help_text="House or ward number, street or tole, town or municipality, district.",
+    )
+    postcode = models.CharField("postcode or postal code", max_length=12, blank=True)
+    created_at = models.DateTimeField("sent", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        amount = format_money(self.amount, self.currency)
+        return f"{self.name}: {amount} {self.get_frequency_display().lower()}"

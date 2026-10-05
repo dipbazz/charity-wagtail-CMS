@@ -1,10 +1,10 @@
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
-from wagtail.contrib.forms.models import FormSubmission
 from wagtail.test.utils.form_data import inline_formset, nested_form_data, rich_text, streamfield
 
-from campaigns.models import DonatePage
+from campaigns.forms import PledgeForm
+from campaigns.models import CampaignPage, DonatePage, Frequency, Pledge
 from campaigns.tests.factories import DonatePageFactory
 from core.models import SiteSettings
 from home.models import StandardPage
@@ -30,7 +30,7 @@ def pledge(client, page, **changes):
 
 
 def stored(page):
-    return FormSubmission.objects.get(page=page).form_data
+    return Pledge.objects.get(page=page)
 
 
 def soup(response):
@@ -95,28 +95,50 @@ class TestDonatePage:
         assert options == ["Wherever it's needed most", "Flood relief"]
 
 
+class TestPledgeModelAndForm:
+    """PledgeForm builds its fields from Pledge, so labels, help and choices can't drift apart."""
+
+    @pytest.mark.parametrize("name", ["frequency", "name", "email", "phone", "address", "postcode"])
+    def test_labels_and_help_come_from_the_model(self, name):
+        form_field = PledgeForm.base_fields[name]
+        model_field = Pledge._meta.get_field(name)
+
+        assert (
+            form_field.label == model_field.verbose_name[0].upper() + model_field.verbose_name[1:]
+        )
+        assert form_field.help_text == model_field.help_text
+
+    def test_frequency_choices_are_the_shared_frequency_choices(self):
+        assert list(PledgeForm.base_fields["frequency"].choices) == Frequency.choices
+
+
 class TestPledging:
+    def test_a_pledge_records_the_page_it_came_from(self, client, donate_page):
+        pledge(client, donate_page)
+
+        assert stored(donate_page).page == donate_page
+
     def test_a_suggested_amount_is_saved(self, client, donate_page):
         response = pledge(client, donate_page, frequency="monthly", appeal="flood-relief")
 
         assert response.status_code == 200
-        data = stored(donate_page)
-        assert data["amount"] == "2500"
-        assert data["currency"] == "NPR"
-        assert data["frequency"] == "Monthly"
-        assert data["name"] == "Sita Sharma"
-        assert data["email"] == "sita@example.com"
-        assert data["appeal"] == "Flood relief"
+        saved = stored(donate_page)
+        assert saved.amount == 2500
+        assert saved.currency == "NPR"
+        assert saved.frequency == Frequency.MONTHLY
+        assert saved.name == "Sita Sharma"
+        assert saved.email == "sita@example.com"
+        assert saved.appeal == CampaignPage.objects.get(slug="flood-relief")
 
     def test_a_different_amount_is_saved(self, client, donate_page):
         pledge(client, donate_page, amount="other", other_amount="4000")
 
-        assert stored(donate_page)["amount"] == "4000"
+        assert stored(donate_page).amount == 4000
 
     def test_typing_an_amount_without_choosing_other_is_enough(self, client, donate_page):
         pledge(client, donate_page, amount="", other_amount="4000")
 
-        assert stored(donate_page)["amount"] == "4000"
+        assert stored(donate_page).amount == 4000
 
     # Regression: ISSUE-002 — a typed amount was silently dropped when a card was also chosen
     # Found by /qa on 2026-10-05
@@ -127,7 +149,7 @@ class TestPledging:
         assert "Choose a suggested amount or type your own, not both." in (
             response.content.decode()
         )
-        assert not FormSubmission.objects.exists()
+        assert not Pledge.objects.exists()
 
     def test_own_amount_is_labelled_with_the_currency(self, client, donate_page):
         label = soup(client.get(donate_page.url)).find("label", attrs={"for": "id_other_amount"})
@@ -137,7 +159,7 @@ class TestPledging:
     def test_wherever_needed_most_is_the_default_appeal(self, client, donate_page):
         pledge(client, donate_page)
 
-        assert stored(donate_page)["appeal"] == "Wherever it's needed most"
+        assert stored(donate_page).appeal is None
 
     @pytest.mark.parametrize(
         "amount",
@@ -153,7 +175,7 @@ class TestPledging:
 
         assert response.status_code == 200
         assert "Choose an amount or enter your own." in response.content.decode()
-        assert not FormSubmission.objects.exists()
+        assert not Pledge.objects.exists()
 
     # Regression: ISSUE-001 — the error summary said "This field is required." twice
     # Found by /qa on 2026-10-05
@@ -170,7 +192,7 @@ class TestPledging:
         response = pledge(client, donate_page, appeal="last-year")
 
         assert "Select a valid choice." in response.content.decode()
-        assert not FormSubmission.objects.exists()
+        assert not Pledge.objects.exists()
 
     def test_thank_you_page_links_back_to_the_appeals(self, client, donate_page, appeals):
         response = pledge(client, donate_page)
@@ -214,21 +236,21 @@ class TestOwnAmountInput:
         assert field["inputmode"] == "numeric"
 
     @pytest.mark.parametrize(
-        ("typed", "stored_amount"), [("1,00,000", "100000"), ("4,000", "4000"), ("4 000", "4000")]
+        ("typed", "stored_amount"), [("1,00,000", 100000), ("4,000", 4000), ("4 000", 4000)]
     )
     def test_accepts_amounts_written_with_commas_or_spaces(
         self, client, donate_page, typed, stored_amount
     ):
         pledge(client, donate_page, amount="other", other_amount=typed)
 
-        assert stored(donate_page)["amount"] == stored_amount
+        assert stored(donate_page).amount == stored_amount
 
     @pytest.mark.parametrize("typed", ["abc", "12.5"])
     def test_rejects_anything_but_a_whole_amount(self, client, donate_page, typed):
         response = pledge(client, donate_page, amount="other", other_amount=typed)
 
         assert "Enter a whole number." in response.content.decode()
-        assert not FormSubmission.objects.exists()
+        assert not Pledge.objects.exists()
 
 
 class TestPreselecting:
@@ -268,16 +290,16 @@ class TestAddress:
     def test_a_nepali_address_without_a_postal_code_is_accepted(self, client, donate_page):
         pledge(client, donate_page, address="Ward 4, Thamel, Kathmandu")
 
-        data = stored(donate_page)
-        assert data["address"] == "Ward 4, Thamel, Kathmandu"
-        assert data["postcode"] == ""
+        saved = stored(donate_page)
+        assert saved.address == "Ward 4, Thamel, Kathmandu"
+        assert saved.postcode == ""
 
     def test_a_uk_address_with_a_postcode_is_saved(self, client, donate_page):
         pledge(client, donate_page, address="1 Example Street\nBirmingham", postcode="B1 1AA")
 
-        data = stored(donate_page)
-        assert data["address"] == "1 Example Street\nBirmingham"
-        assert data["postcode"] == "B1 1AA"
+        saved = stored(donate_page)
+        assert saved.address == "1 Example Street\nBirmingham"
+        assert saved.postcode == "B1 1AA"
 
 
 class TestOptionalLabels:
@@ -302,21 +324,6 @@ class TestOptionalLabels:
         assert legend.find(class_="optional").get_text(strip=True) == "(optional)"
 
 
-class TestNoGiftAid:
-    """Gift Aid confused donors, so it's off the form until it's needed (backlog issue)."""
-
-    def test_is_not_offered(self, client, donate_page):
-        html = client.get(donate_page.url).content.decode()
-
-        assert 'name="gift_aid"' not in html
-        assert "Gift Aid" not in html
-
-    def test_a_posted_gift_aid_tick_is_not_stored(self, client, donate_page):
-        pledge(client, donate_page, gift_aid="on")
-
-        assert "gift_aid" not in stored(donate_page)
-
-
 class TestMobileNumber:
     """Asked for only with a monthly gift, for the monthly reminder; charity.css hides it
     until Monthly is chosen."""
@@ -329,7 +336,7 @@ class TestMobileNumber:
     def test_is_optional(self, client, donate_page):
         pledge(client, donate_page, frequency="monthly")
 
-        assert stored(donate_page)["phone"] == ""
+        assert stored(donate_page).phone == ""
 
     def test_comes_straight_after_how_often_and_starts_hidden(self, client, donate_page):
         response = client.get(donate_page.url)
@@ -353,19 +360,19 @@ class TestMobileNumber:
     def test_nepali_number_is_saved_with_its_country_code(self, client, donate_page):
         pledge(client, donate_page, frequency="monthly", phone="984-1234567")
 
-        assert stored(donate_page)["phone"] == "+9779841234567"
+        assert stored(donate_page).phone == "+9779841234567"
 
     def test_uk_number_is_saved_with_its_country_code(self, client, donate_page):
         pledge(client, donate_page, frequency="monthly", phone_country="GB", phone="07400 123456")
 
-        assert stored(donate_page)["phone"] == "+447400123456"
+        assert stored(donate_page).phone == "+447400123456"
 
     @pytest.mark.parametrize("phone", ["01-4567890", "98abc12345"])
     def test_a_number_that_cannot_get_messages_shows_an_error(self, client, donate_page, phone):
         response = pledge(client, donate_page, frequency="monthly", phone=phone)
 
         assert "Enter a mobile number, like 984-1234567." in response.content.decode()
-        assert not FormSubmission.objects.exists()
+        assert not Pledge.objects.exists()
 
     # Regression: ISSUE-001 — after a mobile number error, choosing One-off left it on screen
     # Found by /qa on 2026-10-05
@@ -381,7 +388,7 @@ class TestMobileNumber:
         response = pledge(client, donate_page, frequency="one-off", phone=phone)
 
         assert response.status_code == 200
-        assert stored(donate_page)["phone"] == ""
+        assert stored(donate_page).phone == ""
 
     def test_says_it_is_only_for_a_whatsapp_or_text_reminder(self, client, donate_page):
         html = client.get(donate_page.url).content.decode()
@@ -390,29 +397,7 @@ class TestMobileNumber:
         assert "text message" in html
 
 
-class TestPledgesInTheAdmin:
-    def test_editors_see_pledges_with_readable_columns(self, client, editor, donate_page):
-        pledge(client, donate_page, appeal="flood-relief")
-        client.force_login(editor)
-
-        url = reverse("wagtailforms:list_submissions", args=[donate_page.pk])
-        html = client.get(url).content.decode()
-
-        assert "sita@example.com" in html
-        assert "Flood relief" in html
-        assert "Mobile number" in html
-
-    def test_editors_can_export_pledges_as_csv(self, client, editor, donate_page):
-        pledge(client, donate_page, frequency="monthly", phone="984-1234567")
-        client.force_login(editor)
-
-        url = reverse("wagtailforms:list_submissions", args=[donate_page.pk])
-        response = client.get(url, {"export": "csv"})
-
-        csv = b"".join(response.streaming_content).decode()
-        assert csv.splitlines()[0].startswith("Submission date,Amount,Currency,Frequency,Name")
-        assert "2500,NPR,Monthly,Sita Sharma,sita@example.com,+9779841234567" in csv
-
+class TestDonatePageInTheAdmin:
     def test_editors_can_draft_a_donate_page_with_amounts(self, client, editor, home_page):
         client.force_login(editor)
         url = reverse("wagtailadmin_pages:add", args=("campaigns", "donatepage", home_page.pk))

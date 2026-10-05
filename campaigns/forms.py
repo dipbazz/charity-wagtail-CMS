@@ -2,12 +2,12 @@ from dataclasses import dataclass
 
 from django import forms
 from django.core.exceptions import ValidationError
-from wagtail.contrib.forms.forms import BaseForm
+from django.core.validators import MaxLengthValidator
 
+from campaigns.models import Frequency, Pledge
 from core.money import CURRENCIES, format_money
 from core.phone import normalise_mobile, phone_country_choices
 
-FREQUENCIES = {"one-off": "One-off", "monthly": "Monthly"}
 NEEDED_MOST = "Wherever it's needed most"
 CHOOSE_AN_AMOUNT = "Choose an amount or enter your own."
 OTHER = "other"
@@ -36,8 +36,12 @@ class WholeAmountField(forms.IntegerField):
         return super().to_python(value)
 
 
-class PledgeForm(BaseForm):
-    """A pledge to give, saved as a form submission. No payment is taken."""
+class PledgeForm(forms.ModelForm):
+    """A pledge to give, saved as a Pledge. No payment is taken.
+
+    Fields, labels, help text and choices come from the Pledge model; this form only adds how
+    the page asks for them: the amount cards, the supporter's own amount and the phone country.
+    """
 
     # Adds "(optional)" to the labels of fields marked show_optional in __init__.
     template_name_label = "campaigns/forms/label.html"
@@ -55,87 +59,71 @@ class PledgeForm(BaseForm):
         max_value=99_999_999,
         widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
     )
-    frequency = forms.ChoiceField(
-        choices=FREQUENCIES.items(),
-        widget=forms.RadioSelect,
-        initial="one-off",
-        label="How often",
-    )
-    # Each error says which field it's about, because the summary at the top lists them all.
-    name = forms.CharField(
-        max_length=255,
-        label="Your name",
-        error_messages={"required": "Enter your name."},
-        widget=forms.TextInput(attrs={"autocomplete": "name"}),
-    )
-    email = forms.EmailField(
-        label="Email address",
-        error_messages={"required": "Enter your email address."},
-        widget=forms.EmailInput(attrs={"autocomplete": "email"}),
-    )
     phone_country = forms.ChoiceField(choices=phone_country_choices, label="Country")
-    phone = forms.CharField(
-        required=False,
-        max_length=30,
-        label="Number",
-        help_text=(
-            "We'll only use this to send you a monthly reminder on WhatsApp, or by text "
-            "message if you're in Nepal and not on WhatsApp."
-        ),
-        widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel-national"}),
-    )
-    appeal = forms.ChoiceField(required=False, label="Which appeal would you like to support?")
-    address = forms.CharField(
-        required=False,
-        max_length=500,
-        label="Address",
-        help_text="House or ward number, street or tole, town or municipality, district.",
-        widget=forms.Textarea(attrs={"rows": 3, "autocomplete": "street-address"}),
-    )
-    postcode = forms.CharField(
-        required=False,
-        max_length=12,
-        label="Postcode or postal code",
-        widget=forms.TextInput(attrs={"autocomplete": "postal-code"}),
-    )
 
-    def __init__(
-        self,
-        *args,
-        amounts,
-        appeals,
-        currency,
-        phone_country,
-        link=None,
-        **kwargs,
-    ):
-        """`amounts` are the page's suggested amounts, `appeals` the appeals on offer, and
-        `link` the query string of the link that brought the visitor here (?amount=&appeal=).
+    class Meta:
+        model = Pledge
+        fields = ["frequency", "phone", "appeal", "name", "email", "address", "postcode"]
+        widgets = {
+            "frequency": forms.RadioSelect,
+            "phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "tel-national"}),
+            "name": forms.TextInput(attrs={"autocomplete": "name"}),
+            "email": forms.EmailInput(attrs={"autocomplete": "email"}),
+            "address": forms.Textarea(attrs={"rows": 3, "autocomplete": "street-address"}),
+            "postcode": forms.TextInput(attrs={"autocomplete": "postal-code"}),
+        }
+        # Each error says which field it's about, because the summary at the top lists them all.
+        error_messages = {
+            "name": {"required": "Enter your name."},
+            "email": {"required": "Enter your email address."},
+        }
+
+    def __init__(self, *args, page, currency, phone_country, link=None, **kwargs):
+        """`page` is the Donate page (its suggested amounts and appeals), and `link` the query
+        string of the link that brought the visitor here (?amount=&appeal=).
         """
+        kwargs.setdefault("label_suffix", "")  # "Your name", not "Your name:"
         super().__init__(*args, **kwargs)
+        self.page = page
         self.currency = currency
-        self.fields["other_amount"].label = f"Your own amount ({CURRENCIES[currency][1].strip()})"
+        amounts = page.donation_amounts.all()
         self.suggested = {str(option.amount) for option in amounts}
         self.fields["amount"].choices = [
             (str(option.amount), AmountLabel(format_money(option.amount, currency), option.impact))
             for option in amounts
         ] + [(OTHER, AmountLabel("Other amount"))]
-        self.appeal_titles = {"": NEEDED_MOST} | {appeal.slug: appeal.title for appeal in appeals}
-        self.fields["appeal"].choices = self.appeal_titles.items()
+        self.fields["other_amount"].label = f"Your own amount ({CURRENCIES[currency][1].strip()})"
+
+        # Appeals are chosen and linked by slug: /donate/?appeal=flood-relief.
+        appeal = self.fields["appeal"]
+        appeal.queryset = page.get_appeals()
+        appeal.to_field_name = "slug"
+        appeal.empty_label = NEEDED_MOST
+        appeal.help_text = ""
+        if self.initial.get("appeal") is None:
+            self.initial["appeal"] = ""  # renders "Wherever it's needed most" as chosen
+
+        # The column holds the cleaned-up number (E.164, at most 16 characters), but people type
+        # spaces, dashes and brackets, so allow more here; clean() normalises it.
+        phone = self.fields["phone"]
+        phone.max_length = 30
+        phone.validators = [MaxLengthValidator(30)]
+        phone.widget.attrs["maxlength"] = "30"
+
         self.fields["phone_country"].initial = phone_country
         # Not every optional field: the appeal has a default, and the mobile number's legend
         # already says it's optional.
         for name in ("address", "postcode"):
             self.fields[name].show_optional = True
-        self.initial.setdefault("appeal", "")
         if link is not None:
             self.initial.update(self.initial_from_link(link))
 
     def initial_from_link(self, link):
         """Preselect the amount and appeal named in the link, ignoring any that aren't offered."""
         initial = {}
-        if link.get("appeal") in self.appeal_titles:
-            initial["appeal"] = link["appeal"]
+        slug = link.get("appeal")
+        if slug and self.fields["appeal"].queryset.filter(slug=slug).exists():
+            initial["appeal"] = slug
         amount = link.get("amount", "")
         if amount in self.suggested:
             initial["amount"] = amount
@@ -159,7 +147,7 @@ class PledgeForm(BaseForm):
                 self.add_error("amount", "Choose a suggested amount or type your own, not both.")
 
         # The number is only for the monthly reminder, so a one-off gift doesn't keep it.
-        if cleaned_data.get("frequency") != "monthly":
+        if cleaned_data.get("frequency") != Frequency.MONTHLY:
             cleaned_data["phone"] = ""
         phone = cleaned_data.get("phone", "").strip()
         if phone and cleaned_data.get("phone_country"):
@@ -170,18 +158,12 @@ class PledgeForm(BaseForm):
 
         return cleaned_data
 
-    def pledge_data(self):
-        """The pledge as it's stored and exported: one amount, readable values, JSON-safe."""
-        data = self.cleaned_data
-        amount = data["other_amount"] if data["amount"] == OTHER else data["amount"]
-        return {
-            "amount": str(amount),
-            "currency": self.currency,
-            "frequency": FREQUENCIES[data["frequency"]],
-            "name": data["name"],
-            "email": data["email"],
-            "phone": data["phone"],
-            "appeal": self.appeal_titles[data["appeal"]],
-            "address": data["address"],
-            "postcode": data["postcode"],
-        }
+    def save(self, commit=True):
+        pledge = super().save(commit=False)
+        chosen = self.cleaned_data["amount"]
+        pledge.amount = self.cleaned_data["other_amount"] if chosen == OTHER else int(chosen)
+        pledge.currency = self.currency
+        pledge.page = self.page
+        if commit:
+            pledge.save()
+        return pledge
