@@ -33,6 +33,8 @@ Some tests guard the whole project rather than one feature:
 | `charity/tests/test_deploy.py` | `.env` stays out of git and the image; images pinned; logs capped |
 | `charity/tests/test_production_settings.py` | Production refuses to start half-configured; every app's warnings are logged |
 | `home/tests/test_seed_demo.py` | Every demo page renders |
+| `charity/tests/test_changelog.py` | The changelog is well-formed and its newest version matches `pyproject.toml` |
+| `charity/tests/test_docs.py` | The docs sidebar menu isn't hidden |
 
 ## How to write them
 
@@ -62,3 +64,4 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and every
 | `lighthouse` | Page weight and layout shift on a phone ([Performance](../topics/performance.md)) |
 | `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse |
 | `docs` | These docs build with warnings as errors; the built site is uploaded as the `docs-html` artifact |
+| `changelog` (its own workflow) | The pull request updates `CHANGELOG.md`, unless it's labelled `no changelog` |

@@ -7,6 +7,14 @@ repo. Catch up with `git log --oneline <last verified commit>..HEAD --stat` and 
 changed. A PR that changes what a docs page describes updates that page in the same PR, and
 the docs must build with `uv run --group docs sphinx-build -W --keep-going docs docs/_build/html`.
 
+## Versions and changelog
+
+Every PR adds a line under `## [Unreleased]` in `CHANGELOG.md`, written for the person the change
+affects, or is labelled `no changelog` (CI checks this). Each version is a GitHub milestone: put a
+PR in the milestone of the issue it closes. New work found mid-iteration goes into the next
+milestone, not the current one, unless it fixes a P1 bug on the live site. Rules and release
+steps: `docs/contributing/releases.md`.
+
 ## Design mobile first
 
 HTML with no CSS already works on any screen, so that is where every design starts: semantic
