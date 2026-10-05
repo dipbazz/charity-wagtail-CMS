@@ -32,6 +32,8 @@ Moderators only.
 |---|---|
 | `charity_number`, `contact_email`, `phone`, `address` | Shown in the footer |
 | `donate_page` | The page the header's Donate button links to |
+| `currency` | Shown with every amount (`{% money %}`): `NPR` (Nepalese rupee, the default, grouped in lakhs and crores: `Rs 46,87,500`) or `GBP`. Codes and symbols are in `core/money.py` |
+| `phone_country` | The country selected by default for phone numbers on forms (default Nepal). The list is `PHONE_COUNTRIES` in `core/phone.py` |
 | `facebook_url`, `instagram_url`, `linkedin_url` | Social links; `social_links` lists the ones that are set |
 
 ### `AnnouncementBanner`
@@ -110,9 +112,63 @@ An appeal, with its editor split into Content, Fundraising, Promote and Settings
 - Preview modes: `""` (the full page) and `"card"` (the listing card).
 - In the API with its fundraising fields and donation amounts.
 
-### `DonationAmount`
+### `DonationAmount` and `DonatePageAmount`
 
-A suggested gift on a `CampaignPage` (inline, up to four): `amount` in pounds and its `impact`.
+A suggested gift: `amount`, a whole number in the site's currency, and its `impact` (what it pays
+for). `DonationAmount` is on a `CampaignPage` (inline, up to four) and `DonatePageAmount` on the
+`DonatePage` (up to six); both extend the abstract `AbstractDonationAmount`.
+
+### `DonatePage`
+
+The page every Donate button leads to (max 1, under the `HomePage`): suggested amounts and a
+pledge form. A plain page with its own `serve()`: a valid form is saved as a `Pledge` and the
+thank-you template (`donate_page_landing.html`) is shown. Preview modes: `""` (the page) and
+`"thank-you"`. No payment is taken.
+
+| Field | |
+|---|---|
+| `introduction` | Shown under the title |
+| `donation_amounts` | The suggested amounts (`DonatePageAmount`) |
+| `payment_notice` | Above the form: how payment works and what happens next. Has a default |
+| `body` | Below the form, e.g. a table of where the money goes |
+| `thank_you_text` | Shown after someone sends the form, with a link to the appeals |
+
+`PledgeForm` (`campaigns/forms.py`) is a `ModelForm` for `Pledge`: what each field accepts
+(type, length, choices, required) comes from the model. The model's names are neutral, because
+they head the columns under Pledges in the admin; the form words them for donors with
+`Meta.labels` and `Meta.help_texts` ("Your name", the mobile number's reminder consent), and adds
+how the page asks for them (the amount cards, the supporter's own amount, the phone country,
+widgets and error messages).
+
+- Choosing "Other amount" reveals "Your own amount", a text box with a number keypad that
+  accepts "1,00,000"; choosing "Monthly" reveals an optional mobile number for a future monthly
+  reminder on WhatsApp or by text, checked and stored in E.164 by `core.phone` (a one-off gift
+  never keeps a number). Both are shown and hidden with CSS `:has()`, so they work without
+  JavaScript.
+- Optional fields say "(optional)" in grey after their label
+  (`campaigns/templates/campaigns/forms/label.html`, for fields `PledgeForm` marks
+  `show_optional`).
+- `?appeal=<slug>&amount=<n>` preselects an appeal and an amount; an appeal page's "Donate to
+  this appeal" button adds `?appeal=`.
+
+### `Pledge`
+
+A supporter's promise to give, from the Donate page. No payment is taken yet; a payment status
+comes with taking payments (#92).
+
+| Field | |
+|---|---|
+| `page` | The `DonatePage` it was sent from |
+| `appeal` | The `CampaignPage` it's for; blank means wherever it's needed most |
+| `amount`, `currency` | A whole amount, and the site's currency when it was sent |
+| `frequency` | `Frequency.ONE_OFF` or `Frequency.MONTHLY` |
+| `name`, `email` | |
+| `phone` | E.164; monthly pledges only, for the reminder |
+| `address`, `postcode` | Optional |
+| `created_at` | When it was sent |
+
+`Frequency` (`campaigns.models`) is a `TextChoices` shared by the model, the form and anything
+that acts on pledges: compare with `Frequency.MONTHLY`, never the string.
 
 The fundraising dashboard panel (`campaigns/wagtail_hooks.py`) shows open appeals' totals and
 those closing within 14 days.

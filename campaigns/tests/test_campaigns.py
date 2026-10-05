@@ -11,6 +11,7 @@ from wagtail_factories import ImageFactory
 
 from campaigns.models import CampaignIndexPage, CampaignPage
 from campaigns.tests.factories import CampaignIndexPageFactory, CampaignPageFactory
+from core.models import SiteSettings
 from home.models import HomePage, StandardPage
 
 pytestmark = pytest.mark.django_db
@@ -102,11 +103,27 @@ class TestCampaignPage:
         html = client.get(campaign.url).content.decode()
 
         assert "Clean water for Kisumu" in html
-        assert "£2,500 raised of £10,000" in html
+        assert "Rs 2,500 raised of Rs 10,000" in html
         assert 'style="width: 25%"' in html
-        assert "£10" in html and "Clean water for one person" in html
-        assert "£250" in html and "A hand pump repair" in html
+        assert "Rs 10<" in html and "Clean water for one person" in html
+        assert "Rs 250<" in html and "A hand pump repair" in html
         assert "Why it matters" in html
+
+    def test_donate_button_tells_the_donate_page_which_appeal(
+        self, client, site, home_page, campaign_index
+    ):
+        donate = StandardPage(title="Donate", slug="donate")
+        home_page.add_child(instance=donate)
+        settings = SiteSettings.for_site(site)
+        settings.donate_page = donate
+        settings.save()
+        campaign = CampaignPageFactory(parent=campaign_index, slug="flood-relief")
+        campaign.donation_amounts.create(amount=2500, impact="A hygiene kit for a family")
+        campaign.save_revision().publish()
+
+        html = client.get(campaign.url).content.decode()
+
+        assert f'href="{donate.url}?appeal=flood-relief"' in html
 
     def test_can_preview_the_listing_card(self, campaign_index):
         campaign = CampaignPageFactory(parent=campaign_index, title="Winter appeal")

@@ -34,7 +34,7 @@ class TestFundraisingDashboardPanel:
         html = admin_client.get(reverse("wagtailadmin_home")).content.decode()
 
         assert "Fundraising overview" in html
-        assert "£12,500" in html
+        assert "Rs 12,500" in html
         assert "2 open appeals" in html
 
     def test_lists_appeals_closing_within_two_weeks(self, admin_client, campaigns):

@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from wagtail.images.rect import Rect
 from wagtail.models import Site
 
-from campaigns.models import CampaignIndexPage, CampaignPage
+from campaigns.models import CampaignIndexPage, CampaignPage, DonatePage, DonatePageAmount
 from contact.models import FormField, FormPage
 from core.models import AnnouncementBanner, CustomImage, Partner, SiteSettings, Testimonial
 from home.models import StandardPage
@@ -195,29 +195,41 @@ class Command(BaseCommand):
                 ],
             ),
         )
-        donate = publish(
-            home,
-            StandardPage(
-                title="Donate",
-                slug="donate",
-                introduction="Every gift helps a community get safe water that lasts.",
-                body=[
-                    (
-                        "table",
-                        {
-                            "first_row_is_table_header": True,
-                            "first_col_is_header": False,
-                            "data": [
-                                ["Where £1 goes", "Amount"],
-                                ["Projects", "82p"],
-                                ["Fundraising", "13p"],
-                                ["Running the charity", "5p"],
-                            ],
-                        },
-                    ),
-                ],
+        donate = DonatePage(
+            title="Donate",
+            slug="donate",
+            introduction="Every gift helps a community get safe water that lasts.",
+            payment_notice=(
+                "<p>Brightwell is a demo charity, so no payment is taken and nobody will contact "
+                "you about this pledge. To help people affected by the flood in Nepal, give to "
+                f'the <a href="{RELIEF_FUND_URL}">Prime Minister\'s Disaster Relief Fund</a>.</p>'
             ),
+            thank_you_text=(
+                "<p>Thank you for trying the pledge form. Brightwell is fictional, so nobody will "
+                "contact you, but a real charity would be in touch about how to pay.</p>"
+            ),
+            body=[
+                (
+                    "table",
+                    {
+                        "first_row_is_table_header": True,
+                        "first_col_is_header": False,
+                        "data": [
+                            ["Where every Rs 100 goes", "Amount"],
+                            ["Projects", "Rs 82"],
+                            ["Fundraising", "Rs 13"],
+                            ["Running the charity", "Rs 5"],
+                        ],
+                    },
+                ),
+            ],
         )
+        donate.donation_amounts = [
+            DonatePageAmount(amount=1500, impact="Safe water for one person for a year"),
+            DonatePageAmount(amount=2500, impact="A hygiene kit for a family"),
+            DonatePageAmount(amount=10000, impact="Water purification for a month"),
+        ]
+        publish(home, donate)
 
         campaigns = publish(
             home,
@@ -264,11 +276,14 @@ class Command(BaseCommand):
                 ),
             ],
             hero_image=images["flood"],
-            target=Decimal("50000"),
-            raised=Decimal("31250"),
+            target=Decimal("7500000"),
+            raised=Decimal("4687500"),
             start=TODAY - datetime.timedelta(days=10),
             end=TODAY + datetime.timedelta(days=9),
-            amounts=[(25, "A hygiene kit for a family"), (100, "Water purification for a month")],
+            amounts=[
+                (2500, "A hygiene kit for a family"),
+                (10000, "Water purification for a month"),
+            ],
         )
         self.add_campaign(
             campaigns,
@@ -276,11 +291,14 @@ class Command(BaseCommand):
             slug="clean-water-kisumu",
             summary="Twelve villages still walk two hours a day for water.",
             hero_image=images["well"],
-            target=Decimal("80000"),
-            raised=Decimal("24000"),
+            target=Decimal("12000000"),
+            raised=Decimal("3600000"),
             start=TODAY - datetime.timedelta(days=40),
             end=None,
-            amounts=[(10, "Clean water for one person for a year"), (250, "A hand pump repair")],
+            amounts=[
+                (1500, "Clean water for one person for a year"),
+                (35000, "A hand pump repair"),
+            ],
         )
         self.add_campaign(
             campaigns,
@@ -288,11 +306,11 @@ class Command(BaseCommand):
             slug="taps-for-schools",
             summary="Handwashing stations keep children healthy and in class.",
             hero_image=images["school"],
-            target=Decimal("15000"),
-            raised=Decimal("9100"),
+            target=Decimal("2250000"),
+            raised=Decimal("1365000"),
             start=TODAY - datetime.timedelta(days=20),
             end=TODAY + datetime.timedelta(days=60),
-            amounts=[(40, "A handwashing station")],
+            amounts=[(6000, "A handwashing station")],
         )
         self.add_campaign(
             campaigns,
@@ -300,8 +318,8 @@ class Command(BaseCommand):
             slug="winter-appeal-2025",
             summary="Thanks to you, 20 communities kept their water running through winter.",
             hero_image=images["hero"],
-            target=Decimal("20000"),
-            raised=Decimal("23400"),
+            target=Decimal("3000000"),
+            raised=Decimal("3510000"),
             start=TODAY - datetime.timedelta(days=300),
             end=TODAY - datetime.timedelta(days=200),
             amounts=[],
@@ -385,7 +403,7 @@ class Command(BaseCommand):
         testimonial.save_revision().publish()
 
         home.hero_heading = "Clean water changes everything"
-        home.hero_text = "£10 gives one person safe water for a whole year."
+        home.hero_text = "Rs 1,500 gives one person safe water for a whole year."
         home.hero_image = images["hero"]
         home.hero_cta_text = "Give today"
         home.hero_cta_page = donate
@@ -398,7 +416,7 @@ class Command(BaseCommand):
                     "stats": [
                         {"figure": "180,000", "label": "people with clean water"},
                         {"figure": "412", "label": "wells built"},
-                        {"figure": "82p", "label": "of every £1 spent on projects"},
+                        {"figure": "Rs 82", "label": "of every Rs 100 spent on projects"},
                     ],
                 },
             ),
@@ -423,6 +441,8 @@ class Command(BaseCommand):
         settings.phone = "0123 456 7890"
         settings.address = "1 Example Street\nBirmingham\nB1 1AA"
         settings.donate_page = donate
+        settings.currency = "NPR"
+        settings.phone_country = "NP"
         settings.instagram_url = "https://instagram.example/brightwell"
         settings.save()
 

@@ -10,6 +10,24 @@ version number.
 
 ## [Unreleased]
 
+### Added
+
+- The Donate page now has suggested amounts and a pledge form: one-off or monthly, which appeal
+  to support, and an optional mobile number for a monthly reminder.
+  It says plainly that no payment is taken online yet, preselects the appeal you came from, and
+  pledges are listed under Pledges in the admin, with filters and CSV/Excel export
+  ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
+- Browser tests (Playwright) for what only happens in a browser, such as focus, scrolling and
+  fields that appear on a choice. Run `uv run playwright install chromium` once
+  ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
+
+### Changed
+
+- Amounts across the site (appeal targets, suggested gifts, the dashboard) are shown in the
+  currency chosen in Site settings: Nepalese rupees by default, grouped the Nepali way
+  (Rs 46,87,500), or pounds sterling
+  ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
+
 ## [0.1.0] - 2026-10-05
 
 The first tracked release. It collects everything built before versioning started.

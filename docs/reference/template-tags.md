@@ -4,6 +4,7 @@
 
 | Library | Tag | |
 |---|---|---|
+| `money_tags` | `{% money amount %}` | A whole amount with the symbol of the currency chosen in Site settings, grouped that currency's way: `Rs 46,87,500` (lakhs and crores) or `£4,687,500`. Use it for every amount; never write a currency symbol in a template |
 | `navigation_tags` | `{% main_menu %}` | The site's top-level live pages with "Show in menus" ticked, with `aria-current="page"` on the current page and `"true"` on its section. Renders `includes/main_menu.html` |
 | `picture_tags` | `{% hero_picture image attr=value ... %}` | The homepage banner: a square crop for phones and a wide crop for larger screens, in AVIF, WebP and JPEG. Keyword arguments become `<img>` attributes. See [Images](../topics/images.md#the-homepage-banner) |
 | `seo_tags` | `{% absolute_url url %}` | Makes a URL absolute for the current request; already-absolute URLs pass through |

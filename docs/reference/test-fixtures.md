@@ -19,7 +19,7 @@ and `django_assert_max_num_queries`.
 Built on [wagtail-factories](https://github.com/wagtail/wagtail-factories):
 
 - `campaigns/tests/factories.py`: `CampaignIndexPageFactory`, `CampaignPageFactory` (an open
-  appeal with a £10,000 target and £2,500 raised, started 30 days ago).
+  appeal with a 10,000 target and 2,500 raised, started 30 days ago).
 - `news/tests/factories.py`: `NewsIndexPageFactory`, `NewsPageFactory`, `NewsCategoryFactory`.
 - From wagtail-factories directly: `ImageFactory`, `DocumentFactory` and others.
 

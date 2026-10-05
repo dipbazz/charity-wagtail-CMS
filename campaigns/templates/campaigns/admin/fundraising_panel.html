@@ -1,7 +1,7 @@
-{% load wagtailadmin_tags %}
+{% load money_tags wagtailadmin_tags %}
 {% panel id="fundraising" heading="Fundraising overview" classname="w-panel--dashboard" %}
     <p>
-        <strong>£{{ total_raised|floatformat:"0g" }}</strong> raised of £{{ total_target|floatformat:"0g" }}
+        <strong>{% money total_raised %}</strong> raised of {% money total_target %}
         across {{ open_count }} open appeal{{ open_count|pluralize }}.
     </p>
     {% if closing_soon %}

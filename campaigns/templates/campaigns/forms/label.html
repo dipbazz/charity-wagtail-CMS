@@ -1,0 +1,1 @@
+{% comment %}Django's django/forms/label.html, plus "(optional)" for fields PledgeForm marks show_optional.{% endcomment %}{% if use_tag %}<{{ tag }}{% include 'django/forms/attrs.html' %}>{{ label }}{% if field.field.show_optional %} <span class="optional">(optional)</span>{% endif %}</{{ tag }}>{% else %}{{ label }}{% endif %}

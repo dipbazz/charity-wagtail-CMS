@@ -43,6 +43,9 @@ jobs:
           DJANGO_ALLOWED_HOSTS: brightwell.example
           DJANGO_SITE_URL: https://brightwell.example
 
+      - name: Install Chromium for the browser tests
+        run: uv run playwright install --with-deps chromium
+
       - name: Test
         run: uv run pytest --cov --cov-report=term-missing:skip-covered
 

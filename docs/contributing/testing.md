@@ -9,6 +9,7 @@ you expect, then write the code that makes it pass.
 uv run pytest                    # the whole suite
 uv run pytest news               # one app
 uv run pytest --cov              # with coverage
+uv run pytest -m "not browser"   # without the browser tests (quicker)
 uv run ruff check . && uv run ruff format --check .
 uv run python manage.py makemigrations --check --dry-run
 ```
@@ -54,13 +55,33 @@ Some tests guard the whole project rather than one feature:
 - If pytest can't catch a bug (something purely visual, such as spacing), say so in the pull
   request rather than skipping it silently.
 
+## Browser tests
+
+Some behaviour only exists in a browser: where the cursor goes, what scrolling does to a field,
+and fields that CSS or `charity.js` show and hide. pytest's HTML checks can't see it, so write a
+**browser test** for it with [Playwright](https://playwright.dev/python/) (`pytest-playwright`),
+next to the app's other tests, e.g. `campaigns/tests/test_donate_browser.py`:
+
+- mark the module `pytestmark = [pytest.mark.browser, pytest.mark.django_db]`;
+- open pages with the root `conftest.py`'s `site_page` fixture: `site_page.goto(SITE +
+  page.url)`. It answers the browser's requests with Django's test client, in the test's own
+  thread and database transaction, so there's no live server and the test sees the data it
+  creates. Static files come from the static finders.
+- assert with `playwright.sync_api.expect`, which waits for the page to settle.
+
+Install Chromium once with `uv run playwright install chromium`. Without it, browser tests are
+skipped locally with that hint; in CI they always run. Each takes about a second.
+
+Once Playwright has started, its event loop stays in the main thread for the rest of the run, so
+the root `conftest.py` sets `DJANGO_ALLOW_ASYNC_UNSAFE` whenever browser tests are collected.
+
 ## What CI runs
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and every push to `main`:
 
 | Job | What it checks |
 |---|---|
-| `test` | ruff, `makemigrations --check`, Django's `check --deploy --fail-level WARNING` against production settings, the test suite with coverage |
+| `test` | ruff, `makemigrations --check`, Django's `check --deploy --fail-level WARNING` against production settings, the test suite with coverage, including the browser tests in Chromium |
 | `lighthouse` | Page weight and layout shift on a phone ([Performance](../topics/performance.md)) |
 | `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse |
 | `docs` | These docs build with warnings as errors; the built site is uploaded as the `docs-html` artifact |

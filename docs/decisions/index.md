@@ -17,4 +17,6 @@ live-public-listings
 pinned-actions
 permissions-in-data-migrations
 versioning
+phonenumbers
+browser-tests
 ```

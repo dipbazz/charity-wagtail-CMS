@@ -5,6 +5,7 @@ from wagtail import hooks
 from wagtail.admin.ui.components import Component
 
 from campaigns.models import CampaignPage
+from campaigns.views import PledgeViewSet
 
 CLOSING_SOON_DAYS = 14
 
@@ -23,6 +24,8 @@ class FundraisingPanel(Component):
         totals = open_appeals.aggregate(raised=Sum("amount_raised"), target=Sum("target_amount"))
         context.update(
             {
+                # The money tag reads the currency from the request's Site settings.
+                "request": parent_context["request"],
                 "open_count": open_appeals.count(),
                 "total_raised": totals["raised"] or 0,
                 "total_target": totals["target"] or 0,
@@ -37,3 +40,8 @@ class FundraisingPanel(Component):
 @hooks.register("construct_homepage_panels")
 def add_fundraising_panel(request, panels):
     panels.append(FundraisingPanel())
+
+
+@hooks.register("register_admin_viewset")
+def register_pledge_viewset():
+    return PledgeViewSet()

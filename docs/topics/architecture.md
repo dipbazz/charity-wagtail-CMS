@@ -21,10 +21,13 @@ charity/    settings (base, dev, test, production), urls.py, api.py (Wagtail API
             pagination, 404/500), static/css/charity.css, static/js/charity.js
 core/       shared: StreamField blocks, CustomImage + CustomRendition, SocialMetaMixin,
             SiteSettings, AnnouncementBanner, Partner and Testimonial snippets, template tags,
-            admin hooks, views (robots.txt, serve_media), the SMTP mail backend,
+            admin hooks, views (robots.txt, serve_media), the SMTP mail backend, money
+            (currency formatting), phone (mobile number checks),
             update_site_url and backup_site commands
 home/       HomePage, StandardPage, seed_demo command + demo_images/
-campaigns/  CampaignIndexPage, CampaignPage, DonationAmount, dashboard panel hook
+campaigns/  CampaignIndexPage, CampaignPage, DonationAmount, DonatePage, Pledge (+ Frequency
+            choices), PledgeForm (a ModelForm, forms.py), PledgeViewSet (views.py,
+            the Pledges admin), dashboard panel hook
 news/       NewsIndexPage (routable: tag, category, RSS feed), NewsPage, NewsCategory snippet
 contact/    FormPage (wagtail.contrib.forms, editor-built forms with email)
 search/     search view with search promotions
@@ -48,7 +51,8 @@ The tree `seed_demo` builds, and the parent and child rules each page type enfor
 ```
 Root
 └─ HomePage "/" (max 1)
-   ├─ StandardPage  /about/, /donate/ ... (can nest under another StandardPage)
+   ├─ StandardPage  /about/ ... (can nest under another StandardPage)
+   ├─ DonatePage /donate/ (max 1; no children)
    ├─ CampaignIndexPage /appeals/ (max 1)
    │   └─ CampaignPage /appeals/flood-relief/ ... (+ DonationAmount inline)
    ├─ NewsIndexPage /news/ (max 1)

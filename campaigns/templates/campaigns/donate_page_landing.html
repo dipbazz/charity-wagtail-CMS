@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block body_class %}template-donatepage{% endblock %}
+
+{% block content %}
+    <div class="container narrow">
+        <h1>Thank you</h1>
+        {% if page.thank_you_text %}
+            {{ page.thank_you_text|richtext }}
+        {% else %}
+            <p>We've received your pledge and will be in touch soon.</p>
+        {% endif %}
+        {% if appeals_page %}
+            <p><a class="button" href="{% pageurl appeals_page %}">See all our appeals</a></p>
+        {% endif %}
+    </div>
+{% endblock %}

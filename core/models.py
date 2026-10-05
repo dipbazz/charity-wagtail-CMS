@@ -12,6 +12,9 @@ from wagtail.models import (
 )
 from wagtail.search import index
 
+from core.money import CURRENCY_CHOICES
+from core.phone import phone_country_choices
+
 
 class CustomImage(AbstractImage):
     """Wagtail image with the extra metadata a charity needs to publish photos responsibly."""
@@ -73,6 +76,18 @@ class SiteSettings(BaseSiteSetting):
         related_name="+",
         help_text="Linked from the Donate button in the site header.",
     )
+    currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        default="NPR",
+        help_text="Shown with every amount on the site, such as appeal targets and gifts.",
+    )
+    phone_country = models.CharField(
+        max_length=2,
+        choices=phone_country_choices,
+        default="NP",
+        help_text="The country selected by default for phone numbers on forms.",
+    )
     facebook_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
@@ -84,6 +99,8 @@ class SiteSettings(BaseSiteSetting):
                 FieldPanel("contact_email"),
                 FieldPanel("phone"),
                 FieldPanel("address"),
+                FieldPanel("currency"),
+                FieldPanel("phone_country"),
             ],
             heading="Organisation",
         ),
