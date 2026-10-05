@@ -26,6 +26,7 @@ agents.
   and the QA pass every pull request gets.
 - **Editing the charity's content?** The [editor guide](editor-guide/index.md) is for the
   charity's own team.
+- **What changed?** The [changelog](changelog.md) lists every version and what it brought.
 
 ## Contents
 
@@ -42,5 +43,6 @@ reference/index
 decisions/index
 contributing/index
 editor-guide/index
+changelog
 project-context
 ```
