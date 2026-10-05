@@ -20,6 +20,25 @@ class TestFormatMoney:
     def test_whole_amounts_have_no_decimals(self):
         assert format_money(Decimal("2500.00"), "NPR") == "Rs 2,500"
 
+    @pytest.mark.parametrize(
+        ("amount", "expected"),
+        [
+            (999, "Rs 999"),
+            (1500, "Rs 1,500"),
+            (100000, "Rs 1,00,000"),
+            (4687500, "Rs 46,87,500"),
+            (12000000, "Rs 1,20,00,000"),
+        ],
+    )
+    def test_rupees_are_grouped_in_lakhs_and_crores(self, amount, expected):
+        assert format_money(amount, "NPR") == expected
+
+    def test_pounds_keep_groups_of_three(self):
+        assert format_money(4687500, "GBP") == "£4,687,500"
+
+    def test_part_amounts_round_half_up(self):
+        assert format_money(Decimal("2500.50"), "NPR") == "Rs 2,501"
+
 
 class TestMoneyTag:
     def render(self, site, amount):

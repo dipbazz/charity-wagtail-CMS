@@ -21,7 +21,8 @@ version number.
 ### Changed
 
 - Amounts across the site (appeal targets, suggested gifts, the dashboard) are shown in the
-  currency chosen in Site settings: Nepalese rupees by default, or pounds sterling
+  currency chosen in Site settings: Nepalese rupees by default, grouped the Nepali way
+  (Rs 46,87,500), or pounds sterling
   ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
 
 ## [0.1.0] - 2026-10-05
