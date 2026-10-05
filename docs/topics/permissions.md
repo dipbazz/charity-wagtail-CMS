@@ -8,15 +8,19 @@ permissions are granted, and how to test them.
 The charity's team are users in Wagtail's built-in **Editors** and **Moderators** groups, never
 superusers.
 
-| | Editors | Moderators |
-|---|---|---|
-| Pages | Edit, preview and submit for moderation | Also approve and publish |
-| Announcement banner | Change directly | Change |
-| Partners | Add, change, delete | Add, change, delete |
-| Testimonials | Add, change, delete drafts | Also publish, lock and unlock |
-| News categories | Add, change, delete | Add, change, delete |
-| Site settings (charity number, donate page, contact details) | No | Change |
-| Users, groups, sites | No | No |
+| Area | Permission | Editors | Moderators |
+|---|---|:---:|:---:|
+| **Pages** | Edit and preview | ✅ | ✅ |
+| | Submit for moderation | ✅ | ✅ |
+| | Approve and publish | ❌ | ✅ |
+| **Testimonials** | Add, change and delete drafts | ✅ | ✅ |
+| | Publish | ❌ | ✅ |
+| | Lock and unlock | ❌ | ✅ |
+| **Announcement banner** | Change (no approval needed) | ✅ | ✅ |
+| **Partners** | Add, change and delete | ✅ | ✅ |
+| **News categories** | Add, change and delete | ✅ | ✅ |
+| **Site settings** (charity number, donate page, contact details) | Change | ❌ | ✅ |
+| **Users, groups and sites** | Manage | ❌ | ❌ |
 
 Why the differences:
 
