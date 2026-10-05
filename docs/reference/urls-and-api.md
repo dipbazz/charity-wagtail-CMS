@@ -13,6 +13,7 @@
 | `/robots.txt` | Disallows `/admin/`, `/django-admin/` and `/search/`; links the sitemap |
 | `/media/<path>` | Uploads, through `core.views.serve_media` when `SERVE_MEDIA` is on; never `documents/` |
 | `/__debug__/` | django-debug-toolbar, in development only |
+| `/donate/?appeal=<slug>&amount=<n>` | The Donate page with an appeal and an amount preselected; either can be left out, and ones not on offer are ignored |
 | everything else | Wagtail's page serving: the [page tree](../topics/architecture.md#page-tree), including the news index's own routes (`/news/tag/…`, `/news/category/…`, `/news/feed/`) |
 
 ## API (`charity/api.py`)

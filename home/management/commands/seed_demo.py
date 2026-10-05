@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from wagtail.images.rect import Rect
 from wagtail.models import Site
 
-from campaigns.models import CampaignIndexPage, CampaignPage
+from campaigns.models import CampaignIndexPage, CampaignPage, DonatePage, DonatePageAmount
 from contact.models import FormField, FormPage
 from core.models import AnnouncementBanner, CustomImage, Partner, SiteSettings, Testimonial
 from home.models import StandardPage
@@ -195,29 +195,42 @@ class Command(BaseCommand):
                 ],
             ),
         )
-        donate = publish(
-            home,
-            StandardPage(
-                title="Donate",
-                slug="donate",
-                introduction="Every gift helps a community get safe water that lasts.",
-                body=[
-                    (
-                        "table",
-                        {
-                            "first_row_is_table_header": True,
-                            "first_col_is_header": False,
-                            "data": [
-                                ["Where every Rs 100 goes", "Amount"],
-                                ["Projects", "Rs 82"],
-                                ["Fundraising", "Rs 13"],
-                                ["Running the charity", "Rs 5"],
-                            ],
-                        },
-                    ),
-                ],
+        donate = DonatePage(
+            title="Donate",
+            slug="donate",
+            introduction="Every gift helps a community get safe water that lasts.",
+            payment_notice=(
+                "<p>Brightwell is a demo charity, so no payment is taken and nobody will contact "
+                "you about this pledge. To help people affected by the flood in Nepal, give to "
+                f'the <a href="{RELIEF_FUND_URL}">Prime Minister\'s Disaster Relief Fund</a>.</p>'
             ),
+            offer_gift_aid=True,
+            thank_you_text=(
+                "<p>Thank you for trying the pledge form. Brightwell is fictional, so nobody will "
+                "contact you, but a real charity would be in touch about how to pay.</p>"
+            ),
+            body=[
+                (
+                    "table",
+                    {
+                        "first_row_is_table_header": True,
+                        "first_col_is_header": False,
+                        "data": [
+                            ["Where every Rs 100 goes", "Amount"],
+                            ["Projects", "Rs 82"],
+                            ["Fundraising", "Rs 13"],
+                            ["Running the charity", "Rs 5"],
+                        ],
+                    },
+                ),
+            ],
         )
+        donate.donation_amounts = [
+            DonatePageAmount(amount=1500, impact="Safe water for one person for a year"),
+            DonatePageAmount(amount=2500, impact="A hygiene kit for a family"),
+            DonatePageAmount(amount=10000, impact="Water purification for a month"),
+        ]
+        publish(home, donate)
 
         campaigns = publish(
             home,

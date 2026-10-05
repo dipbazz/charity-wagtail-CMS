@@ -2,7 +2,7 @@ import pytest
 from django.core.management import call_command
 from wagtail.models import Page
 
-from campaigns.models import CampaignPage
+from campaigns.models import CampaignPage, DonatePage
 from contact.models import FormPage
 
 # Imported via the module: a name starting with "Test" would be collected by pytest.
@@ -36,6 +36,16 @@ def test_configures_site_settings_and_menu(seeded, client):
     assert settings.donate_page is not None
     assert AnnouncementBanner.load().enabled
     assert seeded.root_page.get_children().live().in_menu().count() >= 3
+
+
+def test_donate_page_takes_pledges_for_the_appeals(seeded, client):
+    donate = SiteSettings.for_site(seeded).donate_page.specific
+
+    assert isinstance(donate, DonatePage)
+    assert donate.donation_amounts.count() >= 3
+    html = client.get(donate.url, {"appeal": "flood-relief"}).content.decode()
+    assert "Flash flood relief in Nepal" in html
+    assert "Where every Rs 100 goes" in html
 
 
 def test_amounts_are_in_rupees_on_every_page(seeded, client):

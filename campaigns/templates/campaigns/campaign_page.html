@@ -36,7 +36,7 @@
                         {% endfor %}
                     </ul>
                     {% if settings.core.SiteSettings.donate_page %}
-                        <a class="button button-large" href="{% pageurl settings.core.SiteSettings.donate_page %}">Donate to this appeal</a>
+                        <a class="button button-large" href="{% pageurl settings.core.SiteSettings.donate_page %}?appeal={{ page.slug|urlencode }}">Donate to this appeal</a>
                     {% endif %}
                 </section>
             {% endif %}

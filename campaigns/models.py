@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
+from django.template.response import TemplateResponse
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
     FieldPanel,
@@ -16,15 +17,18 @@ from wagtail.admin.panels import (
     TabbedInterface,
 )
 from wagtail.api import APIField
-from wagtail.fields import StreamField
+from wagtail.contrib.forms.models import AbstractForm
+from wagtail.contrib.forms.panels import FormSubmissionsPanel
+from wagtail.fields import RichTextField, StreamField
 from wagtail.images.api.fields import ImageRenditionField
-from wagtail.models import Orderable, Page, PageManager
+from wagtail.models import Orderable, Page, PageManager, Site
 from wagtail.query import PageQuerySet
 from wagtail.search import index
 
+from campaigns.forms import PledgeForm
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
-from core.models import SocialMetaMixin
+from core.models import SiteSettings, SocialMetaMixin
 
 
 class CampaignIndexPage(Page):
@@ -172,15 +176,139 @@ class CampaignPage(SocialMetaMixin, Page):
         return super().get_preview_template(request, mode_name)
 
 
-class DonationAmount(Orderable):
+class AbstractDonationAmount(Orderable):
     """A suggested gift and what it pays for, e.g. 1,500 = clean water for one person."""
 
-    page = ParentalKey(CampaignPage, on_delete=models.CASCADE, related_name="donation_amounts")
     amount = models.PositiveIntegerField(help_text="A whole amount in the site's currency.")
     impact = models.CharField(max_length=255)
 
     panels = [FieldPanel("amount"), FieldPanel("impact")]
     api_fields = [APIField("amount"), APIField("impact")]
 
+    class Meta(Orderable.Meta):
+        abstract = True
+
     def __str__(self):
         return f"{self.amount:,}: {self.impact}"
+
+
+class DonationAmount(AbstractDonationAmount):
+    page = ParentalKey(CampaignPage, on_delete=models.CASCADE, related_name="donation_amounts")
+
+
+DEFAULT_PAYMENT_NOTICE = (
+    "<p>No payment is taken on this website yet. Send this form and we'll contact you about how "
+    "to pay. If you choose monthly, we'll help you set up a regular payment.</p>"
+)
+
+
+class DonatePage(SocialMetaMixin, AbstractForm):
+    """The page every Donate button leads to: suggested amounts and a pledge form.
+
+    The form's fields are fixed (`campaigns.forms.PledgeForm`), not built by editors, but pledges
+    are saved as form submissions, so they're listed in the admin and export to CSV.
+    """
+
+    introduction = models.TextField(blank=True)
+    payment_notice = RichTextField(
+        default=DEFAULT_PAYMENT_NOTICE,
+        help_text="Shown above the form: say plainly how payment works and what happens next.",
+    )
+    offer_gift_aid = models.BooleanField(
+        default=False,
+        help_text="UK charities only. Adds the Gift Aid declaration and asks for a home address.",
+    )
+    body = StreamField(
+        BaseStreamBlock(),
+        blank=True,
+        help_text="Shown below the form, e.g. a table of where the money goes.",
+    )
+    thank_you_text = RichTextField(blank=True, help_text="Shown after someone sends the form.")
+
+    content_panels = AbstractForm.content_panels + [
+        FormSubmissionsPanel(),
+        FieldPanel("introduction"),
+        InlinePanel("donation_amounts", heading="Suggested amounts", label="Amount", max_num=6),
+        FieldPanel("payment_notice"),
+        FieldPanel("offer_gift_aid"),
+        FieldPanel("body"),
+        FieldPanel("thank_you_text"),
+    ]
+    promote_panels = SocialMetaMixin.promote_panels
+
+    parent_page_types = ["home.HomePage"]
+    subpage_types = []
+    max_count = 1
+
+    data_fields = [
+        ("submit_time", "Submission date"),
+        ("amount", "Amount"),
+        ("currency", "Currency"),
+        ("frequency", "Frequency"),
+        ("name", "Name"),
+        ("email", "Email"),
+        ("phone", "Mobile number"),
+        ("appeal", "Appeal"),
+        ("gift_aid", "Gift Aid"),
+        ("address", "Address"),
+        ("postcode", "Postcode or postal code"),
+    ]
+
+    def get_appeals(self):
+        return CampaignPage.objects.live().public().active().order_by("title")
+
+    def get_form_fields(self):
+        return []
+
+    def get_data_fields(self):
+        return self.data_fields
+
+    def get_form_class(self):
+        return PledgeForm
+
+    def get_form(self, *args, request=None, **kwargs):
+        if request is None:  # the admin preview
+            site = self.get_site()
+            site_settings = SiteSettings.for_site(site)
+        else:
+            site = Site.find_for_request(request)
+            site_settings = SiteSettings.for_request(request)
+        return PledgeForm(
+            *args,
+            amounts=self.donation_amounts.all(),
+            appeals=self.get_appeals(),
+            currency=site_settings.currency,
+            phone_country=site_settings.phone_country,
+            charity_name=site.site_name if site else "",
+            offer_gift_aid=self.offer_gift_aid,
+            **kwargs,
+        )
+
+    def serve(self, request, *args, **kwargs):
+        if request.method == "POST":
+            form = self.get_form(request.POST, request=request, page=self, user=request.user)
+            if form.is_valid():
+                submission = self.process_form_submission(form)
+                return self.render_landing_page(request, submission, *args, **kwargs)
+        else:
+            form = self.get_form(request=request, link=request.GET, page=self, user=request.user)
+
+        context = self.get_context(request)
+        context["form"] = form
+        return TemplateResponse(request, self.get_template(request), context)
+
+    def process_form_submission(self, form):
+        return self.get_submission_class().objects.create(form_data=form.pledge_data(), page=self)
+
+    def get_appeals_page(self):
+        return CampaignIndexPage.objects.live().public().first()
+
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+        # Only the thank-you page shows it; templates call a method only if they use it.
+        context["appeals_page"] = self.get_appeals_page
+        return context
+
+
+class DonatePageAmount(AbstractDonationAmount):
+    page = ParentalKey(DonatePage, on_delete=models.CASCADE, related_name="donation_amounts")

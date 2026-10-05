@@ -14,6 +14,8 @@ pytestmark = pytest.mark.django_db
 # (core.images.with_card_images). On a just-started server that one query replaces one per card.
 # Public listings (/, /appeals/, /news/ and its feed) also spend one query reading the page privacy
 # restrictions, so pages behind a password or login stay out of them (`.public()`, #47).
+# /donate/ spends three more than /about/: its suggested amounts, and the open appeals offered in
+# the form with their privacy restrictions (#31).
 BUDGETS = {
     "/": 17,
     "/appeals/": 15,
@@ -22,6 +24,8 @@ BUDGETS = {
     "/news/feed/": 10,
     "/about/": 11,
     "/volunteer/": 12,
+    "/donate/": 14,
+    "/donate/?appeal=flood-relief&amount=2500": 14,
     "/search/?query=water": 21,
     "/api/v2/pages/?type=campaigns.CampaignPage&fields=*": 18,
 }

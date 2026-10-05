@@ -112,9 +112,36 @@ An appeal, with its editor split into Content, Fundraising, Promote and Settings
 - Preview modes: `""` (the full page) and `"card"` (the listing card).
 - In the API with its fundraising fields and donation amounts.
 
-### `DonationAmount`
+### `DonationAmount` and `DonatePageAmount`
 
-A suggested gift on a `CampaignPage` (inline, up to four): `amount`, a whole number in the site's currency, and its `impact`.
+A suggested gift: `amount`, a whole number in the site's currency, and its `impact` (what it pays
+for). `DonationAmount` is on a `CampaignPage` (inline, up to four) and `DonatePageAmount` on the
+`DonatePage` (up to six); both extend the abstract `AbstractDonationAmount`.
+
+### `DonatePage`
+
+The page every Donate button leads to (max 1, under the `HomePage`): suggested amounts and a
+pledge form. It's a `wagtail.contrib.forms` form page, so pledges are listed under Forms in the
+admin and export to CSV, but its fields are fixed in `campaigns/forms.py` (`PledgeForm`), not
+built by editors. No payment is taken.
+
+| Field | |
+|---|---|
+| `introduction` | Shown under the title |
+| `donation_amounts` | The suggested amounts (`DonatePageAmount`) |
+| `payment_notice` | Above the form: how payment works and what happens next. Has a default |
+| `offer_gift_aid` | UK charities only: adds the Gift Aid declaration, which then requires a home address and postcode |
+| `body` | Below the form, e.g. a table of where the money goes |
+| `thank_you_text` | Shown after someone sends the form, with a link to the appeals |
+
+The form asks for an amount (a suggested one or the supporter's own), one-off or monthly, the
+appeal (open, public appeals, or "Wherever it's needed most"), name, email, an optional mobile
+number (checked and stored in E.164 by `core.phone`, for a future monthly reminder on WhatsApp
+or by text), address and postcode. A pledge is stored with the site's currency code and the
+appeal's title.
+
+`?appeal=<slug>&amount=<n>` preselects an appeal and an amount; an appeal page's "Donate to this
+appeal" button adds `?appeal=`.
 
 The fundraising dashboard panel (`campaigns/wagtail_hooks.py`) shows open appeals' totals and
 those closing within 14 days.
