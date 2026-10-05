@@ -57,5 +57,15 @@ if (ownAmount) {
                 ownAmount.value = "";
             }
         });
+        // Clicking or tapping "Other amount" goes straight to typing the amount. Arrow keys
+        // through the choices also fire "click", with detail 0: keep focus on the choices then,
+        // so keyboard users aren't pulled out of them; the field is the next Tab stop.
+        if (radio.value === "other") {
+            radio.addEventListener("click", (event) => {
+                if (event.detail > 0) {
+                    ownAmount.focus();
+                }
+            });
+        }
     });
 }

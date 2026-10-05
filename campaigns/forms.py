@@ -27,6 +27,15 @@ class AmountLabel:
         return f"{self.amount}: {self.impact}" if self.impact else self.amount
 
 
+class WholeAmountField(forms.IntegerField):
+    """A whole amount, also written the way the site shows amounts: "1,00,000" or "4 000"."""
+
+    def to_python(self, value):
+        if isinstance(value, str):
+            value = value.replace(",", "").replace(" ", "")
+        return super().to_python(value)
+
+
 class PledgeForm(BaseForm):
     """A pledge to give, saved as a form submission. No payment is taken."""
 
@@ -39,10 +48,12 @@ class PledgeForm(BaseForm):
         widget=forms.RadioSelect,
         error_messages={"invalid_choice": CHOOSE_AN_AMOUNT},
     )
-    other_amount = forms.IntegerField(
+    # A text box, not type="number": scrolling over a number input changes its value, so a donor
+    # could pledge an amount they never meant. inputmode still brings up the number keypad.
+    other_amount = WholeAmountField(
         required=False,
         max_value=99_999_999,
-        widget=forms.NumberInput(attrs={"inputmode": "numeric", "min": 1}),
+        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
     )
     frequency = forms.ChoiceField(
         choices=FREQUENCIES.items(),

@@ -204,6 +204,33 @@ class TestOwnAmountField:
         assert field.find("input")["value"] == "4000"
 
 
+class TestOwnAmountInput:
+    def test_is_a_text_box_with_a_number_keypad_so_scrolling_cannot_change_it(
+        self, client, donate_page
+    ):
+        field = soup(client.get(donate_page.url)).find("input", attrs={"name": "other_amount"})
+
+        assert field["type"] == "text"
+        assert field["inputmode"] == "numeric"
+
+    @pytest.mark.parametrize(
+        ("typed", "stored_amount"), [("1,00,000", "100000"), ("4,000", "4000"), ("4 000", "4000")]
+    )
+    def test_accepts_amounts_written_with_commas_or_spaces(
+        self, client, donate_page, typed, stored_amount
+    ):
+        pledge(client, donate_page, amount="other", other_amount=typed)
+
+        assert stored(donate_page)["amount"] == stored_amount
+
+    @pytest.mark.parametrize("typed", ["abc", "12.5"])
+    def test_rejects_anything_but_a_whole_amount(self, client, donate_page, typed):
+        response = pledge(client, donate_page, amount="other", other_amount=typed)
+
+        assert "Enter a whole number." in response.content.decode()
+        assert not FormSubmission.objects.exists()
+
+
 class TestPreselecting:
     def test_arriving_from_an_appeal_preselects_it(self, client, donate_page):
         response = client.get(donate_page.url, {"appeal": "flood-relief"})
