@@ -15,12 +15,14 @@ version number.
 - The Donate page now has suggested amounts and a pledge form: one-off or monthly, which appeal
   to support, an optional mobile number for a monthly reminder, and Gift Aid for UK charities.
   It says plainly that no payment is taken online yet, preselects the appeal you came from, and
-  pledges appear in the admin and the CSV export.
+  pledges appear in the admin and the CSV export
+  ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
 
 ### Changed
 
 - Amounts across the site (appeal targets, suggested gifts, the dashboard) are shown in the
-  currency chosen in Site settings: Nepalese rupees by default, or pounds sterling.
+  currency chosen in Site settings: Nepalese rupees by default, or pounds sterling
+  ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
 
 ## [0.1.0] - 2026-10-05
 
