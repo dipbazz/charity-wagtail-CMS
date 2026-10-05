@@ -151,6 +151,17 @@ class TestPledging:
 
         assert stored(donate_page)["amount"] == "4000"
 
+    # Regression: ISSUE-002 — a typed amount was silently dropped when a card was also chosen
+    # Found by /qa on 2026-10-05
+    # Report: .gstack/qa-reports/run-20261005T080853Z/qa-report-127.0.0.1-2026-10-05.md
+    def test_choosing_a_suggested_amount_and_typing_another_asks_which(self, client, donate_page):
+        response = pledge(client, donate_page, amount="2500", other_amount="4000")
+
+        assert "Choose a suggested amount or type your own, not both." in (
+            response.content.decode()
+        )
+        assert not FormSubmission.objects.exists()
+
     def test_own_amount_is_labelled_with_the_currency(self, client, donate_page):
         label = soup(client.get(donate_page.url)).find("label", attrs={"for": "id_other_amount"})
 

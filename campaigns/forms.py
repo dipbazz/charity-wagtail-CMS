@@ -145,6 +145,9 @@ class PledgeForm(BaseForm):
                 cleaned_data["amount"] == OTHER and not (other_amount or 0) > 0
             ):
                 self.add_error("amount", CHOOSE_AN_AMOUNT)
+            elif cleaned_data["amount"] != OTHER and other_amount:
+                # Saving either one could record a gift the supporter didn't mean.
+                self.add_error("amount", "Choose a suggested amount or type your own, not both.")
 
         phone = cleaned_data.get("phone", "").strip()
         if phone and cleaned_data.get("phone_country"):
