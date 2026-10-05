@@ -3,6 +3,7 @@ name = "charity-cms"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "phonenumbers>=9.0.40",
     "wagtail>=8.0",
     "whitenoise>=6.12.0",
 ]

@@ -33,6 +33,7 @@ Moderators only.
 | `charity_number`, `contact_email`, `phone`, `address` | Shown in the footer |
 | `donate_page` | The page the header's Donate button links to |
 | `currency` | Shown with every amount (`{% money %}`): `NPR` (Nepalese rupee, the default) or `GBP`. Codes and symbols are in `core/money.py` |
+| `phone_country` | The country selected by default for phone numbers on forms (default Nepal). The list is `PHONE_COUNTRIES` in `core/phone.py` |
 | `facebook_url`, `instagram_url`, `linkedin_url` | Social links; `social_links` lists the ones that are set |
 
 ### `AnnouncementBanner`

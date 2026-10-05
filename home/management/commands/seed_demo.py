@@ -430,6 +430,7 @@ class Command(BaseCommand):
         settings.address = "1 Example Street\nBirmingham\nB1 1AA"
         settings.donate_page = donate
         settings.currency = "NPR"
+        settings.phone_country = "NP"
         settings.instagram_url = "https://instagram.example/brightwell"
         settings.save()
 
