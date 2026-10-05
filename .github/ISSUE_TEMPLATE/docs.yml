@@ -1,5 +1,5 @@
 name: Docs
-description: The README, deployment notes or code comments are missing something or are wrong.
+description: The docs, the README or code comments are missing something or are wrong.
 labels: ["documentation"]
 body:
   - type: dropdown
