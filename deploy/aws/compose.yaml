@@ -23,6 +23,7 @@ services:
       DJANGO_CSRF_TRUSTED_ORIGINS: https://${SITE_HOST}
       DJANGO_SITE_URL: https://${SITE_HOST}
       DJANGO_SECURE_HSTS_SECONDS: ${DJANGO_SECURE_HSTS_SECONDS:-3600}
+      DJANGO_LANGUAGE_CODE: ${DJANGO_LANGUAGE_CODE:-en}
       # No SMTP yet: form submissions are still saved in the admin and the failed email is
       # logged. Add the DJANGO_EMAIL_* variables here when there's a mail service.
       # gunicorn workers. Each takes roughly 100-150 MB; the server has 1 GB plus swap.
