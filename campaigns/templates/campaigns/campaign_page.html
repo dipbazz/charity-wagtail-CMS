@@ -35,11 +35,9 @@
                             <li><strong>{% money option.amount %}</strong> {{ option.impact }}</li>
                         {% endfor %}
                     </ul>
-                    {% with donate=donate_page %}
-                        {% if donate %}
-                            <a class="button button-large" href="{% pageurl donate %}?appeal={{ page.slug|urlencode }}">Donate to this appeal</a>
-                        {% endif %}
-                    {% endwith %}
+                    {% if donate_page %}
+                        <a class="button button-large" href="{% pageurl donate_page %}?appeal={{ page.slug|urlencode }}">Donate to this appeal</a>
+                    {% endif %}
                 </section>
             {% endif %}
         {% endwith %}

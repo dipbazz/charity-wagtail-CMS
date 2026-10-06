@@ -1,5 +1,4 @@
 import datetime
-import functools
 from decimal import Decimal
 
 from django.contrib import admin
@@ -9,6 +8,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.http import HttpResponseRedirect
+from django.utils.functional import SimpleLazyObject
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
     FieldPanel,
@@ -190,9 +190,9 @@ class CampaignPage(SocialMetaMixin, Page):
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
-        # Only an open appeal with suggested amounts shows the Donate button; templates call a
-        # function only if they use it.
-        context["donate_page"] = functools.partial(self.get_donate_page, request)
+        # Only an open appeal with suggested amounts shows the Donate button, so look it up only
+        # when the template uses it, and once.
+        context["donate_page"] = SimpleLazyObject(lambda: self.get_donate_page(request))
         return context
 
 
