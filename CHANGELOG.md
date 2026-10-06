@@ -41,6 +41,9 @@ version number.
 - Appeal titles on the Appeals page are now the level below the page heading, so screen readers
   no longer hear a skipped level and Wagtail's accessibility check stops warning editors about it
   ([#43](https://github.com/dipbazz/Charity-wagtail-CMS/issues/43)).
+- On short pages, such as a search that finds nothing, the footer now reaches the bottom of the
+  window instead of stopping partway up with a white strip below it
+  ([#37](https://github.com/dipbazz/Charity-wagtail-CMS/issues/37)).
 
 ## [0.1.0] - 2026-10-05
 
