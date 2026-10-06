@@ -52,7 +52,7 @@ check. Dependabot's pull requests are skipped automatically.
 ## What goes into which version
 
 Each version is a [milestone](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) with a
-goal and a due date. Usually one minor version is released at the end of each two-week
+goal and a due date. Usually one minor version is released at the end of each one-week
 iteration.
 
 - **An issue joins a milestone at planning,** when the iteration starts. The milestone's goal
@@ -62,12 +62,14 @@ iteration.
   the next version is planned. This keeps each version finishable.
 - **The exception is a bug on the live site** that stops people using it (`P1`). Its fix can
   join the current version, or ship on its own as a PATCH release.
-- Issues nobody has planned yet stay in the Backlog with no milestone.
+- Issues nobody has planned yet stay in the Backlog with no milestone. So does planned work
+  that turns out not to matter for this version: take it out of the milestone and clear its
+  iteration, and it's considered again when the next iteration is planned.
 
 ## Cutting a release
 
-1. **Check the milestone.** Every issue in it is closed, or moved to the next milestone with a
-   comment saying why.
+1. **Check the milestone.** Every issue in it is closed, or moved to the next milestone or the
+   Backlog with a comment saying why.
 2. **Prepare the release** on a `chore/release-X.Y.Z` branch:
    - in `CHANGELOG.md`, rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` (today), add a new
      empty `## [Unreleased]` above it, and update the links at the bottom (`[Unreleased]`
