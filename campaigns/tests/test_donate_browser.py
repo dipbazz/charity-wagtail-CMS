@@ -4,6 +4,8 @@ pytest's HTML checks in test_donate.py can't see these. Run `uv run playwright i
 once; `uv run pytest -m "not browser"` leaves them out.
 """
 
+import re
+
 import pytest
 from playwright.sync_api import expect
 
@@ -74,3 +76,78 @@ class TestYourOwnAmount:
         other = donate_form.locator('input[name="amount"][value="other"]')
         expect(other).to_be_checked()
         expect(other).to_be_focused()
+
+
+class TestChoices:
+    # Regression: each tick box sat on its own line above its label, and only the 20px box
+    # could be tapped. Found while building #98 on 2026-10-06.
+    @pytest.mark.parametrize("name", ["email_updates", "show_on_website"])
+    def test_on_a_phone_the_box_sits_beside_its_label_in_a_row_you_can_tap(self, donate_form, name):
+        donate_form.set_viewport_size({"width": 320, "height": 800})
+        box = donate_form.locator(f'input[name="{name}"]')
+        row = donate_form.locator(f'label[for="id_{name}"]')
+        text = row.locator("span")
+
+        box_at, row_at, text_at = box.bounding_box(), row.bounding_box(), text.bounding_box()
+        assert text_at["x"] > box_at["x"] + box_at["width"]
+        assert abs(text_at["y"] - box_at["y"]) < box_at["height"]
+        assert row_at["height"] >= 44
+        assert row_at["width"] > 250
+
+        text.click()
+        expect(box).to_be_checked()
+
+
+class TestMessageCount:
+    """Typing stops at 1000 characters (maxlength), so a count shows how many are left before
+    a supporter mistakes the limit for a frozen phone. Asked for in review of #101."""
+
+    @pytest.fixture
+    def message(self, donate_form):
+        return donate_form.locator("#id_message")
+
+    def count(self, page):
+        return page.locator(".char-count")
+
+    def test_shows_how_many_characters_are_typed(self, donate_form, message):
+        expect(self.count(donate_form)).to_have_text("0/1000 characters")
+
+        message.fill("In memory")
+        message.press_sequentially("!")
+
+        expect(self.count(donate_form)).to_have_text("10/1000 characters")
+
+    def test_is_quiet_until_950_characters(self, donate_form, message):
+        message.fill("x" * 949)
+
+        expect(self.count(donate_form)).not_to_have_class(re.compile("is-near-limit"))
+        expect(message).not_to_have_class(re.compile("is-near-limit"))
+
+    def test_turns_yellow_from_950_characters(self, donate_form, message):
+        message.fill("x" * 949)
+        message.press_sequentially("x")
+
+        expect(self.count(donate_form)).to_have_text("950/1000 characters")
+        expect(self.count(donate_form)).to_have_class(re.compile("is-near-limit"))
+        expect(message).to_have_class(re.compile("is-near-limit"))
+        expect(message).to_have_css("border-top-color", "rgb(242, 177, 52)")  # --colour-accent
+
+    def test_typing_stops_at_1000_characters(self, donate_form, message):
+        message.fill("x" * 999)
+        message.press_sequentially("yz")
+
+        expect(message).to_have_value("x" * 999 + "y")
+        expect(self.count(donate_form)).to_have_text("1000/1000 characters")
+
+    def test_screen_readers_hear_when_the_limit_is_near_and_reached(self, donate_form, message):
+        status = donate_form.locator("#id_message_count_status")
+        expect(status).to_have_attribute("role", "status")
+        expect(self.count(donate_form)).to_have_attribute("aria-hidden", "true")
+
+        message.fill("x" * 949)
+        message.press_sequentially("x")
+        expect(status).to_have_text("You have 50 characters left.")
+
+        message.fill("x" * 999)
+        message.press_sequentially("x")
+        expect(status).to_have_text("You've reached the limit of 1000 characters.")

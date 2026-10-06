@@ -81,6 +81,36 @@ class TestTheTeam:
         assert "+9779841234567" in csv
         assert "Monthly" in csv
 
+    @pytest.mark.parametrize("consent", ["email_updates", "show_on_website"])
+    def test_can_filter_by_each_consent(self, client, request, member, sent_pledge, consent):
+        Pledge.objects.create(
+            page=sent_pledge.page,
+            amount=1500,
+            currency="NPR",
+            name="Ram Thapa",
+            email="ram@example.com",
+            **{consent: True},
+        )
+        client.force_login(request.getfixturevalue(member))
+
+        html = client.get(reverse("pledges:index"), {consent: "true"}).content
+        assert b"Ram Thapa" in html
+        assert b"Sita Sharma" not in html
+
+    def test_export_has_the_message_and_both_consents(self, client, request, member, sent_pledge):
+        sent_pledge.message = "In memory of my father, Hari."
+        sent_pledge.show_on_website = True
+        sent_pledge.save()
+        client.force_login(request.getfixturevalue(member))
+
+        response = client.get(reverse("pledges:index"), {"export": "csv"})
+
+        header, row = b"".join(response.streaming_content).decode().splitlines()[:2]
+        assert "Message" in header
+        assert "Email updates" in header
+        assert "Show on website" in header
+        assert "In memory of my father, Hari." in row
+
     def test_can_read_a_pledge(self, client, request, member, sent_pledge):
         client.force_login(request.getfixturevalue(member))
 

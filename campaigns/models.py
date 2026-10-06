@@ -330,6 +330,17 @@ class Pledge(models.Model):
         help_text="House or ward number, street or tole, town or municipality, district.",
     )
     postcode = models.CharField("postcode or postal code", max_length=12, blank=True)
+    message = models.TextField(
+        max_length=1000, blank=True, help_text="For the team only; never shown on the site."
+    )
+    # Consents, both opt-in. The pledge form's help texts are what the supporter agreed to.
+    email_updates = models.BooleanField(
+        default=False, help_text="Agreed to emails about our projects and appeals."
+    )
+    show_on_website = models.BooleanField(
+        default=False,
+        help_text="Agreed to their name, amount, appeal and date being listed once received.",
+    )
     created_at = models.DateTimeField("sent", auto_now_add=True)
 
     class Meta:

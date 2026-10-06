@@ -69,3 +69,43 @@ if (ownAmount) {
         }
     });
 }
+
+// Character counts: a textarea with data-char-count and a maxlength shows "10/1000 characters"
+// below it, so a supporter who reaches the limit knows why typing stopped. From 95% of the limit
+// (950 of 1000) the box and the count turn amber (.is-near-limit in charity.css). Screen readers
+// hear only that and reaching the limit, through a hidden status message, not every keystroke.
+// Without JavaScript there's no count, and maxlength still stops typing at the limit.
+document.querySelectorAll("textarea[data-char-count][maxlength]").forEach((box) => {
+    const limit = Number(box.getAttribute("maxlength"));
+    const warnFrom = Math.ceil(limit * 0.95);
+
+    const count = document.createElement("p");
+    count.className = "char-count";
+    count.setAttribute("aria-hidden", "true");
+    const status = document.createElement("p");
+    status.className = "visually-hidden";
+    status.id = `${box.id}_count_status`;
+    status.setAttribute("role", "status");
+    box.after(count, status);
+
+    let state;
+    const update = () => {
+        const typed = box.value.length;
+        const near = typed >= warnFrom;
+        count.textContent = `${typed}/${limit} characters`;
+        count.classList.toggle("is-near-limit", near);
+        box.classList.toggle("is-near-limit", near);
+
+        const newState = typed >= limit ? "full" : near ? "near" : "ok";
+        if (newState !== state) {
+            state = newState;
+            status.textContent = {
+                ok: "",
+                near: `You have ${limit - typed} characters left.`,
+                full: `You've reached the limit of ${limit} characters.`,
+            }[state];
+        }
+    };
+    box.addEventListener("input", update);
+    update();
+});

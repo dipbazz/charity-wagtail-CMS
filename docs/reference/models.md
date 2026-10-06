@@ -145,6 +145,14 @@ widgets and error messages).
   reminder on WhatsApp or by text, checked and stored in E.164 by `core.phone` (a one-off gift
   never keeps a number). Both are shown and hidden with CSS `:has()`, so they work without
   JavaScript.
+- The message box shows how many characters are typed ("10/1000 characters", amber from
+  950), so a supporter who reaches the limit knows why typing stopped (`data-char-count`; see
+  [Front end](../topics/front-end.md)).
+- After "Your details", **Your choices** asks for two separate consents, both unticked by
+  default: email updates, and showing the gift on the site. Their help texts (in
+  `PledgeForm.Meta.help_texts`) are what the supporter agrees to, so anything that uses a
+  consent must do no more than its text says. Each tick box sits inside its label, so the
+  whole row can be tapped (`campaigns/templates/campaigns/forms/checkbox.html`).
 - Optional fields say "(optional)" in grey after their label
   (`campaigns/templates/campaigns/forms/label.html`, for fields `PledgeForm` marks
   `show_optional`).
@@ -165,6 +173,9 @@ comes with taking payments (#92).
 | `name`, `email` | |
 | `phone` | E.164; monthly pledges only, for the reminder |
 | `address`, `postcode` | Optional |
+| `message` | Optional, at most 1000 characters; for the team only, never shown on the site |
+| `email_updates` | Consent to emails about projects and appeals; unticked by default |
+| `show_on_website` | Consent to the name, amount, appeal and date being listed on the site once the gift is received (#99); unticked by default |
 | `created_at` | When it was sent |
 
 `Frequency` (`campaigns.models`) is a `TextChoices` shared by the model, the form and anything

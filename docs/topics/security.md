@@ -72,3 +72,14 @@ folders.
 
 The mobile number's help text is the supporter's consent to a monthly reminder on WhatsApp or
 by text. Don't use the numbers for anything else.
+
+The same goes for the pledge form's two tick boxes, both unticked unless the supporter ticks
+them:
+
+- **Email updates** (`email_updates`): only email supporters who ticked it, and give every
+  email a way to stop (sending is future work, in the Email epic #81).
+- **Show my gift on our website** (`show_on_website`): the only consent to list a supporter
+  in public, and only their name, amount, appeal and date, once the gift is received.
+
+A pledge's message is free text and may hold personal details (who a gift is in memory of,
+for example). It's for the team only: never show it on the site.
