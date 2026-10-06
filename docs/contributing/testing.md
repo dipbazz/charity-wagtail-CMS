@@ -66,7 +66,9 @@ next to the app's other tests, e.g. `campaigns/tests/test_donate_browser.py`:
 - open pages with the root `conftest.py`'s `site_page` fixture: `site_page.goto(SITE +
   page.url)`. It answers the browser's requests with Django's test client, in the test's own
   thread and database transaction, so there's no live server and the test sees the data it
-  creates. Static files come from the static finders.
+  creates. Static files come from the static finders. A redirect is answered with an
+  immediate refresh to its target, because Chromium sends a redirected request to the network
+  instead of back to `site_page`; like a redirect, the refresh replaces the history entry.
 - assert with `playwright.sync_api.expect`, which waits for the page to settle.
 
 Install Chromium once with `uv run playwright install chromium`. Without it, browser tests are

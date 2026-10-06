@@ -12,9 +12,10 @@ version number.
 
 ### Fixed
 
-- Refreshing the Donate page's thank-you page, or going back and forward, no longer sends the
-  pledge again, so the team doesn't get duplicate pledges
-  ([#103](https://github.com/dipbazz/Charity-wagtail-CMS/issues/103)).
+- Refreshing the Donate page's thank-you page no longer sends the pledge again. Going back to the
+  form and sending it again, even with changes, updates the same pledge instead of adding
+  another, so the team doesn't get duplicate pledges
+  ([#110](https://github.com/dipbazz/Charity-wagtail-CMS/pull/110)).
 
 ## [0.2.0] - 2026-10-06
 

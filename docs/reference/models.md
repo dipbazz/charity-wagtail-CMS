@@ -178,6 +178,7 @@ comes with taking payments (#92).
 | `email_updates` | Consent to emails about projects and appeals; unticked by default |
 | `show_on_website` | Consent to the name, amount, appeal and date being listed on the site once the gift is received (#99); unticked by default |
 | `created_at` | When it was sent |
+| `submission_id` | The one-time ID of the copy of the form it came from: sending that copy again updates this pledge instead of adding another (#103). Blank on pledges sent before it existed |
 
 `Frequency` (`campaigns.models`) is a `TextChoices` shared by the model, the form and anything
 that acts on pledges: compare with `Frequency.MONTHLY`, never the string.

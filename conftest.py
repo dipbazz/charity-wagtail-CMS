@@ -1,5 +1,6 @@
 import os
-from urllib.parse import urlsplit
+from html import escape
+from urllib.parse import urljoin, urlsplit
 
 import pytest
 from django.contrib.auth.models import Group
@@ -130,6 +131,13 @@ def site_page(page, client):
             data=request.post_data_buffer or b"",
             content_type=request.headers.get("content-type", ""),
         )
+        if response.has_header("Location"):
+            # Chromium follows a redirect from route.fulfill, but its request for the new address
+            # skips this handler and goes to the network, where testserver doesn't exist. Move on
+            # with an immediate refresh instead, which also replaces the history entry.
+            target = escape(urljoin(request.url, response["Location"]))
+            body = f'<meta http-equiv="refresh" content="0; url={target}">'
+            return route.fulfill(status=200, content_type="text/html", body=body)
         body = b"".join(response.streaming_content) if response.streaming else response.content
         route.fulfill(status=response.status_code, headers=dict(response.items()), body=body)
 

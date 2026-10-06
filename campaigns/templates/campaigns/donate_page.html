@@ -27,6 +27,7 @@
 
         <form class="pledge-form" action="{% pageurl page %}" method="post" novalidate>
             {% csrf_token %}
+            {{ form.submission_id }}
 
             <fieldset class="amount-options"{% if form.amount.errors %} aria-describedby="{{ form.amount.auto_id }}_error"{% endif %}>
                 <legend>How much would you like to give?</legend>

@@ -341,6 +341,9 @@ class Pledge(models.Model):
         help_text="Agreed to their name, amount, appeal and date being listed once received.",
     )
     created_at = models.DateTimeField("sent", auto_now_add=True)
+    # The one-time ID of the copy of the form it was sent from. Sending that copy again (after
+    # going back from the thank-you page) updates this pledge instead of adding another.
+    submission_id = models.UUIDField(null=True, unique=True, editable=False)
 
     class Meta:
         ordering = ["-created_at"]

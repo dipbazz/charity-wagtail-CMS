@@ -249,6 +249,35 @@ class TestPledging:
         assert response.status_code == 200
         assert not Pledge.objects.exists()
 
+    def form_copy(self, client, donate_page):
+        """The one-time ID of a freshly opened copy of the form."""
+        return soup(client.get(donate_page.url)).find("input", {"name": "submission_id"})["value"]
+
+    # Regression: going back from the thank-you page and sending the form again added a second
+    # pledge. Found in review of #110 on 2026-10-06.
+    def test_sending_the_same_copy_again_updates_its_pledge(self, client, donate_page):
+        copy = self.form_copy(client, donate_page)
+
+        pledge(client, donate_page, submission_id=copy)
+        response = pledge(client, donate_page, submission_id=copy, amount="10000")
+
+        assert response.status_code == 303
+        assert Pledge.objects.count() == 1
+        assert stored(donate_page).amount == 10000
+
+    def test_each_newly_opened_copy_is_a_new_pledge(self, client, donate_page):
+        for _ in range(2):
+            pledge(client, donate_page, submission_id=self.form_copy(client, donate_page))
+
+        assert Pledge.objects.count() == 2
+
+    @pytest.mark.parametrize("sent", ["", "not-an-id"])
+    def test_a_missing_or_unreadable_id_still_saves_the_pledge(self, client, donate_page, sent):
+        response = pledge(client, donate_page, submission_id=sent)
+
+        assert response.status_code == 303
+        assert stored(donate_page).submission_id is not None
+
     @pytest.mark.parametrize(("mode", "shows"), [("", 'name="amount"'), ("thank-you", "Thank you")])
     def test_editors_can_preview_the_form_and_the_thank_you_page(self, donate_page, mode, shows):
         response = donate_page.make_preview_request(preview_mode=mode)
