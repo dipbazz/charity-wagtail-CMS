@@ -38,6 +38,9 @@ version number.
 - On the Appeals and News pages, the filter you've chosen stands out from the others, and
   screen readers say which one is selected
   ([#35](https://github.com/dipbazz/Charity-wagtail-CMS/issues/35)).
+- Appeal titles on the Appeals page are now the level below the page heading, so screen readers
+  no longer hear a skipped level and Wagtail's accessibility check stops warning editors about it
+  ([#43](https://github.com/dipbazz/Charity-wagtail-CMS/issues/43)).
 
 ## [0.1.0] - 2026-10-05
 

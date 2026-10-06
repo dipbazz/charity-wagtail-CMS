@@ -19,7 +19,7 @@
         {% if campaigns %}
             <ul class="card-grid">
                 {% for campaign in campaigns %}
-                    <li>{% include "campaigns/includes/campaign_card.html" %}</li>
+                    <li>{% include "campaigns/includes/campaign_card.html" with heading_level=2 %}</li>
                 {% endfor %}
             </ul>
             {% include "includes/pagination.html" with items=campaigns %}

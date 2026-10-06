@@ -196,6 +196,14 @@ class TestCampaignIndexPage:
 
         assert [link.text for link in filters.select('a[aria-current="page"]')] == [selected]
 
+    def test_appeal_titles_are_one_level_below_the_page_title(self, client, campaign_index):
+        CampaignPageFactory(parent=campaign_index, title="Well building")
+
+        soup = BeautifulSoup(client.get(campaign_index.url).content, "html.parser")
+
+        assert [h2.text for h2 in soup.select(".campaign-card h2")] == ["Well building"]
+        assert not soup.select(".campaign-card h3")
+
     def test_paginates_campaigns(self, client, campaign_index):
         for n in range(CampaignIndexPage.campaigns_per_page + 1):
             CampaignPageFactory(parent=campaign_index, title=f"Appeal {n:02d}")
