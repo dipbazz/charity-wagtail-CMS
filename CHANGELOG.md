@@ -17,6 +17,11 @@ version number.
   It says plainly that no payment is taken online yet, preselects the appeal you came from, and
   pledges are listed under Pledges in the admin, with filters and CSV/Excel export
   ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
+- The pledge form asks for an optional message with your gift, and has two separate tick boxes,
+  both unticked: email updates about the charity's projects and appeals, and showing your gift
+  (name, amount, appeal and date) on the website once it's received. The team can filter and
+  export pledges by each consent under Pledges
+  ([#101](https://github.com/dipbazz/Charity-wagtail-CMS/pull/101)).
 - Browser tests (Playwright) for what only happens in a browser, such as focus, scrolling and
   fields that appear on a choice. Run `uv run playwright install chromium` once
   ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
