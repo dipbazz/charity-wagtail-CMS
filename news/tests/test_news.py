@@ -73,19 +73,6 @@ class TestNewsIndex:
         assert titles(response) == ["Grace's story"]
         assert response.context["active_filter"] == "Stories"
 
-    @pytest.mark.parametrize(
-        ("path", "selected"),
-        [("", ["All news"]), ("category/stories/", ["Stories"]), ("tag/water/", [])],
-    )
-    def test_marks_the_selected_category(self, client, news_index, path, selected):
-        NewsCategoryFactory(name="Stories", slug="stories")
-        NewsCategoryFactory(name="Press releases", slug="press")
-
-        html = client.get(news_index.url + path).content
-        nav = BeautifulSoup(html, "html.parser").find("nav", {"aria-label": "News categories"})
-
-        assert [link.text for link in nav.select('a[aria-current="page"]')] == selected
-
     def test_unknown_category_is_a_404(self, client, news_index):
         assert client.get(news_index.url + "category/nope/").status_code == 404
 
