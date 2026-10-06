@@ -28,6 +28,17 @@ class TestSitemap:
         assert "<loc>http://localhost/about/</loc>" in body
         assert "/draft/" not in body
 
+    def test_lists_pages_in_every_language(self, client, home_page, nepali_home_page):
+        about = StandardPage(title="About us", slug="about")
+        home_page.add_child(instance=about)
+        about.copy_for_translation(nepali_home_page.locale).save_revision().publish()
+
+        body = client.get("/sitemap.xml").content.decode()
+
+        assert "<loc>http://localhost/about/</loc>" in body
+        assert "<loc>http://localhost/ne/</loc>" in body
+        assert "<loc>http://localhost/ne/about/</loc>" in body
+
 
 def test_robots_txt_blocks_admin_and_points_to_the_sitemap(client, home_page):
     response = client.get("/robots.txt")

@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
-from wagtail.models import Site
+from wagtail.models import Locale, Site
 
 
 @pytest.fixture(autouse=True)
@@ -48,6 +48,21 @@ def site(db):
 def home_page(site):
     """The HomePage that sits at the root of the default Site."""
     return site.root_page.specific
+
+
+@pytest.fixture
+def nepali_locale(db):
+    """Nepali, the site's second language: English is the main language in tests."""
+    return Locale.objects.get_or_create(language_code="ne")[0]
+
+
+@pytest.fixture
+def nepali_home_page(home_page, nepali_locale):
+    """The home page's published Nepali translation, served at /ne/."""
+    page = home_page.copy_for_translation(nepali_locale)
+    page.title = "गृहपृष्ठ"
+    page.save_revision().publish()
+    return page
 
 
 def _user_in_group(django_user_model, group_name):

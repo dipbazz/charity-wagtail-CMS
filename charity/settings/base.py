@@ -63,6 +63,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -128,11 +129,26 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = "en-gb"
+# The site's main language, served at /; the other one is served under its prefix (/ne/ or /en/).
+# A Nepali charity's site sets DJANGO_LANGUAGE_CODE=ne in production. It must be one of LANGUAGES
+# exactly: an unlisted variant such as en-gb would put even the main language under a prefix.
+LANGUAGE_CODE = "en"
+
+LANGUAGES = [
+    ("en", "English"),
+    ("ne", "नेपाली"),
+]
+
+# British date and number formats for English, as before the site had two languages.
+FORMAT_MODULE_PATH = ["charity.formats"]
 
 TIME_ZONE = "Europe/London"
 
 USE_I18N = True
+
+# One page tree per language, in the same languages as the site's interface.
+WAGTAIL_I18N_ENABLED = True
+WAGTAIL_CONTENT_LANGUAGES = LANGUAGES
 
 USE_TZ = True
 

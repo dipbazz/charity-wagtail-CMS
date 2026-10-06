@@ -17,16 +17,18 @@ pytestmark = pytest.mark.django_db
 # /donate/ spends three more than /about/: its suggested amounts, and the open appeals offered in
 # the form with their privacy restrictions (#31). A link naming an appeal costs one more, to check
 # that appeal is on offer before preselecting it.
+# Every page spends one query on the language being read: Wagtail looks up its Locale to find the
+# home page in that language (#113).
 BUDGETS = {
-    "/": 17,
-    "/appeals/": 15,
-    "/appeals/flood-relief/": 15,
-    "/news/": 18,
-    "/news/feed/": 10,
-    "/about/": 11,
-    "/volunteer/": 12,
-    "/donate/": 14,
-    "/donate/?appeal=flood-relief&amount=2500": 15,
+    "/": 18,
+    "/appeals/": 16,
+    "/appeals/flood-relief/": 16,
+    "/news/": 19,
+    "/news/feed/": 11,
+    "/about/": 12,
+    "/volunteer/": 13,
+    "/donate/": 15,
+    "/donate/?appeal=flood-relief&amount=2500": 16,
     "/search/?query=water": 21,
     "/api/v2/pages/?type=campaigns.CampaignPage&fields=*": 18,
 }
