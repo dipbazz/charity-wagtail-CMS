@@ -23,7 +23,7 @@ version number.
   submit. Slugs stay in English, so a page's Nepali address is its English one under `/ne/`. On
   a translated appeal, the Donate button goes to the Donate page in the same language
   once that's translated too
-  ([#114](https://github.com/dipbazz/Charity-wagtail-CMS/issues/114)).
+  ([#121](https://github.com/dipbazz/Charity-wagtail-CMS/pull/121)).
 
 ### Upgrade notes
 
