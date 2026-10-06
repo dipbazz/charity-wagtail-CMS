@@ -23,7 +23,8 @@ history.
   written by the person who knows what changed and for whom.
 - **GitHub milestones for versions,** because issues and pull requests carry them everywhere,
   the board has a Milestone field to group by, and each milestone shows how much is done.
-  Iterations stay as two-week time boxes.
+  Iterations stay as time boxes: two weeks at first, one week since 6 October 2026, because
+  the work planned for two weeks was finishing in one.
 - **New work goes into the next milestone,** apart from fixes for bugs that stop people using the
   live site.
 

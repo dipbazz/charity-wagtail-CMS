@@ -32,7 +32,7 @@ updated issues in the repo are added to it automatically.
 | Field | |
 |---|---|
 | Status | Backlog → Ready → In progress → In review → Done |
-| Iteration | Two-week sprints |
+| Iteration | One-week sprints, Tuesday to Monday |
 | Milestone | The version the work ships in, e.g. `v0.2.0` |
 | Priority | Mirrors the `P1`–`P3` labels |
 

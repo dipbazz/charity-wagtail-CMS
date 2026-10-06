@@ -1,12 +1,15 @@
 # Deploy a change
 
-How a merged change reaches the live server set up from `deploy/aws/`
+How a released version reaches the live server set up from `deploy/aws/`
 ([Deployment](../topics/deployment.md) describes that setup). Today it's done by hand on the
 server; issue #76 plans deploying from GitHub, with a backup and an approval each time.
 
 ## Before you start
 
-- The change is merged to `main` and CI passed on it.
+- The change is in a released version, tagged `vX.Y.Z`. A merged pull request waits for the next
+  release, so the live site always runs a version listed in the changelog; a fix for a bug that
+  stops people using the site ships as a PATCH release
+  ([Versions and releases](../contributing/releases.md)).
 - If the change has a migration that alters existing data, take a backup first:
   `sudo systemctl start charity-backup.service`, then check it with
   `journalctl -u charity-backup.service -n 20 --no-pager`.
@@ -16,7 +19,7 @@ server; issue #76 plans deploying from GitHub, with a backup and an approval eac
 On the server:
 
 ```bash
-cd /srv/charity/app && sudo git pull
+cd /srv/charity/app && sudo git fetch --tags && sudo git checkout vX.Y.Z
 cd deploy/aws && sudo docker compose build && sudo docker compose up -d
 sudo docker image prune -f       # remove the previous image, so the disk doesn't fill up
 ```
@@ -35,7 +38,7 @@ sudo docker compose logs --tail 100 web   # migrations, gunicorn start, any erro
 ```
 
 Then open the site and the pages the change touched. If something is wrong, `git checkout` the
-previous commit and build again; if a migration changed data, [restore the
+previous version's tag and build again; if a migration changed data, [restore the
 backup](restore-a-backup.md).
 
 ## Changes to the timers or Compose file
