@@ -15,9 +15,9 @@
         {% if categories %}
             <nav aria-label="News categories">
                 <ul class="tag-list">
-                    <li><a href="{{ page.url }}"{% if not active_filter %} aria-current="page"{% endif %}>All news</a></li>
+                    <li><a href="{{ page.url }}">All news</a></li>
                     {% for category in categories %}
-                        <li><a href="{% routablepageurl page 'category' category.slug %}"{% if category == active_category %} aria-current="page"{% endif %}>{{ category.name }}</a></li>
+                        <li><a href="{% routablepageurl page 'category' category.slug %}">{{ category.name }}</a></li>
                     {% endfor %}
                 </ul>
             </nav>

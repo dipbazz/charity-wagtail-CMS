@@ -1,9 +1,8 @@
 {% load wagtailcore_tags wagtailimages_tags %}
-{# heading_level: 2 straight under a page's <h1>, 3 (the default) under a section's <h2>. #}
 <article class="card campaign-card">
     {% if campaign.hero_image %}{% picture campaign.hero_image fill-{640x360,320x180} format-{avif,webp,jpeg} sizes="(min-width: 59rem) 22rem, (min-width: 40rem) 50vw, 100vw" loading="lazy" %}{% endif %}
     <div class="card-body">
-        <h{{ heading_level|default:3 }}><a href="{% pageurl campaign %}">{{ campaign.title }}</a></h{{ heading_level|default:3 }}>
+        <h3><a href="{% pageurl campaign %}">{{ campaign.title }}</a></h3>
         <p>{{ campaign.summary }}</p>
         {% include "campaigns/includes/progress.html" %}
         {% if not campaign.is_active %}<p class="meta">This appeal has closed.</p>{% endif %}

@@ -47,9 +47,7 @@ Every page works without it:
 Accessibility is a requirement, not a polish step:
 
 - a skip link to the main content;
-- `aria-current` on the menu item for the current page or section (`{% main_menu %}`), and
-  `aria-current="page"` on the selected listing filter (Appeals status, News category), which
-  `.tag-list a[aria-current]` fills and makes bold;
+- `aria-current` on the menu item for the current page or section (`{% main_menu %}`);
 - a visible focus outline on everything you can tab to;
 - tap targets of at least 44px (`2.75rem`);
 - alt text on every image, taken from the image's description in the admin.
