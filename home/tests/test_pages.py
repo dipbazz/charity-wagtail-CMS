@@ -1,9 +1,11 @@
 import pytest
+from bs4 import BeautifulSoup
 from django.urls import reverse
 from wagtail.models import Page
 from wagtail.test.utils.form_data import nested_form_data, rich_text, streamfield
 from wagtail_factories import ImageFactory
 
+from campaigns.tests.factories import CampaignIndexPageFactory, CampaignPageFactory
 from home.models import HomePage, StandardPage
 
 pytestmark = pytest.mark.django_db
@@ -48,6 +50,15 @@ class TestHomePage:
         home_page.save_revision().publish()
 
         assert "How we work" in client.get("/").content.decode()
+
+    def test_appeal_titles_sit_under_the_current_appeals_heading(self, client, home_page):
+        appeals = CampaignIndexPageFactory(parent=home_page)
+        CampaignPageFactory(parent=appeals, title="Well building")
+
+        soup = BeautifulSoup(client.get("/").content, "html.parser")
+
+        assert soup.select_one(".featured-campaigns h2").text == "Current appeals"
+        assert [h3.text for h3 in soup.select(".campaign-card h3")] == ["Well building"]
 
 
 class TestStandardPage:
