@@ -122,18 +122,18 @@ def test_hsts_duration_is_configurable(monkeypatch):
     assert load_settings()["SECURE_HSTS_SECONDS"] == 31536000
 
 
-def test_main_language_is_english_unless_set(monkeypatch):
+def test_main_language_is_nepali_unless_set(monkeypatch):
     monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
     monkeypatch.delenv("DJANGO_LANGUAGE_CODE", raising=False)
 
-    assert load_settings()["LANGUAGE_CODE"] == "en"
-
-
-def test_a_nepali_charity_sets_nepali_as_the_main_language(monkeypatch):
-    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
-    monkeypatch.setenv("DJANGO_LANGUAGE_CODE", "ne")
-
     assert load_settings()["LANGUAGE_CODE"] == "ne"
+
+
+def test_an_english_site_sets_english_as_the_main_language(monkeypatch):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.setenv("DJANGO_LANGUAGE_CODE", "en")
+
+    assert load_settings()["LANGUAGE_CODE"] == "en"
 
 
 @pytest.mark.parametrize("value", ["en-gb", "hi", ""])

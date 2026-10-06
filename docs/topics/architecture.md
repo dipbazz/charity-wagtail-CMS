@@ -68,7 +68,7 @@ The [models reference](../reference/models.md) has each page type's fields.
 
 ## Languages
 
-The site is in English and Nepali (`LANGUAGES`), with Wagtail's built-in translation
+The site is in Nepali and English (`LANGUAGES`), with Wagtail's built-in translation
 (`WAGTAIL_I18N_ENABLED`):
 
 - **One page tree per language.** Each language has its own home page under Root, and a
@@ -80,8 +80,9 @@ The site is in English and Nepali (`LANGUAGES`), with Wagtail's built-in transla
   `core.middleware.URLLocaleMiddleware` does the redirect. `HomePage.route` refuses a language
   that has no live home page of its own, because Wagtail would otherwise serve the main
   language's pages under the other language's address.
-- **The main language is at `/`.** `LANGUAGE_CODE` is the language the site opens in: `en` for
-  the demo, `ne` for a Nepali charity (`DJANGO_LANGUAGE_CODE` in production). The other language
+- **The main language is at `/`.** `LANGUAGE_CODE` is the language the site opens in: Nepali
+  by default in production (`DJANGO_LANGUAGE_CODE`), English for the Brightwell demo, which
+  development and the tests use. The other language
   is under its prefix through `i18n_patterns(prefix_default_language=False)` in
   `charity/urls.py`. Admin, API, documents, media, the sitemap and robots.txt have no prefix.
   So the URL alone sets a response's language, and `core.middleware.URLLocaleMiddleware` (Django's

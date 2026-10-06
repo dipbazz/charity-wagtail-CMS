@@ -29,3 +29,8 @@ def test_migration_leaves_other_locales_alone(nepali_locale):
 def test_english_dates_stay_british():
     with translation.override("en"):
         assert formats.date_format(datetime.date(2026, 10, 6), "SHORT_DATE_FORMAT") == "06/10/2026"
+
+
+def test_times_are_nepal_time(settings):
+    # Scheduled publishing and every time shown in the admin follow the charity's clock.
+    assert settings.TIME_ZONE == "Asia/Kathmandu"

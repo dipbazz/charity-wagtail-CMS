@@ -25,11 +25,11 @@ Django 6.1 configures email with `MAILERS`, not `EMAIL_BACKEND`.
 | `WAGTAILSEARCH_BACKENDS` | Wagtail's database backend |
 | `WAGTAILDOCS_EXTENSIONS` | Allowed document types: csv, docx, key, odt, pdf, pptx, rtf, txt, xlsx, zip |
 | `WAGTAILDOCS_MAX_UPLOAD_SIZE` | 10 MB |
-| `LANGUAGE_CODE` | The main language, served at `/`: `en` unless production sets `DJANGO_LANGUAGE_CODE`. It must match a code in `LANGUAGES` exactly; a variant such as `en-gb` would put every page under a prefix |
-| `LANGUAGES`, `WAGTAIL_CONTENT_LANGUAGES` | English (`en`) and Nepali (`ne`). The language that isn't the main one is served under its prefix, `/ne/` or `/en/` |
+| `LANGUAGE_CODE` | The main language, served at `/`. `en` in development and tests, where the Brightwell demo is English-first; production reads `DJANGO_LANGUAGE_CODE`, Nepali by default. It must match a code in `LANGUAGES` exactly; a variant such as `en-gb` would put every page under a prefix |
+| `LANGUAGES`, `WAGTAIL_CONTENT_LANGUAGES` | Nepali (`ne`) and English (`en`). The language that isn't the main one is served under its prefix, `/en/` or `/ne/` |
 | `WAGTAIL_I18N_ENABLED` | On: one page tree per language. See [Architecture](../topics/architecture.md#languages) |
 | `FORMAT_MODULE_PATH` | `charity.formats`, which keeps British date and number formats for `en` |
-| `TIME_ZONE` | `Europe/London` (scheduled publishing times are UK time) |
+| `TIME_ZONE` | `Asia/Kathmandu` (scheduled publishing and admin times are Nepal time) |
 
 ## Production environment variables
 
@@ -44,7 +44,7 @@ settings with `DJANGO_SETTINGS_MODULE`; anywhere else, set that variable yoursel
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated origins, e.g. `https://brightwell.example` |
 | `DJANGO_SITE_URL` | Required; the public address, e.g. `https://brightwell.example`. The Docker image copies it into Wagtail's Site record on every start (`manage.py update_site_url`), which all full URLs are built from: API links, the news feed, the sitemap, canonical and social tags. Admin emails use it too |
 | `DJANGO_SECURE_HSTS_SECONDS` | HSTS duration; defaults to one hour until HTTPS is confirmed |
-| `DJANGO_LANGUAGE_CODE` | The language the site opens in at `/`: `en` (the default) or `ne` for a Nepali charity. Anything else stops the app starting. Choose it before adding content: changing it later changes every page's address |
+| `DJANGO_LANGUAGE_CODE` | The language the site opens in at `/`: `ne` (the default) or `en` for an English-first site such as the Brightwell demo. Anything else stops the app starting. Choose it before adding content: changing it later changes every page's address |
 | `DJANGO_EMAIL_HOST` | SMTP server for form notifications and workflow emails. If it's unreachable, form submissions are still saved, pages can still be submitted and approved, and the error is logged |
 | `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_USE_TLS` | Defaults: `587` and `true` |
 | `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD` | SMTP credentials |

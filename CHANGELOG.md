@@ -21,9 +21,12 @@ version number.
 
 ### Upgrade notes
 
-- A Nepali charity's site sets `DJANGO_LANGUAGE_CODE=ne` in `deploy/aws/.env` to open in Nepali.
-  Choose before adding content, because changing it later changes every page's address. Sites
-  that leave it out stay English, and their addresses don't change.
+- **Sites now open in Nepali unless they say otherwise.** An English-first site, such as the
+  Brightwell demo server, must add `DJANGO_LANGUAGE_CODE=en` to `deploy/aws/.env` before
+  upgrading; without it, its home page stops being found. Choose a site's language before adding
+  content, because changing it later changes every page's address.
+- Scheduled publishing and the admin now use Nepal time (`Asia/Kathmandu`). Pages already
+  scheduled keep their moment, but the admin now shows it in Nepal time.
 
 ### Fixed
 

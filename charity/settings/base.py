@@ -129,20 +129,22 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-# The site's main language, served at /; the other one is served under its prefix (/ne/ or /en/).
-# A Nepali charity's site sets DJANGO_LANGUAGE_CODE=ne in production. It must be one of LANGUAGES
+# The site's main language, served at /; the other one is served under its prefix (/en/ or /ne/).
+# Production opens in Nepali unless DJANGO_LANGUAGE_CODE says otherwise; development and the tests
+# use English because the Brightwell demo content is English-first. It must be one of LANGUAGES
 # exactly: an unlisted variant such as en-gb would put even the main language under a prefix.
 LANGUAGE_CODE = "en"
 
 LANGUAGES = [
-    ("en", "English"),
     ("ne", "नेपाली"),
+    ("en", "English"),
 ]
 
 # British date and number formats for English, as before the site had two languages.
 FORMAT_MODULE_PATH = ["charity.formats"]
 
-TIME_ZONE = "Europe/London"
+# Nepal time: scheduled publishing and the admin use the charity's clock.
+TIME_ZONE = "Asia/Kathmandu"
 
 USE_I18N = True
 
