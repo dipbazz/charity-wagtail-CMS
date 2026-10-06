@@ -11,7 +11,8 @@ site settings and the announcement banner, plus Nepali translations of the home 
 appeal and its news story, with photos from
 `home/management/commands/demo_images/`. Safe to re-run: if appeals already exist it changes
 nothing else. It always runs `update_site_url` first, so an existing local database gets working
-full URLs. See [Demo content](demo-content.md).
+full URLs. The demo is English-first, so on a site whose main language is Nepali (production's
+default) it stops and asks for `DJANGO_LANGUAGE_CODE=en`. See [Demo content](demo-content.md).
 
 ## `update_site_url` (core)
 

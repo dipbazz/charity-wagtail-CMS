@@ -5,7 +5,7 @@ from pathlib import Path
 
 from django.core.files.images import ImageFile
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from PIL import Image, ImageDraw, ImageFont
 from wagtail.images.rect import Rect
@@ -150,6 +150,13 @@ class Command(BaseCommand):
         if CampaignIndexPage.objects.exists():
             self.stdout.write("Demo content already exists; nothing else to do.")
             return
+
+        # The demo is written in English with some pages translated into Nepali.
+        if home.locale.language_code != "en":
+            raise CommandError(
+                "The demo content is English-first, but this site's main language is "
+                f"{home.locale.language_code!r}. Seed it on a site with DJANGO_LANGUAGE_CODE=en."
+            )
 
         site.site_name = SITE_NAME
         site.save()
