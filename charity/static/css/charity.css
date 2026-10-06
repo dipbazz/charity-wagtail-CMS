@@ -28,6 +28,17 @@ body {
     line-height: 1.6;
     color: var(--colour-text);
     background: #fff;
+    /* At least as tall as the window, with <main> taking the spare height, so the footer sits at
+       the bottom on short pages. svh: the height with the phone's browser bars showing, so a
+       short page doesn't scroll. */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100svh;
+}
+
+main {
+    flex-grow: 1;
 }
 
 img {
@@ -481,6 +492,13 @@ h4 {
     background: var(--colour-surface);
     font-size: 0.875rem;
     text-decoration: none;
+}
+
+/* The selected filter: filled, and bold so it doesn't rely on colour alone. */
+.tag-list a[aria-current] {
+    background: var(--colour-primary);
+    color: #fff;
+    font-weight: 700;
 }
 
 /* Follow our news */
