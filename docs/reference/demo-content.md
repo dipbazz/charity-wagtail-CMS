@@ -19,9 +19,11 @@ the live demo all use. See [Management commands](management-commands.md#seed_dem
 ## Nepali pages
 
 The home page, the appeals and news index pages, the flood appeal and its news story have Nepali
-translations under `/ne/`. Everything else is English only, as most of a real charity's site
-would be at first, so QA has pages in both languages and pages in one. The Nepali appeal is as
-honest as the English one: Brightwell takes no donations, and it links to the same relief fund.
+translations under `/ne/`. One news story, about volunteers repairing a village tap, is in
+Nepali only: `/ne/news/village-tap-repair/`. Everything else is English only, as most
+of a real charity's site would be at first, so QA has pages in both languages and pages in one.
+The Nepali appeal is as honest as the English one: Brightwell takes no donations, and it links to
+the same relief fund.
 
 ## Demo photos
 
