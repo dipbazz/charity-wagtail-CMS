@@ -11,7 +11,8 @@
 {% endwith %}
 <header class="site-header">
     <div class="container">
-        <a class="brand" href="/">{{ current_site.site_name|default:"Charity" }}</a>
+        {# The home page in the language being read: / or /ne/ (or /en/ on a Nepali site). #}
+        <a class="brand" href="{% url 'wagtail_serve' '' %}">{{ current_site.site_name|default:"Charity" }}</a>
         {# Shown only on pages with JavaScript (the "js" class), so without it the menu simply stays open. #}
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu">Menu</button>
         <div class="site-menu" id="site-menu">

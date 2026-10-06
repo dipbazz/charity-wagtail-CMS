@@ -131,3 +131,10 @@ def test_donate_button_stays_outside_the_collapsible_menu(client, home_page, sit
 
     # The search form is the last thing in the collapsible menu.
     assert header.index('class="button"') > header.index("</form>")
+
+
+def test_site_name_links_to_the_home_page_in_the_language_being_read(
+    client, home_page, nepali_home_page
+):
+    assert '<a class="brand" href="/">' in header_html(client, "/")
+    assert '<a class="brand" href="/ne/">' in header_html(client, "/ne/")
