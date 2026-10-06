@@ -13,6 +13,7 @@ superusers.
 | **Pages** | Edit and preview | ✅ | ✅ |
 | | Submit for moderation | ✅ | ✅ |
 | | Approve and publish | ❌ | ✅ |
+| | Translate (copies the page into the other language as a draft) | ✅ | ✅ |
 | **Testimonials** | Add, change and delete drafts | ✅ | ✅ |
 | | Publish | ❌ | ✅ |
 | | Lock and unlock | ❌ | ✅ |
@@ -42,7 +43,8 @@ This site's models get theirs from data migrations:
 - `core/migrations/0004_editor_and_moderator_permissions.py`: the banner, partners,
   testimonials and site settings;
 - `news/migrations/0004_editor_and_moderator_permissions.py`: news categories;
-- `campaigns/migrations/0006_pledge_permissions.py`: viewing pledges.
+- `campaigns/migrations/0006_pledge_permissions.py`: viewing pledges;
+- `core/migrations/0008_translation_permissions.py`: translating pages.
 
 The full discussion is in issue #72.
 

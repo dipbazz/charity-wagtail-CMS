@@ -18,6 +18,12 @@ version number.
   page that isn't translated yet sends Nepali readers to the English page (or the other way
   round on a Nepali site) instead of a "page not found"
   ([#120](https://github.com/dipbazz/Charity-wagtail-CMS/pull/120)).
+- Editors can publish a page in one language and translate it later: **Translate** on any page
+  copies it, with its images and blocks, into the other language as a draft to rewrite and
+  submit. Slugs stay in English, so a page's Nepali address is its English one under `/ne/`. On
+  a translated appeal, the Donate button goes to the Donate page in the same language
+  once that's translated too
+  ([#114](https://github.com/dipbazz/Charity-wagtail-CMS/issues/114)).
 
 ### Upgrade notes
 

@@ -74,6 +74,16 @@ The site is in Nepali and English (`LANGUAGES`), with Wagtail's built-in transla
 - **One page tree per language.** Each language has its own home page under Root, and a
   translation is a separate page linked to its original by `translation_key`
   (`page.copy_for_translation(locale)`, then publish). A page can exist in one language only.
+- **Editors translate with simple_translation.** `wagtail.contrib.simple_translation` adds a
+  **Translate** action that copies a page into another language as a draft, keeping its slug.
+  `WAGTAILSIMPLETRANSLATION_SYNC_PAGE_TREE` is left off: it would copy every new page into every
+  language, and one-language pages must stay possible. Translate only offers languages that have
+  a `Locale`, and Wagtail creates only the main language's, so `core.apps.create_content_locales`
+  creates one for each of `WAGTAIL_CONTENT_LANGUAGES` after every `migrate`.
+- **Slugs are in English in every language** (`WAGTAIL_ALLOW_UNICODE_SLUGS = False`), so a
+  page's addresses differ only by the language prefix. Django's slug check rejects Devanagari
+  vowel signs and the virama, and Wagtail's admin would drop them from a slug made from a Nepali
+  title (धारा मर्मत becomes धर-मरमत).
 - **Links to a chosen page follow the page's language.** The appeal page's Donate button goes to
   the Donate page's live translation in the appeal's language, otherwise to the Donate page
   itself (`CampaignPage.get_donate_page`). Wagtail's `.localized` does the same but spends a

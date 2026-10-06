@@ -6,6 +6,8 @@ from django.apps import apps
 from django.utils import formats, translation
 from wagtail.models import Locale
 
+from core.apps import create_content_locales
+
 pytestmark = pytest.mark.django_db
 
 migration = importlib.import_module("core.migrations.0007_english_locale_without_region")
@@ -34,3 +36,18 @@ def test_english_dates_stay_british():
 def test_times_are_nepal_time(settings):
     # Scheduled publishing and every time shown in the admin follow the charity's clock.
     assert settings.TIME_ZONE == "Asia/Kathmandu"
+
+
+def test_every_content_language_has_a_locale():
+    # Editors can only translate a page into a language that has a Locale. A new site has only
+    # its main language's, so migrate creates the rest.
+    assert sorted(Locale.objects.values_list("language_code", flat=True)) == ["en", "ne"]
+
+
+def test_a_language_added_later_gets_a_locale(settings):
+    settings.WAGTAIL_CONTENT_LANGUAGES = [*settings.WAGTAIL_CONTENT_LANGUAGES, ("hi", "हिन्दी")]
+
+    create_content_locales()
+    create_content_locales()
+
+    assert Locale.objects.filter(language_code="hi").count() == 1
