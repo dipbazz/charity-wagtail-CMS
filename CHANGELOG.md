@@ -44,6 +44,8 @@ version number.
 - On short pages, such as a search that finds nothing, the footer now reaches the bottom of the
   window instead of stopping partway up with a white strip below it
   ([#37](https://github.com/dipbazz/Charity-wagtail-CMS/issues/37)).
+- The appeal and news filters and a story's tags are now big enough to tap easily on a phone
+  (44px tall instead of 27px) ([#108](https://github.com/dipbazz/Charity-wagtail-CMS/pull/108)).
 
 ## [0.1.0] - 2026-10-05
 
