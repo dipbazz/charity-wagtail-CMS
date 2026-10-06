@@ -1,7 +1,11 @@
+from django.conf import settings
 from django.db import models
+from django.http import Http404
+from django.utils import translation
 from wagtail.admin.panels import FieldPanel, MultiFieldPanel
+from wagtail.coreutils import get_supported_content_language_variant
 from wagtail.fields import StreamField
-from wagtail.models import Page
+from wagtail.models import Page, Site
 from wagtail.search import index
 
 from campaigns.models import CampaignPage
@@ -47,6 +51,22 @@ class HomePage(SocialMetaMixin, Page):
 
     max_count = 1
     parent_page_types = ["wagtailcore.Page"]
+
+    def route(self, request, path_components):
+        # Wagtail starts routing at the home page in the language being read, but falls back to
+        # the main language's when that language has no live home page: /ne/news/ would serve the
+        # English news page marked as Nepali. A language without its own home page has no pages
+        # here; core.middleware.URLLocaleMiddleware then redirects to the main language's page.
+        # The site root paths are cached, so this check costs no query.
+        language = get_supported_content_language_variant(
+            translation.get_language() or settings.LANGUAGE_CODE
+        )
+        if not any(
+            root.root_path == self.url_path and root.language_code == language
+            for root in Site.get_site_root_paths()
+        ):
+            raise Http404
+        return super().route(request, path_components)
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)

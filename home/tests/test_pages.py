@@ -1,6 +1,8 @@
 import pytest
 from bs4 import BeautifulSoup
+from django.http import Http404
 from django.urls import reverse
+from django.utils import translation
 from wagtail.models import Page
 from wagtail.test.utils.form_data import nested_form_data, rich_text, streamfield
 from wagtail_factories import ImageFactory
@@ -28,6 +30,20 @@ class TestPageTreeRules:
 
         assert StandardPage.can_create_at(home_page)
         assert StandardPage.can_create_at(about)
+
+
+class TestHomePageRouting:
+    def test_routes_requests_in_its_own_language(self, rf, home_page):
+        add_standard_page(home_page)
+
+        with translation.override("en"):
+            assert home_page.route(rf.get("/about-us/"), ["about-us"]).page.title == "About us"
+
+    def test_doesnt_route_a_language_that_has_no_home_page(self, rf, home_page, nepali_locale):
+        add_standard_page(home_page)
+
+        with translation.override("ne"), pytest.raises(Http404):
+            home_page.route(rf.get("/ne/about-us/"), ["about-us"])
 
 
 class TestHomePage:

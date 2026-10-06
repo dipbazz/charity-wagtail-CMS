@@ -74,6 +74,12 @@ The site is in English and Nepali (`LANGUAGES`), with Wagtail's built-in transla
 - **One page tree per language.** Each language has its own home page under Root, and a
   translation is a separate page linked to its original by `translation_key`
   (`page.copy_for_translation(locale)`, then publish). A page can exist in one language only.
+- **Missing pages fall back to the main language.** A second-language address with no page there,
+  such as `/ne/news/` before the news page is translated, redirects (302) to the same address in
+  the main language, `/news/`, if a page is there; otherwise it's a 404.
+  `core.middleware.URLLocaleMiddleware` does the redirect. `HomePage.route` refuses a language
+  that has no live home page of its own, because Wagtail would otherwise serve the main
+  language's pages under the other language's address.
 - **The main language is at `/`.** `LANGUAGE_CODE` is the language the site opens in: `en` for
   the demo, `ne` for a Nepali charity (`DJANGO_LANGUAGE_CODE` in production). The other language
   is under its prefix through `i18n_patterns(prefix_default_language=False)` in

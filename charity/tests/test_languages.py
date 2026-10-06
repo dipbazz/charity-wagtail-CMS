@@ -47,12 +47,15 @@ class TestEnglishAsTheMainLanguage:
         assert "गृहपृष्ठ" in client.get("/ne/").content.decode()
         assert "हाम्रो बारेमा" in client.get("/ne/about-us/").content.decode()
 
-    def test_a_page_in_one_language_isnt_found_in_the_other(
+    def test_a_page_missing_in_nepali_falls_back_to_english(
         self, client, home_page, nepali_home_page
     ):
         add_page(home_page, "About us", "about-us")
 
-        assert client.get("/ne/about-us/").status_code == 404
+        response = client.get("/ne/about-us/")
+
+        assert response.status_code == 302
+        assert response["Location"] == "/about-us/"
 
     def test_english_isnt_also_served_under_en(self, client, home_page):
         assert client.get("/en/").status_code == 404
@@ -90,3 +93,9 @@ class TestNepaliAsTheMainLanguage:
         response = client.get("/en/")
         assert "Home" in response.content.decode()
         assert 'lang="en"' in html_lang(response)
+
+    def test_english_without_a_translation_falls_back_to_nepali(self, client):
+        response = client.get("/en/")
+
+        assert response.status_code == 302
+        assert response["Location"] == "/"
