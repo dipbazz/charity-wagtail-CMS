@@ -16,6 +16,13 @@ the live demo all use. See [Management commands](management-commands.md#seed_dem
   No freely licensed photo of that flood exists, so the appeal uses a representative photo of a
   flooded camp, labelled as such in its caption and alt text.
 
+## Nepali pages
+
+The home page, the appeals and news index pages, the flood appeal and its news story have Nepali
+translations under `/ne/`. Everything else is English only, as most of a real charity's site
+would be at first, so QA has pages in both languages and pages in one. The Nepali appeal is as
+honest as the English one: Brightwell takes no donations, and it links to the same relief fund.
+
 ## Demo photos
 
 `seed_demo` loads these photos from `home/management/commands/demo_images/`, resized to 1600px

@@ -12,6 +12,7 @@ What editors can do in the admin, and the Wagtail features behind each part.
 | Supporters | Partners (drag to reorder) and testimonials with drafts, revisions, locking and preview | Snippets, `SnippetViewSet(Group)`, `DraftStateMixin`, `RevisionMixin`, `PreviewableMixin` |
 | Site-wide | Charity number, contact details, donate page, currency, default phone country, social links, emergency-appeal banner | `wagtail.contrib.settings` (site and generic settings) |
 | Images | Photo credit and a safeguarding consent flag on every image, which keeps unconsented images out of the API; focal-point crops; alt text from the image description | Custom image model, renditions, custom API viewset |
+| Languages | Pages in English, Nepali or both; each site chooses the main language it opens in, and the other is under `/ne/` or `/en/`. Listings and menus show the language being read | `WAGTAIL_I18N_ENABLED`, `Locale`, `copy_for_translation`, Django's `i18n_patterns` |
 | Search | Full-text search over page content, excluding drafts and private pages; editor-pinned results | `search_fields`, `wagtail.contrib.search_promotions` |
 | SEO | Sitemap, robots.txt, canonical and Open Graph tags, social sharing image, redirects (including automatic ones on slug change) | `wagtail.contrib.sitemaps`, `wagtail.contrib.redirects`, promote panels |
 | Headless | Read-only JSON for pages, images and documents, e.g. for a mobile app | `wagtail.api.v2` |

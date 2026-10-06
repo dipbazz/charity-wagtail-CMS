@@ -59,6 +59,8 @@ before.
 
 - Public listings filter `.live().public()`, never just `.live()`
   ([Security](topics/security.md)).
+- Page queries that visitors see, other than `child_of(self)`, filter by `locale_id`, or Nepali
+  and English pages mix ([Architecture](topics/architecture.md#languages)).
 - Never serve `MEDIA_ROOT/documents/` directly ([Security](topics/security.md)).
 - A new snippet or setting needs a permissions data migration that uses `get_or_create`
   ([Add a snippet or setting](how-to/add-snippet-or-setting.md)).

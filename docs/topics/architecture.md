@@ -50,17 +50,41 @@ The tree `seed_demo` builds, and the parent and child rules each page type enfor
 
 ```
 Root
-└─ HomePage "/" (max 1)
-   ├─ StandardPage  /about/ ... (can nest under another StandardPage)
-   ├─ DonatePage /donate/ (max 1; no children)
-   ├─ CampaignIndexPage /appeals/ (max 1)
-   │   └─ CampaignPage /appeals/flood-relief/ ... (+ DonationAmount inline)
-   ├─ NewsIndexPage /news/ (max 1)
-   │   └─ NewsPage /news/<slug>/
-   └─ FormPage /volunteer/ (under HomePage or a StandardPage; no children)
+├─ HomePage "/" (max 1 created in the admin; translations are copies)
+│  ├─ StandardPage  /about/ ... (can nest under another StandardPage)
+│  ├─ DonatePage /donate/ (one per home page; no children)
+│  ├─ CampaignIndexPage /appeals/ (one per home page)
+│  │   └─ CampaignPage /appeals/flood-relief/ ... (+ DonationAmount inline)
+│  ├─ NewsIndexPage /news/ (one per home page)
+│  │   └─ NewsPage /news/<slug>/
+│  └─ FormPage /volunteer/ (under HomePage or a StandardPage; no children)
+└─ HomePage "/ne/" (the Nepali translation)
+   ├─ CampaignIndexPage /ne/appeals/
+   │   └─ CampaignPage /ne/appeals/flood-relief/
+   └─ NewsIndexPage /ne/news/ ...
 ```
 
 The [models reference](../reference/models.md) has each page type's fields.
+
+## Languages
+
+The site is in English and Nepali (`LANGUAGES`), with Wagtail's built-in translation
+(`WAGTAIL_I18N_ENABLED`):
+
+- **One page tree per language.** Each language has its own home page under Root, and a
+  translation is a separate page linked to its original by `translation_key`
+  (`page.copy_for_translation(locale)`, then publish). A page can exist in one language only.
+- **The main language is at `/`.** `LANGUAGE_CODE` is the language the site opens in: `en` for
+  the demo, `ne` for a Nepali charity (`DJANGO_LANGUAGE_CODE` in production). The other language
+  is under its prefix through `i18n_patterns(prefix_default_language=False)` in
+  `charity/urls.py`. Admin, API, documents, media, the sitemap and robots.txt have no prefix.
+- **Listings stay in one language.** Listings built with `child_of(self)` already are. Any other
+  page query that visitors see filters by `locale_id=self.locale_id`, as the home page's
+  featured appeals and the Donate page's appeals do. The menu takes its items from the home
+  page at the start of the current page's tree path.
+- **English uses British formats** through `FORMAT_MODULE_PATH` (`charity/formats/en/`), because
+  `LANGUAGE_CODE` has to be `en`, not `en-gb`, for English pages to have no prefix.
+  `core.migrations.0007` renamed existing `en-gb` locales to `en`.
 
 ## Settings modules
 

@@ -10,6 +10,19 @@ version number.
 
 ## [Unreleased]
 
+### Added
+
+- Pages can now be read in Nepali as well as English. Each site opens in its main language, and
+  pages in the other language are under `/ne/` (or `/en/` on a Nepali site). Menus, the home
+  page's appeals and the Donate page's appeals show only pages in the language being read
+  ([#120](https://github.com/dipbazz/Charity-wagtail-CMS/pull/120)).
+
+### Upgrade notes
+
+- A Nepali charity's site sets `DJANGO_LANGUAGE_CODE=ne` in `deploy/aws/.env` to open in Nepali.
+  Choose before adding content, because changing it later changes every page's address. Sites
+  that leave it out stay English, and their addresses don't change.
+
 ### Fixed
 
 - Refreshing the Donate page's thank-you page no longer sends the pledge again. Going back to the
