@@ -1,4 +1,5 @@
 import datetime
+import functools
 from decimal import Decimal
 
 from django.contrib import admin
@@ -175,6 +176,24 @@ class CampaignPage(SocialMetaMixin, Page):
         if mode_name == "card":
             return "campaigns/previews/campaign_card.html"
         return super().get_preview_template(request, mode_name)
+
+    def get_donate_page(self, request):
+        """The Donate page in this appeal's language once it's translated, else the main one.
+
+        Costs no query beyond the site settings' on a main-language appeal, unlike `.localized`.
+        """
+        donate_page = SiteSettings.for_request(request).donate_page
+        if donate_page is None or donate_page.locale_id == self.locale_id:
+            return donate_page
+        translation = donate_page.get_translations().live().filter(locale_id=self.locale_id).first()
+        return translation or donate_page
+
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+        # Only an open appeal with suggested amounts shows the Donate button; templates call a
+        # function only if they use it.
+        context["donate_page"] = functools.partial(self.get_donate_page, request)
+        return context
 
 
 class AbstractDonationAmount(Orderable):

@@ -131,6 +131,49 @@ class TestCampaignPage:
 
         assert f'href="{donate.url}?appeal=flood-relief"' in html
 
+    def test_donate_button_on_a_nepali_appeal_goes_to_the_nepali_donate_page(
+        self, client, site, home_page, nepali_home_page, campaign_index
+    ):
+        nepali = nepali_home_page.locale
+        donate = StandardPage(title="Donate", slug="donate")
+        home_page.add_child(instance=donate)
+        donate.save_revision().publish()
+        settings = SiteSettings.for_site(site)
+        settings.donate_page = donate
+        settings.save()
+        donate.copy_for_translation(nepali).save_revision().publish()
+        campaign = CampaignPageFactory(parent=campaign_index, slug="flood-relief")
+        campaign.donation_amounts.create(amount=2500, impact="A hygiene kit for a family")
+        campaign.save_revision().publish()
+        campaign_index.copy_for_translation(nepali).save_revision().publish()
+        nepali_campaign = campaign.copy_for_translation(nepali)
+        nepali_campaign.save_revision().publish()
+
+        html = client.get(nepali_campaign.url).content.decode()
+
+        assert 'href="/ne/donate/?appeal=flood-relief"' in html
+
+    def test_donate_button_on_a_nepali_appeal_falls_back_to_the_main_donate_page(
+        self, client, site, home_page, nepali_home_page, campaign_index
+    ):
+        nepali = nepali_home_page.locale
+        donate = StandardPage(title="Donate", slug="donate")
+        home_page.add_child(instance=donate)
+        donate.save_revision().publish()
+        settings = SiteSettings.for_site(site)
+        settings.donate_page = donate
+        settings.save()
+        campaign = CampaignPageFactory(parent=campaign_index, slug="flood-relief")
+        campaign.donation_amounts.create(amount=2500, impact="A hygiene kit for a family")
+        campaign.save_revision().publish()
+        campaign_index.copy_for_translation(nepali).save_revision().publish()
+        nepali_campaign = campaign.copy_for_translation(nepali)
+        nepali_campaign.save_revision().publish()
+
+        html = client.get(nepali_campaign.url).content.decode()
+
+        assert 'href="/donate/?appeal=flood-relief"' in html
+
     def test_can_preview_the_listing_card(self, campaign_index):
         campaign = CampaignPageFactory(parent=campaign_index, title="Winter appeal")
 

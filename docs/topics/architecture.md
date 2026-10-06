@@ -74,6 +74,10 @@ The site is in Nepali and English (`LANGUAGES`), with Wagtail's built-in transla
 - **One page tree per language.** Each language has its own home page under Root, and a
   translation is a separate page linked to its original by `translation_key`
   (`page.copy_for_translation(locale)`, then publish). A page can exist in one language only.
+- **Links to a chosen page follow the page's language.** The appeal page's Donate button goes to
+  the Donate page's live translation in the appeal's language, otherwise to the Donate page
+  itself (`CampaignPage.get_donate_page`). Wagtail's `.localized` does the same but spends a
+  query even on a main-language page.
 - **Missing pages fall back to the main language.** A second-language address with no page there,
   such as `/ne/news/` before the news page is translated, redirects (302) to the same address in
   the main language, `/news/`, if a page is there; otherwise it's a 404.
