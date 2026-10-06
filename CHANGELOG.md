@@ -10,6 +10,21 @@ version number.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-06
+
+The giving journey: suggested amounts and a pledge form on the Donate page, amounts in Nepalese
+rupees or pounds, and accessibility and layout fixes.
+
+### Upgrade notes
+
+- Amounts are now shown in the currency chosen in **Site settings**, which is Nepalese rupees
+  unless you change it. If your appeal targets and suggested amounts are in pounds, choose
+  pounds sterling there after upgrading.
+- The migrations, which run when the container starts, add a table for pledges and settings
+  for the currency and the mobile number's country, and let the Editors and Moderators groups
+  view pledges. Pledges hold supporters' names and contact details, so check who is in those
+  groups. Existing pages and content aren't changed.
+
 ### Added
 
 - The Donate page now has suggested amounts and a pledge form: one-off or monthly, which appeal
@@ -143,5 +158,6 @@ The first tracked release. It collects everything built before versioning starte
 - Every CI action is pinned to a commit, and Dependabot proposes updates
   ([#69](https://github.com/dipbazz/Charity-wagtail-CMS/pull/69)).
 
-[Unreleased]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dipbazz/Charity-wagtail-CMS/releases/tag/v0.1.0
