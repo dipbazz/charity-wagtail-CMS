@@ -167,10 +167,30 @@ def test_slugs_made_from_a_title_are_in_latin_letters(client, editor, nepali_hom
     assert "data-w-slug-allow-unicode-value" not in html
 
 
-def test_page_explorer_shows_each_page_s_language(client, editor, nepali_home_page):
+def test_page_explorer_status_panel_shows_the_language(client, editor, nepali_home_page):
+    # Wagtail labels rows with their language only at the root, where both home pages are; below
+    # that, the status panel (the ⓘ button) names the language and links to the translations.
     add_page(nepali_home_page, title="धारा मर्मत", slug="tap-repair")
     client.force_login(editor)
 
     html = client.get(reverse("wagtailadmin_explore", args=[nepali_home_page.pk])).content.decode()
 
     assert "नेपाली" in html
+    assert (
+        reverse(
+            "wagtailadmin_explore",
+            args=[nepali_home_page.get_translation(Locale.objects.get(language_code="en")).pk],
+        )
+        in html
+    )
+
+
+def test_page_explorer_root_labels_each_home_page_with_its_language(
+    client, editor, nepali_home_page
+):
+    client.force_login(editor)
+
+    html = client.get(reverse("wagtailadmin_explore_root")).content.decode()
+
+    assert "नेपाली" in html
+    assert "English" in html

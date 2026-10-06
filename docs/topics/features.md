@@ -29,8 +29,10 @@ waits for the other one. Until a page in the site's main language is translated,
 other language are sent to it. A page only in the other language is listed only in that
 language.
 
-- **To write a page in one language,** add it under that language's pages: in the page explorer,
-  each page shows its language, and the Nepali pages sit under the Nepali home page.
+- **To write a page in one language,** add it under that language's home page: the Nepali pages
+  sit under the Nepali home page. The page explorer labels the two home pages with their
+  language, and a page's status panel (the ⓘ button, in the explorer or while editing) shows its
+  language, which translations it has, and **Switch locales** to open one.
 - **To translate a page,** open it and choose **Translate** (or **Translate** in the page
   explorer's "More" menu), then the language. Wagtail copies the page, with its images and
   blocks, into the other language as a draft and opens it. Rewrite the text, keep the slug, and
