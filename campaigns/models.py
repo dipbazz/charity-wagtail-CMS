@@ -7,7 +7,7 @@ from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
-from django.template.response import TemplateResponse
+from django.http import HttpResponseRedirect
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
     FieldPanel,
@@ -18,6 +18,7 @@ from wagtail.admin.panels import (
     TabbedInterface,
 )
 from wagtail.api import APIField
+from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 from wagtail.fields import RichTextField, StreamField
 from wagtail.images.api.fields import ImageRenditionField
 from wagtail.models import Orderable, Page, PageManager
@@ -201,10 +202,11 @@ DEFAULT_PAYMENT_NOTICE = (
 )
 
 
-class DonatePage(SocialMetaMixin, Page):
+class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     """The page every Donate button leads to: suggested amounts and a pledge form.
 
-    Each pledge it takes is saved as a `Pledge`, listed under Pledges in the admin.
+    Each pledge it takes is saved as a `Pledge`, listed under Pledges in the admin. The form
+    then redirects to its own thank-you page, so reloading that page can't send it again.
     """
 
     introduction = models.TextField(blank=True)
@@ -249,32 +251,29 @@ class DonatePage(SocialMetaMixin, Page):
             **kwargs,
         )
 
-    def serve(self, request, *args, **kwargs):
+    @path("")
+    def pledge_form(self, request):
         site_settings = SiteSettings.for_request(request)
         if request.method == "POST":
             form = self.get_form(request.POST, site_settings=site_settings)
             if form.is_valid():
                 form.save()
-                return self.render_landing_page(request)
+                # 303 See Other: the browser fetches the thank-you page with GET, so reloading
+                # it doesn't send the form again.
+                thank_you = self.get_url(request) + self.reverse_subpage("thank_you")
+                return HttpResponseRedirect(thank_you, status=303)
         else:
             form = self.get_form(site_settings=site_settings, link=request.GET)
+        return self.render(request, context_overrides={"form": form})
 
-        context = self.get_context(request, *args, **kwargs)
-        context["form"] = form
-        return TemplateResponse(request, self.get_template(request), context)
-
-    def render_landing_page(self, request):
-        return TemplateResponse(request, self.landing_page_template, self.get_context(request))
+    @path("thank-you/", name="thank_you")
+    def thank_you(self, request):
+        return self.render(request, template=self.landing_page_template)
 
     def serve_preview(self, request, mode_name):
         if mode_name == "thank-you":
-            return self.render_landing_page(request)
+            return self.thank_you(request)
         return super().serve_preview(request, mode_name)
-
-    def get_preview_context(self, request, mode_name):
-        context = super().get_preview_context(request, mode_name)
-        context["form"] = self.get_form(site_settings=SiteSettings.for_site(self.get_site()))
-        return context
 
     def get_appeals_page(self):
         return CampaignIndexPage.objects.live().public().first()

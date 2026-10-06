@@ -121,9 +121,10 @@ for). `DonationAmount` is on a `CampaignPage` (inline, up to four) and `DonatePa
 ### `DonatePage`
 
 The page every Donate button leads to (max 1, under the `HomePage`): suggested amounts and a
-pledge form. A plain page with its own `serve()`: a valid form is saved as a `Pledge` and the
-thank-you template (`donate_page_landing.html`) is shown. Preview modes: `""` (the page) and
-`"thank-you"`. No payment is taken.
+pledge form. A routable page: a valid form is saved as a `Pledge`, then redirects (303) to its
+`thank-you/` route, which shows `donate_page_landing.html`, so reloading the thank-you page
+can't send the pledge again. Preview modes: `""` (the page) and `"thank-you"`. No payment is
+taken.
 
 | Field | |
 |---|---|

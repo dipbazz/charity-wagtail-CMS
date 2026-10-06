@@ -25,8 +25,8 @@ VALID = {
 }
 
 
-def pledge(client, page, **changes):
-    return client.post(page.url, {**VALID, **changes})
+def pledge(client, page, follow=False, **changes):
+    return client.post(page.url, {**VALID, **changes}, follow=follow)
 
 
 def stored(page):
@@ -148,7 +148,7 @@ class TestPledging:
     def test_a_suggested_amount_is_saved(self, client, donate_page):
         response = pledge(client, donate_page, frequency="monthly", appeal="flood-relief")
 
-        assert response.status_code == 200
+        assert response.status_code == 303
         saved = stored(donate_page)
         assert saved.amount == 2500
         assert saved.currency == "NPR"
@@ -222,11 +222,38 @@ class TestPledging:
         assert not Pledge.objects.exists()
 
     def test_thank_you_page_links_back_to_the_appeals(self, client, donate_page, appeals):
-        response = pledge(client, donate_page)
+        response = pledge(client, donate_page, follow=True)
 
         html = response.content.decode()
         assert "Thank you for your pledge." in html
         assert f'href="{appeals.url}"' in html
+
+    def test_sending_a_pledge_redirects_to_the_thank_you_page(self, client, donate_page):
+        response = pledge(client, donate_page)
+
+        assert response.status_code == 303
+        assert response["Location"] == donate_page.url + "thank-you/"
+
+    # Regression: refreshing the thank-you page sent the pledge again (#103).
+    def test_reloading_the_thank_you_page_saves_nothing_more(self, client, donate_page):
+        thank_you = pledge(client, donate_page)["Location"]
+
+        for _ in range(2):
+            assert "Thank you for your pledge." in client.get(thank_you).content.decode()
+
+        assert Pledge.objects.count() == 1
+
+    def test_the_thank_you_page_saves_nothing_when_opened_directly(self, client, donate_page):
+        response = client.get(donate_page.url + "thank-you/")
+
+        assert response.status_code == 200
+        assert not Pledge.objects.exists()
+
+    @pytest.mark.parametrize(("mode", "shows"), [("", 'name="amount"'), ("thank-you", "Thank you")])
+    def test_editors_can_preview_the_form_and_the_thank_you_page(self, donate_page, mode, shows):
+        response = donate_page.make_preview_request(preview_mode=mode)
+
+        assert shows in response.content.decode()
 
 
 class TestOwnAmountField:
@@ -414,7 +441,7 @@ class TestMobileNumber:
     def test_is_not_kept_for_a_one_off_gift(self, client, donate_page, phone):
         response = pledge(client, donate_page, frequency="one-off", phone=phone)
 
-        assert response.status_code == 200
+        assert response.status_code == 303
         assert stored(donate_page).phone == ""
 
     def test_says_it_is_only_for_a_whatsapp_or_text_reminder(self, client, donate_page):
@@ -454,7 +481,7 @@ class TestMessage:
 
         response = pledge(client, donate_page, message=sent)
 
-        assert "Thank you for your pledge." in response.content.decode()
+        assert response.status_code == 303
         assert stored(donate_page).message == typed
 
     def test_box_asks_for_a_character_count_up_to_the_models_limit(self, client, donate_page):
