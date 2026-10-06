@@ -1,8 +1,10 @@
+import uuid
 from dataclasses import dataclass
 
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator
+from django.db import IntegrityError, transaction
 
 from campaigns.models import Frequency, Pledge
 from core.money import CURRENCIES, format_money
@@ -72,6 +74,10 @@ class PledgeForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
     )
     phone_country = forms.ChoiceField(choices=phone_country_choices, label="Country")
+    # A one-time ID for this copy of the form: sending the same copy again updates its pledge
+    # instead of adding a second one. Going back from the thank-you page can reload the page with
+    # a new ID, so donate.js puts back the ID that was sent.
+    submission_id = forms.CharField(required=False, initial=uuid.uuid4, widget=forms.HiddenInput)
 
     class Meta:
         model = Pledge
@@ -169,6 +175,16 @@ class PledgeForm(forms.ModelForm):
             self.fields[name].show_optional = True
         if link is not None:
             self.initial.update(self.initial_from_link(link))
+        if self.is_bound:
+            self.instance = self.pledge_sent_before() or self.instance
+
+    def pledge_sent_before(self):
+        """The pledge already saved from this copy of the form, if it's being sent again."""
+        try:
+            sent = uuid.UUID(self.data.get(self.add_prefix("submission_id"), ""))
+        except ValueError:
+            return None
+        return Pledge.objects.filter(submission_id=sent).first()
 
     def initial_from_link(self, link):
         """Preselect the amount and appeal named in the link, ignoring any that aren't offered."""
@@ -210,12 +226,26 @@ class PledgeForm(forms.ModelForm):
 
         return cleaned_data
 
+    def clean_submission_id(self):
+        """This copy's ID, or a new one if it's missing or unreadable (a page opened before IDs
+        existed): never a reason to turn a pledge away."""
+        try:
+            return uuid.UUID(self.cleaned_data["submission_id"])
+        except ValueError:
+            return uuid.uuid4()
+
     def save(self, commit=True):
         pledge = super().save(commit=False)
         chosen = self.cleaned_data["amount"]
         pledge.amount = self.cleaned_data["other_amount"] if chosen == OTHER else int(chosen)
         pledge.currency = self.currency
         pledge.page = self.page
+        pledge.submission_id = self.cleaned_data["submission_id"]
         if commit:
-            pledge.save()
+            try:
+                with transaction.atomic():
+                    pledge.save()
+            except IntegrityError:
+                # The same copy sent twice at once (a double click): the first one saved it.
+                return Pledge.objects.get(submission_id=pledge.submission_id)
         return pledge

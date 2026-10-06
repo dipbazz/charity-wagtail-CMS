@@ -41,6 +41,12 @@ Every page works without it:
   turns amber (`--colour-warning-text`, `--colour-warning-surface`) from 95% of the limit,
   with a hidden status message that tells screen readers only when the limit is near and
   when it's reached. Without JavaScript, `maxlength` still stops typing at the limit.
+- Some scripts only make the server's work more reliable. The pledge form's hidden
+  `submission_id` lets the server update a pledge when the same copy of the form is sent again.
+  Going back from the thank-you page can reload the form with a new ID while the browser refills
+  what was typed, so `donate.js`, which only the Donate page loads, remembers the ID it sent (in
+  `sessionStorage`) and puts it back when the page is reached with Back or Forward. Scripts for
+  one page go in their own file like this, so other pages stay within their weight budgets.
 
 ## Accessibility
 

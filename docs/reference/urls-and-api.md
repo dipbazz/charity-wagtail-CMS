@@ -14,6 +14,7 @@
 | `/media/<path>` | Uploads, through `core.views.serve_media` when `SERVE_MEDIA` is on; never `documents/` |
 | `/__debug__/` | django-debug-toolbar, in development only |
 | `/donate/?appeal=<slug>&amount=<n>` | The Donate page with an appeal and an amount preselected; either can be left out, and ones not on offer are ignored |
+| `/donate/thank-you/` | Where the pledge form redirects once a pledge is saved. Opening or reloading it saves nothing |
 | everything else | Wagtail's page serving: the [page tree](../topics/architecture.md#page-tree), including the news index's own routes (`/news/tag/…`, `/news/category/…`, `/news/feed/`) |
 
 ## API (`charity/api.py`)

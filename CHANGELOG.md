@@ -10,6 +10,13 @@ version number.
 
 ## [Unreleased]
 
+### Fixed
+
+- Refreshing the Donate page's thank-you page no longer sends the pledge again. Going back to the
+  form and sending it again, even with changes, updates the same pledge instead of adding
+  another, so the team doesn't get duplicate pledges
+  ([#110](https://github.com/dipbazz/Charity-wagtail-CMS/pull/110)).
+
 ## [0.2.0] - 2026-10-06
 
 The giving journey: suggested amounts and a pledge form on the Donate page, amounts in Nepalese

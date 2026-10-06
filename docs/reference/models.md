@@ -121,9 +121,10 @@ for). `DonationAmount` is on a `CampaignPage` (inline, up to four) and `DonatePa
 ### `DonatePage`
 
 The page every Donate button leads to (max 1, under the `HomePage`): suggested amounts and a
-pledge form. A plain page with its own `serve()`: a valid form is saved as a `Pledge` and the
-thank-you template (`donate_page_landing.html`) is shown. Preview modes: `""` (the page) and
-`"thank-you"`. No payment is taken.
+pledge form. A routable page: a valid form is saved as a `Pledge`, then redirects (303) to its
+`thank-you/` route, which shows `donate_page_landing.html`, so reloading the thank-you page
+can't send the pledge again. Preview modes: `""` (the page) and `"thank-you"`. No payment is
+taken.
 
 | Field | |
 |---|---|
@@ -177,6 +178,7 @@ comes with taking payments (#92).
 | `email_updates` | Consent to emails about projects and appeals; unticked by default |
 | `show_on_website` | Consent to the name, amount, appeal and date being listed on the site once the gift is received (#99); unticked by default |
 | `created_at` | When it was sent |
+| `submission_id` | The one-time ID of the copy of the form it came from: sending that copy again updates this pledge instead of adding another (#103). Blank on pledges sent before it existed |
 
 `Frequency` (`campaigns.models`) is a `TextChoices` shared by the model, the form and anything
 that acts on pledges: compare with `Frequency.MONTHLY`, never the string.

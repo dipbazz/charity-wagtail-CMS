@@ -9,6 +9,7 @@ import re
 import pytest
 from playwright.sync_api import expect
 
+from campaigns.models import Pledge
 from conftest import SITE
 
 pytestmark = [pytest.mark.browser, pytest.mark.django_db]
@@ -76,6 +77,36 @@ class TestYourOwnAmount:
         other = donate_form.locator('input[name="amount"][value="other"]')
         expect(other).to_be_checked()
         expect(other).to_be_focused()
+
+
+class TestSendingAgain:
+    # Regression: going back from the thank-you page showed the filled-in form, and sending it
+    # again added a second pledge. Found in review of #110 on 2026-10-06.
+    def test_going_back_and_sending_again_keeps_one_pledge(self, donate_form):
+        amount_card(donate_form, "Rs 2,500").click()
+        donate_form.get_by_label("Your name").fill("Sita Sharma")
+        donate_form.get_by_label("Email address").fill("sita@example.com")
+        send = donate_form.get_by_role("button", name="Send my pledge")
+
+        send.click()
+        expect(donate_form).to_have_url(re.compile(r"/thank-you/$"))
+        donate_form.go_back()
+        expect(donate_form.get_by_label("Your name")).to_have_value("Sita Sharma")
+        send.click()
+        expect(donate_form).to_have_url(re.compile(r"/thank-you/$"))
+
+        assert Pledge.objects.count() == 1
+
+    def test_opening_the_donate_page_again_starts_a_new_pledge(self, donate_form, donate_page):
+        for _ in range(2):
+            donate_form.goto(SITE + donate_page.url)
+            amount_card(donate_form, "Rs 2,500").click()
+            donate_form.get_by_label("Your name").fill("Sita Sharma")
+            donate_form.get_by_label("Email address").fill("sita@example.com")
+            donate_form.get_by_role("button", name="Send my pledge").click()
+            expect(donate_form).to_have_url(re.compile(r"/thank-you/$"))
+
+        assert Pledge.objects.count() == 2
 
 
 class TestChoices:
