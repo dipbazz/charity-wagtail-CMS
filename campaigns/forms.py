@@ -76,7 +76,7 @@ class PledgeForm(forms.ModelForm):
     phone_country = forms.ChoiceField(choices=phone_country_choices, label="Country")
     # A one-time ID for this copy of the form: sending the same copy again updates its pledge
     # instead of adding a second one. Going back from the thank-you page can reload the page with
-    # a new ID, so charity.js puts back the ID that was sent.
+    # a new ID, so donate.js puts back the ID that was sent.
     submission_id = forms.CharField(required=False, initial=uuid.uuid4, widget=forms.HiddenInput)
 
     class Meta:

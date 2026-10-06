@@ -44,8 +44,9 @@ Every page works without it:
 - Some scripts only make the server's work more reliable. The pledge form's hidden
   `submission_id` lets the server update a pledge when the same copy of the form is sent again.
   Going back from the thank-you page can reload the form with a new ID while the browser refills
-  what was typed, so `charity.js` remembers the ID it sent (in `sessionStorage`) and puts it back
-  when the page is reached with Back or Forward.
+  what was typed, so `donate.js`, which only the Donate page loads, remembers the ID it sent (in
+  `sessionStorage`) and puts it back when the page is reached with Back or Forward. Scripts for
+  one page go in their own file like this, so other pages stay within their weight budgets.
 
 ## Accessibility
 

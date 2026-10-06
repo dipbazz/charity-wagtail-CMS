@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load static wagtailcore_tags %}
 
 {% block body_class %}template-donatepage form-page{% endblock %}
 
@@ -84,4 +84,8 @@
 
         {% include "includes/streamfield.html" with stream=page.body %}
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/donate.js' %}"></script>
 {% endblock %}
