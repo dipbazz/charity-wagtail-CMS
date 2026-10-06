@@ -18,7 +18,8 @@ pytestmark = pytest.mark.django_db
 # the form with their privacy restrictions (#31). A link naming an appeal costs one more, to check
 # that appeal is on offer before preselecting it.
 # Every page spends one query on the language being read: Wagtail looks up its Locale to find the
-# home page in that language (#113).
+# home page in that language (#113). A page in the second language spends one more, finding that
+# home page's translation. The API lists the Nepali flood appeal too, so it spends one more on it.
 BUDGETS = {
     "/": 18,
     "/appeals/": 16,
@@ -30,7 +31,11 @@ BUDGETS = {
     "/donate/": 15,
     "/donate/?appeal=flood-relief&amount=2500": 16,
     "/search/?query=water": 21,
-    "/api/v2/pages/?type=campaigns.CampaignPage&fields=*": 18,
+    "/api/v2/pages/?type=campaigns.CampaignPage&fields=*": 19,
+    "/ne/": 16,
+    "/ne/appeals/": 17,
+    "/ne/appeals/flood-relief/": 17,
+    "/ne/news/": 20,
 }
 
 
