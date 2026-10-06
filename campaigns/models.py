@@ -38,7 +38,8 @@ class CampaignIndexPage(Page):
 
     parent_page_types = ["home.HomePage"]
     subpage_types = ["campaigns.CampaignPage"]
-    max_count = 1
+    # One per home page, so one per language.
+    max_count_per_parent = 1
 
     campaigns_per_page = 9
     status_filters = {"active": "Open appeals", "closed": "Past appeals"}
@@ -232,13 +233,20 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
 
     parent_page_types = ["home.HomePage"]
     subpage_types = []
-    max_count = 1
+    # One per home page, so one per language.
+    max_count_per_parent = 1
 
     landing_page_template = "campaigns/donate_page_landing.html"
     preview_modes = [("", "Donate page"), ("thank-you", "Thank-you page")]
 
     def get_appeals(self):
-        return CampaignPage.objects.live().public().active().order_by("title")
+        return (
+            CampaignPage.objects.live()
+            .public()
+            .active()
+            .filter(locale_id=self.locale_id)
+            .order_by("title")
+        )
 
     def get_form(self, *args, site_settings, **kwargs):
         from campaigns.forms import PledgeForm  # forms imports this module's Pledge
@@ -276,7 +284,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         return super().serve_preview(request, mode_name)
 
     def get_appeals_page(self):
-        return CampaignIndexPage.objects.live().public().first()
+        return CampaignIndexPage.objects.live().public().filter(locale_id=self.locale_id).first()
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)

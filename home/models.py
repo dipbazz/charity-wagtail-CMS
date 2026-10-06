@@ -51,7 +51,11 @@ class HomePage(SocialMetaMixin, Page):
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
         context["featured_campaigns"] = with_card_images(
-            CampaignPage.objects.live().public().active().order_by("-start_date")
+            CampaignPage.objects.live()
+            .public()
+            .active()
+            .filter(locale_id=self.locale_id)
+            .order_by("-start_date")
         )[:3]
         return context
 

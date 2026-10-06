@@ -36,6 +36,12 @@ class TestPageTreeRules:
     def test_news_index_lives_under_home(self, home_page):
         assert NewsIndexPage.can_create_at(home_page)
 
+    def test_each_language_s_home_page_has_one_news_index(
+        self, home_page, news_index, nepali_home_page
+    ):
+        assert not NewsIndexPage.can_create_at(home_page)
+        assert NewsIndexPage.can_create_at(nepali_home_page)
+
     def test_news_pages_live_only_under_the_news_index(self, home_page, news_index):
         assert NewsPage.can_create_at(news_index)
         assert not NewsPage.can_create_at(home_page)

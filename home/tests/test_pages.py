@@ -60,6 +60,20 @@ class TestHomePage:
         assert soup.select_one(".featured-campaigns h2").text == "Current appeals"
         assert [h3.text for h3 in soup.select(".campaign-card h3")] == ["Well building"]
 
+    def test_lists_only_appeals_in_its_own_language(self, client, home_page, nepali_home_page):
+        appeals = CampaignIndexPageFactory(parent=home_page)
+        CampaignPageFactory(parent=appeals, title="Well building")
+        nepali_appeals = appeals.copy_for_translation(nepali_home_page.locale)
+        nepali_appeals.save_revision().publish()
+        CampaignPageFactory(parent=nepali_appeals, title="इनार निर्माण")
+
+        def appeal_titles(path):
+            soup = BeautifulSoup(client.get(path).content, "html.parser")
+            return [h3.text for h3 in soup.select(".campaign-card h3")]
+
+        assert appeal_titles("/") == ["Well building"]
+        assert appeal_titles("/ne/") == ["इनार निर्माण"]
+
 
 class TestStandardPage:
     def test_renders_introduction_and_body(self, client, home_page):

@@ -73,7 +73,8 @@ class NewsIndexPage(RoutablePageMixin, Page):
 
     parent_page_types = ["home.HomePage"]
     subpage_types = ["news.NewsPage"]
-    max_count = 1
+    # One per home page, so one per language.
+    max_count_per_parent = 1
 
     stories_per_page = 10
 

@@ -55,6 +55,22 @@ def test_main_menu_marks_the_section_containing_the_current_page(client, home_pa
     assert f'<a href="{work.url}">Our work</a>' in menu
 
 
+def test_main_menu_lists_the_pages_in_the_language_being_read(client, home_page, nepali_home_page):
+    about = add_page(home_page, "About us")
+    add_page(home_page, "Our work")
+    hamro_barema = about.copy_for_translation(nepali_home_page.locale)
+    hamro_barema.title = "हाम्रो बारेमा"
+    hamro_barema.save_revision().publish()
+
+    english_menu = menu_html(client, "/")
+    nepali_menu = menu_html(client, "/ne/")
+
+    assert "About us" in english_menu and "Our work" in english_menu
+    assert "हाम्रो बारेमा" not in english_menu
+    assert f'<a href="{hamro_barema.url}">हाम्रो बारेमा</a>' in nepali_menu
+    assert "About us" not in nepali_menu and "Our work" not in nepali_menu
+
+
 def header_html(client, path="/"):
     html = client.get(path).content.decode()
     start = html.index('<header class="site-header"')

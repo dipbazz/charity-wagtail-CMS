@@ -5,7 +5,7 @@ from wagtail.test.utils.form_data import inline_formset, nested_form_data, rich_
 
 from campaigns.forms import PledgeForm
 from campaigns.models import CampaignPage, DonatePage, Frequency, Pledge
-from campaigns.tests.factories import DonatePageFactory
+from campaigns.tests.factories import CampaignPageFactory, DonatePageFactory
 from core.models import SiteSettings
 from home.models import StandardPage
 
@@ -62,6 +62,11 @@ class TestPageTreeRules:
     def test_has_no_child_pages(self):
         assert DonatePage.subpage_types == []
 
+    def test_each_language_s_home_page_can_have_one(self, home_page, nepali_home_page):
+        DonatePageFactory(parent=home_page)
+
+        assert DonatePage.can_create_at(nepali_home_page)
+
 
 class TestDonatePage:
     def test_shows_suggested_amounts_with_what_they_pay_for(self, client, donate_page):
@@ -93,6 +98,24 @@ class TestDonatePage:
         options = [option.get_text(strip=True) for option in select.find_all("option")]
 
         assert options == ["Wherever it's needed most", "Flood relief"]
+
+    def test_offers_and_links_to_appeals_in_its_own_language(
+        self, client, donate_page, appeals, nepali_home_page
+    ):
+        nepali_appeals = appeals.copy_for_translation(nepali_home_page.locale)
+        nepali_appeals.save_revision().publish()
+        CampaignPageFactory(parent=nepali_appeals, title="बाढी राहत", slug="badhi-rahat")
+        nepali_donate_page = donate_page.copy_for_translation(nepali_home_page.locale)
+        nepali_donate_page.save_revision().publish()
+
+        def appeal_options(page):
+            select = soup(client.get(page.url)).find("select", attrs={"name": "appeal"})
+            return [option.get_text(strip=True) for option in select.find_all("option")][1:]
+
+        assert appeal_options(donate_page) == ["Flood relief"]
+        assert appeal_options(nepali_donate_page) == ["बाढी राहत"]
+        assert donate_page.get_appeals_page().pk == appeals.pk
+        assert nepali_donate_page.get_appeals_page().pk == nepali_appeals.pk
 
 
 class TestPledgeModelAndForm:
