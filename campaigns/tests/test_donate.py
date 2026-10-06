@@ -443,6 +443,20 @@ class TestMessage:
         assert "at most 1000 characters" in response.content.decode()
         assert not Pledge.objects.exists()
 
+    # Regression: a message the box counted as 1000 characters was rejected as "1008", because
+    # browsers count a line break as one character but send it as two (CRLF).
+    # Found in review of #101 on 2026-10-06.
+    def test_a_full_message_with_line_breaks_is_accepted_as_the_box_counts_it(
+        self, client, donate_page
+    ):
+        typed = ("x" * 99 + "\n") * 9 + "x" * 100  # 1000 characters in the box
+        sent = typed.replace("\n", "\r\n")
+
+        response = pledge(client, donate_page, message=sent)
+
+        assert "Thank you for your pledge." in response.content.decode()
+        assert stored(donate_page).message == typed
+
     def test_box_asks_for_a_character_count_up_to_the_models_limit(self, client, donate_page):
         """charity.js adds the count; without JavaScript, maxlength alone stops typing."""
         box = soup(client.get(donate_page.url)).find("textarea", attrs={"name": "message"})
