@@ -8,7 +8,7 @@ The project's own commands, plus the Wagtail ones the deployment relies on. Run 
 
 Builds the fictional demo site: pages, appeals, stories, a form, partners, a testimonial, the
 site settings and the announcement banner, plus Nepali translations of the home page, the flood
-appeal and its news story, with photos from
+appeal and its news story and one story in Nepali only, with photos from
 `home/management/commands/demo_images/`. Safe to re-run: if appeals already exist it changes
 nothing else. It always runs `update_site_url` first, so an existing local database gets working
 full URLs. The demo is English-first, so on a site whose main language is Nepali (production's

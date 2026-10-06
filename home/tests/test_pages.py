@@ -81,7 +81,7 @@ class TestHomePage:
         CampaignPageFactory(parent=appeals, title="Well building")
         nepali_appeals = appeals.copy_for_translation(nepali_home_page.locale)
         nepali_appeals.save_revision().publish()
-        CampaignPageFactory(parent=nepali_appeals, title="इनार निर्माण")
+        CampaignPageFactory(parent=nepali_appeals, title="इनार निर्माण", slug="wells")
 
         def appeal_titles(path):
             soup = BeautifulSoup(client.get(path).content, "html.parser")

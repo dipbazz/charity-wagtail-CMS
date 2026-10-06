@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "wagtail.contrib.routable_page",
     "wagtail.contrib.search_promotions",
     "wagtail.contrib.sitemaps",
+    "wagtail.contrib.simple_translation",
     "wagtail.api.v2",
     "rest_framework",
     "wagtail.contrib.table_block",
@@ -148,9 +149,17 @@ TIME_ZONE = "Asia/Kathmandu"
 
 USE_I18N = True
 
-# One page tree per language, in the same languages as the site's interface.
+# One page tree per language, in the same languages as the site's interface. Editors copy a page
+# into the other language with simple_translation's Translate action. Its
+# WAGTAILSIMPLETRANSLATION_SYNC_PAGE_TREE stays off: it would put a copy of every new page in every
+# language, and a page must be able to exist in one language only (#114).
 WAGTAIL_I18N_ENABLED = True
 WAGTAIL_CONTENT_LANGUAGES = LANGUAGES
+
+# Slugs are in English in both languages, so a page's addresses differ only by /ne/. Wagtail would
+# drop Devanagari vowel signs from a slug made from a Nepali title (धारा मर्मत -> धर-मरमत), and
+# Django can't validate most Nepali words as slugs anyway.
+WAGTAIL_ALLOW_UNICODE_SLUGS = False
 
 USE_TZ = True
 

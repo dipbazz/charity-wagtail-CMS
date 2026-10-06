@@ -46,6 +46,7 @@ def assert_denied(response):
         ("core.lock_testimonial", False, True),
         ("core.unlock_testimonial", False, True),
         ("core.change_sitesettings", False, True),
+        ("simple_translation.submit_translation", True, True),
     ],
 )
 def test_groups_have_the_agreed_permissions(editor, moderator, permission, editors, moderators):
@@ -143,3 +144,17 @@ def test_migration_reuses_the_permissions_an_existing_database_already_has(
     # A fresh copy of the user: has_perm caches permissions on the instance.
     editor = django_user_model.objects.get(pk=editor.pk)
     assert editor.has_perm("core.change_announcementbanner")
+
+
+def test_translation_migration_reuses_the_permission_an_existing_database_already_has(
+    django_user_model, editor
+):
+    migration = importlib.import_module("core.migrations.0008_translation_permissions")
+    Group.objects.get(name="Editors").permissions.clear()
+    permission_count = Permission.objects.count()
+
+    migration.grant_permissions(apps, schema_editor=None)
+
+    assert Permission.objects.count() == permission_count
+    editor = django_user_model.objects.get(pk=editor.pk)
+    assert editor.has_perm("simple_translation.submit_translation")

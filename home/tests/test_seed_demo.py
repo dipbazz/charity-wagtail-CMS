@@ -108,7 +108,7 @@ def test_translates_the_home_page_an_appeal_and_a_story_into_nepali(seeded, clie
     nepali = Locale.objects.get(language_code="ne")
     flood = CampaignPage.objects.get(slug="flood-relief", locale__language_code="en")
     nepali_flood = flood.get_translation(nepali)
-    [nepali_story] = NewsPage.objects.live().filter(locale=nepali)
+    nepali_story = flood_story_in(nepali)
 
     assert seeded.root_page.get_translation(nepali).live
     assert nepali_flood.live
@@ -120,6 +120,23 @@ def test_translates_the_home_page_an_appeal_and_a_story_into_nepali(seeded, clie
     # The Nepali appeal is honest about the demo too, and points to the same relief fund.
     html = client.get(nepali_flood.url).content.decode()
     assert "https://rescue.opmcm.gov.np/donations" in html
+
+
+def flood_story_in(locale):
+    english = NewsPage.objects.get(locale__language_code="en", slug__contains="bhote-koshi")
+    return english.get_translation(locale)
+
+
+def test_adds_a_news_story_in_nepali_only(seeded, client):
+    nepali = Locale.objects.get(language_code="ne")
+    [story] = [
+        page
+        for page in NewsPage.objects.live().filter(locale=nepali)
+        if not page.get_translations().exists()
+    ]
+
+    assert story.get_parent().specific.locale == nepali
+    assert client.get(story.url).status_code == 200
 
 
 def test_running_twice_does_not_duplicate_content(seeded):

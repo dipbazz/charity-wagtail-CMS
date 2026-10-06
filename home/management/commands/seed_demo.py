@@ -468,7 +468,8 @@ class Command(BaseCommand):
         """Translate the home page, the flood appeal and its news story, served under /ne/.
 
         The rest of the site stays English only, as most of a real charity's site would be at
-        first: QA needs pages in both languages and pages in one.
+        first, and one news story is in Nepali only, as an editor who writes in Nepali would
+        publish it: QA needs pages in both languages and pages in one.
         """
         nepali = Locale.objects.get_or_create(language_code="ne")[0]
 
@@ -519,7 +520,9 @@ class Command(BaseCommand):
                 ),
             ],
         )
-        translate(news, title="समाचार", introduction="साझेदार र सहयोगीहरूका कथा र अपडेट।")
+        nepali_news = translate(
+            news, title="समाचार", introduction="साझेदार र सहयोगीहरूका कथा र अपडेट।"
+        )
         translate(
             flood_story,
             title="भोटेकोशी बाढीबारे हामीलाई के थाहा छ",
@@ -530,6 +533,24 @@ class Command(BaseCommand):
                     "<p>लाङटाङमा हिमनदी खस्दा आएको बाढी नेपालका तीन जिल्ला हुँदै बग्यो।</p>",
                 )
             ],
+        )
+        # Written in Nepali only: there's no English version. Its slug is English, like every
+        # page's, so an English version could later have the same address without /ne/.
+        publish(
+            nepali_news,
+            NewsPage(
+                title="गाउँका स्वयंसेवकले धारा मर्मत गरे",
+                slug="village-tap-repair",
+                date=TODAY - datetime.timedelta(days=1),
+                introduction="स्वयंसेवकहरूले एक दिनमै गाउँको बिग्रिएको धारा फेरि चलाए।",
+                body=[
+                    (
+                        "paragraph",
+                        "<p>स्वयंसेवकहरूले एक दिनमै गाउँको बिग्रिएको धारा फेरि चलाए। अब "
+                        "परिवारहरूले पानी लिन टाढा जानु पर्दैन।</p>",
+                    )
+                ],
+            ),
         )
 
     def add_campaign(self, parent, *, amounts, target, raised, start, end, body=None, **fields):
