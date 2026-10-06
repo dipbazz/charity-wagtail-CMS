@@ -82,7 +82,8 @@ class PledgeForm(forms.ModelForm):
             "email": forms.EmailInput(attrs={"autocomplete": "email"}),
             "address": forms.Textarea(attrs={"rows": 3, "autocomplete": "street-address"}),
             "postcode": forms.TextInput(attrs={"autocomplete": "postal-code"}),
-            "message": forms.Textarea(attrs={"rows": 3}),
+            # charity.js shows "10/1000 characters" below it (data-char-count).
+            "message": forms.Textarea(attrs={"rows": 3, "data-char-count": ""}),
         }
         # The model's names head the admin's columns; donors are asked in their own words.
         labels = {

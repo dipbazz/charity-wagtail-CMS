@@ -7,6 +7,9 @@
     --colour-surface: #f4f7f6;
     --colour-border: #d7e0de;
     --colour-error: #b3261e;
+    /* Nearing a limit: dark amber text (6.4:1 on the surface below) and a pale amber fill. */
+    --colour-warning-text: #7a5300;
+    --colour-warning-surface: #fff6df;
     --radius: 6px;
     --container: 1120px;
     --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -572,6 +575,24 @@ h4 {
 .helptext {
     color: var(--colour-muted);
     font-size: 0.9375rem;
+}
+
+/* A textarea's character count (charity.js), amber once the limit is near. */
+.char-count {
+    margin: 0;
+    color: var(--colour-muted);
+    font-size: 0.9375rem;
+}
+
+.char-count.is-near-limit {
+    color: var(--colour-warning-text);
+    font-weight: 600;
+}
+
+.form-page main textarea.is-near-limit {
+    border-color: var(--colour-accent);
+    background: var(--colour-warning-surface);
+    box-shadow: 0 0 0 1px var(--colour-accent);
 }
 
 /* Radio buttons and tick boxes: big enough to tap, with their label beside them. */

@@ -443,6 +443,13 @@ class TestMessage:
         assert "at most 1000 characters" in response.content.decode()
         assert not Pledge.objects.exists()
 
+    def test_box_asks_for_a_character_count_up_to_the_models_limit(self, client, donate_page):
+        """charity.js adds the count; without JavaScript, maxlength alone stops typing."""
+        box = soup(client.get(donate_page.url)).find("textarea", attrs={"name": "message"})
+
+        assert box.has_attr("data-char-count")
+        assert box["maxlength"] == str(Pledge._meta.get_field("message").max_length)
+
     def test_says_only_the_team_reads_it(self, client, donate_page):
         html = client.get(donate_page.url).content.decode()
 

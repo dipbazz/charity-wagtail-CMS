@@ -36,6 +36,11 @@ Every page works without it:
   first paint, and the CSS keys off that, so the page doesn't jump when `charity.js` runs at the
   end of the body. If `charity.js` fails to download, its `onerror` removes the class again, so
   the menu opens back up.
+- Elements that only make sense with JavaScript are created by it. A `<textarea>` with
+  `data-char-count` and a `maxlength` gets a "10/1000 characters" count below it, which
+  turns amber (`--colour-warning-text`, `--colour-warning-surface`) from 95% of the limit,
+  with a hidden status message that tells screen readers only when the limit is near and
+  when it's reached. Without JavaScript, `maxlength` still stops typing at the limit.
 
 ## Accessibility
 
