@@ -99,7 +99,7 @@ class TestPledgeModelAndForm:
     """PledgeForm builds its fields from Pledge, so what a field accepts can't drift apart. The
     model's names are neutral (they head the admin columns); the form words them for donors."""
 
-    @pytest.mark.parametrize("name", ["name", "email", "phone", "address", "postcode"])
+    @pytest.mark.parametrize("name", ["name", "email", "phone", "address", "postcode", "message"])
     def test_what_each_field_accepts_comes_from_the_model(self, name):
         form_field = PledgeForm.base_fields[name]
         model_field = Pledge._meta.get_field(name)
@@ -118,6 +118,13 @@ class TestPledgeModelAndForm:
             ("appeal", "appeal", "Which appeal would you like to support?"),
             ("phone", "mobile number", "Number"),
             ("frequency", "how often", "How often"),
+            ("message", "message", "A message with your gift"),
+            (
+                "email_updates",
+                "email updates",
+                "Email me stories from our projects and appeals that need help",
+            ),
+            ("show_on_website", "show on website", "Show my gift on our website"),
         ],
     )
     def test_the_model_is_named_for_the_team_and_the_form_for_donors(
@@ -328,7 +335,7 @@ class TestOptionalLabels:
     def label(self, response, for_id):
         return soup(response).find("label", attrs={"for": for_id})
 
-    @pytest.mark.parametrize("for_id", ["id_address", "id_postcode"])
+    @pytest.mark.parametrize("for_id", ["id_message", "id_address", "id_postcode"])
     def test_optional_fields_say_so(self, client, donate_page, for_id):
         optional = self.label(client.get(donate_page.url), for_id).find(class_="optional")
 
@@ -415,6 +422,113 @@ class TestMobileNumber:
 
         assert "WhatsApp" in html
         assert "text message" in html
+
+
+class TestMessage:
+    """A note to the team with the gift, e.g. who it's in memory of. Never shown on the site."""
+
+    def test_is_optional(self, client, donate_page):
+        pledge(client, donate_page)
+
+        assert stored(donate_page).message == ""
+
+    def test_is_saved(self, client, donate_page):
+        pledge(client, donate_page, message="In memory of my father, Hari.")
+
+        assert stored(donate_page).message == "In memory of my father, Hari."
+
+    def test_a_message_over_1000_characters_shows_an_error(self, client, donate_page):
+        response = pledge(client, donate_page, message="x" * 1001)
+
+        assert "at most 1000 characters" in response.content.decode()
+        assert not Pledge.objects.exists()
+
+    def test_says_only_the_team_reads_it(self, client, donate_page):
+        html = client.get(donate_page.url).content.decode()
+
+        assert "Only our team will read it." in html
+
+
+class TestChoices:
+    """Two separate consents, both unticked until the supporter ticks one (opt-in)."""
+
+    @pytest.mark.parametrize("name", ["email_updates", "show_on_website"])
+    def test_starts_unticked(self, client, donate_page, name):
+        box = soup(client.get(donate_page.url)).find("input", attrs={"name": name})
+
+        assert box["type"] == "checkbox"
+        assert not box.has_attr("checked")
+
+    def test_leaving_both_unticked_saves_no_consent(self, client, donate_page):
+        pledge(client, donate_page)
+
+        saved = stored(donate_page)
+        assert saved.email_updates is False
+        assert saved.show_on_website is False
+
+    def test_ticking_email_updates_saves_only_that(self, client, donate_page):
+        pledge(client, donate_page, email_updates="on")
+
+        saved = stored(donate_page)
+        assert saved.email_updates is True
+        assert saved.show_on_website is False
+
+    def test_ticking_show_on_website_saves_only_that(self, client, donate_page):
+        pledge(client, donate_page, show_on_website="on")
+
+        saved = stored(donate_page)
+        assert saved.show_on_website is True
+        assert saved.email_updates is False
+
+    def test_a_ticked_box_stays_ticked_when_the_form_has_errors(self, client, donate_page):
+        response = pledge(client, donate_page, name="", show_on_website="on")
+
+        box = soup(response).find("input", attrs={"name": "show_on_website"})
+        assert box.has_attr("checked")
+
+    def test_show_on_website_says_exactly_what_is_shown(self, client, donate_page):
+        """This help text is the consent to the recent supporters list (#99)."""
+        help_text = PledgeForm.base_fields["show_on_website"].help_text
+
+        for shown in ("name", "amount", "appeal", "date"):
+            assert shown in help_text
+        assert "Nothing else about you is shown." in help_text
+        box = soup(client.get(donate_page.url)).find("input", attrs={"name": "show_on_website"})
+        assert box.find_next(class_="helptext").get_text(strip=True) == help_text
+
+    def test_email_updates_says_you_can_stop(self, client, donate_page):
+        assert "You can ask us to stop at any time." in client.get(donate_page.url).content.decode()
+
+    @pytest.mark.parametrize("name", ["email_updates", "show_on_website"])
+    def test_each_box_is_inside_its_label_and_described_by_its_help_text(
+        self, client, donate_page, name
+    ):
+        """Inside its label, so the whole row can be tapped, like the radio buttons."""
+        html = soup(client.get(donate_page.url))
+        box = html.find("input", attrs={"name": name})
+
+        assert box.find_parent("label")["for"] == box["id"]
+        assert html.find(id=box["aria-describedby"]).get_text(strip=True)
+
+
+class TestFormOrder:
+    def test_the_message_comes_after_the_appeal_and_before_your_details(self, client, donate_page):
+        html = client.get(donate_page.url).content.decode()
+
+        assert html.index('name="appeal"') < html.index('name="message"')
+        assert html.index('name="message"') < html.index("<legend>Your details</legend>")
+
+    def test_the_choices_come_after_your_details_and_before_the_button(self, client, donate_page):
+        response = client.get(donate_page.url)
+        html = response.content.decode()
+
+        assert html.index('name="postcode"') < html.index('name="email_updates"')
+        assert html.index('name="email_updates"') < html.index('name="show_on_website"')
+        assert html.index('name="show_on_website"') < html.index("Send my pledge")
+        choices = (
+            soup(response).find("input", attrs={"name": "email_updates"}).find_parent("fieldset")
+        )
+        assert choices.legend.get_text(strip=True) == "Your choices"
 
 
 class TestDonatePageInTheAdmin:

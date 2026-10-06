@@ -585,7 +585,7 @@ h4 {
 }
 
 .form-page main div:has(> label > input[type="radio"]) label,
-.form-page main .checkbox {
+.form-page main .checkbox label {
     display: flex;
     gap: 0.75rem;
     align-items: flex-start;
@@ -596,6 +596,12 @@ h4 {
 
 .form-page main .checkbox label {
     font-weight: 600;
+}
+
+/* A tick box's help text lines up with its label text: past the box (1.25rem) and the gap. */
+.checkbox .helptext {
+    margin: 0;
+    padding-left: 2rem;
 }
 
 /* Donate page */

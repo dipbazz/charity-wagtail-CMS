@@ -1,0 +1,5 @@
+{% comment %}A tick box inside its label, so the whole row can be tapped like the radio buttons, with its help text below (.checkbox in charity.css). Django adds aria-describedby="<id>_helptext" to the box.{% endcomment %}
+<div class="field checkbox">
+    <label for="{{ field.id_for_label }}">{{ field }} <span>{{ field.label }}</span></label>
+    {% if field.help_text %}<p class="helptext" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+</div>

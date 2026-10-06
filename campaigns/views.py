@@ -31,6 +31,9 @@ class PledgeViewSet(ModelViewSet):
         "phone",
         "address",
         "postcode",
+        "message",
+        "email_updates",
+        "show_on_website",
     ]
 
     list_display = [
@@ -40,7 +43,7 @@ class PledgeViewSet(ModelViewSet):
         Column("frequency", label="How often", accessor="get_frequency_display"),
         "appeal",
     ]
-    list_filter = ["frequency", "appeal", "created_at"]
+    list_filter = ["frequency", "appeal", "email_updates", "show_on_website", "created_at"]
     search_fields = ["name", "email"]
     search_backend_name = None  # plain database search; pledges aren't in the site search index
 
@@ -55,9 +58,14 @@ class PledgeViewSet(ModelViewSet):
         "appeal",
         "address",
         "postcode",
+        "message",
+        "email_updates",
+        "show_on_website",
     ]
     export_headings = {
         "created_at": "Sent",
         "get_frequency_display": "How often",
+        "email_updates": "Email updates",
+        "show_on_website": "Show on website",
     }
     export_filename = "pledges"

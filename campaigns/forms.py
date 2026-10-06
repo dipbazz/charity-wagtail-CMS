@@ -63,7 +63,18 @@ class PledgeForm(forms.ModelForm):
 
     class Meta:
         model = Pledge
-        fields = ["frequency", "phone", "appeal", "name", "email", "address", "postcode"]
+        fields = [
+            "frequency",
+            "phone",
+            "appeal",
+            "message",
+            "name",
+            "email",
+            "address",
+            "postcode",
+            "email_updates",
+            "show_on_website",
+        ]
         widgets = {
             "frequency": forms.RadioSelect,
             "phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "tel-national"}),
@@ -71,14 +82,28 @@ class PledgeForm(forms.ModelForm):
             "email": forms.EmailInput(attrs={"autocomplete": "email"}),
             "address": forms.Textarea(attrs={"rows": 3, "autocomplete": "street-address"}),
             "postcode": forms.TextInput(attrs={"autocomplete": "postal-code"}),
+            "message": forms.Textarea(attrs={"rows": 3}),
         }
         # The model's names head the admin's columns; donors are asked in their own words.
         labels = {
             "name": "Your name",
             "appeal": "Which appeal would you like to support?",
             "phone": "Number",  # under its "Mobile number (optional)" legend
+            "message": "A message with your gift",
+            "email_updates": "Email me stories from our projects and appeals that need help",
+            "show_on_website": "Show my gift on our website",
         }
         help_texts = {
+            "message": (
+                "For example, if you're giving in memory of someone. Only our team will read it."
+            ),
+            # The supporter's consents. Each says exactly what they agree to; the recent
+            # supporters list (#99) must show no more than show_on_website's text promises.
+            "email_updates": "You can ask us to stop at any time.",
+            "show_on_website": (
+                "Once your gift reaches us, we'll list your name, the amount, the appeal and the "
+                "date. Nothing else about you is shown."
+            ),
             # The supporter's consent to the monthly reminder (#90): keep its purpose this clear.
             "phone": (
                 "We'll only use this to send you a monthly reminder on WhatsApp, or by text "
@@ -126,7 +151,7 @@ class PledgeForm(forms.ModelForm):
         self.fields["phone_country"].initial = phone_country
         # Not every optional field: the appeal has a default, and the mobile number's legend
         # already says it's optional.
-        for name in ("address", "postcode"):
+        for name in ("message", "address", "postcode"):
             self.fields[name].show_optional = True
         if link is not None:
             self.initial.update(self.initial_from_link(link))
