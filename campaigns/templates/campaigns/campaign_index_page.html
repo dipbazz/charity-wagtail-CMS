@@ -9,9 +9,9 @@
 
         <nav aria-label="Filter appeals">
             <ul class="tag-list">
-                <li><a href="{{ page.url }}"{% if not status %} aria-current="true"{% endif %}>All appeals</a></li>
+                <li><a href="{{ page.url }}"{% if not status %} aria-current="page"{% endif %}>All appeals</a></li>
                 {% for value, label in status_filters.items %}
-                    <li><a href="?status={{ value }}"{% if status == value %} aria-current="true"{% endif %}>{{ label }}</a></li>
+                    <li><a href="?status={{ value }}"{% if status == value %} aria-current="page"{% endif %}>{{ label }}</a></li>
                 {% endfor %}
             </ul>
         </nav>

@@ -483,6 +483,13 @@ h4 {
     text-decoration: none;
 }
 
+/* The selected filter: filled, and bold so it doesn't rely on colour alone. */
+.tag-list a[aria-current] {
+    background: var(--colour-primary);
+    color: #fff;
+    font-weight: 700;
+}
+
 /* Follow our news */
 .follow-news {
     margin-top: 3rem;

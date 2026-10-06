@@ -33,6 +33,12 @@ version number.
   (Rs 46,87,500), or pounds sterling
   ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
 
+### Fixed
+
+- On the Appeals and News pages, the filter you've chosen stands out from the others, and
+  screen readers say which one is selected
+  ([#35](https://github.com/dipbazz/Charity-wagtail-CMS/issues/35)).
+
 ## [0.1.0] - 2026-10-05
 
 The first tracked release. It collects everything built before versioning started.

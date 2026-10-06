@@ -86,13 +86,14 @@ class NewsIndexPage(RoutablePageMixin, Page):
             .order_by("-date", "-pk")
         )
 
-    def render_listing(self, request, stories, active_filter=None):
+    def render_listing(self, request, stories, active_filter=None, active_category=None):
         paginator = Paginator(with_card_images(stories), self.stories_per_page)
         return self.render(
             request,
             context_overrides={
                 "stories": paginator.get_page(request.GET.get("page")),
                 "active_filter": active_filter,
+                "active_category": active_category,
                 "categories": NewsCategory.objects.all(),
                 "feed_url": request.build_absolute_uri(
                     self.get_url(request) + self.reverse_subpage("feed")
@@ -112,7 +113,7 @@ class NewsIndexPage(RoutablePageMixin, Page):
     def stories_by_category(self, request, category):
         category = get_object_or_404(NewsCategory, slug=category)
         stories = self.get_stories().filter(categories=category)
-        return self.render_listing(request, stories, category.name)
+        return self.render_listing(request, stories, category.name, category)
 
     @path("feed/", name="feed")
     def feed(self, request):
