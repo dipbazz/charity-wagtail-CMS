@@ -10,6 +10,24 @@ version number.
 
 ## [Unreleased]
 
+### Added
+
+- Pages can now be read in Nepali as well as English. Each site opens in its main language, and
+  pages in the other language are under `/ne/` (or `/en/` on a Nepali site). Menus, the home
+  page's appeals and the Donate page's appeals show only pages in the language being read. A
+  page that isn't translated yet sends Nepali readers to the English page (or the other way
+  round on a Nepali site) instead of a "page not found"
+  ([#120](https://github.com/dipbazz/Charity-wagtail-CMS/pull/120)).
+
+### Upgrade notes
+
+- **Sites now open in Nepali unless they say otherwise.** An English-first site, such as the
+  Brightwell demo server, must add `DJANGO_LANGUAGE_CODE=en` to `deploy/aws/.env` before
+  upgrading; without it, its home page stops being found. Choose a site's language before adding
+  content, because changing it later changes every page's address.
+- Scheduled publishing and the admin now use Nepal time (`Asia/Kathmandu`). Pages already
+  scheduled keep their moment, but the admin now shows it in Nepal time.
+
 ### Fixed
 
 - Refreshing the Donate page's thank-you page no longer sends the pledge again. Going back to the

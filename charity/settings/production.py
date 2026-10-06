@@ -18,6 +18,15 @@ CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o
 ]
 
+# The language the site opens in at /: Nepali unless a site sets "en". The other one is under
+# /en/ or /ne/. A code outside LANGUAGES, even a variant such as en-gb, would move every page
+# under a prefix and break existing links, so it stops the site starting instead.
+LANGUAGE_CODE = os.environ.get("DJANGO_LANGUAGE_CODE", "ne")
+if LANGUAGE_CODE not in dict(LANGUAGES):
+    raise ImproperlyConfigured(
+        f"Set DJANGO_LANGUAGE_CODE to one of {', '.join(dict(LANGUAGES))}, not {LANGUAGE_CODE!r}."
+    )
+
 SITE_URL = os.environ["DJANGO_SITE_URL"].rstrip("/")
 WAGTAILADMIN_BASE_URL = SITE_URL
 

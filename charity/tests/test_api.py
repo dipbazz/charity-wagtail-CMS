@@ -3,6 +3,8 @@ from decimal import Decimal
 
 import pytest
 from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from wagtail.models import PageViewRestriction
 from wagtail_factories import DocumentFactory, ImageFactory
 
@@ -134,3 +136,22 @@ def test_api_is_read_only(client, campaign):
     response = client.post(f"{API}/pages/", {"title": "Hacked"})
 
     assert response.status_code == 405
+
+
+class TestLanguages:
+    def test_pages_can_be_listed_in_one_language(self, client, home_page, nepali_home_page):
+        nepali = client.get(f"{API}/pages/", {"locale": "ne"}).json()["items"]
+        english = client.get(f"{API}/pages/", {"locale": "en"}).json()["items"]
+
+        assert [(page["title"], page["meta"]["locale"]) for page in nepali] == [("गृहपृष्ठ", "ne")]
+        assert [page["meta"]["locale"] for page in english] == ["en"]
+
+    def test_reading_each_page_s_language_costs_no_query_per_page(self, client, campaign_index):
+        for _ in range(3):
+            CampaignPageFactory(parent=campaign_index)
+
+        with CaptureQueriesContext(connection) as queries:
+            client.get(f"{API}/pages/", {"type": "campaigns.CampaignPage"})
+
+        sql = [query["sql"] for query in queries.captured_queries]
+        assert not [q for q in sql if q.startswith('SELECT "wagtailcore_locale"')]

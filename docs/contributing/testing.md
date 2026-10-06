@@ -50,6 +50,14 @@ Some tests guard the whole project rather than one feature:
 - **Files on disk:** tests use `InMemoryStorage`, which has no file paths. Tests of anything that
   reads files from disk must set `MEDIA_ROOT` to `tmp_path` and the default storage to
   `FileSystemStorage` (see `core/tests/test_media.py`).
+- **Languages:** tests run with **English as the main language**, as the Brightwell demo is
+  English-first, though production defaults to Nepali. So English pages are at `/about/` and
+  Nepali ones under `/ne/about/`; `charity/settings/local.py` is never loaded by tests. Ask a page
+  for its address (`page.url`) rather than typing one, and build Nepali pages under
+  `nepali_home_page` with `page.copy_for_translation(nepali_locale)` and a publish. To test a
+  Nepali-first site, set `settings.LANGUAGE_CODE = "ne"` and clear Django's URL caches and the
+  cache before and after, as `TestNepaliAsTheMainLanguage` in `charity/tests/test_languages.py`
+  does: reversed URLs and Wagtail's site root paths are cached per language.
 - **Query counts:** a listing test should check that its query count doesn't grow per item,
   with `cold_cache_queries`.
 - If pytest can't catch a bug (something purely visual, such as spacing), say so in the pull

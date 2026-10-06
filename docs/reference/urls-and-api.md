@@ -8,8 +8,9 @@
 | `/django-admin/` | Django admin (superusers only) |
 | `/documents/<id>/<filename>` | Wagtail's document view, which checks a private collection's password or login |
 | `/api/v2/` | Read-only JSON API (below) |
+| `/en/…` or `/ne/…` | Pages and search in the site's second language: `/en/` when Nepali is the main language (the default), `/ne/` when English is, as on the Brightwell demo. The main language has no prefix. An address with no page in that language redirects to the same address in the main language, if a page is there. See [Architecture](../topics/architecture.md#languages) |
 | `/search/?query=…` | Site search, with editor-pinned results ([promotions](https://docs.wagtail.org/en/stable/reference/contrib/searchpromotions.html)); logs each query for editors |
-| `/sitemap.xml` | Sitemap of live, public pages |
+| `/sitemap.xml` | Sitemap of live, public pages in every language (`core.sitemaps.AllLanguagesSitemap`) |
 | `/robots.txt` | Disallows `/admin/`, `/django-admin/` and `/search/`; links the sitemap |
 | `/media/<path>` | Uploads, through `core.views.serve_media` when `SERVE_MEDIA` is on; never `documents/` |
 | `/__debug__/` | django-debug-toolbar, in development only |
@@ -25,7 +26,7 @@ website.
 
 | Endpoint | |
 |---|---|
-| `/api/v2/pages/` | Live, public pages. Filter by type with `?type=campaigns.CampaignPage` and ask for fields with `?fields=*` |
+| `/api/v2/pages/` | Live, public pages in every language. Filter by type with `?type=campaigns.CampaignPage`, by language with `?locale=ne`, and ask for fields with `?fields=*`. Each page's language is in `meta.locale` |
 | `/api/v2/images/` | **Only images with `consent_confirmed`** (`ConsentedImagesAPIViewSet`), because the endpoint exposes every image's original file |
 | `/api/v2/documents/` | Documents |
 

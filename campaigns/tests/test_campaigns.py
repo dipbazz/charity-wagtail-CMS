@@ -37,6 +37,12 @@ class TestPageTreeRules:
     def test_campaign_index_lives_under_the_home_page(self, home_page):
         assert CampaignIndexPage.can_create_at(home_page)
 
+    def test_each_language_s_home_page_has_one_campaign_index(
+        self, home_page, campaign_index, nepali_home_page
+    ):
+        assert not CampaignIndexPage.can_create_at(home_page)
+        assert CampaignIndexPage.can_create_at(nepali_home_page)
+
     def test_campaigns_live_only_under_the_campaign_index(self, home_page, campaign_index):
         assert CampaignPage.can_create_at(campaign_index)
         assert not CampaignPage.can_create_at(home_page)

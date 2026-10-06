@@ -6,6 +6,8 @@
 |---|---|
 | `site` | The default Wagtail `Site`, created by the home app's data migration |
 | `home_page` | The `HomePage` at the root of that site; the parent for test pages |
+| `nepali_locale` | The Nepali `Locale`. English is the main language in tests, so Nepali pages are under `/ne/` |
+| `nepali_home_page` | The home page's published Nepali translation, served at `/ne/`; the parent for Nepali test pages |
 | `editor` | A user in Wagtail's Editors group, as the charity's editors are: not a superuser |
 | `moderator` | A user in Wagtail's Moderators group, who approves and publishes editors' work |
 | `cold_cache_queries` | A function: `cold_cache_queries(path)` returns how many queries that page runs on a just-started server, with image renditions looked up in the database |

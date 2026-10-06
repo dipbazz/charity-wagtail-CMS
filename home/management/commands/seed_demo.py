@@ -5,11 +5,11 @@ from pathlib import Path
 
 from django.core.files.images import ImageFile
 from django.core.management import call_command
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from PIL import Image, ImageDraw, ImageFont
 from wagtail.images.rect import Rect
-from wagtail.models import Site
+from wagtail.models import Locale, Site
 
 from campaigns.models import CampaignIndexPage, CampaignPage, DonatePage, DonatePageAmount
 from contact.models import FormField, FormPage
@@ -150,6 +150,13 @@ class Command(BaseCommand):
         if CampaignIndexPage.objects.exists():
             self.stdout.write("Demo content already exists; nothing else to do.")
             return
+
+        # The demo is written in English with some pages translated into Nepali.
+        if home.locale.language_code != "en":
+            raise CommandError(
+                "The demo content is English-first, but this site's main language is "
+                f"{home.locale.language_code!r}. Seed it on a site with DJANGO_LANGUAGE_CODE=en."
+            )
 
         site.site_name = SITE_NAME
         site.save()
@@ -345,7 +352,7 @@ class Command(BaseCommand):
             [stories],
             days_ago=2,
         )
-        self.add_story(
+        flood_story = self.add_story(
             news,
             "What we know about the Bhote Koshi flash flood",
             "A glacier collapse in Langtang sent a flash flood through three districts of Nepal.",
@@ -452,8 +459,78 @@ class Command(BaseCommand):
         banner.link_page = flood
         banner.save()
 
+        self.add_nepali_pages(home, campaigns, flood, news, flood_story)
+
         self.stdout.write(self.style.SUCCESS(f"Created demo content for {SITE_NAME}."))
         self.stdout.write(f"About page: {about.url}")
+
+    def add_nepali_pages(self, home, campaigns, flood, news, flood_story):
+        """Translate the home page, the flood appeal and its news story, served under /ne/.
+
+        The rest of the site stays English only, as most of a real charity's site would be at
+        first: QA needs pages in both languages and pages in one.
+        """
+        nepali = Locale.objects.get_or_create(language_code="ne")[0]
+
+        def translate(page, **fields):
+            translation = page.copy_for_translation(nepali)
+            for name, value in fields.items():
+                setattr(translation, name, value)
+            translation.save_revision().publish()
+            return translation
+
+        translate(
+            home,
+            title="गृहपृष्ठ",
+            hero_heading="सबैका लागि सफा पानी",
+            hero_text="तपाईंको सहयोगले गाउँगाउँमा सुरक्षित पिउने पानी पुग्छ।",
+            hero_cta_text="सहयोग गर्नुहोस्",
+            body=[
+                (
+                    "paragraph",
+                    "<p>ब्राइटवेल वाटर ट्रस्टले नेपाल र अन्य देशका समुदायसँग मिलेर खानेपानी, "
+                    "शौचालय र सरसफाइका काम गर्छ।</p>",
+                )
+            ],
+        )
+        translate(
+            campaigns,
+            title="सहयोग अपिल",
+            introduction="एउटा अपिल रोज्नुहोस् र तपाईंको सहयोगले के गर्छ, हेर्नुहोस्।",
+        )
+        translate(
+            flood,
+            title="नेपालमा आएको बाढी पीडितलाई राहत",
+            summary=("भोटेकोशीमा आएको बाढीले रसुवा, नुवाकोट र धादिङमा घर र खानेपानीका संरचना बगाएको छ।"),
+            body=[
+                ("heading", {"heading_text": "के भयो", "size": "h2"}),
+                (
+                    "paragraph",
+                    "<p>२०२६ अगस्ट २६ मा लाङटाङ लिरुङ हिमनदीको एक भाग खस्यो। त्यसपछि आएको "
+                    "बाढीले भोटेकोशी र त्रिशूली नदी किनारका पुल, सडक र झन्डै ७,५७० घर बगायो।</p>",
+                ),
+                ("heading", {"heading_text": "अहिले कसरी सहयोग गर्ने", "size": "h2"}),
+                (
+                    "paragraph",
+                    "<p>ब्राइटवेल एउटा नमुना (डेमो) संस्था हो र यसले कुनै चन्दा लिँदैन। बाढी "
+                    "पीडितलाई सहयोग गर्न नेपाल सरकारको "
+                    f'<a href="{RELIEF_FUND_URL}">प्रधानमन्त्री दैवी प्रकोप उद्धार कोष</a>मा '
+                    "सहयोग गर्नुहोस्।</p>",
+                ),
+            ],
+        )
+        translate(news, title="समाचार", introduction="साझेदार र सहयोगीहरूका कथा र अपडेट।")
+        translate(
+            flood_story,
+            title="भोटेकोशी बाढीबारे हामीलाई के थाहा छ",
+            introduction="लाङटाङमा हिमनदी खस्दा आएको बाढी नेपालका तीन जिल्ला हुँदै बग्यो।",
+            body=[
+                (
+                    "paragraph",
+                    "<p>लाङटाङमा हिमनदी खस्दा आएको बाढी नेपालका तीन जिल्ला हुँदै बग्यो।</p>",
+                )
+            ],
+        )
 
     def add_campaign(self, parent, *, amounts, target, raised, start, end, body=None, **fields):
         campaign = CampaignPage(

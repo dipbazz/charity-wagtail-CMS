@@ -1,6 +1,6 @@
 import pytest
-from django.core.management import call_command
-from wagtail.models import Page
+from django.core.management import CommandError, call_command
+from wagtail.models import Locale, Page
 
 from campaigns.models import CampaignPage, DonatePage
 from contact.models import FormPage
@@ -92,7 +92,7 @@ def test_each_partner_has_its_own_logo(seeded):
 
 
 def test_flood_appeal_points_people_to_a_real_relief_fund(seeded, client):
-    flood = CampaignPage.objects.get(slug="flood-relief")
+    flood = CampaignPage.objects.get(slug="flood-relief", locale__language_code="en")
 
     html = client.get(flood.url).content.decode()
 
@@ -104,12 +104,44 @@ def test_flood_appeal_points_people_to_a_real_relief_fund(seeded, client):
     assert "Nepal" in AnnouncementBanner.load().message
 
 
+def test_translates_the_home_page_an_appeal_and_a_story_into_nepali(seeded, client):
+    nepali = Locale.objects.get(language_code="ne")
+    flood = CampaignPage.objects.get(slug="flood-relief", locale__language_code="en")
+    nepali_flood = flood.get_translation(nepali)
+    [nepali_story] = NewsPage.objects.live().filter(locale=nepali)
+
+    assert seeded.root_page.get_translation(nepali).live
+    assert nepali_flood.live
+    assert nepali_flood.url == "/ne/appeals/flood-relief/"
+    assert "बाढी" in nepali_flood.title
+    assert NewsPage.objects.filter(
+        translation_key=nepali_story.translation_key, locale__language_code="en"
+    ).exists()
+    # The Nepali appeal is honest about the demo too, and points to the same relief fund.
+    html = client.get(nepali_flood.url).content.decode()
+    assert "https://rescue.opmcm.gov.np/donations" in html
+
+
 def test_running_twice_does_not_duplicate_content(seeded):
     page_count = Page.objects.count()
 
     call_command("seed_demo", verbosity=0)
 
     assert Page.objects.count() == page_count
+
+
+def test_explains_how_to_seed_a_site_whose_main_language_is_nepali(
+    home_page, nepali_locale, settings
+):
+    # A new deployment opens in Nepali, so its home page is in the Nepali locale.
+    settings.LANGUAGE_CODE = "ne"
+    home_page.locale = nepali_locale
+    home_page.save()
+
+    with pytest.raises(CommandError, match="DJANGO_LANGUAGE_CODE=en"):
+        call_command("seed_demo", verbosity=0)
+
+    assert not CampaignPage.objects.exists()
 
 
 def test_points_the_site_at_the_site_url_even_when_content_exists(site, settings):
