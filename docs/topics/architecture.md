@@ -78,6 +78,9 @@ The site is in English and Nepali (`LANGUAGES`), with Wagtail's built-in transla
   the demo, `ne` for a Nepali charity (`DJANGO_LANGUAGE_CODE` in production). The other language
   is under its prefix through `i18n_patterns(prefix_default_language=False)` in
   `charity/urls.py`. Admin, API, documents, media, the sitemap and robots.txt have no prefix.
+  So the URL alone sets a response's language, and `core.middleware.URLLocaleMiddleware` (Django's
+  `LocaleMiddleware` in `MIDDLEWARE`) leaves out `Vary: Accept-Language`, which would make caches
+  keep a copy of each page per browser language.
 - **Listings stay in one language.** Listings built with `child_of(self)` already are. Any other
   page query that visitors see filters by `locale_id=self.locale_id`, as the home page's
   featured appeals and the Donate page's appeals do. The menu takes its items from the home
