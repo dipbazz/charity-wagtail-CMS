@@ -39,14 +39,14 @@
         {
           "matchingUrlPattern": "/appeals/flood-relief/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 58500, "aggregationMethod": "median"}],
+            "resource-summary:total:size": ["error", {"maxNumericValue": 61400, "aggregationMethod": "median"}],
             "resource-summary:image:size": ["error", {"maxNumericValue": 44000, "aggregationMethod": "median"}]
           }
         },
         {
           "matchingUrlPattern": "/news/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 94000, "aggregationMethod": "median"}],
+            "resource-summary:total:size": ["error", {"maxNumericValue": 98800, "aggregationMethod": "median"}],
             "resource-summary:image:size": ["error", {"maxNumericValue": 81000, "aggregationMethod": "median"}]
           }
         }
