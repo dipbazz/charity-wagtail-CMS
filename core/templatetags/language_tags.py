@@ -4,6 +4,7 @@ from django import template
 from django.conf import settings
 from django.urls import translate_url
 from django.utils import translation
+from wagtail.coreutils import get_supported_content_language_variant
 from wagtail.models import Page, Site
 
 from core.languages import hreflang_alternates, language_codes
@@ -19,10 +20,16 @@ class LanguageLink:
     current: bool
 
 
+def main_language():
+    return get_supported_content_language_variant(settings.LANGUAGE_CODE)
+
+
 @dataclass(frozen=True)
 class LanguageVersions:
     links: list[LanguageLink] = field(default_factory=list)
     alternates: list[tuple[str, str]] = field(default_factory=list)
+    # The language of things written once for the whole site, such as its name.
+    main_language: str = field(default_factory=main_language)
 
 
 @register.simple_tag(takes_context=True)

@@ -83,6 +83,12 @@ body:lang(ne) {
     line-height: 1.45;
 }
 
+/* Buttons and form fields hold one line, which has room for the marks at the English line height.
+   Keeping it means the header doesn't change height when a reader switches language. */
+:is(button, input, select, textarea, .button):lang(ne) {
+    line-height: 1.6;
+}
+
 .container {
     max-width: var(--container);
     margin: 0 auto;

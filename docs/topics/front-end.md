@@ -33,7 +33,9 @@ Nepali is written in Devanagari, which needs more room than English:
   Noto Sans Devanagari (Android), Kohinoor Devanagari (iPhone and Mac) and Nirmala UI (Windows).
   The Latin fonts have no Devanagari letters, so the browser takes those from the next font.
 - **More line height.** Vowel signs sit above and below the letters, so `body:lang(ne)` has a
-  line height of 1.8 and headings 1.45, against 1.6 and 1.2 for English.
+  line height of 1.8 and headings 1.45, against 1.6 and 1.2 for English. Buttons and form fields
+  hold one line and keep 1.6, and the site name carries the main language's `lang` (it's written
+  once, in that language), so the header is the same height in both languages.
 - **No `letter-spacing` or `text-transform` on Nepali text.** Spacing breaks conjunct letters
   apart, and Devanagari has no capitals. A rule may set them only for `:lang(en)`;
   `core/tests/test_stylesheet.py` checks this.

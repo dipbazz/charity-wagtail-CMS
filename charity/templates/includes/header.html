@@ -22,7 +22,8 @@
     {% endif %}
     <div class="container">
         {# The home page in the language being read: / or /ne/ (or /en/ on a Nepali site). #}
-        <a class="brand" href="{% url 'wagtail_serve' '' %}">{{ current_site.site_name|default:"Charity" }}</a>
+        {# The site name is written in the main language, so it keeps that lang on every page. #}
+        <a class="brand" href="{% url 'wagtail_serve' '' %}" lang="{{ languages.main_language }}">{{ current_site.site_name|default:"Charity" }}</a>
         {# Shown only on pages with JavaScript (the "js" class), so without it the menu simply stays open. #}
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu">Menu</button>
         <div class="site-menu" id="site-menu">
