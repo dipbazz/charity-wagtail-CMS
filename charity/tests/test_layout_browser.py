@@ -156,3 +156,56 @@ def test_footer_and_form_links_are_big_enough_to_tap(site_page, home_page, priva
     assert links.count() == 2
     for box in (links.nth(n).bounding_box() for n in range(links.count())):
         assert box["height"] >= 44
+
+
+WHITE = "rgb(255, 255, 255)"
+NO_FILL = "rgba(0, 0, 0, 0)"
+
+
+# The header was white on white pages, so it didn't look like a header. Found in review of #122.
+@pytest.mark.parametrize("width", [320, 1440])
+def test_header_is_set_apart_from_a_white_page(site_page, demo_header, width):
+    site_page.set_viewport_size({"width": width, "height": 800})
+    site_page.goto(SITE + "/")
+
+    name_bar = site_page.evaluate(
+        "getComputedStyle(document.querySelector('.brand-bar')).backgroundColor"
+    )
+    shadow = site_page.evaluate(
+        "getComputedStyle(document.querySelector('.site-header')).boxShadow"
+    )
+
+    assert name_bar not in (WHITE, NO_FILL)
+    assert shadow != "none"
+
+
+def style(site_page, selector, prop):
+    return site_page.evaluate(
+        "([s, p]) => getComputedStyle(document.querySelector(s))[p]", [selector, prop]
+    )
+
+
+# A bold current language beside an underlined link read as "the bold one isn't selected". Found
+# in review of #122: the current language is filled, the other is an outlined button, no underlines.
+def test_the_current_language_is_filled_and_the_other_is_an_outlined_button(site_page, demo_header):
+    site_page.set_viewport_size({"width": 1440, "height": 900})
+    site_page.goto(SITE + "/")
+    current = ".language-switcher a[aria-current]"
+    other = ".language-switcher a:not([aria-current])"
+
+    assert style(site_page, current, "backgroundColor") not in (WHITE, NO_FILL)
+    assert style(site_page, other, "backgroundColor") in (WHITE, NO_FILL)
+    assert style(site_page, other, "borderTopWidth") == "2px"
+    for link in (current, other):
+        assert style(site_page, link, "textDecorationLine") == "none"
+
+
+def test_on_a_phone_the_other_language_is_an_outlined_button(site_page, demo_header):
+    site_page.set_viewport_size({"width": 320, "height": 700})
+    site_page.goto(SITE + "/ne/")
+    other = ".language-switcher a:not([aria-current])"
+
+    assert site_page.locator(".language-switcher a:visible").count() == 1
+    assert style(site_page, other, "borderTopWidth") == "2px"
+    assert style(site_page, other, "textDecorationLine") == "none"
+    assert site_page.evaluate("document.documentElement.scrollWidth") == 320

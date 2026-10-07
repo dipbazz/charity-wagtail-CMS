@@ -156,6 +156,8 @@ body:lang(ne) {
 .site-header {
     border-bottom: 1px solid var(--colour-border);
     background: #fff;
+    /* Lifts the header off a white page, which its own white controls row would blend into. */
+    box-shadow: 0 2px 6px rgb(7 59 69 / 0.15);
 }
 
 /* The charity's name on a row of its own, centred, so a long name never crowds the
@@ -164,7 +166,8 @@ body:lang(ne) {
     display: flex;
     justify-content: center;
     padding: 0.375rem 1rem;
-    border-bottom: 1px solid var(--colour-border);
+    /* The footer's colour, so the header and footer frame the page. */
+    background: var(--colour-primary-dark);
 }
 
 .brand {
@@ -176,7 +179,7 @@ body:lang(ne) {
     font-weight: 800;
     line-height: 1.2;
     text-align: center;
-    color: var(--colour-primary-dark);
+    color: #fff;
     text-decoration: none;
 }
 
@@ -234,17 +237,23 @@ body:lang(ne) {
     list-style: none;
 }
 
+/* Buttons like Menu, not links: the other language is outlined, and the current one (shown on wide
+   screens) is filled, so it reads as the selected half of a switch and not as a plain link. */
 .language-switcher a {
     display: flex;
     align-items: center;
     min-height: 2.75rem;
-    padding-inline: 0.5rem;
-    color: var(--colour-text);
+    padding-inline: 0.75rem;
+    border: 2px solid var(--colour-primary);
+    border-radius: var(--radius);
+    color: var(--colour-primary);
+    font-weight: 700;
+    text-decoration: none;
 }
 
 .language-switcher a[aria-current] {
-    font-weight: 700;
-    text-decoration: none;
+    background: var(--colour-primary);
+    color: #fff;
 }
 
 /* On a phone only the other language is shown; the page itself is already in this one. */
@@ -353,6 +362,21 @@ body:lang(ne) {
 
     .language-switcher li:has(> [aria-current]) {
         display: list-item;
+    }
+
+    /* Both languages show: join them into one two-part switch. */
+    .language-switcher li:first-child a {
+        border-start-end-radius: 0;
+        border-end-end-radius: 0;
+    }
+
+    .language-switcher li:last-child a {
+        border-start-start-radius: 0;
+        border-end-start-radius: 0;
+    }
+
+    .language-switcher li + li a {
+        margin-inline-start: -2px;
     }
 }
 

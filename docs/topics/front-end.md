@@ -27,11 +27,14 @@ than repeating a raw value, and add a token when a new value will be reused.
 
 ## Header
 
-The header has two rows. The site name is centred on a row of its own, so a long name (and,
-later, a logo) never crowds the controls. Below it, Menu (or, on a wide screen, the menu and
+The header has two rows. The site name is centred on a dark row of its own (the footer's colour,
+so the two frame the page, and a shadow lifts the white controls row off a white page), so a long
+name (and, later, a logo) never crowds the controls. Below it, Menu (or, on a wide screen, the menu and
 search) is on the left, and the language switcher and Donate are on the right, with Donate last
 so Menu and Donate sit at the two ends. On a phone the switcher shows only the other language;
-from 68rem it shows both, with the current one in bold. `charity/tests/test_layout_browser.py`
+from 68rem it shows both as one two-part switch. Its links look like the Menu button, not like
+links: the current language is filled and the other is outlined, with no underline, so a reader
+can't mistake the one to switch to for the one they're on. `charity/tests/test_layout_browser.py`
 checks this layout at 320px and on wide screens.
 
 ## Nepali text
