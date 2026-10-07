@@ -10,20 +10,13 @@
     {% endif %}
 {% endwith %}
 <header class="site-header">
-    {# First in the header, so a reader who can't read this language finds theirs straight away. #}
-    {% if languages.links %}
-        <nav class="language-switcher" aria-label="{% translate "Language" %}">
-            <ul class="container">
-                {% for language in languages.links %}
-                    <li><a href="{{ language.url }}" lang="{{ language.code }}" hreflang="{{ language.code }}"{% if language.current %} aria-current="page"{% endif %}>{{ language.name }}</a></li>
-                {% endfor %}
-            </ul>
-        </nav>
-    {% endif %}
-    <div class="container">
-        {# The home page in the language being read: / or /ne/ (or /en/ on a Nepali site). #}
-        {# The site name is written in the main language, so it keeps that lang on every page. #}
+    {# The charity's name has a row of its own, so a long name never crowds the controls below it. #}
+    {# It links to the home page in the language being read: / or /ne/ (or /en/ on a Nepali site). #}
+    {# The site name is written in the main language, so it keeps that lang on every page. #}
+    <div class="brand-bar">
         <a class="brand" href="{% url 'wagtail_serve' '' %}" lang="{{ languages.main_language }}">{{ current_site.site_name|default:"Charity" }}</a>
+    </div>
+    <div class="container">
         {# Shown only on pages with JavaScript (the "js" class), so without it the menu simply stays open. #}
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu">Menu</button>
         <div class="site-menu" id="site-menu">
@@ -33,8 +26,20 @@
                 <input id="header-search" type="search" name="query" placeholder="Search">
             </form>
         </div>
-        {% if settings.core.SiteSettings.donate_page %}
-            <a class="button" href="{% pageurl settings.core.SiteSettings.donate_page %}">Donate</a>
-        {% endif %}
+        {# Donate comes last, so Menu and Donate sit at the two ends of the row. #}
+        <div class="header-actions">
+            {% if languages.links %}
+                <nav class="language-switcher" aria-label="{% translate "Language" %}">
+                    <ul>
+                        {% for language in languages.links %}
+                            <li><a href="{{ language.url }}" lang="{{ language.code }}" hreflang="{{ language.code }}"{% if language.current %} aria-current="page"{% endif %}>{{ language.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+            {% endif %}
+            {% if settings.core.SiteSettings.donate_page %}
+                <a class="button" href="{% pageurl settings.core.SiteSettings.donate_page %}">Donate</a>
+            {% endif %}
+        </div>
     </div>
 </header>

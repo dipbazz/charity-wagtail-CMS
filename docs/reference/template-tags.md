@@ -20,7 +20,7 @@ The `wagtail.contrib.settings` context processor makes settings available as
 | Template | |
 |---|---|
 | `base.html` | Every page: title, meta and social tags, `hreflang` alternates, the `js` class script, skip link, header, main, footer, `charity.js` |
-| `includes/header.html` | The announcement banner, language switcher, site name, Menu button, main menu and Donate button |
+| `includes/header.html` | The announcement banner; the site name, centred on a row of its own; then the Menu button, main menu and search on the left, and the language switcher and Donate button on the right |
 | `includes/main_menu.html` | Rendered by `{% main_menu %}` |
 | `includes/footer.html` | Organisation details and social links from `SiteSettings` |
 | `includes/streamfield.html` | Renders a StreamField: `{% include "includes/streamfield.html" with stream=page.body %}` |

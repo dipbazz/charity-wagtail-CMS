@@ -25,6 +25,15 @@ writing or reviewing any CSS or layout markup.
 `:root` (`--colour-primary`, `--radius`, `--container`, `--font` and so on). Use a token rather
 than repeating a raw value, and add a token when a new value will be reused.
 
+## Header
+
+The header has two rows. The site name is centred on a row of its own, so a long name (and,
+later, a logo) never crowds the controls. Below it, Menu (or, on a wide screen, the menu and
+search) is on the left, and the language switcher and Donate are on the right, with Donate last
+so Menu and Donate sit at the two ends. On a phone the switcher shows only the other language;
+from 68rem it shows both, with the current one in bold. `charity/tests/test_layout_browser.py`
+checks this layout at 320px and on wide screens.
+
 ## Nepali text
 
 Nepali is written in Devanagari, which needs more room than English:

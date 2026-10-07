@@ -24,10 +24,13 @@ version number.
   a translated appeal, the Donate button goes to the Donate page in the same language
   once that's translated too
   ([#121](https://github.com/dipbazz/Charity-wagtail-CMS/pull/121)).
-- Readers can switch between नेपाली and English at the top of every page. It opens the same page
-  in the other language, or that language's home page if the page isn't translated yet. Search
+- Readers can switch between नेपाली and English from the header of every page. It opens the same
+  page in the other language, or that language's home page if the page isn't translated yet. Search
   engines are told which pages are translations of each other, so they show people the page in
   their language
+  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
+- The charity's name now has a row of its own at the top of every page, centred, so a long name
+  fits on a phone. Below it, the menu is on the left, and the language and Donate are on the right
   ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
 - Search finds pages in the language being read, including Nepali words, and editors can promote
   a different result for each language

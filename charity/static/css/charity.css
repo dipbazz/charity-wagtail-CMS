@@ -155,56 +155,37 @@ body:lang(ne) {
     background: #fff;
 }
 
-/* The language switcher has a row of its own above the site name at every width, so it's one tap
-   away on a phone without crowding the name, Menu and Donate. */
-.language-switcher {
-    border-bottom: 1px solid var(--colour-border);
-    background: var(--colour-surface);
-}
-
-.language-switcher ul {
+/* The charity's name on a row of its own, centred, so a long name never crowds the
+   controls below it. Every link and button in the header is at least 44px tall. */
+.brand-bar {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    list-style: none;
+    justify-content: center;
+    padding: 0.375rem 1rem;
+    border-bottom: 1px solid var(--colour-border);
 }
 
-.language-switcher a {
+.brand {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
     min-height: 2.75rem;
-    padding-inline: 0.5rem;
-    color: var(--colour-text);
-    font-size: 0.9375rem;
-}
-
-.language-switcher a[aria-current] {
-    font-weight: 700;
+    font-size: 1.125rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    color: var(--colour-primary-dark);
     text-decoration: none;
 }
 
-/* Narrow screens: name, Menu and Donate on one row; the menu and search open below it. */
+/* Narrow screens: Menu on the left, the other language and Donate on the right; the menu and
+   search open below them. */
 .site-header > .container {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    /* Padding rather than a min-height, so the top row doesn't move when the menu opens. */
+    /* Padding rather than a min-height, so the row doesn't move when the menu opens. */
     padding-block: 0.625rem;
-}
-
-/* Every link and button in the header is at least 44px tall, so it's easy to tap. */
-.brand {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    min-height: 2.75rem;
-    font-size: 1.125rem;
-    font-weight: 800;
-    line-height: 1.2;
-    color: var(--colour-primary-dark);
-    text-decoration: none;
 }
 
 /* Only pages with JavaScript get a Menu button; without it the menu below stays open. */
@@ -231,9 +212,41 @@ body:lang(ne) {
     display: block;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-inline-start: auto;
+}
+
 .site-header .button {
     min-height: 2.75rem;
     padding-inline: 0.9rem;
+}
+
+.language-switcher ul {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.language-switcher a {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 0.5rem;
+    color: var(--colour-text);
+}
+
+.language-switcher a[aria-current] {
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* On a phone only the other language is shown; the page itself is already in this one. */
+.language-switcher li:has(> [aria-current]) {
+    display: none;
 }
 
 .site-menu {
@@ -284,22 +297,17 @@ body:lang(ne) {
     font: inherit;
 }
 
-/* Wide enough for the whole menu, the search box and Donate to fit on one line. */
+/* Wide enough for the whole menu, the search box, both languages and Donate on one line. */
 @media (min-width: 68rem) {
+    .brand {
+        font-size: 1.4rem;
+    }
+
     .site-header > .container {
         flex-wrap: nowrap;
         gap: 1rem;
         min-height: 4.5rem;
         padding-block: 0;
-    }
-
-    .brand {
-        flex: none;
-        font-size: 1.4rem;
-    }
-
-    .site-header .button {
-        padding-inline: 1.2rem;
     }
 
     .js .menu-toggle {
@@ -316,10 +324,6 @@ body:lang(ne) {
         padding: 0;
     }
 
-    .main-nav {
-        margin-inline: auto;
-    }
-
     .main-nav ul {
         display: flex;
         gap: 0.5rem;
@@ -332,8 +336,20 @@ body:lang(ne) {
         white-space: nowrap;
     }
 
+    .search-form {
+        margin-inline-start: auto;
+    }
+
     .search-form input {
         width: 12rem;
+    }
+
+    .site-header .button {
+        padding-inline: 1.2rem;
+    }
+
+    .language-switcher li:has(> [aria-current]) {
+        display: list-item;
     }
 }
 
