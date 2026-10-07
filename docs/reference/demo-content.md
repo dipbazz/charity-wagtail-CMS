@@ -15,6 +15,8 @@ the live demo all use. See [Management commands](management-commands.md#seed_dem
   in touch.
   No freely licensed photo of that flood exists, so the appeal uses a representative photo of a
   flooded camp, labelled as such in its caption and alt text.
+- A placeholder **Privacy notice** (`/privacy/`), chosen in Site settings, describes what the
+  site stores. It says it's example text to replace before going live.
 
 ## Nepali pages
 

@@ -1,4 +1,5 @@
 import pytest
+from bs4 import BeautifulSoup
 from django.core import mail
 from django.urls import reverse
 from wagtail.contrib.forms.models import FormSubmission
@@ -55,6 +56,19 @@ class TestFormPage:
         assert 'name="your_name"' in html
         assert 'name="email_address"' in html
         assert "Weekends" in html
+
+    def test_links_to_the_privacy_notice_before_the_send_button(
+        self, client, volunteer_form, privacy_notice
+    ):
+        html = client.get(volunteer_form.url).content.decode()
+        form = BeautifulSoup(html, "html.parser").find("form", method="post")
+        link = form.find("a", string="How we use your details")
+
+        assert link["href"] == privacy_notice.url
+        assert link.find_next("button", type="submit") is not None
+
+    def test_no_privacy_link_without_a_privacy_notice(self, client, volunteer_form):
+        assert "How we use your details" not in client.get(volunteer_form.url).content.decode()
 
     def test_valid_submission_is_stored_and_shows_thank_you(self, client, volunteer_form):
         response = client.post(volunteer_form.url, VALID_DATA)

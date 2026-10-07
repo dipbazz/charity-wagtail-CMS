@@ -549,6 +549,11 @@ h4 {
     gap: 0.25rem;
 }
 
+/* Only the link's own text opens the privacy notice, not the row beside it. */
+.form-page main .privacy-link {
+    align-items: flex-start;
+}
+
 .form-page main input:not([type="checkbox"]):not([type="radio"]),
 .form-page main textarea,
 .form-page main select {

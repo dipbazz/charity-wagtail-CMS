@@ -1,0 +1,3 @@
+{% load wagtailcore_tags %}
+{# Before the send button, so people reach it before they send their details. #}
+{% if privacy_page %}<p class="privacy-link"><a href="{% pageurl privacy_page %}">How we use your details</a></p>{% endif %}

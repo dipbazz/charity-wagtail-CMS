@@ -38,6 +38,15 @@ def test_configures_site_settings_and_menu(seeded, client):
     assert seeded.root_page.get_children().live().in_menu().count() >= 3
 
 
+def test_adds_a_placeholder_privacy_notice_linked_from_every_page(seeded, client):
+    privacy = SiteSettings.for_site(seeded).privacy_page
+    html = client.get(privacy.url).content.decode()
+
+    assert privacy.live and not privacy.show_in_menus
+    assert "Example text" in html and "before going live" in html
+    assert f'<a href="{privacy.url}">Privacy notice</a>' in client.get("/").content.decode()
+
+
 def test_donate_page_takes_pledges_for_the_appeals(seeded, client):
     donate = SiteSettings.for_site(seeded).donate_page.specific
 

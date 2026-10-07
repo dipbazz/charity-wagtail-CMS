@@ -238,6 +238,60 @@ class Command(BaseCommand):
         ]
         publish(home, donate)
 
+        # Example text for a charity to start from; it can't be the charity's own notice.
+        privacy = publish(
+            home,
+            StandardPage(
+                title="Privacy notice",
+                slug="privacy",
+                introduction=(
+                    "Example text: replace it with your charity's own notice before going live. "
+                    "It describes what this website stores, but only your charity can say how "
+                    "it looks after supporters' details."
+                ),
+                search_description="How we use the details you give us.",
+                body=[
+                    ("heading", {"heading_text": "What we collect", "size": "h2"}),
+                    (
+                        "paragraph",
+                        "<p>When you pledge a gift, we keep your name, email address and the "
+                        "message you write, and your home address and postcode if you give them. "
+                        "For a monthly gift you can also give a mobile number. When you sign up "
+                        "to volunteer, we keep the answers you give on the form.</p>",
+                    ),
+                    ("heading", {"heading_text": "What we use it for", "size": "h2"}),
+                    (
+                        "paragraph",
+                        "<ul><li>To arrange your gift or your volunteering, and to thank you."
+                        "</li><li>Your mobile number only to remind you each month to give, on "
+                        "WhatsApp or by text.</li><li>Your email address for news only if you "
+                        "ticked <b>Email updates</b>.</li><li>Your name, amount, appeal and date "
+                        "on this website only if you ticked <b>Show my gift on our website</b>, "
+                        "and only once your gift has arrived.</li></ul><p>Your message is for our "
+                        "team only and never appears on the website.</p>",
+                    ),
+                    ("heading", {"heading_text": "Who can see it", "size": "h2"}),
+                    (
+                        "paragraph",
+                        "<p>Only the members of our team who manage gifts and volunteers. We "
+                        "don't sell your details or share them with anyone else.</p>",
+                    ),
+                    ("heading", {"heading_text": "How long we keep it", "size": "h2"}),
+                    (
+                        "paragraph",
+                        "<p>Write here how long your charity keeps pledges and volunteer "
+                        "sign-ups, and why.</p>",
+                    ),
+                    ("heading", {"heading_text": "Seeing or deleting your details", "size": "h2"}),
+                    (
+                        "paragraph",
+                        "<p>Email us at hello@brightwell.example to see the details we hold about "
+                        "you, correct them, or ask us to delete them.</p>",
+                    ),
+                ],
+            ),
+        )
+
         campaigns = publish(
             home,
             CampaignIndexPage(
@@ -448,6 +502,7 @@ class Command(BaseCommand):
         settings.phone = "0123 456 7890"
         settings.address = "1 Example Street\nBirmingham\nB1 1AA"
         settings.donate_page = donate
+        settings.privacy_page = privacy
         settings.currency = "NPR"
         settings.phone_country = "NP"
         settings.instagram_url = "https://instagram.example/brightwell"
