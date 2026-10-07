@@ -24,6 +24,10 @@ version number.
   a translated appeal, the Donate button goes to the Donate page in the same language
   once that's translated too
   ([#121](https://github.com/dipbazz/Charity-wagtail-CMS/pull/121)).
+- Supporters can read how their details are used before they send them: choose a privacy notice
+  page in **Site settings → Privacy notice**, and the footer of every page links to it, as does
+  "How we use your details" just before the pledge form's and every form page's send button. The
+  demo site adds an example notice; replace it with your charity's own before going live.
 
 ### Upgrade notes
 
@@ -42,6 +46,8 @@ version number.
   form and sending it again, even with changes, updates the same pledge instead of adding
   another, so the team doesn't get duplicate pledges
   ([#110](https://github.com/dipbazz/Charity-wagtail-CMS/pull/110)).
+- Appeal pages no longer scroll sideways on the smallest phones (320px wide)
+  ([#125](https://github.com/dipbazz/Charity-wagtail-CMS/pull/125)).
 
 ## [0.2.0] - 2026-10-06
 

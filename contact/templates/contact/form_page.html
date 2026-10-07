@@ -11,6 +11,7 @@
         <form action="{% pageurl page %}" method="post" novalidate>
             {% csrf_token %}
             {{ form.as_p }}
+            {% include "includes/privacy_link.html" %}
             <button class="button button-large" type="submit">Send</button>
         </form>
     </div>

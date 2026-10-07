@@ -92,6 +92,20 @@ def nepali_home_page(home_page, nepali_locale):
     return page
 
 
+@pytest.fixture
+def privacy_notice(home_page):
+    """A published privacy notice, chosen in Site settings so the footer and forms link to it."""
+    from core.models import SiteSettings
+    from home.models import StandardPage
+
+    page = StandardPage(title="Privacy notice", slug="privacy")
+    home_page.add_child(instance=page)
+    settings = SiteSettings.for_site(home_page.get_site())
+    settings.privacy_page = page
+    settings.save()
+    return page
+
+
 def _user_in_group(django_user_model, group_name):
     user = django_user_model.objects.create_user(username=group_name.lower(), password="x")
     user.groups.add(Group.objects.get(name=group_name))

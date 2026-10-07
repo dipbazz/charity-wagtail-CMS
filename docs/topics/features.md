@@ -10,7 +10,7 @@ What editors can do in the admin, and the Wagtail features behind each part.
 | Donating | Suggested amounts and a pledge form (one-off or monthly, the appeal, optional mobile number for monthly gifts, optional address, an optional message for the team, and opt-in consent to email updates and to being listed on the site) that preselects the appeal a supporter came from; pledges listed under Pledges in the admin, with filters (including by each consent) and CSV/Excel export. No payment is taken yet | A `Pledge` model and `ModelForm`, `ModelViewSet` (listing, filters, export), `InlinePanel` |
 | Forms | Build volunteer and enquiry forms, receive email (Reply-To the sender), export submissions to CSV | `wagtail.contrib.forms` |
 | Supporters | Partners (drag to reorder) and testimonials with drafts, revisions, locking and preview | Snippets, `SnippetViewSet(Group)`, `DraftStateMixin`, `RevisionMixin`, `PreviewableMixin` |
-| Site-wide | Charity number, contact details, donate page, currency, default phone country, social links, emergency-appeal banner | `wagtail.contrib.settings` (site and generic settings) |
+| Site-wide | Charity number, contact details, donate page, privacy notice, currency, default phone country, social links, emergency-appeal banner | `wagtail.contrib.settings` (site and generic settings) |
 | Images | Photo credit and a safeguarding consent flag on every image, which keeps unconsented images out of the API; focal-point crops; alt text from the image description | Custom image model, renditions, custom API viewset |
 | Languages | Pages in Nepali, English or both; each site opens in Nepali unless it chooses English, and the other language is under `/en/` or `/ne/`. Listings and menus show the language being read. Editors write a page in one language and copy it into the other with **Translate** when they want to | `WAGTAIL_I18N_ENABLED`, `Locale`, `wagtail.contrib.simple_translation`, Django's `i18n_patterns` |
 | Search | Full-text search over page content, excluding drafts and private pages; editor-pinned results | `search_fields`, `wagtail.contrib.search_promotions` |
@@ -42,6 +42,23 @@ language.
   slug empty, so type an English one.
 - **Translate the parent page first.** A language is greyed out when the page above isn't
   translated yet; the form links to that page's Translate.
+
+## Privacy notice
+
+The pledge form and volunteer forms collect supporters' names and contact details, so the site
+links to a privacy notice from the footer of every page and just before every form's send
+button. The notice is an ordinary page, written in the admin:
+
+- **Write it as a page** (a standard page works), and publish it. Leave "Show in menus" unticked;
+  the footer links to it.
+- **Choose it in Site settings → Privacy notice.** Until a published page is chosen, the site
+  has no privacy links.
+- **Translate it** like any other page; Nepali readers get the Nepali notice once it's
+  published, and the main one until then.
+- **The demo's notice is example text.** `seed_demo` adds one that describes what the site
+  stores, so a charity has something to start from. Replace it with the charity's own notice
+  before going live: only the charity can say who looks after the details, how long it keeps
+  them and how to ask for them.
 
 Editors draft and moderators publish; [Permissions](permissions.md) says who can change what.
 The [models reference](../reference/models.md) lists the fields behind each feature.
