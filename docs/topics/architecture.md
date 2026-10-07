@@ -107,6 +107,16 @@ The site is in Nepali and English (`LANGUAGES`), with Wagtail's built-in transla
   page query that visitors see filters by `locale_id=self.locale_id`, as the home page's
   featured appeals and the Donate page's appeals do. The menu takes its items from the home
   page at the start of the current page's tree path.
+- **Readers switch language from any page.** `{% language_versions %}` (`core/templatetags/
+  language_tags.py`) finds, in one query, each language's live home page and the live
+  translations of the page being read. The header's switcher links to the translation, or to
+  that language's home page, so it never leads to a 404; it's left out until two languages have
+  a live home page. The same data gives `<link rel="alternate" hreflang>` in `<head>`, with
+  `x-default` for the main language, but only for a page that has a translation. The sitemap
+  lists the same alternates (`core.sitemaps.AllLanguagesSitemap`, `core.languages`).
+- **Search is in the language being read.** `/ne/search/` filters by the active `Locale`, and so
+  do its promotions (external links show in every language). SQLite's full-text search already
+  splits Devanagari into words with their vowel signs and conjuncts, so Nepali words are found.
 - **English uses British formats** through `FORMAT_MODULE_PATH` (`charity/formats/en/`), because
   `LANGUAGE_CODE` has to be `en`, not `en-gb`, for English pages to have no prefix.
   `core.migrations.0007` renamed existing `en-gb` locales to `en`.

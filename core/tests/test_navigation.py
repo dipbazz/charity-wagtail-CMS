@@ -136,5 +136,6 @@ def test_donate_button_stays_outside_the_collapsible_menu(client, home_page, sit
 def test_site_name_links_to_the_home_page_in_the_language_being_read(
     client, home_page, nepali_home_page
 ):
-    assert '<a class="brand" href="/">' in header_html(client, "/")
-    assert '<a class="brand" href="/ne/">' in header_html(client, "/ne/")
+    # The name is written in the main language (English in tests), so it keeps lang="en".
+    assert '<a class="brand" href="/" lang="en">' in header_html(client, "/")
+    assert '<a class="brand" href="/ne/" lang="en">' in header_html(client, "/ne/")

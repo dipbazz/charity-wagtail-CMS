@@ -12,7 +12,12 @@
     --colour-warning-surface: #fff6df;
     --radius: 6px;
     --container: 1120px;
-    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* The device's own fonts; no download. Latin fonts come first, and each lacks Devanagari, so
+       Nepali letters fall through to the phone's Devanagari font: Noto Sans Devanagari on
+       Android, Kohinoor Devanagari on iPhone and Mac, Nirmala UI on Windows (#118). */
+    --font:
+        system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", "Kohinoor Devanagari",
+        "Nirmala UI", sans-serif;
 }
 
 *,
@@ -66,6 +71,22 @@ h3,
 h4 {
     line-height: 1.2;
     color: var(--colour-primary-dark);
+}
+
+/* Devanagari has vowel signs above and below the letters, which touch the lines next to them at
+   the line heights that suit English (#118). */
+body:lang(ne) {
+    line-height: 1.8;
+}
+
+:is(h1, h2, h3, h4, .brand):lang(ne) {
+    line-height: 1.45;
+}
+
+/* Buttons and form fields hold one line, which has room for the marks at the English line height.
+   Keeping it means the header doesn't change height when a reader switches language. */
+:is(button, input, select, textarea, .button):lang(ne) {
+    line-height: 1.6;
 }
 
 .container {
@@ -135,29 +156,42 @@ h4 {
 .site-header {
     border-bottom: 1px solid var(--colour-border);
     background: #fff;
+    /* Lifts the header off a white page, which its own white controls row would blend into. */
+    box-shadow: 0 2px 6px rgb(7 59 69 / 0.15);
 }
 
-/* Narrow screens: name, Menu and Donate on one row; the menu and search open below it. */
-.site-header .container {
+/* The charity's name on a row of its own, centred, so a long name never crowds the
+   controls below it. Every link and button in the header is at least 44px tall. */
+.brand-bar {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    /* Padding rather than a min-height, so the top row doesn't move when the menu opens. */
-    padding-block: 0.625rem;
+    justify-content: center;
+    padding: 0.375rem 1rem;
+    /* The footer's colour, so the header and footer frame the page. */
+    background: var(--colour-primary-dark);
 }
 
-/* Every link and button in the header is at least 44px tall, so it's easy to tap. */
 .brand {
     display: flex;
-    flex: 1;
     align-items: center;
+    gap: 0.5rem;
     min-height: 2.75rem;
     font-size: 1.125rem;
     font-weight: 800;
     line-height: 1.2;
-    color: var(--colour-primary-dark);
+    text-align: center;
+    color: #fff;
     text-decoration: none;
+}
+
+/* Narrow screens: Menu on the left, the other language and Donate on the right; the menu and
+   search open below them. */
+.site-header > .container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    /* Padding rather than a min-height, so the row doesn't move when the menu opens. */
+    padding-block: 0.625rem;
 }
 
 /* Only pages with JavaScript get a Menu button; without it the menu below stays open. */
@@ -165,7 +199,7 @@ h4 {
     display: none;
     min-width: 2.75rem;
     min-height: 2.75rem;
-    padding: 0 0.75rem;
+    padding: 0 0.6rem;
     border: 2px solid var(--colour-primary);
     border-radius: var(--radius);
     background: #fff;
@@ -184,9 +218,47 @@ h4 {
     display: block;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-inline-start: auto;
+}
+
 .site-header .button {
     min-height: 2.75rem;
-    padding-inline: 0.9rem;
+    padding-inline: 0.7rem;
+}
+
+.language-switcher ul {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Buttons like Menu, not links: the other language is outlined, and the current one (shown on wide
+   screens) is filled, so it reads as the selected half of a switch and not as a plain link. */
+.language-switcher a {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 0.5rem;
+    border: 2px solid var(--colour-primary);
+    border-radius: var(--radius);
+    color: var(--colour-primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.language-switcher a[aria-current] {
+    background: var(--colour-primary);
+    color: #fff;
+}
+
+/* On a phone only the other language is shown; the page itself is already in this one. */
+.language-switcher li:has(> [aria-current]) {
+    display: none;
 }
 
 .site-menu {
@@ -237,22 +309,17 @@ h4 {
     font: inherit;
 }
 
-/* Wide enough for the whole menu, the search box and Donate to fit on one line. */
+/* Wide enough for the whole menu, the search box, both languages and Donate on one line. */
 @media (min-width: 68rem) {
-    .site-header .container {
+    .brand {
+        font-size: 1.4rem;
+    }
+
+    .site-header > .container {
         flex-wrap: nowrap;
         gap: 1rem;
         min-height: 4.5rem;
         padding-block: 0;
-    }
-
-    .brand {
-        flex: none;
-        font-size: 1.4rem;
-    }
-
-    .site-header .button {
-        padding-inline: 1.2rem;
     }
 
     .js .menu-toggle {
@@ -269,10 +336,6 @@ h4 {
         padding: 0;
     }
 
-    .main-nav {
-        margin-inline: auto;
-    }
-
     .main-nav ul {
         display: flex;
         gap: 0.5rem;
@@ -285,8 +348,35 @@ h4 {
         white-space: nowrap;
     }
 
+    .search-form {
+        margin-inline-start: auto;
+    }
+
     .search-form input {
         width: 12rem;
+    }
+
+    .site-header .button {
+        padding-inline: 1.2rem;
+    }
+
+    .language-switcher li:has(> [aria-current]) {
+        display: list-item;
+    }
+
+    /* Both languages show: join them into one two-part switch. */
+    .language-switcher li:first-child a {
+        border-start-end-radius: 0;
+        border-end-end-radius: 0;
+    }
+
+    .language-switcher li:last-child a {
+        border-start-start-radius: 0;
+        border-end-start-radius: 0;
+    }
+
+    .language-switcher li + li a {
+        margin-inline-start: -2px;
     }
 }
 
