@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailsearchpromotions_tags %}
+{% load wagtailcore_tags %}
 
 {% block body_class %}template-searchresults{% endblock %}
 
@@ -16,7 +16,6 @@
         </form>
 
         {% if search_query %}
-            {% get_search_promotions search_query as promotions %}
             {% if promotions %}
                 <ul class="search-promotions">
                     {% for promotion in promotions %}

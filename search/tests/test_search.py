@@ -9,8 +9,8 @@ from news.tests.factories import NewsIndexPageFactory, NewsPageFactory
 pytestmark = pytest.mark.django_db
 
 
-def search(client, query, **params):
-    return client.get("/search/", {"query": query, **params})
+def search(client, query, path="/search/", **params):
+    return client.get(path, {"query": query, **params})
 
 
 def result_titles(response):
@@ -109,3 +109,63 @@ def test_header_contains_a_search_form(client, home_page):
 
     assert 'role="search"' in html
     assert 'action="/search/"' in html
+
+
+@pytest.fixture
+def nepali_news_index(news_index, nepali_home_page):
+    translation = news_index.copy_for_translation(nepali_home_page.locale)
+    translation.title = "समाचार"
+    translation.save_revision().publish()
+    return translation
+
+
+def test_finds_nepali_pages_by_a_word_with_conjuncts_and_vowel_signs(client, nepali_news_index):
+    # सम्पन्न has a conjunct (म्प) and a virama; पुनर्निर्माण has vowel signs above and below.
+    NewsPageFactory(
+        parent=nepali_news_index,
+        title="धारा मर्मत सम्पन्न",
+        slug="tap-repaired",
+        body=[("paragraph", "<p>बाढीपछि गाउँको पानी प्रणालीको पुनर्निर्माण भयो।</p>")],
+    )
+
+    assert result_titles(search(client, "सम्पन्न", path="/ne/search/")) == ["धारा मर्मत सम्पन्न"]
+    assert result_titles(search(client, "पुनर्निर्माण", path="/ne/search/")) == ["धारा मर्मत सम्पन्न"]
+
+
+@pytest.fixture
+def jhapa_story(news_index, nepali_news_index):
+    """A story in English and Nepali that both mention Jhapa in English letters."""
+    english = NewsPageFactory(parent=news_index, title="Wells for Jhapa", slug="jhapa")
+    nepali = english.copy_for_translation(nepali_news_index.locale)
+    nepali.title = "Jhapa का लागि इनार"
+    nepali.save_revision().publish()
+    return english, nepali
+
+
+def test_lists_only_pages_in_the_language_being_read(client, jhapa_story):
+    assert result_titles(search(client, "jhapa")) == ["Wells for Jhapa"]
+    assert result_titles(search(client, "jhapa", path="/ne/search/")) == ["Jhapa का लागि इनार"]
+
+
+def test_promotes_only_pages_in_the_language_being_read(client, jhapa_story):
+    english, nepali = jhapa_story
+    query = Query.get("jhapa")
+    SearchPromotion.objects.create(query=query, page=english, description="Read in English")
+    SearchPromotion.objects.create(query=query, page=nepali, description="नेपालीमा पढ्नुहोस्")
+
+    english_html = search(client, "jhapa").content.decode()
+    nepali_html = search(client, "jhapa", path="/ne/search/").content.decode()
+
+    assert "Read in English" in english_html and "नेपालीमा पढ्नुहोस्" not in english_html
+    assert "नेपालीमा पढ्नुहोस्" in nepali_html and "Read in English" not in nepali_html
+
+
+def test_promoted_external_links_show_in_every_language(client, home_page, nepali_home_page):
+    SearchPromotion.objects.create(
+        query=Query.get("report"),
+        external_link_url="https://example.org/annual-report.pdf",
+        external_link_text="Annual report",
+    )
+
+    assert "Annual report" in search(client, "report").content.decode()
+    assert "Annual report" in search(client, "report", path="/ne/search/").content.decode()
