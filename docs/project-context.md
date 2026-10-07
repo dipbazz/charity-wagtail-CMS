@@ -46,7 +46,7 @@ first, and budgeted for queries and page weight in CI.
 | Why SQLite, one server, `.live().public()`, pinned actions, permission migrations? | [Decisions](decisions/index.md) |
 | Branches, commits, pull requests? | [Contributing](contributing/index.md) |
 | How do I write tests? What does CI run? | [Testing](contributing/testing.md) |
-| What's the QA pass? | [QA](contributing/qa.md) |
+| What does CI check about layout? What must I check by hand? | [QA](contributing/qa.md) |
 | Issues, epics and the board? | [Issues and the board](contributing/issues-and-board.md) |
 | How do I build these docs? | [Writing docs](contributing/writing-docs.md) |
 | What changed in each version? What's planned next? | [Changelog](changelog.md), [milestones](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) |

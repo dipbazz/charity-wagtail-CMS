@@ -36,6 +36,8 @@ version number.
 
 ### Fixed
 
+- On a 320px phone the home page no longer scrolls sideways, and the news page's Copy link
+  button is big enough to tap.
 - Refreshing the Donate page's thank-you page no longer sends the pledge again. Going back to the
   form and sending it again, even with changes, updates the same pledge instead of adding
   another, so the team doesn't get duplicate pledges

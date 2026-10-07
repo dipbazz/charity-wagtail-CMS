@@ -8,6 +8,7 @@
 | `home_page` | The `HomePage` at the root of that site; the parent for test pages |
 | `nepali_locale` | The Nepali `Locale`. English is the main language in tests, so Nepali pages are under `/ne/` |
 | `nepali_home_page` | The home page's published Nepali translation, served at `/ne/`; the parent for Nepali test pages |
+| `demo_site` | The default `Site` holding the whole `seed_demo` charity. The demo is built once per test module (`demo_content`, rolled back at the module's end), and each test's changes are rolled back as usual. Use `site` instead for a test that needs an empty database |
 | `editor` | A user in Wagtail's Editors group, as the charity's editors are: not a superuser |
 | `moderator` | A user in Wagtail's Moderators group, who approves and publishes editors' work |
 | `cold_cache_queries` | A function: `cold_cache_queries(path)` returns how many queries that page runs on a just-started server, with image renditions looked up in the database |
