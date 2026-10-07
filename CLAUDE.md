@@ -9,8 +9,8 @@ the docs must build with `uv run --group docs sphinx-build -W --keep-going docs 
 
 ## Versions and changelog
 
-Every PR adds a line under `## [Unreleased]` in `CHANGELOG.md`, written for the person the change
-affects, or is labelled `no changelog` (CI checks this). Each version is a GitHub milestone: put a
+Every PR adds a file `changelog.d/<slug>.<group>.md` (the entry, written for the person the change
+affects), or is labelled `no changelog` (CI checks this). Never edit `CHANGELOG.md` in a PR. Each version is a GitHub milestone: put a
 PR in the milestone of the issue it closes. New work found mid-iteration goes into the next
 milestone, not the current one, unless it fixes a P1 bug on the live site. Rules and release
 steps: `docs/contributing/releases.md`.

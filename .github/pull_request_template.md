@@ -15,5 +15,5 @@ Closes #
      Delete this section if empty. -->
 
 - [ ] Tests written first; the ones I touched pass (CI runs the full suite)
-- [ ] A line under `Unreleased` in `CHANGELOG.md`, or the `no changelog` label
+- [ ] A file in `changelog.d/`, or the `no changelog` label
 - [ ] Docs pages updated for anything they describe (`docs/`)

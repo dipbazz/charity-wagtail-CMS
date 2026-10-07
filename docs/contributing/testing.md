@@ -55,7 +55,7 @@ Some tests guard the whole project rather than one feature:
   `FileSystemStorage` (see `core/tests/test_media.py`).
 - **Languages:** tests run with **English as the main language**, as the Brightwell demo is
   English-first, though production defaults to Nepali. So English pages are at `/about/` and
-  Nepali ones under `/ne/about/`; `charity/settings/local.py` is never loaded by tests. Ask a page
+  Nepali ones under `/ne/about/`; `DJANGO_LANGUAGE_CODE` never affects tests. Ask a page
   for its address (`page.url`) rather than typing one, and build Nepali pages under
   `nepali_home_page` with `page.copy_for_translation(nepali_locale)` and a publish. To test a
   Nepali-first site, set `settings.LANGUAGE_CODE = "ne"` and clear Django's URL caches and the
@@ -98,4 +98,4 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and every
 | `lighthouse` | Page weight and layout shift on a phone ([Performance](../topics/performance.md)) |
 | `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse |
 | `docs` | These docs build with warnings as errors; the built site is uploaded as the `docs-html` artifact |
-| `changelog` (its own workflow) | The pull request updates `CHANGELOG.md`, unless it's labelled `no changelog` |
+| `changelog` (its own workflow) | The pull request adds a `changelog.d/` file, unless it's labelled `no changelog` |

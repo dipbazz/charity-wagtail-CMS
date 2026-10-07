@@ -37,11 +37,18 @@ version number.
   content, because changing it later changes every page's address.
 - Scheduled publishing and the admin now use Nepal time (`Asia/Kathmandu`). Pages already
   scheduled keep their moment, but the admin now shows it in Nepal time.
+- **`charity/settings/local.py` is no longer read.** To open your local site in Nepali, set
+  `DJANGO_LANGUAGE_CODE=ne` in a new `.env.local` file (copy `.env.local.example`); development opens in
+  English otherwise. You can delete the old file.
+
+### Changed
+
+- Page-weight limits now cap each page's images strictly and give its HTML, CSS and
+  JavaScript one fixed allowance, so ordinary template and style changes no longer fail the
+  Lighthouse check.
 
 ### Fixed
 
-- On a 320px phone the home page no longer scrolls sideways, and the news page's Copy link
-  button and the Donate page's dropdowns and fields are big enough to tap on every device.
 - Refreshing the Donate page's thank-you page no longer sends the pledge again. Going back to the
   form and sending it again, even with changes, updates the same pledge instead of adding
   another, so the team doesn't get duplicate pledges
