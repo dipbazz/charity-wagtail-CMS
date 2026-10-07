@@ -14,6 +14,6 @@ Closes #
 <!-- Only what the reviewer must act on: migrations, settings, conflicts with other pull requests.
      Delete this section if empty. -->
 
-- [ ] Tests written first; the full suite passed before pushing
+- [ ] Tests written first; the ones I touched pass (CI runs the full suite)
 - [ ] A line under `Unreleased` in `CHANGELOG.md`, or the `no changelog` label
 - [ ] Docs pages updated for anything they describe (`docs/`)

@@ -1,15 +1,14 @@
 # Testing
 
 Every feature here was built test-first with pytest: write a test, watch it fail for the reason
-you expect, then write the code that makes it pass. While working, run only the tests you wrote
-or changed and those for the code you touched; run the whole suite once, when the code is ready
-to push (CI runs it again).
+you expect, then write the code that makes it pass. Locally, run only the tests you wrote or
+changed and those for the code you touched; CI runs the whole suite on every push.
 
 ## Running the tests
 
 ```bash
-uv run pytest path/to/tests      # while working: the tests you wrote and those for code you touched
-uv run pytest                    # the whole suite, once, when the code is ready to push
+uv run pytest path/to/tests      # locally: the tests you wrote and those for code you touched
+uv run pytest                    # the whole suite: CI runs it; run it yourself only when you want to
 uv run pytest news               # one app
 uv run pytest --cov              # with coverage
 uv run pytest -m "not browser"   # without the browser tests (quicker)

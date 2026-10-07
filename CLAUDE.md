@@ -29,9 +29,9 @@ CI runs the mechanical half of QA on every pull request: `charity/tests/test_dem
 loads each kind of demo page at 320, 375, 412, 768, 1024 and 1440px and fails on sideways scrolling
 or a tap target under 44px. The rest is yours:
 
-1. **While working,** run only the tests you wrote or changed and the ones for the code you
-   touched (`uv run pytest path/to/tests`). Run the full suite, `ruff check` and
-   `ruff format --check` once, when the code is ready to push; CI runs them again.
+1. **Locally,** run only the tests you wrote or changed and the ones for the code you touched
+   (`uv run pytest path/to/tests`), plus `ruff check` and `ruff format --check`. Don't run the
+   full suite: CI runs it on every push, and the pull request isn't merged until it's green.
 2. **Fix each bug test-first:** write a test in the relevant app's `tests/` package, run it to see
    it fail for the reason the bug describes, fix the bug, see it pass. One bug per commit, test and
    fix together. If pytest can't catch it (purely visual), say so in the pull request.
