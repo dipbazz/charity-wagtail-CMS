@@ -25,6 +25,19 @@ writing or reviewing any CSS or layout markup.
 `:root` (`--colour-primary`, `--radius`, `--container`, `--font` and so on). Use a token rather
 than repeating a raw value, and add a token when a new value will be reused.
 
+## Nepali text
+
+Nepali is written in Devanagari, which needs more room than English:
+
+- **The device's own Devanagari font, no download.** `--font` lists the Latin system fonts, then
+  Noto Sans Devanagari (Android), Kohinoor Devanagari (iPhone and Mac) and Nirmala UI (Windows).
+  The Latin fonts have no Devanagari letters, so the browser takes those from the next font.
+- **More line height.** Vowel signs sit above and below the letters, so `body:lang(ne)` has a
+  line height of 1.8 and headings 1.45, against 1.6 and 1.2 for English.
+- **No `letter-spacing` or `text-transform` on Nepali text.** Spacing breaks conjunct letters
+  apart, and Devanagari has no capitals. A rule may set them only for `:lang(en)`;
+  `core/tests/test_stylesheet.py` checks this.
+
 ## JavaScript as an enhancement
 
 `charity.js` adds progressive enhancements, such as the copy-feed-link button on the news page.
@@ -53,6 +66,8 @@ Every page works without it:
 Accessibility is a requirement, not a polish step:
 
 - a skip link to the main content;
+- a language switcher named in each language's own script (`lang` and `hreflang` on each link,
+  `aria-current="page"` on the language being read), inside a `<nav>` labelled "Language";
 - `aria-current` on the menu item for the current page or section (`{% main_menu %}`), and
   `aria-current="page"` on the selected listing filter (Appeals status, News category), which
   `.tag-list a[aria-current]` fills and makes bold;

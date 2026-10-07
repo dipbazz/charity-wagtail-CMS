@@ -9,8 +9,8 @@
 | `/documents/<id>/<filename>` | Wagtail's document view, which checks a private collection's password or login |
 | `/api/v2/` | Read-only JSON API (below) |
 | `/en/…` or `/ne/…` | Pages and search in the site's second language: `/en/` when Nepali is the main language (the default), `/ne/` when English is, as on the Brightwell demo. The main language has no prefix. An address with no page in that language redirects to the same address in the main language, if a page is there. See [Architecture](../topics/architecture.md#languages) |
-| `/search/?query=…` | Site search, with editor-pinned results ([promotions](https://docs.wagtail.org/en/stable/reference/contrib/searchpromotions.html)); logs each query for editors |
-| `/sitemap.xml` | Sitemap of live, public pages in every language (`core.sitemaps.AllLanguagesSitemap`) |
+| `/search/?query=…` | Site search in the language being read (`/ne/search/` finds Nepali pages), with editor-pinned results ([promotions](https://docs.wagtail.org/en/stable/reference/contrib/searchpromotions.html)) for pages in that language; logs each query for editors |
+| `/sitemap.xml` | Sitemap of live, public pages in every language, each translated page with its translations as `hreflang` alternates (`core.sitemaps.AllLanguagesSitemap`) |
 | `/robots.txt` | Disallows `/admin/`, `/django-admin/` and `/search/`; links the sitemap |
 | `/media/<path>` | Uploads, through `core.views.serve_media` when `SERVE_MEDIA` is on; never `documents/` |
 | `/__debug__/` | django-debug-toolbar, in development only |
