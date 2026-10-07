@@ -199,7 +199,7 @@ body:lang(ne) {
     display: none;
     min-width: 2.75rem;
     min-height: 2.75rem;
-    padding: 0 0.75rem;
+    padding: 0 0.6rem;
     border: 2px solid var(--colour-primary);
     border-radius: var(--radius);
     background: #fff;
@@ -227,7 +227,7 @@ body:lang(ne) {
 
 .site-header .button {
     min-height: 2.75rem;
-    padding-inline: 0.9rem;
+    padding-inline: 0.7rem;
 }
 
 .language-switcher ul {
@@ -243,7 +243,7 @@ body:lang(ne) {
     display: flex;
     align-items: center;
     min-height: 2.75rem;
-    padding-inline: 0.75rem;
+    padding-inline: 0.5rem;
     border: 2px solid var(--colour-primary);
     border-radius: var(--radius);
     color: var(--colour-primary);
