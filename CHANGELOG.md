@@ -27,11 +27,14 @@ version number.
 - Readers can switch between नेपाली and English at the top of every page. It opens the same page
   in the other language, or that language's home page if the page isn't translated yet. Search
   engines are told which pages are translations of each other, so they show people the page in
-  their language.
+  their language
+  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
 - Search finds pages in the language being read, including Nepali words, and editors can promote
-  a different result for each language.
+  a different result for each language
+  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
 - Nepali text uses the phone's own Devanagari font and has more space between lines, so vowel
-  signs above and below the letters no longer touch the lines next to them.
+  signs above and below the letters no longer touch the lines next to them
+  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
 
 ### Upgrade notes
 
