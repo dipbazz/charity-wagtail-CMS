@@ -50,6 +50,34 @@ remove the `#` from that line. The file is gitignored and only development reads
 `/` is then the Nepali home page, and pages that exist only in English are under `/en/`. Put the
 `#` back to go back (a variable set in your shell wins over the file). The tests ignore it.
 
+### Run it as the live site runs it
+
+`runserver` is for changing code. To see the site as it's served live (production settings,
+gunicorn, compressed static files, the Docker image) install
+[Docker](https://docs.docker.com/get-started/get-docker/), then run this from the project folder:
+
+```bash
+docker compose up --build
+```
+
+The first build takes a few minutes. When the logs show gunicorn listening, open
+<http://localhost:8090> (the admin is at `/admin/`). It loads the demo content itself, so there is no
+superuser: create one with `docker compose exec web python manage.py createsuperuser`.
+
+It runs on port 8090, so it can run next to `runserver`, and keeps its data in a Docker volume,
+never in your `db.sqlite3`. To start again from empty demo content:
+
+```bash
+docker compose down --volumes
+```
+
+Use it to check what only breaks under production settings (static files, security headers,
+the language the site opens in) and to
+[measure page weight with Lighthouse](../how-to/run-lighthouse.md) before pushing. The secret
+key and other values in `compose.yaml` are for your computer only; the live server has its own in
+[`deploy/aws/`](../topics/deployment.md). Safari won't keep the admin login on plain `http`;
+use Chrome, Edge or Firefox.
+
 ## Check that everything passes
 
 ```bash

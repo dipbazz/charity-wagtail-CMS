@@ -31,6 +31,13 @@ config` and `caddy validate` must pass.
 
 The choice of one server is recorded in [One EC2 server](../decisions/single-server.md).
 
+## Running the image on your own computer
+
+`compose.yaml` in the project root (not `deploy/aws/`) runs the same Docker image with
+production settings, the demo content and a throwaway data volume, behind a small Caddy proxy
+that stands in for the live server's. Its secret key and hosts are for your computer only; see
+[Getting started](../getting-started/index.md#run-it-as-the-live-site-runs-it).
+
 ## On container start
 
 The Docker image's command runs, in order:

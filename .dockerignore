@@ -42,6 +42,7 @@ wheels/
 **/.env
 **/.env.local
 deploy/
+compose.yaml
 
 # Local-only files: version control, virtualenvs, tool caches and private notes
 .git/
