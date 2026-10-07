@@ -52,7 +52,7 @@ Some tests guard the whole project rather than one feature:
   `FileSystemStorage` (see `core/tests/test_media.py`).
 - **Languages:** tests run with **English as the main language**, as the Brightwell demo is
   English-first, though production defaults to Nepali. So English pages are at `/about/` and
-  Nepali ones under `/ne/about/`; `charity/settings/local.py` is never loaded by tests. Ask a page
+  Nepali ones under `/ne/about/`; `DJANGO_LANGUAGE_CODE` never affects tests. Ask a page
   for its address (`page.url`) rather than typing one, and build Nepali pages under
   `nepali_home_page` with `page.copy_for_translation(nepali_locale)` and a publish. To test a
   Nepali-first site, set `settings.LANGUAGE_CODE = "ne"` and clear Django's URL caches and the

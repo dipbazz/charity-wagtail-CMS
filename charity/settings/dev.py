@@ -1,3 +1,7 @@
+import os
+
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -20,8 +24,10 @@ INSTALLED_APPS = [*INSTALLED_APPS, "debug_toolbar"]
 MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware", *MIDDLEWARE]
 INTERNAL_IPS = ["127.0.0.1"]
 
-
-try:
-    from .local import *
-except ImportError:
-    pass
+# Development opens in English, like the demo content and the tests. Set DJANGO_LANGUAGE_CODE=ne to
+# see the site the way a Nepali charity's visitors will; it's checked as production checks it.
+LANGUAGE_CODE = os.environ.get("DJANGO_LANGUAGE_CODE", "en")
+if LANGUAGE_CODE not in dict(LANGUAGES):
+    raise ImproperlyConfigured(
+        f"Set DJANGO_LANGUAGE_CODE to one of {', '.join(dict(LANGUAGES))}, not {LANGUAGE_CODE!r}."
+    )
