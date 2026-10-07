@@ -5,7 +5,8 @@ from urllib.parse import urljoin, urlsplit
 import pytest
 from django.contrib.auth.models import Group
 from django.core.cache import cache
-from django.db import connection
+from django.core.management import call_command
+from django.db import connection, transaction
 from django.test.utils import CaptureQueriesContext
 from wagtail.models import Locale, Site
 
@@ -41,6 +42,32 @@ def cold_cache_queries(client):
 @pytest.fixture
 def site(db):
     """The default Site created by the home app's data migration."""
+    return Site.objects.get(is_default_site=True)
+
+
+@pytest.fixture(scope="module")
+def demo_content(django_db_setup, django_db_blocker):
+    """The `seed_demo` site, built once for a test module instead of once per test.
+
+    It sits in a transaction that's rolled back when the module ends; each test's own transaction
+    nests inside it, so tests can read the demo and change it freely. Tests that need an empty
+    database (a first run of `seed_demo`) use `site` instead.
+    """
+    with django_db_blocker.unblock():
+        outer = transaction.atomic()
+        outer.__enter__()
+        try:
+            call_command("seed_demo", verbosity=0)
+            yield
+        finally:
+            transaction.set_rollback(True)
+            outer.__exit__(None, None, None)
+            cache.clear()
+
+
+@pytest.fixture
+def demo_site(db, demo_content):
+    """The default Site, holding the whole demo charity."""
     return Site.objects.get(is_default_site=True)
 
 

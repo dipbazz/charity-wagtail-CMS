@@ -6,7 +6,6 @@ and say why; if it saves queries, lower the budget.
 """
 
 import pytest
-from django.core.management import call_command
 
 pytestmark = pytest.mark.django_db
 
@@ -38,11 +37,6 @@ BUDGETS = {
     "/ne/appeals/flood-relief/": 18,
     "/ne/news/": 20,
 }
-
-
-@pytest.fixture
-def demo_site(site):
-    call_command("seed_demo", verbosity=0)
 
 
 @pytest.mark.parametrize(("path", "budget"), BUDGETS.items())
