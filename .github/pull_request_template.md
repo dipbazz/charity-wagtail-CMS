@@ -1,21 +1,19 @@
 Closes #
 
-## Why
+## What changed
 
-<!-- The problem this solves, for the people using the site, the admin or the deployment. -->
+<!-- 2-4 bullets, for the person using the site or the admin. The why goes in the commit messages. -->
 
-## Changes
+## Check before merging
 
-<!-- What changed, grouped by area. The diff shows the details; say what a reviewer needs to know. -->
+<!-- The pages and widths to look at in the browser, and what to look for. Or: "Nothing in the
+     browser: no templates or CSS changed." -->
 
-## Testing
+## Notes
 
-<!-- The tests you wrote first, and anything checked by hand (pages, widths, commands). -->
+<!-- Only what the reviewer must act on: migrations, settings, conflicts with other pull requests.
+     Delete this section if empty. -->
 
-## Checklist
-
-- [ ] Tests written first, and `uv run pytest`, `ruff check` and `ruff format --check` pass
+- [ ] Tests written first; the ones I touched pass (CI runs the full suite)
 - [ ] A file in `changelog.d/`, or the `no changelog` label
 - [ ] Docs pages updated for anything they describe (`docs/`)
-- [ ] In the milestone of the version it ships in
-- [ ] QA pass posted as a comment (`QA on <commit>`) after opening

@@ -35,7 +35,8 @@ writing-docs
 7. **Open a pull request** against `main`. Its description says why, what changed, and how you
    tested it (the pull request template has the checklist), and is in the version's milestone.
    Pull requests aren't stacked on each other.
-8. **QA pass:** every pull request gets one before it's reported as ready ([QA](qa.md)).
+8. **QA:** CI checks every page layout at six widths; the pull request lists what a person must
+   check in the browser ([QA](qa.md)).
 9. **The maintainer reviews and merges.**
 
 ## Commits

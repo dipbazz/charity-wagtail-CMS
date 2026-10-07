@@ -1,29 +1,42 @@
-# The QA pass
+# QA
 
-Every pull request gets a QA pass before it's reported as ready. This is mandatory.
+QA is split between what a machine can check on every pull request and what needs a person.
 
-1. **After opening the pull request,** check its branch against the dev site loaded with
-   `seed_demo`, at phone and desktop widths, focusing on what the diff changed. (AI sessions use
-   `/qa` in diff-aware mode.)
-2. **Fix each bug test-first.**
-   - Write a test in the relevant app's `tests/` package, following its existing style, and run
-     it to see it fail for the reason the bug describes.
-   - Fix the bug, see the test pass, then run the full suite, `ruff check` and
-     `ruff format --check`.
-   - Commit the test and the fix together, one bug per commit, on the pull request's branch.
+## What CI checks
 
-   If pytest can't catch a bug (purely visual, such as spacing), say so in the QA comment
-   rather than skipping it silently.
-3. **Post the results as a pull request comment,** one per QA run, starting with the commit it
-   checked (`QA on abc1234`): the pages and widths checked, bugs found and fixed (with their
-   tests), and anything deferred.
+`charity/tests/test_demo_layout_browser.py` loads one page of each kind from the demo site
+(home, an ordinary page, the appeals and an appeal, news, the Donate and volunteer forms, search,
+and the Nepali home page and appeal) at **320, 375, 412, 768, 1024 and 1440px** in Chromium, and
+fails the pull request when a page:
 
-The pull request description keeps the author's own testing. QA is a later event tied to a
-commit, so a comment shows when new pushes make it stale and keeps a history of re-runs.
+- **scrolls sideways** (its `scrollWidth` is wider than the window); or
+- has a **tap target under 44px**: a button, select, summary, or a link in the footer, the filter
+  tags or the pagination. Links inside a paragraph are exempt; they're as tall as their line.
 
-## Widths to check
+The failure names the page, the width and the element. To check a new kind of page, add its address
+to `PATHS`; to cover a new kind of control, add its selector to `TAP_TARGETS`. The demo site is
+built once per test module (see [Test fixtures](../reference/test-fixtures.md)).
 
-The `mobile-first` skill lists them: **320, 375, 412, 768, 1024 and 1440px**. At each, look for
-horizontal scrolling, text or buttons overlapping or cut off, tap targets under 44px, and a
-missing focus outline. Then turn the CSS off and check the page still reads in order and its
-links and forms still work.
+## What a person checks
+
+Some things only eyes catch: wording, whether a page looks right, whether a flow makes sense.
+Each pull request's **Check before merging** section lists the pages, widths and things to look
+for, or says nothing needs checking (a backend or admin-only change with no templates or CSS).
+Load the demo with `manage.py seed_demo`; the `mobile-first` skill's checks are the checklist:
+no sideways scrolling, nothing overlapping or cut off, a visible focus outline, and a page that
+still reads in order with CSS off.
+
+For a fuller pass, AI sessions have `/qa` (diff-aware mode against the branch). Run it when you
+want one; it isn't required.
+
+## When QA finds a bug
+
+Fix it test-first, one bug per commit:
+
+1. Write a test in the relevant app's `tests/` package, in its existing style, and run it to see
+   it fail for the reason the bug describes.
+2. Fix the bug and see the test pass.
+3. Commit the test and the fix together on the pull request's branch.
+
+If pytest can't catch a bug (something purely visual, such as spacing), say so in the pull request
+rather than skipping it silently.

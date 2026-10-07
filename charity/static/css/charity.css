@@ -103,7 +103,10 @@ h4 {
 
 /* Buttons */
 .button {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
     padding: 0.6rem 1.2rem;
     border: 0;
     border-radius: var(--radius);
@@ -291,6 +294,8 @@ h4 {
 .hero {
     position: relative;
     display: grid;
+    /* minmax(0, ...) lets the column shrink below the photo's own width on a small phone. */
+    grid-template-columns: minmax(0, 1fr);
     min-height: 26rem;
     background: var(--colour-primary-dark);
     color: #fff;
@@ -563,6 +568,7 @@ h4 {
 .form-page main input:not([type="checkbox"]):not([type="radio"]),
 .form-page main textarea,
 .form-page main select {
+    min-height: 2.75rem;
     padding: 0.6rem;
     border: 1px solid var(--colour-border);
     border-radius: var(--radius);
