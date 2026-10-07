@@ -54,7 +54,7 @@ design, not an afterthought.
 - **Works without CSS or JS.** Controls that need JS start `hidden` and the JS shows them (see
   `charity.js`). Forms and links work with no styling.
 - **Images:** the `sizes` attribute describes the phone layout first. Follow the `{% picture %}`
-  rules in `docs/topics/images.md`.
+  rules in `docs/site/images.md`.
 
 ## Checking
 

@@ -1,7 +1,12 @@
 # Demo content
 
 `manage.py seed_demo` builds the demo site that development, the tests, CI's Lighthouse job and
-the live demo all use. See [Management commands](management-commands.md#seed_demo-home).
+the live demo all use: the home page, About, the Donate page with suggested amounts, four appeals
+(one closed), three news stories with categories, a volunteer form, partners with logos it draws
+itself, a testimonial, the privacy notice, the site settings and the announcement banner, plus the
+Nepali pages below. It's safe to re-run: if appeals already exist it adds nothing (but still points
+the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is English-first
+(`home/management/commands/seed_demo.py`).
 
 ## The charity is fictional
 
