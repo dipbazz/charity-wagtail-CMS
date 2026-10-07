@@ -12,7 +12,12 @@
     --colour-warning-surface: #fff6df;
     --radius: 6px;
     --container: 1120px;
-    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* The device's own fonts; no download. Latin fonts come first, and each lacks Devanagari, so
+       Nepali letters fall through to the phone's Devanagari font: Noto Sans Devanagari on
+       Android, Kohinoor Devanagari on iPhone and Mac, Nirmala UI on Windows (#118). */
+    --font:
+        system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Devanagari", "Kohinoor Devanagari",
+        "Nirmala UI", sans-serif;
 }
 
 *,
@@ -66,6 +71,16 @@ h3,
 h4 {
     line-height: 1.2;
     color: var(--colour-primary-dark);
+}
+
+/* Devanagari has vowel signs above and below the letters, which touch the lines next to them at
+   the line heights that suit English (#118). */
+body:lang(ne) {
+    line-height: 1.8;
+}
+
+:is(h1, h2, h3, h4, .brand):lang(ne) {
+    line-height: 1.45;
 }
 
 .container {
