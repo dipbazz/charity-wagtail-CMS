@@ -25,28 +25,28 @@
         {
           "matchingUrlPattern": "^http://127\\.0\\.0\\.1:8000/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 212000, "aggregationMethod": "median"}],
+            "resource-summary:total:size": ["error", {"maxNumericValue": 219000, "aggregationMethod": "median"}],
             "resource-summary:image:size": ["error", {"maxNumericValue": 194000, "aggregationMethod": "median"}]
           }
         },
         {
           "matchingUrlPattern": "/appeals/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 172000, "aggregationMethod": "median"}],
+            "resource-summary:total:size": ["error", {"maxNumericValue": 182000, "aggregationMethod": "median"}],
             "resource-summary:image:size": ["error", {"maxNumericValue": 157000, "aggregationMethod": "median"}]
           }
         },
         {
           "matchingUrlPattern": "/appeals/flood-relief/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 59900, "aggregationMethod": "median"}],
+            "resource-summary:total:size": ["error", {"maxNumericValue": 69000, "aggregationMethod": "median"}],
             "resource-summary:image:size": ["error", {"maxNumericValue": 44000, "aggregationMethod": "median"}]
           }
         },
         {
           "matchingUrlPattern": "/news/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 94000, "aggregationMethod": "median"}],
+            "resource-summary:total:size": ["error", {"maxNumericValue": 106000, "aggregationMethod": "median"}],
             "resource-summary:image:size": ["error", {"maxNumericValue": 81000, "aggregationMethod": "median"}]
           }
         }

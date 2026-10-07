@@ -41,6 +41,12 @@ version number.
   `DJANGO_LANGUAGE_CODE=ne` in a new `.env.local` file (copy `.env.local.example`); development opens in
   English otherwise. You can delete the old file.
 
+### Changed
+
+- Page-weight limits now cap each page's images strictly and give its HTML, CSS and
+  JavaScript one fixed allowance, so ordinary template and style changes no longer fail the
+  Lighthouse check.
+
 ### Fixed
 
 - Refreshing the Donate page's thank-you page no longer sends the pledge again. Going back to the

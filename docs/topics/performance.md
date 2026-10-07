@@ -23,9 +23,16 @@ A Lighthouse CI job loads `seed_demo` into production settings behind gunicorn, 
 homepage, the appeals page, an appeal and the news page with Lighthouse's phone emulation
 (412px, pixel density 1.75). Budgets are in `lighthouserc.json`:
 
-- **Fail the build:** total bytes and image bytes per page, and layout shift (CLS above 0.1).
+- **Fail the build:** image bytes per page, total bytes per page, and layout shift (CLS above 0.1).
 - **Only warn:** largest paint (LCP above 4 seconds) and the performance score (below 0.8),
   because timings vary on shared CI machines.
+
+Images are what makes a page heavy, so their budget is strict: about 5% above the page's image
+weight today, so an extra or larger photo fails. HTML, CSS and JavaScript weigh 16-20KB on every
+page, so they share one fixed allowance: each page's total budget is its image budget plus
+25,000 bytes (`charity/tests/test_lighthouse_budgets.py` keeps it that way). A template or
+stylesheet change therefore never needs a budget edit; raise the allowance only if the markup and
+CSS have genuinely grown, and say why.
 
 The reports are attached to each run as the `lighthouse-reports` artifact.
 [Run Lighthouse locally](../how-to/run-lighthouse.md) shows how to reproduce a run.
