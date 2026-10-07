@@ -1,6 +1,7 @@
 import os
 
 from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 from .base import *
 
@@ -23,6 +24,10 @@ MAILERS = {"default": {"BACKEND": "django.core.mail.backends.console.EmailBacken
 INSTALLED_APPS = [*INSTALLED_APPS, "debug_toolbar"]
 MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware", *MIDDLEWARE]
 INTERNAL_IPS = ["127.0.0.1"]
+
+# Settings for this machine only: copy .env.example to .env.local (gitignored) and edit it. A
+# variable already set in the shell wins over the file.
+load_dotenv(BASE_DIR / ".env.local")
 
 # Development opens in English, like the demo content and the tests. Set DJANGO_LANGUAGE_CODE=ne to
 # see the site the way a Nepali charity's visitors will; it's checked as production checks it.
