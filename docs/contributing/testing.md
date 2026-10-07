@@ -95,4 +95,4 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and every
 | `lighthouse` | Page weight and layout shift on a phone ([Performance](../topics/performance.md)) |
 | `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse |
 | `docs` | These docs build with warnings as errors; the built site is uploaded as the `docs-html` artifact |
-| `changelog` (its own workflow) | The pull request updates `CHANGELOG.md`, unless it's labelled `no changelog` |
+| `changelog` (its own workflow) | The pull request adds a `changelog.d/` file, unless it's labelled `no changelog` |
