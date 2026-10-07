@@ -38,6 +38,12 @@ version number.
 - Scheduled publishing and the admin now use Nepal time (`Asia/Kathmandu`). Pages already
   scheduled keep their moment, but the admin now shows it in Nepal time.
 
+### Changed
+
+- Page-weight limits now cap each page's images strictly and give its HTML, CSS and
+  JavaScript one fixed allowance, so ordinary template and style changes no longer fail the
+  Lighthouse check.
+
 ### Fixed
 
 - Refreshing the Donate page's thank-you page no longer sends the pledge again. Going back to the
@@ -84,9 +90,6 @@ rupees or pounds, and accessibility and layout fixes.
   currency chosen in Site settings: Nepalese rupees by default, grouped the Nepali way
   (Rs 46,87,500), or pounds sterling
   ([#89](https://github.com/dipbazz/Charity-wagtail-CMS/pull/89)).
-- Page-weight limits now cap each page's images strictly and give its HTML, CSS and
-  JavaScript one fixed allowance, so ordinary template and style changes no longer fail the
-  Lighthouse check.
 
 ### Fixed
 
