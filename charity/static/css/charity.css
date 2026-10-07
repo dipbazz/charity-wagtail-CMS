@@ -291,6 +291,8 @@ h4 {
 .hero {
     position: relative;
     display: grid;
+    /* minmax(0, ...) lets the column shrink below the photo's own width on a small phone. */
+    grid-template-columns: minmax(0, 1fr);
     min-height: 26rem;
     background: var(--colour-primary-dark);
     color: #fff;
