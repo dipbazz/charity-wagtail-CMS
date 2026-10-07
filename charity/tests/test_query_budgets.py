@@ -21,22 +21,24 @@ pytestmark = pytest.mark.django_db
 # home page in that language (#113). A page in the second language spends one more, finding that
 # home page's translation. The API lists the Nepali flood appeal too, so it spends one more on it.
 # A second-language appeal spends one more looking for the Donate page in its language (#114).
+# Every page and search spend one query on the language switcher and hreflang links: the live home
+# page and the live translations of the page being read, in every language (#115).
 BUDGETS = {
-    "/": 18,
-    "/appeals/": 16,
-    "/appeals/flood-relief/": 16,
-    "/news/": 19,
+    "/": 19,
+    "/appeals/": 17,
+    "/appeals/flood-relief/": 17,
+    "/news/": 20,
     "/news/feed/": 11,
-    "/about/": 12,
-    "/volunteer/": 13,
-    "/donate/": 15,
-    "/donate/?appeal=flood-relief&amount=2500": 16,
-    "/search/?query=water": 21,
+    "/about/": 13,
+    "/volunteer/": 14,
+    "/donate/": 16,
+    "/donate/?appeal=flood-relief&amount=2500": 17,
+    "/search/?query=water": 22,
     "/api/v2/pages/?type=campaigns.CampaignPage&fields=*": 19,
-    "/ne/": 16,
-    "/ne/appeals/": 17,
-    "/ne/appeals/flood-relief/": 18,
-    "/ne/news/": 20,
+    "/ne/": 17,
+    "/ne/appeals/": 18,
+    "/ne/appeals/flood-relief/": 19,
+    "/ne/news/": 21,
 }
 
 

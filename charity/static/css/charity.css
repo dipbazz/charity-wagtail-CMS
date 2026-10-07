@@ -149,8 +149,37 @@ body:lang(ne) {
     background: #fff;
 }
 
+/* The language switcher has a row of its own above the site name at every width, so it's one tap
+   away on a phone without crowding the name, Menu and Donate. */
+.language-switcher {
+    border-bottom: 1px solid var(--colour-border);
+    background: var(--colour-surface);
+}
+
+.language-switcher ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    list-style: none;
+}
+
+.language-switcher a {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 0.5rem;
+    color: var(--colour-text);
+    font-size: 0.9375rem;
+}
+
+.language-switcher a[aria-current] {
+    font-weight: 700;
+    text-decoration: none;
+}
+
 /* Narrow screens: name, Menu and Donate on one row; the menu and search open below it. */
-.site-header .container {
+.site-header > .container {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -251,7 +280,7 @@ body:lang(ne) {
 
 /* Wide enough for the whole menu, the search box and Donate to fit on one line. */
 @media (min-width: 68rem) {
-    .site-header .container {
+    .site-header > .container {
         flex-wrap: nowrap;
         gap: 1rem;
         min-height: 4.5rem;

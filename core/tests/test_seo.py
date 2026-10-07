@@ -39,6 +39,27 @@ class TestSitemap:
         assert "<loc>http://localhost/ne/</loc>" in body
         assert "<loc>http://localhost/ne/about/</loc>" in body
 
+    def test_links_each_translated_page_to_its_translations(
+        self, client, home_page, nepali_home_page
+    ):
+        about = StandardPage(title="About us", slug="about")
+        home_page.add_child(instance=about)
+        about.copy_for_translation(nepali_home_page.locale).save_revision().publish()
+        home_page.add_child(instance=StandardPage(title="Volunteer", slug="volunteer"))
+
+        body = client.get("/sitemap.xml").content.decode()
+
+        about_entries = [
+            entry for entry in re.findall(r"<url>.*?</url>", body) if "/about/</loc>" in entry
+        ]
+        assert len(about_entries) == 2
+        for entry in about_entries:
+            assert 'hreflang="en" href="http://localhost/about/"' in entry
+            assert 'hreflang="ne" href="http://localhost/ne/about/"' in entry
+            assert 'hreflang="x-default" href="http://localhost/about/"' in entry
+        volunteer = next(e for e in re.findall(r"<url>.*?</url>", body) if "volunteer" in e)
+        assert "hreflang" not in volunteer
+
 
 def test_robots_txt_blocks_admin_and_points_to_the_sitemap(client, home_page):
     response = client.get("/robots.txt")

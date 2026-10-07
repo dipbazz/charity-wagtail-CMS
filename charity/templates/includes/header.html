@@ -1,4 +1,4 @@
-{% load wagtailcore_tags navigation_tags %}
+{% load i18n wagtailcore_tags navigation_tags %}
 {% wagtail_site as current_site %}
 {% with banner=settings.core.AnnouncementBanner %}
     {% if banner.enabled and banner.message %}
@@ -10,6 +10,16 @@
     {% endif %}
 {% endwith %}
 <header class="site-header">
+    {# First in the header, so a reader who can't read this language finds theirs straight away. #}
+    {% if languages.links %}
+        <nav class="language-switcher" aria-label="{% translate "Language" %}">
+            <ul class="container">
+                {% for language in languages.links %}
+                    <li><a href="{{ language.url }}" lang="{{ language.code }}" hreflang="{{ language.code }}"{% if language.current %} aria-current="page"{% endif %}>{{ language.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </nav>
+    {% endif %}
     <div class="container">
         {# The home page in the language being read: / or /ne/ (or /en/ on a Nepali site). #}
         <a class="brand" href="{% url 'wagtail_serve' '' %}">{{ current_site.site_name|default:"Charity" }}</a>
