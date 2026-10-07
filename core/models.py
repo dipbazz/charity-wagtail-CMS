@@ -76,6 +76,18 @@ class SiteSettings(BaseSiteSetting):
         related_name="+",
         help_text="Linked from the Donate button in the site header.",
     )
+    privacy_page = models.ForeignKey(
+        "wagtailcore.Page",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="privacy notice",
+        help_text=(
+            "Says how supporters' details are used. Linked from the footer and next to every "
+            "form's send button, once it's published."
+        ),
+    )
     currency = models.CharField(
         max_length=3,
         choices=CURRENCY_CHOICES,
@@ -105,6 +117,7 @@ class SiteSettings(BaseSiteSetting):
             heading="Organisation",
         ),
         FieldPanel("donate_page"),
+        FieldPanel("privacy_page"),
         MultiFieldPanel(
             [FieldPanel("facebook_url"), FieldPanel("instagram_url"), FieldPanel("linkedin_url")],
             heading="Social media",

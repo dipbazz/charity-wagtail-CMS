@@ -93,6 +93,18 @@ class TestDonatePage:
 
         assert html.index("</form>") < html.index("Where every Rs 100 goes")
 
+    def test_links_to_the_privacy_notice_before_the_send_button(
+        self, client, donate_page, privacy_notice
+    ):
+        form = soup(client.get(donate_page.url)).find("form", class_="pledge-form")
+        link = form.find("a", string="How we use your details")
+
+        assert link["href"] == privacy_notice.url
+        assert link.find_next("button", type="submit") is not None
+
+    def test_no_privacy_link_without_a_privacy_notice(self, client, donate_page):
+        assert "How we use your details" not in client.get(donate_page.url).content.decode()
+
     def test_offers_open_public_appeals_and_wherever_needed_most(self, client, donate_page):
         select = soup(client.get(donate_page.url)).find("select", attrs={"name": "appeal"})
         options = [option.get_text(strip=True) for option in select.find_all("option")]
