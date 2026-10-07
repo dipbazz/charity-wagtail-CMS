@@ -44,6 +44,8 @@ version number.
   form and sending it again, even with changes, updates the same pledge instead of adding
   another, so the team doesn't get duplicate pledges
   ([#110](https://github.com/dipbazz/Charity-wagtail-CMS/pull/110)).
+- Appeal pages no longer scroll sideways on the smallest phones (320px wide)
+  ([#125](https://github.com/dipbazz/Charity-wagtail-CMS/pull/125)).
 
 ## [0.2.0] - 2026-10-06
 

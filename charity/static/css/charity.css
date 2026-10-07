@@ -864,7 +864,7 @@ h4 {
 /* Campaigns */
 .campaign-header {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     gap: 2rem;
     align-items: center;
     margin-block: 2rem;
