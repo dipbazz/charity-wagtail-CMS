@@ -44,7 +44,7 @@ and canonical tags. On a database created before that, run
 
 Development uses English as the main language, like the demo content and the tests; the live
 site opens in Nepali. To see your local site the way a Nepali charity's visitors will, set
-`DJANGO_LANGUAGE_CODE=ne` in a file called `.env.local`: copy `.env.example` to `.env.local` and
+`DJANGO_LANGUAGE_CODE=ne` in a file called `.env.local`: copy `.env.local.example` to `.env.local` and
 remove the `#` from that line. The file is gitignored and only development reads it.
 
 `/` is then the Nepali home page, and pages that exist only in English are under `/en/`. Put the

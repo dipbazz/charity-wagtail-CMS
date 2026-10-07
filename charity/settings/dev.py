@@ -25,7 +25,7 @@ INSTALLED_APPS = [*INSTALLED_APPS, "debug_toolbar"]
 MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware", *MIDDLEWARE]
 INTERNAL_IPS = ["127.0.0.1"]
 
-# Settings for this machine only: copy .env.example to .env.local (gitignored) and edit it. A
+# Settings for local machine only: copy .env.local.example to .env.local (gitignored) and edit it. A
 # variable already set in the shell wins over the file.
 load_dotenv(BASE_DIR / ".env.local")
 

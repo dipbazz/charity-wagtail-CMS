@@ -8,7 +8,7 @@ reads.
 | Module | Used by | Differences from `base` |
 |---|---|---|
 | `charity.settings.base` | the others | Apps, middleware, templates, Wagtail settings, SQLite at `BASE_DIR / "db.sqlite3"` |
-| `charity.settings.dev` | `manage.py` and `wsgi.py` by default | `DEBUG = True`, any host, `SERVE_MEDIA = True`, console mailer, django-debug-toolbar for `127.0.0.1`. Opens in English unless `DJANGO_LANGUAGE_CODE=ne`, in the shell or in `.env.local` (copy `.env.example`) |
+| `charity.settings.dev` | `manage.py` and `wsgi.py` by default | `DEBUG = True`, any host, `SERVE_MEDIA = True`, console mailer, django-debug-toolbar for `127.0.0.1`. Opens in English unless `DJANGO_LANGUAGE_CODE=ne`, in the shell or in `.env.local` (copy `.env.local.example`) |
 | `charity.settings.test` | pytest (`pyproject.toml`) | `DEBUG = False`, MD5 password hashing, `InMemoryStorage` for media, locmem mailer |
 | `charity.settings.production` | the Docker image (`DJANGO_SETTINGS_MODULE`) | Everything below from the environment; HTTPS and secure cookies; WhiteNoise; logging to stderr |
 
