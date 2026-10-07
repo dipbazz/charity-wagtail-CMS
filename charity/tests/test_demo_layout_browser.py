@@ -29,7 +29,10 @@ PATHS = [
 ]
 
 # What a thumb taps. Text links inside a paragraph are exempt: they're as tall as the line.
-TAP_TARGETS = ".site-footer a, .tag-list a, .pagination a, .button, button, summary, select"
+TAP_TARGETS = (
+    ".site-footer a, .tag-list a, .pagination a, .button, button, summary, select,"
+    " input:not([type=checkbox]):not([type=radio]):not([type=hidden])"
+)
 
 # The measurements the checks need, taken in the page in one go.
 MEASURE = """

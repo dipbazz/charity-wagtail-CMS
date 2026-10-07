@@ -568,6 +568,7 @@ h4 {
 .form-page main input:not([type="checkbox"]):not([type="radio"]),
 .form-page main textarea,
 .form-page main select {
+    min-height: 2.75rem;
     padding: 0.6rem;
     border: 1px solid var(--colour-border);
     border-radius: var(--radius);
