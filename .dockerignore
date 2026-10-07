@@ -40,6 +40,7 @@ wheels/
 
 # Server secrets and the deployment's own files: `COPY . .` must never bake them into the image
 **/.env
+**/.env.local
 deploy/
 
 # Local-only files: version control, virtualenvs, tool caches and private notes

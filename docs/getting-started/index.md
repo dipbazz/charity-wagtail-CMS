@@ -43,15 +43,12 @@ and canonical tags. On a database created before that, run
 ### See the site Nepali-first
 
 Development uses English as the main language, like the demo content and the tests; the live
-site opens in Nepali. To see your local site the way a Nepali charity's visitors will, create
-`charity/settings/local.py` (it's gitignored, and only development and production load it) with:
+site opens in Nepali. To see your local site the way a Nepali charity's visitors will, set
+`DJANGO_LANGUAGE_CODE=ne` in a file called `.env.local`: copy `.env.local.example` to `.env.local` and
+remove the `#` from that line. The file is gitignored and only development reads it.
 
-```python
-LANGUAGE_CODE = "ne"
-```
-
-`/` is then the Nepali home page, and pages that exist only in English are under `/en/`. Delete
-the file to go back. The tests ignore it.
+`/` is then the Nepali home page, and pages that exist only in English are under `/en/`. Put the
+`#` back to go back (a variable set in your shell wins over the file). The tests ignore it.
 
 ## Check that everything passes
 

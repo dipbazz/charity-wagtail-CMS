@@ -37,6 +37,9 @@ version number.
   content, because changing it later changes every page's address.
 - Scheduled publishing and the admin now use Nepal time (`Asia/Kathmandu`). Pages already
   scheduled keep their moment, but the admin now shows it in Nepal time.
+- **`charity/settings/local.py` is no longer read.** To open your local site in Nepali, set
+  `DJANGO_LANGUAGE_CODE=ne` in a new `.env.local` file (copy `.env.local.example`); development opens in
+  English otherwise. You can delete the old file.
 
 ### Fixed
 
