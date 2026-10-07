@@ -69,7 +69,7 @@ before.
 - `{% picture %}` lists the largest size first; card filters must match `CARD_IMAGE_FILTERS`
   ([Images](topics/images.md)).
 - Workflow actions are pinned to a commit SHA ([Security](topics/security.md)).
-- Every pull request adds a line under `Unreleased` in `CHANGELOG.md` or is labelled
+- Every pull request adds a file to `changelog.d/` or is labelled
   `no changelog`; new work goes into the next milestone ([Versions and releases](contributing/releases.md)).
 - Tests use `InMemoryStorage`; tests that read files from disk switch storage
   ([Test fixtures](reference/test-fixtures.md)).

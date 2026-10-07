@@ -15,7 +15,7 @@ Closes #
 ## Checklist
 
 - [ ] Tests written first, and `uv run pytest`, `ruff check` and `ruff format --check` pass
-- [ ] A line under `Unreleased` in `CHANGELOG.md`, or the `no changelog` label
+- [ ] A file in `changelog.d/`, or the `no changelog` label
 - [ ] Docs pages updated for anything they describe (`docs/`)
 - [ ] In the milestone of the version it ships in
 - [ ] QA pass posted as a comment (`QA on <commit>`) after opening

@@ -21,7 +21,7 @@ writing-docs
 3. **Work test-first** ([Testing](testing.md)): a failing test, then the code that makes it pass.
 4. **Update the docs** in the same pull request when it changes something a docs page describes
    ([Writing docs](writing-docs.md)).
-5. **Add a changelog line** under `Unreleased` in `CHANGELOG.md`, written for the person the
+5. **Add a changelog file** in `changelog.d/`, written for the person the
    change affects, or label the pull request `no changelog` if nobody would notice it
    ([Versions and releases](releases.md#the-changelog)).
 6. **Run the checks** before pushing:
