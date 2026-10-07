@@ -1,0 +1,76 @@
+# The live site's Docker image on your own computer, with the demo content: production settings,
+# gunicorn and compressed static files, as deployed. Start it with `docker compose up --build`,
+# then open http://localhost:8090 (not 8000, which `runserver` uses). Reset its data with
+# `docker compose down --volumes`. docs/getting-started/index.md says when to use it.
+#
+# Everything here is for this computer only. The values below are not secrets, and the live
+# server has its own file (deploy/aws/compose.yaml) and its own .env.
+
+# A different project name from deploy/aws/, so the two never share containers or volumes.
+name: charity-local
+
+services:
+  web:
+    build: .
+    image: charity-web-local
+    environment:
+      DJANGO_SECRET_KEY: local-only-not-a-secret-key-this-never-leaves-your-computer
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DJANGO_CSRF_TRUSTED_ORIGINS: http://localhost:8090,http://127.0.0.1:8090
+      DJANGO_SITE_URL: http://localhost:8090
+      # The demo content is English-first, like CI's Lighthouse job. Set "ne" (and drop
+      # seed_demo from the command below) to see the site the way a Nepali charity's visitors do.
+      DJANGO_LANGUAGE_CODE: en
+      WEB_CONCURRENCY: "2"
+    # The image's own command, plus the demo content. seed_demo is safe to re-run, so restarting
+    # keeps what you added.
+    command:
+      - /bin/sh
+      - -c
+      - set -xe; python manage.py migrate --noinput; python manage.py seed_demo; exec gunicorn charity.wsgi:application
+    volumes:
+      # A throwaway volume: `docker compose down --volumes` deletes it, and your runserver
+      # database (db.sqlite3 in this folder) is never touched.
+      - data:/data
+    healthcheck:
+      # Ready once the demo content is loaded and gunicorn answers. The header makes Django
+      # treat the request as https, as Caddy does below; otherwise it redirects.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request as u; u.urlopen(u.Request('http://127.0.0.1:8000/', headers={'X-Forwarded-Proto': 'https'}))"
+      interval: 5s
+      timeout: 10s
+      retries: 60
+      start_period: 10s
+
+  # Production settings redirect http to https and trust X-Forwarded-Proto to know a request was
+  # secure. This stands in for the live server's Caddy: it speaks plain http on your computer
+  # and tells Django the request was https. It doesn't compress, so Lighthouse sees the same
+  # transfer sizes as CI's job, which has no proxy either.
+  proxy:
+    image: caddy:2.11.4@sha256:0c994536bddb66445885237f1a5dcc1916bccea922661c76b4e9fc24061f9b52
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "8090:80"
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+
+configs:
+  caddyfile:
+    content: |
+      {
+      	auto_https off
+      }
+      :80 {
+      	reverse_proxy web:8000 {
+      		header_up X-Forwarded-Proto https
+      	}
+      }
+
+volumes:
+  data:

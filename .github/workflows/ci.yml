@@ -149,3 +149,7 @@ jobs:
         run: |
           docker compose config --quiet
           docker compose run --rm --no-deps caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      # compose.yaml at the root: the site on your own computer.
+      - name: Check the local Docker config
+        run: docker compose config --quiet
