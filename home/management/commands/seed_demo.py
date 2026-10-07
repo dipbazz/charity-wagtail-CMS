@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from wagtail.images.rect import Rect
 from wagtail.models import Locale, Site
 
+from campaigns.forms import PledgeForm
 from campaigns.models import CampaignIndexPage, CampaignPage, DonatePage, DonatePageAmount
 from contact.models import FormField, FormPage
 from core.models import AnnouncementBanner, CustomImage, Partner, SiteSettings, Testimonial
@@ -238,7 +239,9 @@ class Command(BaseCommand):
         ]
         publish(home, donate)
 
-        # Example text for a charity to start from; it can't be the charity's own notice.
+        # Example text for a charity to start from; it can't be the charity's own notice. It names
+        # the tick boxes as the pledge form labels them.
+        tick_boxes = PledgeForm.Meta.labels
         privacy = publish(
             home,
             StandardPage(
@@ -264,11 +267,12 @@ class Command(BaseCommand):
                         "paragraph",
                         "<ul><li>To arrange your gift or your volunteering, and to thank you."
                         "</li><li>Your mobile number only to remind you each month to give, on "
-                        "WhatsApp or by text.</li><li>Your email address for news only if you "
-                        "ticked <b>Email updates</b>.</li><li>Your name, amount, appeal and date "
-                        "on this website only if you ticked <b>Show my gift on our website</b>, "
-                        "and only once your gift has arrived.</li></ul><p>Your message is for our "
-                        "team only and never appears on the website.</p>",
+                        "WhatsApp or by text.</li><li>Your email address for stories and appeals "
+                        f"only if you ticked <b>{tick_boxes['email_updates']}</b>.</li><li>Your "
+                        "name, amount, appeal and date on this website only if you ticked "
+                        f"<b>{tick_boxes['show_on_website']}</b>, and only once your gift has "
+                        "arrived.</li></ul><p>Your message is for our team only and never "
+                        "appears on the website.</p>",
                     ),
                     ("heading", {"heading_text": "Who can see it", "size": "h2"}),
                     (
