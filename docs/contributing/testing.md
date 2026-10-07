@@ -1,12 +1,14 @@
 # Testing
 
 Every feature here was built test-first with pytest: write a test, watch it fail for the reason
-you expect, then write the code that makes it pass.
+you expect, then write the code that makes it pass. Locally, run only the tests you wrote or
+changed and those for the code you touched; CI runs the whole suite on every push.
 
 ## Running the tests
 
 ```bash
-uv run pytest                    # the whole suite
+uv run pytest path/to/tests      # locally: the tests you wrote and those for code you touched
+uv run pytest                    # the whole suite: CI runs it; run it yourself only when you want to
 uv run pytest news               # one app
 uv run pytest --cov              # with coverage
 uv run pytest -m "not browser"   # without the browser tests (quicker)
@@ -34,6 +36,7 @@ Some tests guard the whole project rather than one feature:
 | `charity/tests/test_deploy.py` | `.env` stays out of git and the image; images pinned; logs capped |
 | `charity/tests/test_production_settings.py` | Production refuses to start half-configured; every app's warnings are logged |
 | `home/tests/test_seed_demo.py` | Every demo page renders |
+| `charity/tests/test_demo_layout_browser.py` | Each kind of demo page at six widths: no sideways scrolling, no tap target under 44px ([QA](qa.md)) |
 | `charity/tests/test_changelog.py` | The changelog is well-formed and its newest version matches `pyproject.toml` |
 | `charity/tests/test_docs.py` | The docs sidebar menu isn't hidden |
 
@@ -52,7 +55,7 @@ Some tests guard the whole project rather than one feature:
   `FileSystemStorage` (see `core/tests/test_media.py`).
 - **Languages:** tests run with **English as the main language**, as the Brightwell demo is
   English-first, though production defaults to Nepali. So English pages are at `/about/` and
-  Nepali ones under `/ne/about/`; `charity/settings/local.py` is never loaded by tests. Ask a page
+  Nepali ones under `/ne/about/`; `DJANGO_LANGUAGE_CODE` never affects tests. Ask a page
   for its address (`page.url`) rather than typing one, and build Nepali pages under
   `nepali_home_page` with `page.copy_for_translation(nepali_locale)` and a publish. To test a
   Nepali-first site, set `settings.LANGUAGE_CODE = "ne"` and clear Django's URL caches and the
@@ -91,8 +94,8 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and every
 
 | Job | What it checks |
 |---|---|
-| `test` | ruff, `makemigrations --check`, Django's `check --deploy --fail-level WARNING` against production settings, the test suite with coverage, including the browser tests in Chromium |
+| `test` | ruff, `makemigrations --check`, Django's `check --deploy --fail-level WARNING` against production settings, the test suite with coverage, including the browser tests in Chromium and the layout check at six widths |
 | `lighthouse` | Page weight and layout shift on a phone ([Performance](../topics/performance.md)) |
 | `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse |
 | `docs` | These docs build with warnings as errors; the built site is uploaded as the `docs-html` artifact |
-| `changelog` (its own workflow) | The pull request updates `CHANGELOG.md`, unless it's labelled `no changelog` |
+| `changelog` (its own workflow) | The pull request adds a `changelog.d/` file, unless it's labelled `no changelog` |

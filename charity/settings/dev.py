@@ -1,3 +1,8 @@
+import os
+
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
+
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -20,8 +25,14 @@ INSTALLED_APPS = [*INSTALLED_APPS, "debug_toolbar"]
 MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware", *MIDDLEWARE]
 INTERNAL_IPS = ["127.0.0.1"]
 
+# Settings for local machine only: copy .env.local.example to .env.local (gitignored) and edit it. A
+# variable already set in the shell wins over the file.
+load_dotenv(BASE_DIR / ".env.local")
 
-try:
-    from .local import *
-except ImportError:
-    pass
+# Development opens in English, like the demo content and the tests. Set DJANGO_LANGUAGE_CODE=ne to
+# see the site the way a Nepali charity's visitors will; it's checked as production checks it.
+LANGUAGE_CODE = os.environ.get("DJANGO_LANGUAGE_CODE", "en")
+if LANGUAGE_CODE not in dict(LANGUAGES):
+    raise ImproperlyConfigured(
+        f"Set DJANGO_LANGUAGE_CODE to one of {', '.join(dict(LANGUAGES))}, not {LANGUAGE_CODE!r}."
+    )

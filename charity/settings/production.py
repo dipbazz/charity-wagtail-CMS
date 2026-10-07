@@ -110,8 +110,3 @@ DATABASES = {"default": {**DATABASES["default"], "NAME": DATA_DIR / "db.sqlite3"
 MEDIA_ROOT = DATA_DIR / "media"
 # Turn on when no web server or object storage serves MEDIA_URL in front of the app.
 SERVE_MEDIA = os.environ.get("DJANGO_SERVE_MEDIA", "false").lower() == "true"
-
-try:
-    from .local import *
-except ImportError:
-    pass

@@ -21,7 +21,7 @@ writing-docs
 3. **Work test-first** ([Testing](testing.md)): a failing test, then the code that makes it pass.
 4. **Update the docs** in the same pull request when it changes something a docs page describes
    ([Writing docs](writing-docs.md)).
-5. **Add a changelog line** under `Unreleased` in `CHANGELOG.md`, written for the person the
+5. **Add a changelog file** in `changelog.d/`, written for the person the
    change affects, or label the pull request `no changelog` if nobody would notice it
    ([Versions and releases](releases.md#the-changelog)).
 6. **Run the checks** before pushing:
@@ -35,7 +35,8 @@ writing-docs
 7. **Open a pull request** against `main`. Its description says why, what changed, and how you
    tested it (the pull request template has the checklist), and is in the version's milestone.
    Pull requests aren't stacked on each other.
-8. **QA pass:** every pull request gets one before it's reported as ready ([QA](qa.md)).
+8. **QA:** CI checks every page layout at six widths; the pull request lists what a person must
+   check in the browser ([QA](qa.md)).
 9. **The maintainer reviews and merges.**
 
 ## Commits

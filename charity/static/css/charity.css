@@ -124,7 +124,10 @@ body:lang(ne) {
 
 /* Buttons */
 .button {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
     padding: 0.6rem 1.2rem;
     border: 0;
     border-radius: var(--radius);
@@ -357,6 +360,8 @@ body:lang(ne) {
 .hero {
     position: relative;
     display: grid;
+    /* minmax(0, ...) lets the column shrink below the photo's own width on a small phone. */
+    grid-template-columns: minmax(0, 1fr);
     min-height: 26rem;
     background: var(--colour-primary-dark);
     color: #fff;
@@ -615,9 +620,21 @@ body:lang(ne) {
     gap: 0.25rem;
 }
 
+/* Only the link's own text opens the privacy notice, not the row beside it. */
+.form-page main .privacy-link {
+    align-items: flex-start;
+}
+
+.privacy-link a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+}
+
 .form-page main input:not([type="checkbox"]):not([type="radio"]),
 .form-page main textarea,
 .form-page main select {
+    min-height: 2.75rem;
     padding: 0.6rem;
     border: 1px solid var(--colour-border);
     border-radius: var(--radius);
@@ -878,12 +895,20 @@ body:lang(ne) {
     color: #c3d6d3;
 }
 
+/* Centred, so the phone number lines up with the links' taller tap targets. */
 .site-footer ul {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0 1rem;
+    align-items: center;
     padding: 0;
     list-style: none;
+}
+
+.site-footer li a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
 }
 
 /* Announcement banner */
@@ -925,7 +950,7 @@ body:lang(ne) {
 /* Campaigns */
 .campaign-header {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     gap: 2rem;
     align-items: center;
     margin-block: 2rem;

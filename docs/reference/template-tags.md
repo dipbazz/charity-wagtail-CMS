@@ -15,6 +15,11 @@
 The `wagtail.contrib.settings` context processor makes settings available as
 `settings.core.SiteSettings` and `settings.core.AnnouncementBanner`.
 
+`core.context_processors.privacy_page` gives every template `privacy_page`: the privacy notice
+chosen in Site settings, in the language being read once it's translated, or `None` until one
+is chosen and published. It's looked up only when a template uses it, and once per request: one
+query, plus one on a page in the other language.
+
 ## Shared templates (`charity/templates/`)
 
 | Template | |
@@ -22,7 +27,8 @@ The `wagtail.contrib.settings` context processor makes settings available as
 | `base.html` | Every page: title, meta and social tags, `hreflang` alternates, the `js` class script, skip link, header, main, footer, `charity.js` |
 | `includes/header.html` | The announcement banner; the site name, centred on a row of its own; then the Menu button, main menu and search on the left, and the language switcher and Donate button on the right |
 | `includes/main_menu.html` | Rendered by `{% main_menu %}` |
-| `includes/footer.html` | Organisation details and social links from `SiteSettings` |
+| `includes/footer.html` | Organisation details and social links from `SiteSettings`, and the privacy notice link |
+| `includes/privacy_link.html` | "How we use your details", linking to the privacy notice; forms include it just before their send button |
 | `includes/streamfield.html` | Renders a StreamField: `{% include "includes/streamfield.html" with stream=page.body %}` |
 | `includes/social_meta.html` | Canonical link, Open Graph and Twitter card tags |
 | `includes/pagination.html` | Previous and next links for paginated listings |

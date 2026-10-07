@@ -40,6 +40,38 @@ def test_no_donate_button_without_a_donate_page(client, home_page, site_settings
     assert 'class="button" href=' not in client.get("/").content.decode()
 
 
+class TestPrivacyNoticeLink:
+    def test_footer_links_to_the_chosen_privacy_notice(self, client, privacy_notice):
+        html = client.get("/").content.decode()
+
+        assert f'<a href="{privacy_notice.url}">Privacy notice</a>' in html
+
+    def test_no_link_without_a_privacy_notice(self, client, home_page):
+        assert "Privacy notice" not in client.get("/").content.decode()
+
+    def test_no_link_to_an_unpublished_privacy_notice(self, client, privacy_notice):
+        privacy_notice.unpublish()
+
+        assert "Privacy notice" not in client.get("/").content.decode()
+
+    def test_nepali_page_links_to_the_nepali_privacy_notice(
+        self, client, privacy_notice, nepali_home_page, nepali_locale
+    ):
+        translation = privacy_notice.copy_for_translation(nepali_locale)
+        translation.save_revision().publish()
+
+        html = client.get("/ne/").content.decode()
+
+        assert f'<a href="{translation.url}">Privacy notice</a>' in html
+
+    def test_nepali_page_links_to_the_main_notice_until_it_is_translated(
+        self, client, privacy_notice, nepali_home_page
+    ):
+        html = client.get("/ne/").content.decode()
+
+        assert f'<a href="{privacy_notice.url}">Privacy notice</a>' in html
+
+
 class TestAnnouncementBanner:
     def test_hidden_by_default(self, client, home_page):
         assert "announcement" not in client.get("/").content.decode()

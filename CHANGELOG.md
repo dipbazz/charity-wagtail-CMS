@@ -24,20 +24,10 @@ version number.
   a translated appeal, the Donate button goes to the Donate page in the same language
   once that's translated too
   ([#121](https://github.com/dipbazz/Charity-wagtail-CMS/pull/121)).
-- Readers can switch between नेपाली and English from the header of every page. It opens the same
-  page in the other language, or that language's home page if the page isn't translated yet. Search
-  engines are told which pages are translations of each other, so they show people the page in
-  their language
-  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
-- The charity's name now has a row of its own at the top of every page, centred, so a long name
-  fits on a phone. Below it, the menu is on the left, and the language and Donate are on the right
-  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
-- Search finds pages in the language being read, including Nepali words, and editors can promote
-  a different result for each language
-  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
-- Nepali text uses the phone's own Devanagari font and has more space between lines, so vowel
-  signs above and below the letters no longer touch the lines next to them
-  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
+- Supporters can read how their details are used before they send them: choose a privacy notice
+  page in **Site settings → Privacy notice**, and the footer of every page links to it, as does
+  "How we use your details" just before the pledge form's and every form page's send button. The
+  demo site adds an example notice; replace it with your charity's own before going live.
 
 ### Upgrade notes
 
@@ -47,6 +37,15 @@ version number.
   content, because changing it later changes every page's address.
 - Scheduled publishing and the admin now use Nepal time (`Asia/Kathmandu`). Pages already
   scheduled keep their moment, but the admin now shows it in Nepal time.
+- **`charity/settings/local.py` is no longer read.** To open your local site in Nepali, set
+  `DJANGO_LANGUAGE_CODE=ne` in a new `.env.local` file (copy `.env.local.example`); development opens in
+  English otherwise. You can delete the old file.
+
+### Changed
+
+- Page-weight limits now cap each page's images strictly and give its HTML, CSS and
+  JavaScript one fixed allowance, so ordinary template and style changes no longer fail the
+  Lighthouse check.
 
 ### Fixed
 
@@ -54,6 +53,8 @@ version number.
   form and sending it again, even with changes, updates the same pledge instead of adding
   another, so the team doesn't get duplicate pledges
   ([#110](https://github.com/dipbazz/Charity-wagtail-CMS/pull/110)).
+- Appeal pages no longer scroll sideways on the smallest phones (320px wide)
+  ([#125](https://github.com/dipbazz/Charity-wagtail-CMS/pull/125)).
 
 ## [0.2.0] - 2026-10-06
 

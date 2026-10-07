@@ -17,6 +17,7 @@ htmlcov/
 /media/
 /static/
 .env
+.env.local
 
 # Editors / OS
 .vscode/

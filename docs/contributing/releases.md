@@ -28,24 +28,30 @@ The version lives in one place, `version` in `pyproject.toml`, and
 [`CHANGELOG.md`](https://github.com/dipbazz/Charity-wagtail-CMS/blob/main/CHANGELOG.md) uses the
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
-**Every pull request adds a line under `## [Unreleased]`,** in one of these groups (add the
-group heading if it isn't there yet):
+**Every pull request adds one small file to `changelog.d/`,** named `<slug>.<group>.md` (for
+example `privacy-notice.added.md`) and holding the entry without a leading dash. Entries live in
+their own files so two open pull requests never edit the same lines of `CHANGELOG.md`. The group
+in the name is one of:
 
 | Group | For |
 |---|---|
-| `### Added` | New features |
-| `### Changed` | Changes to existing behaviour |
-| `### Deprecated` | Features that will be removed in a later version |
-| `### Removed` | Features removed now |
-| `### Fixed` | Bug fixes |
-| `### Security` | Fixes for vulnerabilities or leaks |
+| `added` | New features |
+| `changed` | Changes to existing behaviour |
+| `deprecated` | Features that will be removed in a later version |
+| `removed` | Features removed now |
+| `fixed` | Bug fixes |
+| `security` | Fixes for vulnerabilities or leaks |
+| `upgrade` | What someone hosting the site must do when they take this version |
+
+`CHANGELOG.md` itself only changes when a release merges the files into it (below).
 
 Write each entry for the person affected (a supporter, an editor or whoever hosts the site), not
 for the code: "Editors can submit pages when the mail server is down", not "Catch OSError in
-SMTPBackend.open". End it with a link to the pull request or issue.
+SMTPBackend.open". End it with a link to the pull request or issue; when the pull request
+isn't open yet, add the link after you've opened it.
 
 The `Changelog` workflow (`.github/workflows/changelog.yml`) fails a pull request that doesn't
-touch `CHANGELOG.md`. A pull request that changes nothing anyone would notice (a CI tweak, a typo
+add a file to `changelog.d/` (or touch `CHANGELOG.md`). A pull request that changes nothing anyone would notice (a CI tweak, a typo
 in a comment, a release pull request) gets the **`no changelog`** label instead, which skips the
 check. Dependabot's pull requests are skipped automatically.
 
@@ -71,10 +77,10 @@ iteration.
 1. **Check the milestone.** Every issue in it is closed, or moved to the next milestone or the
    Backlog with a comment saying why.
 2. **Prepare the release** on a `chore/release-X.Y.Z` branch:
-   - in `CHANGELOG.md`, rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` (today), add a new
-     empty `## [Unreleased]` above it, and update the links at the bottom (`[Unreleased]`
-     compares `vX.Y.Z...HEAD`; `[X.Y.Z]` compares the previous tag with `vX.Y.Z`);
-   - add **Upgrade notes** under the version if anyone has to act;
+   - run `uv run python -m charity.changelog X.Y.Z`. It adds the `changelog.d/` entries to
+     `CHANGELOG.md`'s `Unreleased` section, renames that to `## [X.Y.Z] - YYYY-MM-DD` (today),
+     starts a new empty `Unreleased`, updates the links at the bottom and deletes the files; read
+     the result once, since it's what people will read;
    - set `version = "X.Y.Z"` in `pyproject.toml`, then run `uv lock`.
 3. **Open a pull request** titled `chore(release): X.Y.Z`, labelled `no changelog`, in the
    milestone. CI and the QA pass run as usual.

@@ -6,7 +6,7 @@ pytest's HTML checks can't see where things end up on screen. Run
 
 import pytest
 
-from campaigns.tests.factories import CampaignIndexPageFactory
+from campaigns.tests.factories import CampaignIndexPageFactory, DonatePageFactory
 from conftest import SITE
 from core.models import SiteSettings
 from home.models import StandardPage
@@ -141,3 +141,18 @@ def test_a_long_charity_name_wraps_without_moving_the_controls(site_page, demo_h
 
     assert menu["y"] == pytest.approx(donate["y"], abs=4)
     assert site_page.evaluate("document.documentElement.scrollWidth") == 320
+
+
+# Regression: ISSUE-002 — the privacy notice links were 22px (footer) and 27px (forms) tall, under
+# the 44px tap target, as were the footer's email and social links.
+# Found by /qa on 2026-10-07 (PR #125).
+def test_footer_and_form_links_are_big_enough_to_tap(site_page, home_page, privacy_notice):
+    donate = DonatePageFactory(parent=home_page)
+    site_page.set_viewport_size({"width": 375, "height": 812})
+    site_page.goto(SITE + donate.url)
+
+    links = site_page.locator(".site-footer li a, .privacy-link a")
+
+    assert links.count() == 2
+    for box in (links.nth(n).bounding_box() for n in range(links.count())):
+        assert box["height"] >= 44

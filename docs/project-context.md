@@ -46,7 +46,7 @@ first, and budgeted for queries and page weight in CI.
 | Why SQLite, one server, `.live().public()`, pinned actions, permission migrations? | [Decisions](decisions/index.md) |
 | Branches, commits, pull requests? | [Contributing](contributing/index.md) |
 | How do I write tests? What does CI run? | [Testing](contributing/testing.md) |
-| What's the QA pass? | [QA](contributing/qa.md) |
+| What does CI check about layout? What must I check by hand? | [QA](contributing/qa.md) |
 | Issues, epics and the board? | [Issues and the board](contributing/issues-and-board.md) |
 | How do I build these docs? | [Writing docs](contributing/writing-docs.md) |
 | What changed in each version? What's planned next? | [Changelog](changelog.md), [milestones](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) |
@@ -69,7 +69,7 @@ before.
 - `{% picture %}` lists the largest size first; card filters must match `CARD_IMAGE_FILTERS`
   ([Images](topics/images.md)).
 - Workflow actions are pinned to a commit SHA ([Security](topics/security.md)).
-- Every pull request adds a line under `Unreleased` in `CHANGELOG.md` or is labelled
+- Every pull request adds a file to `changelog.d/` or is labelled
   `no changelog`; new work goes into the next milestone ([Versions and releases](contributing/releases.md)).
 - Tests use `InMemoryStorage`; tests that read files from disk switch storage
   ([Test fixtures](reference/test-fixtures.md)).

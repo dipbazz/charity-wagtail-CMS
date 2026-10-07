@@ -9,6 +9,7 @@
             {% if site_settings.contact_email %}<li><a href="mailto:{{ site_settings.contact_email }}">{{ site_settings.contact_email }}</a></li>{% endif %}
             {% if site_settings.phone %}<li>{{ site_settings.phone }}</li>{% endif %}
             {% for name, url in site_settings.social_links %}<li><a href="{{ url }}">{{ name }}</a></li>{% endfor %}
+            {% if privacy_page %}<li><a href="{% pageurl privacy_page %}">Privacy notice</a></li>{% endif %}
         </ul>
         <p class="meta">
             &copy; {% now "Y" %} {{ current_site.site_name|default:"Charity" }}.

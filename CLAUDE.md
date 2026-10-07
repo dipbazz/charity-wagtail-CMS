@@ -9,8 +9,8 @@ the docs must build with `uv run --group docs sphinx-build -W --keep-going docs 
 
 ## Versions and changelog
 
-Every PR adds a line under `## [Unreleased]` in `CHANGELOG.md`, written for the person the change
-affects, or is labelled `no changelog` (CI checks this). Each version is a GitHub milestone: put a
+Every PR adds a file `changelog.d/<slug>.<group>.md` (the entry, written for the person the change
+affects), or is labelled `no changelog` (CI checks this). Never edit `CHANGELOG.md` in a PR. Each version is a GitHub milestone: put a
 PR in the milestone of the issue it closes. New work found mid-iteration goes into the next
 milestone, not the current one, unless it fixes a P1 bug on the live site. Rules and release
 steps: `docs/contributing/releases.md`.
@@ -25,21 +25,17 @@ and override down with `max-width` queries. Load the `mobile-first` skill
 
 ## QA is part of done
 
-Every pull request gets a QA pass before it is reported as ready. This is mandatory.
+CI runs the mechanical half of QA on every pull request: `charity/tests/test_demo_layout_browser.py`
+loads each kind of demo page at 320, 375, 412, 768, 1024 and 1440px and fails on sideways scrolling
+or a tap target under 44px. The rest is yours:
 
-1. After opening the PR, run `/qa` on its branch (diff-aware mode) against the dev site with
-   `seed_demo` data, at phone and desktop widths.
-2. Fix each bug QA finds **test-first**. This overrides `/qa`'s own order (fix, then maybe a
-   regression test) and its rule of skipping tests for CSS fixes:
-   - write a test in the relevant app's `tests/` package, following its existing style, and run it
-     to see it fail for the reason the bug describes;
-   - fix the bug, see the test pass, then run the full suite, `ruff check` and `ruff format --check`;
-   - commit the test and the fix together, one bug per commit, on the PR's branch.
-   If pytest can't catch a bug (purely visual, such as spacing), say so in the QA comment rather
-   than skipping it silently.
-3. Post the results as a **PR comment**, one per QA run, starting with the commit it checked
-   (`QA on abc1234`): pages and widths, bugs found and fixed (with their tests), and anything
-   deferred. The PR description keeps the author's own testing; QA is a later event tied to a
-   commit, so a comment shows when new pushes make it stale and keeps a history of re-runs.
-
-@docs/project-context.md
+1. **Locally,** run only the tests you wrote or changed and the ones for the code you touched
+   (`uv run pytest path/to/tests`), plus `ruff check` and `ruff format --check`. Don't run the
+   full suite: CI runs it on every push, and the pull request isn't merged until it's green.
+2. **Fix each bug test-first:** write a test in the relevant app's `tests/` package, run it to see
+   it fail for the reason the bug describes, fix the bug, see it pass. One bug per commit, test and
+   fix together. If pytest can't catch it (purely visual), say so in the pull request.
+3. **Say what a person must check.** The pull request description is short and follows
+   `.github/pull_request_template.md`; its "Check before merging" section names the pages, widths
+   and what to look for in the browser, or says nothing needs checking (a change with no templates
+   or CSS). Don't run `/qa` unless asked; the owner runs it when they want a full pass.
