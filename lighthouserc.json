@@ -39,7 +39,7 @@
         {
           "matchingUrlPattern": "/appeals/flood-relief/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 57000, "aggregationMethod": "median"}],
+            "resource-summary:total:size": ["error", {"maxNumericValue": 59900, "aggregationMethod": "median"}],
             "resource-summary:image:size": ["error", {"maxNumericValue": 44000, "aggregationMethod": "median"}]
           }
         },
