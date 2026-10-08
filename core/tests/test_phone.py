@@ -47,11 +47,6 @@ class TestPhoneCountryChoices:
     def test_nepal_comes_first_with_its_calling_code(self):
         assert phone_country_choices()[0] == ("NP", "Nepal (+977)")
 
-    def test_supporters_can_read_the_names_in_nepali_but_the_admin_keeps_english(self):
-        with translation.override("ne"):
-            assert phone_country_choices(translate=True)[0] == ("NP", "नेपाल (+977)")
-            assert phone_country_choices()[0] == ("NP", "Nepal (+977)")
-
     def test_includes_where_nepali_supporters_live_and_work(self):
         codes = [code for code, label in phone_country_choices()]
 

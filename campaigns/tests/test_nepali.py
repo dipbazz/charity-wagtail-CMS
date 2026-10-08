@@ -129,11 +129,11 @@ class TestThePledgeFormInNepali:
         assert "{left}" in message["data-left-text"]
         assert "{limit}" in message["data-full-text"]
 
-    def test_the_phone_countries_in_nepali(self, client, nepali_donate_page):
+    def test_the_phone_countries_stay_in_english(self, client, nepali_donate_page):
         options = soup(client.get(nepali_donate_page.url)).select("#id_phone_country option")
 
-        assert options[0].text == "नेपाल (+977)"
-        assert "बेलायत (+44)" in [option.text for option in options]
+        assert options[0].text == "Nepal (+977)"
+        assert "United Kingdom (+44)" in [option.text for option in options]
 
     def test_errors(self, client, nepali_donate_page):
         response = client.post(nepali_donate_page.url, {"amount": "", "phone_country": "NP"})

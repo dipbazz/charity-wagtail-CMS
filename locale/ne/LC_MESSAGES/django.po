@@ -237,45 +237,6 @@ msgstr "पठाउनुहोस्"
 msgid "Thank you, we have received your message."
 msgstr "धन्यवाद, हामीले तपाईंको सन्देश प्राप्त गर्‍यौं।"
 
-msgid "Nepal"
-msgstr "नेपाल"
-
-msgid "India"
-msgstr "भारत"
-
-msgid "United Kingdom"
-msgstr "बेलायत"
-
-msgid "United States"
-msgstr "संयुक्त राज्य अमेरिका"
-
-msgid "Australia"
-msgstr "अष्ट्रेलिया"
-
-msgid "Canada"
-msgstr "क्यानडा"
-
-msgid "Qatar"
-msgstr "कतार"
-
-msgid "United Arab Emirates"
-msgstr "संयुक्त अरब इमिरेट्स"
-
-msgid "Saudi Arabia"
-msgstr "साउदी अरब"
-
-msgid "Kuwait"
-msgstr "कुवेत"
-
-msgid "Malaysia"
-msgstr "मलेसिया"
-
-msgid "Japan"
-msgstr "जापान"
-
-msgid "South Korea"
-msgstr "दक्षिण कोरिया"
-
 #, python-format
 msgid "Enter a mobile number, like %(example)s."
 msgstr "मोबाइल नम्बर लेख्नुहोस्, जस्तै %(example)s।"

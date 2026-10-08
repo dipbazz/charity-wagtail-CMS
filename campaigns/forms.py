@@ -75,9 +75,7 @@ class PledgeForm(forms.ModelForm):
         max_value=99_999_999,
         widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
     )
-    phone_country = forms.ChoiceField(
-        choices=lambda: phone_country_choices(translate=True), label=gettext_lazy("Country")
-    )
+    phone_country = forms.ChoiceField(choices=phone_country_choices, label=gettext_lazy("Country"))
     # A one-time ID for this copy of the form: sending the same copy again updates its pledge
     # instead of adding a second one. Going back from the thank-you page can reload the page with
     # a new ID, so donate.js puts back the ID that was sent.
