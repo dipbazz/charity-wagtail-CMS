@@ -7,7 +7,8 @@ from wagtail.embeds.blocks import EmbedBlock
 from wagtail.images.blocks import ImageChooserBlock
 from wagtail.snippets.blocks import SnippetChooserBlock
 
-from core.models import Partner
+from core.languages import in_reading_language
+from core.models import Partner, Testimonial
 
 RICH_TEXT_FEATURES = ["h2", "h3", "bold", "italic", "mark", "link", "document-link", "ol", "ul"]
 
@@ -97,9 +98,22 @@ class TestimonialBlock(SnippetChooserBlock):
         icon = "openquote"
         template = "core/blocks/testimonial_block.html"
 
+    def get_context(self, value, parent_context=None):
+        """Shows the testimonial's published translation in the language being read, if any."""
+        context = super().get_context(value, parent_context)
+        if value is not None:
+            translations = Testimonial.objects.filter(
+                translation_key=value.translation_key, live=True
+            )
+            context["value"] = next(iter(in_reading_language(translations)), value)
+        return context
+
 
 class PartnersBlock(blocks.StructBlock):
-    """Shows every partner snippet, so the list is managed in one place."""
+    """Shows every partner snippet, so the list is managed in one place.
+
+    Each partner is in the language being read, else in the main language (#117).
+    """
 
     heading = blocks.CharBlock(required=False, default="Our partners")
 
@@ -109,7 +123,7 @@ class PartnersBlock(blocks.StructBlock):
 
     def get_context(self, value, parent_context=None):
         context = super().get_context(value, parent_context)
-        context["partners"] = Partner.objects.select_related("logo")
+        context["partners"] = in_reading_language(Partner.objects.select_related("logo"))
         return context
 
 

@@ -233,6 +233,93 @@ class TestNewsPage:
         assert list(story.categories.all()) == [category]
 
 
+class TestCategoriesInNepali:
+    """Categories in the reader's language, else the main language's (#117)."""
+
+    @pytest.fixture
+    def nepali_index(self, news_index, nepali_home_page, nepali_locale):
+        index = news_index.copy_for_translation(nepali_locale)
+        index.save_revision().publish()
+        return index
+
+    @pytest.fixture
+    def stories(self, nepali_locale):
+        """ "Stories", translated, and "Press releases", in English only."""
+        stories = NewsCategoryFactory(name="Stories", slug="stories")
+        translation = stories.copy_for_translation(nepali_locale)
+        translation.name = "कथाहरू"
+        translation.save()
+        NewsCategoryFactory(name="Press releases", slug="press")
+        return stories
+
+    def test_listing_offers_each_category_in_nepali_or_else_in_english(
+        self, client, nepali_index, stories
+    ):
+        html = BeautifulSoup(client.get(nepali_index.url).content, "html.parser")
+
+        nav = html.find("nav", {"aria-label": "समाचारका वर्गहरू"})
+        assert [a.text for a in nav.find_all("a")][1:] == ["Press releases", "कथाहरू"]
+
+    def test_nepali_category_lists_translated_stories_tagged_with_the_english_category(
+        self, client, news_index, nepali_index, stories, nepali_locale
+    ):
+        story = publish_story(news_index, title="Well opens", categories=[stories])
+        nepali_story = story.copy_for_translation(nepali_locale)
+        nepali_story.title = "इनार खुल्यो"
+        nepali_story.save_revision().publish()
+
+        response = client.get(nepali_index.url + "category/stories/")
+
+        assert response.status_code == 200
+        assert titles(response) == ["इनार खुल्यो"]
+        assert response.context["active_filter"] == "कथाहरू"
+
+    def test_story_shows_its_category_in_nepali(
+        self, client, news_index, nepali_index, stories, nepali_locale
+    ):
+        story = publish_story(news_index, title="Well opens", categories=[stories])
+        nepali_story = story.copy_for_translation(nepali_locale)
+        nepali_story.save_revision().publish()
+
+        html = client.get(nepali_story.url).content.decode()
+
+        assert f'href="{nepali_index.url}category/stories/">कथाहरू</a>' in html
+
+    def test_english_pages_keep_the_english_category(self, client, news_index, stories):
+        story = publish_story(news_index, title="Well opens", categories=[stories])
+
+        html = client.get(story.url).content.decode()
+
+        assert ">Stories</a>" in html
+        assert "कथाहरू" not in html
+
+    def test_editor_translates_a_category(self, client, editor, nepali_locale):
+        category = NewsCategoryFactory(name="Stories", slug="stories")
+        client.force_login(editor)
+
+        client.post(
+            reverse(
+                "simple_translation:submit_snippet_translation",
+                args=["news", "newscategory", category.pk],
+            ),
+            {"locales": [nepali_locale.pk]},
+        )
+
+        assert category.get_translation(nepali_locale).slug == "stories"
+
+    def test_a_slug_is_unique_within_a_language(self, client, editor):
+        NewsCategoryFactory(name="Stories", slug="stories")
+        client.force_login(editor)
+
+        response = client.post(
+            reverse("wagtailsnippets_news_newscategory:add"),
+            {"name": "More stories", "slug": "stories"},
+        )
+
+        assert response.status_code == 200
+        assert NewsCategory.objects.filter(slug="stories").count() == 1
+
+
 def test_news_category_is_a_snippet():
     assert NewsCategory in get_snippet_models()
 

@@ -1,5 +1,6 @@
 import pytest
 from django.urls import reverse
+from django.utils.translation import override
 from wagtail.snippets.models import get_snippet_models
 from wagtail_factories import ImageFactory
 
@@ -106,3 +107,76 @@ class TestTestimonial:
         assert response.status_code == 200
         assert "Grace" in response.content.decode()
         assert "draft" in response.content.decode().lower()
+
+
+class TestInNepali:
+    """Partners and testimonials in the reader's language, else the main language's (#117)."""
+
+    def test_partners_block_shows_each_partner_in_the_language_being_read(self, nepali_locale):
+        partner = Partner.objects.create(name="Water Foundation")
+        translation = partner.copy_for_translation(nepali_locale)
+        translation.name = "जल फाउन्डेसन"
+        translation.save()
+        Partner.objects.create(name="Local Council")
+        block = PartnersBlock()
+
+        with override("ne"):
+            html = block.render(block.to_python({"heading": ""}))
+
+        assert "जल फाउन्डेसन" in html
+        assert "Water Foundation" not in html
+        assert "Local Council" in html
+
+    def test_testimonial_block_shows_the_published_translation(self, nepali_locale):
+        testimonial = make_testimonial(publish=True)
+        translate_testimonial(testimonial, nepali_locale, publish=True)
+        block = blocks.TestimonialBlock()
+
+        with override("ne"):
+            nepali = block.render(testimonial, context={})
+        english = block.render(testimonial, context={})
+
+        assert "नयाँ इनार" in nepali
+        assert "my daughter is back at school" in english
+
+    def test_testimonial_block_shows_the_original_until_the_translation_is_published(
+        self, nepali_locale
+    ):
+        testimonial = make_testimonial(publish=True)
+        translate_testimonial(testimonial, nepali_locale)
+        block = blocks.TestimonialBlock()
+
+        with override("ne"):
+            html = block.render(testimonial, context={})
+
+        assert "my daughter is back at school" in html
+
+    def test_translation_of_a_testimonial_starts_as_a_draft(self, nepali_locale):
+        testimonial = make_testimonial(publish=True)
+
+        translation = testimonial.copy_for_translation(nepali_locale)
+        translation.save()
+
+        assert translation.live is False
+        assert translation.live_revision is None
+
+
+def translate_testimonial(testimonial, locale, publish=False):
+    translation = testimonial.copy_for_translation(locale)
+    translation.quote = "नयाँ इनारले गर्दा मेरी छोरी फेरि स्कुल जान थालेकी छ।"
+    translation.save()
+    revision = translation.save_revision()
+    if publish:
+        revision.publish()
+    return translation
+
+
+def test_chooser_searches_testimonials_in_one_language(admin_client, nepali_locale):
+    """The chooser narrows by language before searching, which needs locale in the index."""
+    make_testimonial(name="Grace")
+    url = reverse("wagtailsnippetchoosers_core_testimonial:choose_results")
+
+    response = admin_client.get(url, {"q": "Grace", "locale": "en"})
+
+    assert response.status_code == 200
+    assert "Grace" in response.content.decode()

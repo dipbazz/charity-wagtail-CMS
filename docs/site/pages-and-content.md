@@ -66,24 +66,31 @@ Reusable content that isn't a page, under **Supporters** in the admin (`core/mod
 `core/wagtail_hooks.py`):
 
 - **Partners**: organisations that fund or work with the charity: name, website and logo. Editors
-  drag them into order; the Partners block shows them all.
+  drag them into order; the Partners block shows them all, each in the language being read.
 - **Testimonials**: a quote from a beneficiary, volunteer or supporter, with their name, role and
   photo. They quote real people, so they have drafts, revisions, locking and preview, and a
   moderator publishes them ([Editors and permissions](editors-and-permissions.md)).
+
+Both are translated with **Translate**, and a page shows each in its own language, else in the
+main language ([Languages](languages.md#snippets-and-settings-text)).
 
 ## Site settings and the banner
 
 Settings that apply to every page, under **Settings** in the admin (`core/models.py`):
 
 - **Site settings** (moderators only, because they hold the charity's identity): charity number,
-  contact email, phone and address (shown in the footer); the **Donate page** the header's button
-  goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
+  contact email, phone and address (shown in the footer; the address is written in each
+  language); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
   the **currency** every amount is shown in ([Money](appeals-and-giving.md#money)); the
   **default phone country** for mobile numbers on forms; and Facebook, Instagram and LinkedIn
   links (each shown in the footer only when set).
-- **Announcement banner**: one message, on or off, optionally linking to a page, shown across the
-  top of every page in amber. Editors change it directly, without approval, because an emergency
-  appeal can't wait.
+- **Announcement banner**: one message, written in each language, on or off, optionally linking
+  to a page, shown across the top of every page in amber. Editors change it directly, without
+  approval, because an emergency appeal can't wait.
+
+Both are per Site. Text that differs between languages is in rows, one per language, in the same
+form, and links to chosen pages go to their translation in the language being read
+([Languages](languages.md#snippets-and-settings-text)).
 
 ## Forms
 
@@ -108,7 +115,10 @@ Stories the charity publishes, with editor-managed categories and free tags (`ne
   its credit, the body, then its categories and tags as links to those pages.
 - **The RSS feed** (`/news/feed/`) has the latest 20 stories. A "Follow our news" box on the news
   page gives its address with a Copy link button, for readers who use a feed app.
-- Categories are managed under **News categories** in the admin.
+- Categories are managed under **News categories** in the admin and translated with
+  **Translate**. A slug is unique in each language, and a translation keeps it, so
+  `/news/category/stories/` and `/ne/news/category/stories/` are the same category. A translated
+  story keeps the original's categories and shows them in the language being read.
 
 ## Search
 

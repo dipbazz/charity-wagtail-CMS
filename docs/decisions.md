@@ -271,3 +271,48 @@ and fits pytest through an official plugin.
   Playwright's event loop stays in the main thread once it starts. The project has no async
   code, so this hides nothing today; revisit it if async views arrive.
 - [Testing](contributing/testing.md#browser-tests) says how to write them.
+
+## Settings text in a row per language
+
+**Status:** in use (since #117)
+
+**Context**
+
+The announcement banner's message and the footer's address are set in Wagtail settings, and readers
+of the second language need them in that language. Wagtail can translate pages and snippets, but
+not settings: a setting is exactly one record per Site, with no Translate action. How this project
+will serve several charities is not decided yet: one installation per charity, or one installation
+with a Wagtail Site per charity. Either has to keep working.
+
+Options considered:
+
+- **A translatable snippet holding the text,** translated like partners. Snippets belong to the
+  whole installation rather than a Site, so with several charities in one installation each would
+  see the others' text in the admin. Nothing would stop a second banner in the same language or the
+  deletion of the main one, and the text would be edited away from the setting it belongs to.
+- **One field per language** (`message_ne`, `address_ne`). Each language would need a migration, a
+  third language (Welsh for a UK charity, Maithili or Newar in Nepal) included, and a field named
+  after a language reads backwards on a site whose main language is Nepali.
+
+**Decision**
+
+Each setting keeps the values that are the same in every language. Its text goes in a row model
+attached to it, one row per language (`SiteSettingsText`, `AnnouncementBannerText`, built on
+`TextInEachLanguage`), edited as **Text in each language** in the setting's own form. A unique
+constraint allows one row per language. Templates read the text through properties that return
+the row in the language being read, else the main language's. The announcement banner moved from
+a generic setting (one per installation) to a site setting (one per Site) at the same time.
+
+**Consequences**
+
+- The text belongs to its Site, so each charity has its own if several share an installation, and
+  a new language is another row, not a migration.
+- Rows are not Wagtail translations: they have no Translate action, and tools such as
+  wagtail-localize won't see them. For two short texts that costs little.
+- Every page runs one more query for the footer's address, and one for the banner's message while
+  the banner is on. The links chosen in settings (Donate page, the banner's page, the privacy
+  notice) are found together in one query, which saves as many queries as the text costs.
+- Partners, testimonials and news categories are translatable snippets and so still belong to the
+  whole installation. If several charities ever share one, they need a link to their Site.
+- Text a new setting shows readers goes in a row model like these
+  ([Extending the site](contributing/extending.md#add-a-snippet-or-setting)).

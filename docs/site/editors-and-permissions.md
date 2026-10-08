@@ -16,13 +16,13 @@ whoever hosts the site.
 | | Submit for moderation | ✅ | ✅ |
 | | Approve and publish | ❌ | ✅ |
 | | Translate (copies the page into the other language as a draft) | ✅ | ✅ |
-| **Testimonials** | Add, change and delete drafts | ✅ | ✅ |
+| **Testimonials** | Add, change and delete drafts, and translate them (as drafts) | ✅ | ✅ |
 | | Publish | ❌ | ✅ |
 | | Lock and unlock | ❌ | ✅ |
-| **Announcement banner** | Change (no approval needed) | ✅ | ✅ |
-| **Partners** | Add, change and delete | ✅ | ✅ |
-| **News categories** | Add, change and delete | ✅ | ✅ |
-| **Site settings** (charity number, contact details, Donate page, privacy notice, currency) | Change | ❌ | ✅ |
+| **Announcement banner** | Change, in each language (no approval needed) | ✅ | ✅ |
+| **Partners** | Add, change, delete and translate | ✅ | ✅ |
+| **News categories** | Add, change, delete and translate | ✅ | ✅ |
+| **Site settings** (charity number, contact details and the address in each language, Donate page, privacy notice, currency) | Change | ❌ | ✅ |
 | **Pledges** | View, filter and export | ✅ | ✅ |
 | | Add, change or delete | ❌ | ❌ |
 | **Form submissions** | View and export (comes with editing the form page) | ✅ | ✅ |

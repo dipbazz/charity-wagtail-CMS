@@ -18,7 +18,7 @@
 
             {% include "includes/streamfield.html" with stream=page.body %}
 
-            {% with categories=page.categories.all tags=page.tags.all %}
+            {% with categories=page.get_categories tags=page.tags.all %}
                 {% if categories or tags %}
                     <footer>
                         <ul class="tag-list" aria-label="{% translate "Categories and tags" %}">

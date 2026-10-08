@@ -10,6 +10,8 @@ import pytest
 from django.apps import apps
 from django.contrib.auth.models import Group, Permission
 from django.urls import reverse
+from wagtail.models import Locale
+from wagtail.test.utils.form_data import inline_formset, nested_form_data
 
 # Imported via the module: names starting with "Test" would be collected by pytest.
 from core import models
@@ -54,16 +56,16 @@ def test_groups_have_the_agreed_permissions(editor, moderator, permission, edito
     assert moderator.has_perm(permission) is moderators
 
 
-def test_editor_can_switch_on_the_announcement_banner(client, editor):
-    banner = AnnouncementBanner.load()
+def test_editor_can_switch_on_the_announcement_banner(client, site, editor):
     client.force_login(editor)
-    url = reverse("wagtailsettings:edit", args=["core", "announcementbanner", banner.pk])
+    url = reverse("wagtailsettings:edit", args=["core", "announcementbanner", site.pk])
+    texts = inline_formset([{"locale": Locale.get_default().pk, "message": "Flood appeal"}])
 
-    client.post(url, {"enabled": "on", "message": "Flood appeal: give now", "link_page": ""})
+    client.post(url, nested_form_data({"enabled": "on", "link_page": "", "texts": texts}))
 
-    banner.refresh_from_db()
+    banner = AnnouncementBanner.for_site(site)
     assert banner.enabled
-    assert banner.message == "Flood appeal: give now"
+    assert banner.message == "Flood appeal"
 
 
 def test_editor_cannot_open_site_settings(client, site, editor):
