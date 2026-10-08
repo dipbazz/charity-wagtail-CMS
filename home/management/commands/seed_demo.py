@@ -14,7 +14,15 @@ from wagtail.models import Locale, Site
 from campaigns.forms import PledgeForm
 from campaigns.models import CampaignIndexPage, CampaignPage, DonatePage, DonatePageAmount
 from contact.models import FormField, FormPage
-from core.models import AnnouncementBanner, CustomImage, Partner, SiteSettings, Testimonial
+from core.models import (
+    AnnouncementBanner,
+    AnnouncementBannerText,
+    CustomImage,
+    Partner,
+    SiteSettings,
+    SiteSettingsText,
+    Testimonial,
+)
 from home.models import StandardPage
 from news.models import NewsCategory, NewsIndexPage, NewsPage
 
@@ -506,7 +514,11 @@ class Command(BaseCommand):
         settings.charity_number = "1234567 (fictional)"
         settings.contact_email = "hello@brightwell.example"
         settings.phone = "0123 456 7890"
-        settings.address = "1 Example Street\nBirmingham\nB1 1AA"
+        settings.texts = [
+            SiteSettingsText(
+                locale=Locale.get_default(), address="1 Example Street\nBirmingham\nB1 1AA"
+            )
+        ]
         settings.donate_page = donate
         settings.privacy_page = privacy
         settings.currency = "NPR"
@@ -514,18 +526,24 @@ class Command(BaseCommand):
         settings.instagram_url = "https://instagram.example/brightwell"
         settings.save()
 
-        banner = AnnouncementBanner.load()
+        banner = AnnouncementBanner.for_site(site)
         banner.enabled = True
-        banner.message = "Emergency appeal: help families hit by the flash flood in Nepal"
+        banner.texts = [
+            AnnouncementBannerText(
+                locale=Locale.get_default(),
+                message="Emergency appeal: help families hit by the flash flood in Nepal",
+            )
+        ]
         banner.link_page = flood
         banner.save()
 
-        self.add_nepali_pages(home, donate, campaigns, flood, news, flood_story)
+        self.add_nepali_pages(home, donate, campaigns, flood, news, flood_story, testimonial)
+        self.add_nepali_snippets(settings, banner, testimonial, [successes, updates])
 
         self.stdout.write(self.style.SUCCESS(f"Created demo content for {SITE_NAME}."))
         self.stdout.write(f"About page: {about.url}")
 
-    def add_nepali_pages(self, home, donate, campaigns, flood, news, flood_story):
+    def add_nepali_pages(self, home, donate, campaigns, flood, news, flood_story, testimonial):
         """Translate the home page, the Donate page, the flood appeal and its story, under /ne/.
 
         The rest of the site stays English only, as most of a real charity's site would be at
@@ -552,7 +570,9 @@ class Command(BaseCommand):
                     "paragraph",
                     "<p>ब्राइटवेल वाटर ट्रस्टले नेपाल र अन्य देशका समुदायसँग मिलेर खानेपानी, "
                     "शौचालय र सरसफाइका काम गर्छ।</p>",
-                )
+                ),
+                ("testimonial", testimonial),
+                ("partners", {"heading": "हाम्रा साझेदार"}),
             ],
         )
         translate(
@@ -652,6 +672,38 @@ class Command(BaseCommand):
                 ],
             ),
         )
+
+    def add_nepali_snippets(self, settings, banner, testimonial, categories):
+        """Translate the banner, the footer's address, the testimonial and the news categories.
+
+        The partners stay in English: their names are in their logos, and they show a snippet
+        with no translation falling back to the main language.
+        """
+        nepali = Locale.objects.get(language_code="ne")
+        settings.texts.add(
+            SiteSettingsText(locale=nepali, address="1 एक्जाम्पल स्ट्रिट\nबर्मिङ्घम\nB1 1AA")
+        )
+        settings.save()
+        banner.texts.add(
+            AnnouncementBannerText(
+                locale=nepali,
+                message="आपतकालीन अपिल: नेपालमा आएको बाढीबाट प्रभावित परिवारलाई सहयोग गर्नुहोस्",
+            )
+        )
+        banner.save()
+
+        translation = testimonial.copy_for_translation(nepali)
+        translation.quote = "नयाँ इनारले गर्दा मेरी छोरी फेरि स्कुल जान थालेकी छ।"
+        translation.name = "ग्रेस"
+        translation.role = "अभिभावक, किसुमु"
+        translation.save()
+        translation.save_revision().publish()
+
+        names = {"success-stories": "सफलताका कथा", "field-updates": "कार्यक्षेत्रका अपडेट"}
+        for category in categories:
+            translation = category.copy_for_translation(nepali)
+            translation.name = names[category.slug]
+            translation.save()
 
     def add_campaign(self, parent, *, amounts, target, raised, start, end, body=None, **fields):
         campaign = CampaignPage(

@@ -35,8 +35,9 @@
                             <li><strong>{% money option.amount %}</strong> {{ option.impact }}</li>
                         {% endfor %}
                     </ul>
-                    {% if donate_page %}
-                        <a class="button button-large" href="{% pageurl donate_page %}?appeal={{ page.slug|urlencode }}">{% translate "Donate to this appeal" %}</a>
+                    {# The Donate page in the appeal's language once it's translated, as in the header. #}
+                    {% if donate_page_link %}
+                        <a class="button button-large" href="{% pageurl donate_page_link %}?appeal={{ page.slug|urlencode }}">{% translate "Donate to this appeal" %}</a>
                     {% endif %}
                 </section>
             {% endif %}

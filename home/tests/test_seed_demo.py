@@ -33,7 +33,7 @@ def test_configures_site_settings_and_menu(seeded, client):
     settings = SiteSettings.for_site(seeded)
     assert settings.charity_number
     assert settings.donate_page is not None
-    assert AnnouncementBanner.load().enabled
+    assert AnnouncementBanner.for_site(seeded).enabled
     assert seeded.root_page.get_children().live().in_menu().count() >= 3
 
 
@@ -120,7 +120,7 @@ def test_flood_appeal_points_people_to_a_real_relief_fund(seeded, client):
     assert "https://rescue.opmcm.gov.np/donations" in html
     # The photo isn't of this flood, so the page has to say so.
     assert "Representative image" in html
-    assert "Nepal" in AnnouncementBanner.load().message
+    assert "Nepal" in AnnouncementBanner.for_site(seeded).message
 
 
 def test_translates_the_home_page_an_appeal_and_a_story_into_nepali(seeded, client):
@@ -163,10 +163,25 @@ def test_calls_the_news_section_stories(seeded):
 
     assert (index.title, index.url) == ("Stories", "/stories/")
     assert index.get_translation(Locale.objects.get(language_code="ne")).title == "कथाहरू"
-    assert set(NewsCategory.objects.values_list("name", flat=True)) == {
+    assert set(
+        NewsCategory.objects.filter(locale__language_code="en").values_list("name", flat=True)
+    ) == {
         "Success stories",
         "Field updates",
     }
+
+
+def test_translates_the_banner_address_testimonial_and_categories(seeded, client):
+    """Nepali pages show the demo's Nepali text, and its English partners as a fallback (#117)."""
+    html = client.get("/ne/").content.decode()
+
+    assert "आपतकालीन अपिल" in html
+    assert "एक्जाम्पल स्ट्रिट" in html
+    assert "नयाँ इनारले" in html
+    # The partners aren't translated, so Nepali readers see the English ones.
+    assert f'alt="{Partner.objects.first().name} logo"' in html
+    stories = client.get("/ne/stories/").content.decode()
+    assert "सफलताका कथा" in stories
 
 
 def flood_story_in(locale):

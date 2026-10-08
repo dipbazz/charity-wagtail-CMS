@@ -2,9 +2,10 @@ import datetime
 
 from django import forms
 from django.contrib.syndication.views import Feed
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import models
-from django.shortcuts import get_object_or_404
+from django.http import Http404
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from taggit.models import TaggedItemBase
@@ -13,26 +14,46 @@ from wagtail.api import APIField
 from wagtail.contrib.routable_page.models import RoutablePageMixin, path
 from wagtail.fields import StreamField
 from wagtail.images.api.fields import ImageRenditionField
-from wagtail.models import Page
+from wagtail.models import Page, TranslatableMixin
 from wagtail.search import index
 
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
+from core.languages import in_reading_language
 from core.models import SocialMetaMixin
 
 
-class NewsCategory(models.Model):
+class NewsCategory(TranslatableMixin, models.Model):
     name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True)
+    # Unique in each language: a translation keeps the slug, so a category's address differs
+    # between languages only by the prefix, as a page's does.
+    slug = models.SlugField()
 
     panels = [FieldPanel("name"), FieldPanel("slug")]
 
-    class Meta:
+    class Meta(TranslatableMixin.Meta):
         ordering = ["name"]
         verbose_name_plural = "news categories"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slug", "locale"], name="unique_category_slug_per_language"
+            )
+        ]
 
     def __str__(self):
         return self.name
+
+    def validate_constraints(self, exclude=None):
+        """Checks the slug is unique in its language, which the admin's form leaves to the
+        database because the form has no locale field."""
+        super().validate_constraints(exclude)
+        if exclude and "slug" in exclude:
+            return
+        duplicates = NewsCategory.objects.filter(slug=self.slug, locale_id=self.locale_id)
+        if self.locale_id and duplicates.exclude(pk=self.pk).exists():
+            raise ValidationError(
+                {"slug": "Another category in this language already has this slug."}
+            )
 
 
 class NewsFeed(Feed):
@@ -95,7 +116,7 @@ class NewsIndexPage(RoutablePageMixin, Page):
                 "stories": paginator.get_page(request.GET.get("page")),
                 "active_filter": active_filter,
                 "active_category": active_category,
-                "categories": NewsCategory.objects.all(),
+                "categories": in_reading_language(NewsCategory.objects.all()),
                 "feed_url": request.build_absolute_uri(
                     self.get_url(request) + self.reverse_subpage("feed")
                 ),
@@ -112,8 +133,15 @@ class NewsIndexPage(RoutablePageMixin, Page):
 
     @path("category/<slug:category>/", name="category")
     def stories_by_category(self, request, category):
-        category = get_object_or_404(NewsCategory, slug=category)
-        stories = self.get_stories().filter(categories=category)
+        # Stories in this language may have either language's version of the category.
+        category = next(iter(in_reading_language(NewsCategory.objects.filter(slug=category))), None)
+        if category is None:
+            raise Http404
+        stories = (
+            self.get_stories()
+            .filter(categories__translation_key=category.translation_key)
+            .distinct()
+        )
         return self.render_listing(request, stories, category.name, category)
 
     @path("feed/", name="feed")
@@ -170,6 +198,18 @@ class NewsPage(SocialMetaMixin, Page):
         APIField("tags"),
         APIField("category_names"),
     ]
+
+    def get_categories(self):
+        """The story's categories in the language being read, else in the main language.
+
+        A translated story keeps the categories chosen for the original, so each is looked up by
+        its translation key (#117).
+        """
+        return in_reading_language(
+            NewsCategory.objects.filter(
+                translation_key__in=self.categories.all().values("translation_key")
+            )
+        )
 
     @property
     def category_names(self):

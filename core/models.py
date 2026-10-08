@@ -1,6 +1,8 @@
 from django.db import models
-from wagtail.admin.panels import FieldPanel, MultiFieldPanel
-from wagtail.contrib.settings.models import BaseGenericSetting, BaseSiteSetting, register_setting
+from modelcluster.fields import ParentalKey
+from modelcluster.models import ClusterableModel
+from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
+from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import (
     DraftStateMixin,
@@ -9,9 +11,11 @@ from wagtail.models import (
     Page,
     PreviewableMixin,
     RevisionMixin,
+    TranslatableMixin,
 )
 from wagtail.search import index
 
+from core.languages import main_language, reading_language
 from core.money import CURRENCY_CHOICES
 from core.phone import phone_country_choices
 
@@ -60,14 +64,51 @@ class CustomRendition(AbstractRendition):
         unique_together = (("image", "filter_spec", "focal_point_key"),)
 
 
+class TextInEachLanguage(models.Model):
+    """One language's text for a setting, which Wagtail can't translate itself (#117).
+
+    A setting has one row per language. Its text in the language being read comes from
+    `TextInEachLanguageMixin.text_in_reading_language`.
+    """
+
+    locale = models.ForeignKey(
+        "wagtailcore.Locale", on_delete=models.PROTECT, related_name="+", verbose_name="language"
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.locale.get_display_name()
+
+
+class TextInEachLanguageMixin:
+    """For a setting whose `texts` are `TextInEachLanguage` rows."""
+
+    def text_in_reading_language(self, field):
+        """`field` from the row in the language being read, else from the main language's row.
+
+        A blank field counts as missing. One query for the rows, kept for the rest of the request
+        (Wagtail keeps a setting per request).
+        """
+        if not hasattr(self, "_texts_by_language"):
+            self._texts_by_language = {
+                text.locale.language_code: text for text in self.texts.select_related("locale")
+            }
+        for language in (reading_language(), main_language()):
+            value = getattr(self._texts_by_language.get(language), field, "")
+            if value:
+                return value
+        return ""
+
+
 @register_setting(icon="cog")
-class SiteSettings(BaseSiteSetting):
+class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
     """Organisation details that appear site-wide, editable per Site."""
 
     charity_number = models.CharField(max_length=20, blank=True)
     contact_email = models.EmailField(blank=True)
     phone = models.CharField(max_length=30, blank=True)
-    address = models.TextField(blank=True)
     donate_page = models.ForeignKey(
         "wagtailcore.Page",
         null=True,
@@ -110,7 +151,6 @@ class SiteSettings(BaseSiteSetting):
                 FieldPanel("charity_number"),
                 FieldPanel("contact_email"),
                 FieldPanel("phone"),
-                FieldPanel("address"),
                 FieldPanel("currency"),
                 FieldPanel("phone_country"),
             ],
@@ -122,10 +162,21 @@ class SiteSettings(BaseSiteSetting):
             [FieldPanel("facebook_url"), FieldPanel("instagram_url"), FieldPanel("linkedin_url")],
             heading="Social media",
         ),
+        InlinePanel(
+            "texts",
+            heading="Text in each language",
+            label="Language",
+            help_text="Shown to readers of that language; the main language's is used until "
+            "another language has its own.",
+        ),
     ]
 
     class Meta:
         verbose_name = "Site settings"
+
+    @property
+    def address(self):
+        return self.text_in_reading_language("address")
 
     @property
     def social_links(self):
@@ -137,27 +188,68 @@ class SiteSettings(BaseSiteSetting):
         return [(name, url) for name, url in links if url]
 
 
+class SiteSettingsText(TextInEachLanguage):
+    settings = ParentalKey(SiteSettings, on_delete=models.CASCADE, related_name="texts")
+    address = models.TextField(blank=True, help_text="Shown in the footer of every page.")
+
+    panels = [FieldPanel("locale"), FieldPanel("address")]
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["settings", "locale"], name="one_site_settings_text_per_language"
+            )
+        ]
+
+
 @register_setting(icon="warning")
-class AnnouncementBanner(BaseGenericSetting):
+class AnnouncementBanner(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
     """A banner shown on every page, e.g. for an emergency appeal."""
 
     enabled = models.BooleanField(default=False)
-    message = models.CharField(max_length=255, blank=True)
     link_page = models.ForeignKey(
         "wagtailcore.Page",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="+",
+        help_text="Readers of another language go to its translation, once it's published.",
     )
 
-    panels = [FieldPanel("enabled"), FieldPanel("message"), FieldPanel("link_page")]
+    panels = [
+        FieldPanel("enabled"),
+        FieldPanel("link_page"),
+        InlinePanel(
+            "texts",
+            heading="Message in each language",
+            label="Language",
+            help_text="Readers of a language with no message of its own see the main language's.",
+        ),
+    ]
 
     class Meta:
         verbose_name = "Announcement banner"
 
+    @property
+    def message(self):
+        return self.text_in_reading_language("message")
 
-class Partner(Orderable):
+
+class AnnouncementBannerText(TextInEachLanguage):
+    banner = ParentalKey(AnnouncementBanner, on_delete=models.CASCADE, related_name="texts")
+    message = models.CharField(max_length=255)
+
+    panels = [FieldPanel("locale"), FieldPanel("message")]
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["banner", "locale"], name="one_banner_text_per_language"
+            )
+        ]
+
+
+class Partner(TranslatableMixin, Orderable):
     """An organisation that funds or works with the charity."""
 
     name = models.CharField(max_length=255)
@@ -172,11 +264,15 @@ class Partner(Orderable):
 
     panels = [FieldPanel("name"), FieldPanel("url"), FieldPanel("logo")]
 
+    class Meta(TranslatableMixin.Meta):
+        ordering = ["sort_order"]
+
     def __str__(self):
         return self.name
 
 
 class Testimonial(
+    TranslatableMixin,
     PreviewableMixin,
     LockableMixin,
     DraftStateMixin,
@@ -206,10 +302,30 @@ class Testimonial(
         index.SearchField("quote"),
         index.SearchField("name"),
         index.AutocompleteField("name"),
+        # The admin's language filter narrows the listing before searching it.
+        index.FilterField("locale"),
     ]
+
+    class Meta(TranslatableMixin.Meta):
+        pass
 
     def __str__(self):
         return f"{self.name}: {self.quote[:40]}"
+
+    def copy_for_translation(self, locale, exclude_fields=None):
+        """A translation starts as an unpublished draft, as a translated page does.
+
+        Wagtail copies the latest revision with its live status, so a translation of a published
+        testimonial would go live at once, with any changes still waiting for a moderator.
+        """
+        translation = super().copy_for_translation(locale, exclude_fields)
+        translation.live = False
+        translation.has_unpublished_changes = True
+        translation.live_revision = None
+        translation.first_published_at = translation.last_published_at = None
+        translation.locked = False
+        translation.locked_at = translation.locked_by = None
+        return translation
 
     def get_preview_template(self, request, mode_name):
         return "core/previews/testimonial.html"

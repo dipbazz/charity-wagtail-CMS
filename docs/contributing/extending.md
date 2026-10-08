@@ -51,9 +51,12 @@ permissions**, or editors can't see the new item in the admin.
 2. **Write the model and register it.** A snippet is registered with a `SnippetViewSet` in the
    app's `wagtail_hooks.py`; add `DraftStateMixin`, `RevisionMixin`, `LockableMixin` and
    `PreviewableMixin` (as testimonials have) when the content needs sign-off before going live. A
-   setting subclasses `BaseSiteSetting` (one per site) or `BaseGenericSetting` (one for the whole
-   install) with `@register_setting`, and templates read it as `settings.<app>.<ModelName>`.
-   Shared ones go in `core`, feature ones in their app. Then `makemigrations`.
+   snippet that readers see needs `TranslatableMixin`, and templates list it with
+   `in_reading_language` ([Languages](../site/languages.md#snippets-and-settings-text)). A setting
+   subclasses `BaseSiteSetting` (one per site) with `@register_setting`, and templates read it as
+   `settings.<app>.<ModelName>`; text it shows readers goes in a `TextInEachLanguage` row model, as
+   the banner's message does. Shared ones go in `core`, feature ones in their app. Then
+   `makemigrations`.
 3. **Grant the permissions in a data migration**, modelled on
    `core/migrations/0004_editor_and_moderator_permissions.py`. What matters:
    - it must **`get_or_create`** the permission rows, because on a new database Django and Wagtail

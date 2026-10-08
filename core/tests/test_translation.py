@@ -10,6 +10,9 @@ from django.urls import reverse
 from wagtail.models import Locale
 from wagtail.test.utils.form_data import nested_form_data, rich_text, streamfield
 
+# Imported via the module: names starting with "Test" would be collected by pytest.
+from core import models
+from core.models import Partner
 from home.models import StandardPage
 
 pytestmark = pytest.mark.django_db
@@ -194,3 +197,53 @@ def test_page_explorer_root_labels_each_home_page_with_its_language(
 
     assert "नेपाली" in html
     assert "English" in html
+
+
+class TestTranslatingSnippets:
+    """Editors translate partners and testimonials with the same Translate action (#117)."""
+
+    def translate(self, client, snippet):
+        nepali = Locale.objects.get(language_code="ne")
+        model = snippet._meta
+        response = client.post(
+            reverse(
+                "simple_translation:submit_snippet_translation",
+                args=[model.app_label, model.model_name, snippet.pk],
+            ),
+            {"locales": [nepali.pk]},
+        )
+        assert response.status_code == 302
+        return snippet.get_translation(nepali)
+
+    def test_editor_sees_translate_in_the_partner_listing(self, client, editor):
+        partner = Partner.objects.create(name="Water Foundation")
+        client.force_login(editor)
+
+        html = client.get(reverse("wagtailsnippets_core_partner:list")).content.decode()
+
+        url = reverse(
+            "simple_translation:submit_snippet_translation", args=["core", "partner", partner.pk]
+        )
+        assert url in html
+
+    def test_editor_translates_a_partner(self, client, editor):
+        partner = Partner.objects.create(name="Water Foundation", url="https://example.org")
+        client.force_login(editor)
+
+        translation = self.translate(client, partner)
+
+        assert (translation.name, translation.url) == ("Water Foundation", "https://example.org")
+
+    def test_editor_translates_a_testimonial_into_a_draft(self, client, editor, moderator):
+        testimonial = models.Testimonial(quote="The well is open.", name="Grace", live=False)
+        testimonial.save()
+        testimonial.save_revision().publish()
+        # A change still waiting for a moderator mustn't go live through its translation.
+        testimonial.quote = "Unapproved wording"
+        testimonial.save_revision()
+        client.force_login(editor)
+
+        translation = self.translate(client, testimonial)
+
+        assert translation.live is False
+        assert not models.Testimonial.objects.filter(live=True, quote="Unapproved wording").exists()

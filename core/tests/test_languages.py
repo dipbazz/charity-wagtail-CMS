@@ -7,6 +7,8 @@ from django.utils import formats, translation
 from wagtail.models import Locale
 
 from core.apps import create_content_locales
+from core.languages import in_reading_language
+from core.models import Partner
 
 pytestmark = pytest.mark.django_db
 
@@ -51,3 +53,38 @@ def test_a_language_added_later_gets_a_locale(settings):
     create_content_locales()
 
     assert Locale.objects.filter(language_code="hi").count() == 1
+
+
+class TestInReadingLanguage:
+    """Snippets in the reader's language, falling back to the main language's (#117)."""
+
+    @pytest.fixture
+    def partners(self, nepali_locale):
+        translated = Partner.objects.create(name="Water Foundation", sort_order=1)
+        nepali = translated.copy_for_translation(nepali_locale)
+        nepali.name = "जल फाउन्डेसन"
+        nepali.save()
+        english_only = Partner.objects.create(name="Local Council", sort_order=2)
+        nepali_only = Partner.objects.create(name="गाउँ समिति", sort_order=3, locale=nepali_locale)
+        return {
+            "translated": translated,
+            "nepali": nepali,
+            "english_only": english_only,
+            "nepali_only": nepali_only,
+        }
+
+    def test_nepali_readers_get_each_snippet_in_nepali_or_else_in_english(self, partners):
+        with translation.override("ne"):
+            found = in_reading_language(Partner.objects.all())
+
+        assert found == [partners["nepali"], partners["english_only"], partners["nepali_only"]]
+
+    def test_english_readers_get_english_and_not_snippets_only_in_nepali(self, partners):
+        with translation.override("en"):
+            found = in_reading_language(Partner.objects.all())
+
+        assert found == [partners["translated"], partners["english_only"]]
+
+    def test_costs_one_query(self, partners, django_assert_num_queries):
+        with translation.override("ne"), django_assert_num_queries(1):
+            in_reading_language(Partner.objects.all())

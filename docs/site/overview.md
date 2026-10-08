@@ -89,8 +89,8 @@ Each part uses what Wagtail already provides before adding code of its own:
 | Donate page and pledges | `RoutablePageMixin` (the thank-you route), a `ModelForm`, a `ModelViewSet` (listing, filters, inspect, export) |
 | News | `RoutablePageMixin` (tag, category and feed routes), `ClusterTaggableManager`, `ParentalManyToManyField`, Django's syndication feed |
 | Forms | `wagtail.contrib.forms` (`AbstractEmailForm`) |
-| Partners and testimonials | Snippets with `SnippetViewSet(Group)`; `DraftStateMixin`, `RevisionMixin`, `LockableMixin`, `PreviewableMixin` |
-| Site settings and banner | `wagtail.contrib.settings` (per-site and generic settings) |
+| Partners and testimonials | Snippets with `SnippetViewSet(Group)`; `TranslatableMixin`, `DraftStateMixin`, `RevisionMixin`, `LockableMixin`, `PreviewableMixin` |
+| Site settings and banner | `wagtail.contrib.settings` (per-site settings), with `ClusterableModel` and `InlinePanel` for their text in each language |
 | Images | A custom image model with its own renditions, `{% picture %}`, focal points, a custom API viewset |
 | Languages | `WAGTAIL_I18N_ENABLED`, `Locale`, `wagtail.contrib.simple_translation`, Django's `i18n_patterns` |
 | Search | The database search backend, `search_fields`, `wagtail.contrib.search_promotions` |

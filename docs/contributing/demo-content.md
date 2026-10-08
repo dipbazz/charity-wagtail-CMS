@@ -4,7 +4,7 @@
 the live demo all use: the home page, About, the Donate page with suggested amounts, four appeals
 (one closed), three news stories with categories, a volunteer form, partners with logos it draws
 itself, a testimonial, the privacy notice, the site settings and the announcement banner, plus the
-Nepali pages below. It's safe to re-run: if appeals already exist it adds nothing (but still points
+Nepali content below. It's safe to re-run: if appeals already exist it adds nothing (but still points
 the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is English-first
 (`home/management/commands/seed_demo.py`).
 
@@ -23,7 +23,7 @@ the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is Eng
 - A placeholder **Privacy notice** (`/privacy/`), chosen in Site settings, describes what the
   site stores. It says it's example text to replace before going live.
 
-## Nepali pages
+## Nepali content
 
 The home page, the Donate page, the appeals and Stories index pages, the flood appeal and its
 story have Nepali translations under `/ne/`. One story, about volunteers repairing a village tap,
@@ -31,6 +31,10 @@ is in Nepali only: `/ne/stories/village-tap-repair/`. Everything else is English
 of a real charity's site would be at first, so QA has pages in both languages and pages in one.
 The Nepali appeal is as honest as the English one: Brightwell takes no donations, and it links to
 the same relief fund.
+
+The banner, the footer's address, the testimonial and both news categories are translated too.
+The partners aren't, because their names are in their logos, so the Nepali home page shows how a
+snippet with no translation falls back to English.
 
 ## Demo photos
 

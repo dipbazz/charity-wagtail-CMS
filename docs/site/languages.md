@@ -5,10 +5,12 @@ page can be written in one language, or both, without waiting for the other. In 
 supporters read Nepali first, and writing everything twice isn't realistic for a small charity, so
 one-language pages must always work.
 
-Code: `core/languages.py` (which language versions of a page exist), `core/templatetags/language_tags.py`
-(the switch and `hreflang` links), `core/middleware.py` (addresses and fallback), `core/sitemaps.py`,
-`core/apps.py` (creates the languages), settings in `charity/settings/base.py`, and the site's own
-Nepali words in `locale/ne/` ([below](#menus-buttons-and-messages)).
+Code: `core/languages.py` (the languages, and snippets in the one being read),
+`core/templatetags/language_tags.py` (the switch and `hreflang` links), `core/middleware.py`
+(addresses and fallback), `core/sitemaps.py`, `core/apps.py` (creates the languages),
+`core/context_processors.py` (links to pages chosen in settings), `core/models.py` (settings text in
+each language), settings in `charity/settings/base.py`, and the site's own Nepali words in
+`locale/ne/` ([below](#menus-buttons-and-messages)).
 
 ## What readers see
 
@@ -22,9 +24,12 @@ Nepali words in `locale/ne/` ([below](#menus-buttons-and-messages)).
 - **Menus, listings and search show the language being read.** A page only in one language is
   listed only in that language.
 - **The site's own words are in the language being read too:** the header and footer, buttons, the
-  pledge form with its labels and errors, search, pagination, "Page not found". Editors' content
-  (titles, page text, the banner, testimonials) is shown as written until
-  [#117](https://github.com/dipbazz/Charity-wagtail-CMS/issues/117).
+  pledge form with its labels and errors, search, pagination, "Page not found".
+- **So is the content around the pages:** the announcement banner, the footer's address,
+  testimonials, partners and news categories. Each falls back to the main language until it's
+  translated, so nothing disappears while a translation is missing.
+- **Links chosen in settings follow the language too:** on a Nepali page the header's Donate button
+  and the banner's link go to the Nepali version of their page once it's published.
 - **An address with no page in that language** (such as `/ne/news/` before the news page is
   translated) redirects to the same address in the main language, if a page is there.
 
@@ -40,6 +45,13 @@ Nepali words in `locale/ne/` ([below](#menus-buttons-and-messages)).
 - **Slugs stay in English** in both languages, so a page's two addresses differ only by the prefix
   (`/appeals/flood-relief/` and `/ne/appeals/flood-relief/`). A Nepali title leaves the slug
   empty, so type an English one.
+- **Translate a partner, testimonial or news category** with **Translate** in its listing's More
+  menu, as for a page. A translated testimonial starts as a draft for a moderator to publish, like
+  its original. A partner's or category's copy is shown at once, with the original's text until
+  it's rewritten. A category's translation keeps its slug.
+- **Write the banner and the footer's address in each language** in their settings: each has a
+  **Text in each language** section with one row per language. The banner is editors' to change;
+  the address is in Site settings, which only moderators change.
 - **Promote a search result in each language**: a promoted page shows only in its own language,
   so add one promotion per language. A promoted link to another website shows in both.
 - **The admin stays in English**: Wagtail has no Nepali translation of its admin.
@@ -80,10 +92,83 @@ Nepali words in `locale/ne/` ([below](#menus-buttons-and-messages)).
 language; the home page's appeals, the Donate page's appeal list and the menu filter explicitly.
 This rule has caused a bug before.
 
-**A link to a chosen page follows the reader's language**: an appeal's Donate button and the
-privacy notice links go to the chosen page's published translation in the language being read,
-else to the page itself. Done by hand, because Wagtail's `.localized` costs a query even on a
-main-language page.
+**A link to a chosen page follows the reader's language**: the Donate buttons (in the header and
+on an appeal), the banner's link and the privacy notice links go to the chosen page's published
+translation in the language being read, else to the page itself. The context processor
+`core.context_processors.chosen_pages` finds all of them in one query, and only when a template
+uses one; Wagtail's `.localized` would cost a query for each.
+
+**Snippets readers see are listed with `in_reading_language`** (`core/languages.py`), never with a
+plain queryset, or a Nepali page lists the English and the Nepali version of each one.
+
+### Snippets and settings text
+
+Three kinds of content are translated, each in the way Wagtail supports for it.
+
+**Pages** have one copy per language. The copies share a `translation_key`:
+
+```text
+wagtailcore_page
+┌────┬──────────────┬────────┬─────────────────┐
+│ id │ title        │ locale │ translation_key │
+├────┼──────────────┼────────┼─────────────────┤
+│ 10 │ Flood relief │ en     │ abc-123         │
+│ 25 │ बाढी राहत     │ ne     │ abc-123         │  same key: the same page in another language
+└────┴──────────────┴────────┴─────────────────┘
+```
+
+**Partners, testimonials and news categories** are translatable snippets
+(`TranslatableMixin`), translated the same way, one copy per language:
+
+```text
+core_testimonial
+┌────┬────────────────────────┬────────┬─────────────────┐
+│ id │ quote                  │ locale │ translation_key │
+├────┼────────────────────────┼────────┼─────────────────┤
+│  1 │ "The new tap changed…" │ en     │ def-456         │
+│  7 │ "नयाँ धाराले बदल्यो…"   │ ne     │ def-456         │
+└────┴────────────────────────┴────────┴─────────────────┘
+```
+
+A Nepali page shows row 7, or row 1 while there's no published row 7.
+`in_reading_language(queryset)` returns, in one query, each snippet in the language being read,
+else in the main language; a snippet only in another language is left out, as a page only in one
+language is. A page that was translated keeps the snippets chosen for the original (its
+testimonial block, a story's categories), so those are looked up by `translation_key`.
+
+**Settings text** (the banner's message and the footer's address) can't be translated that way:
+Wagtail keeps exactly one Site settings record per Site, with no Translate action. The settings
+keep everything that's the same in every language; the text that differs is in a table of rows
+attached to them, one per language:
+
+```text
+core_sitesettings  (one per Site)
+┌────┬──────┬───────────────┬───────┬───────────────┐
+│ id │ site │ contact_email │ phone │ donate_page   │  the same in every language
+├────┼──────┼───────────────┼───────┼───────────────┤
+│  1 │ 1    │ info@…        │ 98…   │ → page 40     │
+└────┴──────┴───────────────┴───────┴───────────────┘
+   │
+   ▼ has one row per language
+core_sitesettingstext
+┌──────────┬────────┬──────────────────┐
+│ settings │ locale │ address          │
+├──────────┼────────┼──────────────────┤
+│ 1        │ ne     │ दमक, झापा          │
+│ 1        │ en     │ Damak, Jhapa     │
+└──────────┴────────┴──────────────────┘
+   (settings, locale) is unique: one row per language
+```
+
+`AnnouncementBanner` and `AnnouncementBannerText` (with `message`) have the same shape. Editors
+see the rows as a **Text in each language** section in the same settings form, so a third
+language needs no migration, only another row. In templates `site_settings.address` and
+`banner.message` are properties that return the row in the language being read, else the main
+language's (`TextInEachLanguageMixin`); a blank field counts as missing. Both settings are per
+Site, so each charity on a shared installation would have its own.
+
+Why rows rather than a translatable snippet or one field per language:
+[Decisions](../decisions.md#settings-text-in-a-row-per-language).
 
 ### Menus, buttons and messages
 
@@ -175,5 +260,4 @@ Devanagari needs more room than English:
 
 ## Not yet
 
-- The banner, testimonials, partners and footer's contact details in the reader's language (#117).
 - Nepali digits (०१२…) and Bikram Sambat dates.

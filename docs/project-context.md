@@ -33,7 +33,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | What's the stack? Which app owns what? What's the page tree? Which Wagtail features are used? | [Overview](site/overview.md) |
 | What does the home page, a standard page, a block, news, search, a form, the footer or the API do? Which URLs exist? | [Pages and content](site/pages-and-content.md) |
 | Appeals, the Donate page, the pledge form, pledges in the admin, money, consent, the privacy notice? | [Appeals and giving](site/appeals-and-giving.md) |
-| Nepali and English: addresses, translating, the switch, `hreflang`, Nepali text? | [Languages](site/languages.md) |
+| Nepali and English: addresses, translating pages, snippets and settings text, the switch, `hreflang`, Nepali text? | [Languages](site/languages.md) |
 | How are photos stored, protected and served? What's `with_card_images`? | [Images](site/images.md) |
 | Colours, fonts, header, breakpoints, JavaScript, accessibility? How do I style something? | [Look and feel](site/look-and-feel.md) and the `mobile-first` skill |
 | Who can change what? Why can't editors see my new snippet? | [Editors and permissions](site/editors-and-permissions.md) |
@@ -57,6 +57,8 @@ Each is explained on the linked page; they're here because breaking one has caus
   ([Security](contributing/security.md)).
 - Page queries visitors see, other than `child_of(self)`, filter by `locale_id`, or Nepali and
   English pages mix ([Languages](site/languages.md#keeping-each-language-to-itself)).
+- Snippets visitors see are listed with `in_reading_language`, and text a setting shows visitors
+  goes in its rows for each language ([Languages](site/languages.md#snippets-and-settings-text)).
 - Never serve `MEDIA_ROOT/documents/` directly ([Security](contributing/security.md)).
 - A new snippet or setting needs a permissions data migration that uses `get_or_create`
   ([Extending the site](contributing/extending.md#add-a-snippet-or-setting)).

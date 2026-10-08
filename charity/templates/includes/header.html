@@ -4,7 +4,7 @@
     {% if banner.enabled and banner.message %}
         <div class="announcement" role="region" aria-label="{% translate "Announcement" %}">
             <div class="container">
-                {% if banner.link_page %}<a href="{% pageurl banner.link_page %}">{{ banner.message }}</a>{% else %}{{ banner.message }}{% endif %}
+                {% if banner_link_page %}<a href="{% pageurl banner_link_page %}">{{ banner.message }}</a>{% else %}{{ banner.message }}{% endif %}
             </div>
         </div>
     {% endif %}
@@ -37,8 +37,8 @@
                     </ul>
                 </nav>
             {% endif %}
-            {% if settings.core.SiteSettings.donate_page %}
-                <a class="button" href="{% pageurl settings.core.SiteSettings.donate_page %}">{% translate "Donate" %}</a>
+            {% if donate_page_link %}
+                <a class="button" href="{% pageurl donate_page_link %}">{% translate "Donate" %}</a>
             {% endif %}
         </div>
     </div>

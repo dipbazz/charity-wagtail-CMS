@@ -19,13 +19,15 @@ pytestmark = pytest.mark.django_db
 # Every page spends one query on the language being read: Wagtail looks up its Locale to find the
 # home page in that language (#113). A page in the second language spends one more, finding that
 # home page's translation. The API lists the Nepali flood appeal too, so it spends one more on it.
-# A second-language appeal spends one more looking for the Donate page in its language (#114).
 # Every page and search spend one query on the language switcher and hreflang links: the live home
 # page and the live translations of the page being read, in every language (#115).
-# Every page with a footer spends one query on the privacy notice it links to, and a page in the
-# second language one more looking for the notice in that language (#105).
+# Every page with a header spends one query on the pages chosen in settings that it links to (the
+# Donate page, the banner's page and the privacy notice) with their translations in the language
+# being read, one on the footer's address and one on the banner's message in each language (#117).
+# A page with a testimonial spends one finding its translation, and a partners block one finding
+# the partners (#117): the home page in both languages.
 BUDGETS = {
-    "/": 20,
+    "/": 21,
     "/appeals/": 18,
     "/appeals/flood-relief/": 18,
     "/stories/": 21,
@@ -36,10 +38,10 @@ BUDGETS = {
     "/donate/?appeal=flood-relief&amount=2500": 18,
     "/search/?query=water": 23,
     "/api/v2/pages/?type=campaigns.CampaignPage&fields=*": 19,
-    "/ne/": 19,
-    "/ne/appeals/": 20,
-    "/ne/appeals/flood-relief/": 21,
-    "/ne/stories/": 23,
+    "/ne/": 21,
+    "/ne/appeals/": 19,
+    "/ne/appeals/flood-relief/": 19,
+    "/ne/stories/": 22,
 }
 
 

@@ -8,7 +8,6 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.http import HttpResponseRedirect
-from django.utils.functional import SimpleLazyObject
 from django.utils.translation import gettext_lazy
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
@@ -180,24 +179,6 @@ class CampaignPage(SocialMetaMixin, Page):
         if mode_name == "card":
             return "campaigns/previews/campaign_card.html"
         return super().get_preview_template(request, mode_name)
-
-    def get_donate_page(self, request):
-        """The Donate page in this appeal's language once it's translated, else the main one.
-
-        Costs no query beyond the site settings' on a main-language appeal, unlike `.localized`.
-        """
-        donate_page = SiteSettings.for_request(request).donate_page
-        if donate_page is None or donate_page.locale_id == self.locale_id:
-            return donate_page
-        translation = donate_page.get_translations().live().filter(locale_id=self.locale_id).first()
-        return translation or donate_page
-
-    def get_context(self, request, *args, **kwargs):
-        context = super().get_context(request, *args, **kwargs)
-        # Only an open appeal with suggested amounts shows the Donate button, so look it up only
-        # when the template uses it, and once.
-        context["donate_page"] = SimpleLazyObject(lambda: self.get_donate_page(request))
-        return context
 
 
 class AbstractDonationAmount(Orderable):

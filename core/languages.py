@@ -1,10 +1,41 @@
 from django.conf import settings
+from django.utils import translation
 from wagtail.coreutils import get_supported_content_language_variant
 
 
 def language_codes():
     """The site's languages, in the order of LANGUAGES."""
     return [code for code, _name in settings.LANGUAGES]
+
+
+def main_language():
+    """The language the site opens in: its pages have no prefix in their address."""
+    return get_supported_content_language_variant(settings.LANGUAGE_CODE)
+
+
+def reading_language():
+    """The language of the page being read, which its address sets."""
+    return get_supported_content_language_variant(translation.get_language())
+
+
+def in_reading_language(snippets):
+    """Each translatable snippet in the language being read, else in the main language (#117).
+
+    One query, in the queryset's order. A snippet with neither version is left out, as a page only
+    in one language is listed only in that language.
+    """
+    reading, main = reading_language(), main_language()
+    candidates = list(
+        snippets.filter(locale__language_code__in={reading, main}).select_related("locale")
+    )
+    translated = {
+        snippet.translation_key for snippet in candidates if snippet.locale.language_code == reading
+    }
+    return [
+        snippet
+        for snippet in candidates
+        if snippet.locale.language_code == reading or snippet.translation_key not in translated
+    ]
 
 
 def hreflang_alternates(translations, request=None):
