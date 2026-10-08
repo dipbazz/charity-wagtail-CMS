@@ -10,6 +10,20 @@ version number.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-08
+
+### Upgrade notes
+
+- **Sites now open in Nepali unless they say otherwise.** An English-first site, such as the
+  Brightwell demo server, must add `DJANGO_LANGUAGE_CODE=en` to `deploy/aws/.env` before
+  upgrading; without it, its home page stops being found. Choose a site's language before adding
+  content, because changing it later changes every page's address.
+- Scheduled publishing and the admin now use Nepal time (`Asia/Kathmandu`). Pages already
+  scheduled keep their moment, but the admin now shows it in Nepal time.
+- **`charity/settings/local.py` is no longer read.** To open your local site in Nepali, set
+  `DJANGO_LANGUAGE_CODE=ne` in a new `.env.local` file (copy `.env.local.example`); development opens in
+  English otherwise. You can delete the old file.
+
 ### Added
 
 - Pages can now be read in Nepali as well as English. Each site opens in its main language, and
@@ -28,24 +42,46 @@ version number.
   page in **Site settings → Privacy notice**, and the footer of every page links to it, as does
   "How we use your details" just before the pledge form's and every form page's send button. The
   demo site adds an example notice; replace it with your charity's own before going live.
-
-### Upgrade notes
-
-- **Sites now open in Nepali unless they say otherwise.** An English-first site, such as the
-  Brightwell demo server, must add `DJANGO_LANGUAGE_CODE=en` to `deploy/aws/.env` before
-  upgrading; without it, its home page stops being found. Choose a site's language before adding
-  content, because changing it later changes every page's address.
-- Scheduled publishing and the admin now use Nepal time (`Asia/Kathmandu`). Pages already
-  scheduled keep their moment, but the admin now shows it in Nepal time.
-- **`charity/settings/local.py` is no longer read.** To open your local site in Nepali, set
-  `DJANGO_LANGUAGE_CODE=ne` in a new `.env.local` file (copy `.env.local.example`); development opens in
-  English otherwise. You can delete the old file.
+- The charity's name now has a dark row of its own at the top of every page, centred, so a long name
+  fits on a phone and the header stands out from white pages. The language switcher looks like two
+  buttons: the current language filled, the other outlined. Below it, the menu is on the left, and the language and Donate are on the right
+  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
+- Readers can switch between नेपाली and English from the header of every page. It opens the same
+  page in the other language, or that language's home page if the page isn't translated yet. Search
+  engines are told which pages are translations of each other, so they show people the page in
+  their language
+  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
+- You can run the live site's Docker image on your own computer, with the demo content, using
+  `docker compose up --build`. Page weight can be measured with Lighthouse before pushing.
+- The menus, buttons, forms and messages are now in Nepali when someone reads the site in Nepali:
+  the header and footer, the Donate page with its pledge form, its labels and errors, search, the
+  "Copy link" button and "Page not found". Amounts keep their lakh grouping
+  ([#116](https://github.com/dipbazz/Charity-wagtail-CMS/issues/116)).
+- Search finds pages in the language being read, including Nepali words, and editors can promote
+  a different result for each language
+  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
+- Nepali text uses the phone's own Devanagari font and has more space between lines, so vowel
+  signs above and below the letters no longer touch the lines next to them
+  ([#122](https://github.com/dipbazz/Charity-wagtail-CMS/pull/122)).
+- The announcement banner, the footer's address, testimonials, partners and news categories can be
+  written in Nepali and English, and readers see them in the language they're reading, or in the
+  site's main language until a translation exists. Editors translate partners, testimonials and
+  categories with **Translate**, as for pages, and write the banner and address in each language in
+  their settings. On a Nepali page the Donate button and the banner's link go to the Nepali version
+  of their page once it's published. Each Site now has its own banner
+  ([#117](https://github.com/dipbazz/Charity-wagtail-CMS/issues/117)).
 
 ### Changed
 
 - Page-weight limits now cap each page's images strictly and give its HTML, CSS and
   JavaScript one fixed allowance, so ordinary template and style changes no longer fail the
   Lighthouse check.
+- Contributors add their changelog entry as a small file in `changelog.d/` instead of editing
+  `CHANGELOG.md`, so two open pull requests no longer conflict there; a release merges the files into
+  `CHANGELOG.md`.
+- The documentation is reorganised by feature: each part of the site (pages and content, appeals and
+  giving, languages, images, look and feel, editors and permissions) and running the live site is
+  explained on one page, well enough to rebuild it, so a question no longer needs five or six pages.
 
 ### Fixed
 
@@ -55,6 +91,8 @@ version number.
   ([#110](https://github.com/dipbazz/Charity-wagtail-CMS/pull/110)).
 - Appeal pages no longer scroll sideways on the smallest phones (320px wide)
   ([#125](https://github.com/dipbazz/Charity-wagtail-CMS/pull/125)).
+- On a 320px phone the home page no longer scrolls sideways, and the news page's Copy link
+  button and the Donate page's dropdowns and fields are big enough to tap on every device.
 
 ## [0.2.0] - 2026-10-06
 
@@ -204,6 +242,7 @@ The first tracked release. It collects everything built before versioning starte
 - Every CI action is pinned to a commit, and Dependabot proposes updates
   ([#69](https://github.com/dipbazz/Charity-wagtail-CMS/pull/69)).
 
-[Unreleased]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dipbazz/Charity-wagtail-CMS/releases/tag/v0.1.0
