@@ -82,7 +82,7 @@ jobs:
         run: |
           uv run --with gunicorn==25.1.0 gunicorn charity.wsgi:application             --bind 127.0.0.1:8000 --workers 2 --daemon
           # Visit each page once so image renditions exist before anything is measured.
-          for path in / /appeals/ /appeals/flood-relief/ /news/; do
+          for path in / /appeals/ /appeals/flood-relief/ /stories/; do
             curl --silent --show-error --fail --retry 10 --retry-connrefused               --header "X-Forwarded-Proto: https" --output /dev/null "http://127.0.0.1:8000$path"
           done
 

@@ -141,6 +141,34 @@ def test_translates_the_home_page_an_appeal_and_a_story_into_nepali(seeded, clie
     assert "https://rescue.opmcm.gov.np/donations" in html
 
 
+def test_translates_the_donate_page_with_its_suggested_amounts(seeded, client):
+    nepali = Locale.objects.get(language_code="ne")
+    donate = DonatePage.objects.get(locale__language_code="en")
+    nepali_donate = donate.get_translation(nepali)
+
+    assert nepali_donate.live
+    assert nepali_donate.url == "/ne/donate/"
+    assert nepali_donate.donation_amounts.count() == 3
+    assert donate.donation_amounts.first().impact == "Safe water for one person for a year"
+    html = client.get(nepali_donate.url).content.decode()
+    assert "परिवारका लागि सरसफाइ सामग्रीको किट" in html
+    # Brightwell takes no money, so its Nepali notice links to the same relief fund.
+    assert "https://rescue.opmcm.gov.np/donations" in html
+
+
+def test_calls_the_news_section_stories(seeded):
+    from news.models import NewsCategory, NewsIndexPage
+
+    index = NewsIndexPage.objects.get(locale__language_code="en")
+
+    assert (index.title, index.url) == ("Stories", "/stories/")
+    assert index.get_translation(Locale.objects.get(language_code="ne")).title == "कथाहरू"
+    assert set(NewsCategory.objects.values_list("name", flat=True)) == {
+        "Success stories",
+        "Field updates",
+    }
+
+
 def flood_story_in(locale):
     english = NewsPage.objects.get(locale__language_code="en", slug__contains="bhote-koshi")
     return english.get_translation(locale)

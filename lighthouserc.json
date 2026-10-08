@@ -5,7 +5,7 @@
         "http://127.0.0.1:8000/",
         "http://127.0.0.1:8000/appeals/",
         "http://127.0.0.1:8000/appeals/flood-relief/",
-        "http://127.0.0.1:8000/news/"
+        "http://127.0.0.1:8000/stories/"
       ],
       "numberOfRuns": 3,
       "settings": {
@@ -44,7 +44,7 @@
           }
         },
         {
-          "matchingUrlPattern": "/news/$",
+          "matchingUrlPattern": "/stories/$",
           "assertions": {
             "resource-summary:total:size": ["error", {"maxNumericValue": 106000, "aggregationMethod": "median"}],
             "resource-summary:image:size": ["error", {"maxNumericValue": 81000, "aggregationMethod": "median"}]

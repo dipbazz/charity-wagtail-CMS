@@ -393,21 +393,23 @@ class Command(BaseCommand):
         news = publish(
             home,
             NewsIndexPage(
-                title="News",
-                slug="news",
+                title="Stories",
+                slug="stories",
                 show_in_menus=True,
-                introduction="Stories and updates from our partners and supporters.",
+                introduction=(
+                    "Stories from the communities your gifts reach, and updates from our work."
+                ),
             ),
         )
-        stories = NewsCategory.objects.create(name="Stories", slug="stories")
-        press = NewsCategory.objects.create(name="Press releases", slug="press")
+        successes = NewsCategory.objects.create(name="Success stories", slug="success-stories")
+        updates = NewsCategory.objects.create(name="Field updates", slug="field-updates")
         self.add_story(
             news,
             "The well that brought Grace back to school",
             "Grace used to spend every morning fetching water. Now she spends it in class.",
             images["grace"],
             ["water", "education"],
-            [stories],
+            [successes],
             days_ago=2,
         )
         flood_story = self.add_story(
@@ -416,7 +418,7 @@ class Command(BaseCommand):
             "A glacier collapse in Langtang sent a flash flood through three districts of Nepal.",
             images["flood"],
             ["emergency"],
-            [press],
+            [updates],
             days_ago=6,
         )
         self.add_story(
@@ -425,7 +427,7 @@ class Command(BaseCommand):
             "Meet the supporters who ran, baked and cycled for clean water.",
             images["volunteers"],
             ["volunteering"],
-            [stories],
+            [successes],
             days_ago=15,
         )
 
@@ -518,13 +520,13 @@ class Command(BaseCommand):
         banner.link_page = flood
         banner.save()
 
-        self.add_nepali_pages(home, campaigns, flood, news, flood_story)
+        self.add_nepali_pages(home, donate, campaigns, flood, news, flood_story)
 
         self.stdout.write(self.style.SUCCESS(f"Created demo content for {SITE_NAME}."))
         self.stdout.write(f"About page: {about.url}")
 
-    def add_nepali_pages(self, home, campaigns, flood, news, flood_story):
-        """Translate the home page, the flood appeal and its news story, served under /ne/.
+    def add_nepali_pages(self, home, donate, campaigns, flood, news, flood_story):
+        """Translate the home page, the Donate page, the flood appeal and its story, under /ne/.
 
         The rest of the site stays English only, as most of a real charity's site would be at
         first, and one news story is in Nepali only, as an editor who writes in Nepali would
@@ -554,6 +556,43 @@ class Command(BaseCommand):
             ],
         )
         translate(
+            donate,
+            title="दान गर्नुहोस्",
+            introduction="प्रत्येक सहयोगले समुदायलाई दिगो र सुरक्षित पानी प्राप्त गर्न मद्दत गर्छ।",
+            payment_notice=(
+                "<p>ब्राइटवेल एक डेमो च्यारिटी हो, त्यसैले कुनै भुक्तानी लिइने छैन र यो "
+                "प्रतिज्ञाको बारेमा कसैले पनि तपाईंलाई सम्पर्क गर्ने छैन। नेपालमा बाढीबाट "
+                "प्रभावित मानिसहरूलाई मद्दत गर्न "
+                f'<a href="{RELIEF_FUND_URL}">प्रधानमन्त्री दैवी प्रकोप उद्धार कोष</a>मा '
+                "दान गर्नुहोस्।</p>"
+            ),
+            thank_you_text=(
+                "<p>प्रतिज्ञा फारम प्रयोग गरेर हेर्नुभएकोमा धन्यवाद। ब्राइटवेल काल्पनिक संस्था "
+                "हो, त्यसैले कसैले सम्पर्क गर्ने छैन, तर वास्तविक संस्थाले भुक्तानी कसरी गर्ने "
+                "भनेर तपाईंलाई सम्पर्क गर्थ्यो।</p>"
+            ),
+            donation_amounts=[
+                DonatePageAmount(amount=1500, impact="एक व्यक्तिका लागि एक वर्षसम्म सुरक्षित पानी"),
+                DonatePageAmount(amount=2500, impact="परिवारका लागि सरसफाइ सामग्रीको किट"),
+                DonatePageAmount(amount=10000, impact="एक महिनाका लागि पानी शुद्धीकरण"),
+            ],
+            body=[
+                (
+                    "table",
+                    {
+                        "first_row_is_table_header": True,
+                        "first_col_is_header": False,
+                        "data": [
+                            ["प्रत्येक Rs 100 कहाँ जान्छ", "रकम"],
+                            ["परियोजना", "Rs 82"],
+                            ["कोष सङ्कलन", "Rs 13"],
+                            ["संस्था सञ्चालन", "Rs 5"],
+                        ],
+                    },
+                ),
+            ],
+        )
+        translate(
             campaigns,
             title="सहयोग अपिल",
             introduction="एउटा अपिल रोज्नुहोस् र तपाईंको सहयोगले के गर्छ, हेर्नुहोस्।",
@@ -580,7 +619,9 @@ class Command(BaseCommand):
             ],
         )
         nepali_news = translate(
-            news, title="समाचार", introduction="साझेदार र सहयोगीहरूका कथा र अपडेट।"
+            news,
+            title="कथाहरू",
+            introduction="तपाईंको सहयोग पुगेका समुदायका कथा र हाम्रो कामका अपडेट।",
         )
         translate(
             flood_story,

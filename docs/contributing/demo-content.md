@@ -25,9 +25,9 @@ the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is Eng
 
 ## Nepali pages
 
-The home page, the appeals and news index pages, the flood appeal and its news story have Nepali
-translations under `/ne/`. One news story, about volunteers repairing a village tap, is in
-Nepali only: `/ne/news/village-tap-repair/`. Everything else is English only, as most
+The home page, the Donate page, the appeals and Stories index pages, the flood appeal and its
+story have Nepali translations under `/ne/`. One story, about volunteers repairing a village tap,
+is in Nepali only: `/ne/stories/village-tap-repair/`. Everything else is English only, as most
 of a real charity's site would be at first, so QA has pages in both languages and pages in one.
 The Nepali appeal is as honest as the English one: Brightwell takes no donations, and it links to
 the same relief fund.

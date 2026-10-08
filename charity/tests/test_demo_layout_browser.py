@@ -20,12 +20,13 @@ PATHS = [
     "/about/",
     "/appeals/",
     "/appeals/flood-relief/",
-    "/news/",
+    "/stories/",
     "/donate/",
     "/volunteer/",
     "/search/?query=water",
     "/ne/",
     "/ne/appeals/flood-relief/",
+    "/ne/donate/",
 ]
 
 # What a thumb taps. Text links inside a paragraph are exempt: they're as tall as the line.

@@ -67,7 +67,7 @@ msgid "Show my gift on this website"
 msgstr "मेरो दान यस वेबसाइटमा देखाउनुहोस्"
 
 msgid "For example, if you're giving in memory of someone. Only our team will read it."
-msgstr "उदाहरणका लागि, कसैको सम्झनामा दान दिँदै हुनुहुन्छ भने। यो हाम्रो संस्थाको सदस्यले मात्र पढ्नेछन्।"
+msgstr "उदाहरणका लागि, कसैको सम्झनामा दान दिँदै हुनुहुन्छ भने। तपाईंको सन्देश हाम्रो संस्थाको सदस्यहरूले मात्र पढ्नेछन्।"
 
 msgid "House or ward number, street or tole, town or municipality, district."
 msgstr "घर वा वडा नम्बर, सडक वा टोल, सहर वा नगरपालिका, जिल्ला।"
