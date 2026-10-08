@@ -40,7 +40,7 @@ msgid "How often"
 msgstr "कति पटक"
 
 msgid "Your name"
-msgstr "तपाईंको नाम"
+msgstr "तपाईंको पुरा नाम"
 
 msgid "Email address"
 msgstr "इमेल ठेगाना"
@@ -63,20 +63,20 @@ msgstr "तपाईंको दानसँगै सन्देश"
 msgid "Email me stories from our projects and appeals that need help"
 msgstr "हाम्रा परियोजनाका कथा र सहयोग चाहिएका अपिलहरू मलाई इमेलमा पठाउनुहोस्"
 
-msgid "Show my gift on our website"
-msgstr "मेरो दान हाम्रो वेबसाइटमा देखाउनुहोस्"
+msgid "Show my gift on this website"
+msgstr "मेरो दान यस वेबसाइटमा देखाउनुहोस्"
 
 msgid "For example, if you're giving in memory of someone. Only our team will read it."
-msgstr "उदाहरणका लागि, कसैको सम्झनामा दान दिँदै हुनुहुन्छ भने। यो हाम्रो टोलीले मात्र पढ्नेछ।"
+msgstr "उदाहरणका लागि, कसैको सम्झनामा दान दिँदै हुनुहुन्छ भने। यो हाम्रो संस्थाको सदस्यले मात्र पढ्नेछन्।"
 
 msgid "House or ward number, street or tole, town or municipality, district."
 msgstr "घर वा वडा नम्बर, सडक वा टोल, सहर वा नगरपालिका, जिल्ला।"
 
 msgid "You can ask us to stop at any time."
-msgstr "तपाईं जुनसुकै बेला हामीलाई रोक्न भन्न सक्नुहुन्छ।"
+msgstr "तपाईं जुनसुकै बेला हामीलाई भनेर निस्क्रिय गर्न सक्नुहुन्छ।"
 
 msgid "Once your gift reaches us, we'll list your name, the amount, the appeal and the date. Nothing else about you is shown."
-msgstr "तपाईंको दान हामीकहाँ पुगेपछि, हामी तपाईंको नाम, रकम, अपिल र मिति सूचीमा देखाउनेछौं। तपाईंको अरू कुनै जानकारी देखाइने छैन।"
+msgstr "तपाईंको दान हामीले पाएपछि, हामी तपाईंको नाम, रकम, अपिल र मिति सूचीमा देखाउनेछौं। तपाईंको अरू कुनै जानकारी सम्प्रेषण हुने छैन।"
 
 msgid "We'll only use this to send you a monthly reminder on WhatsApp, or by text message if you're in Nepal and not on WhatsApp."
 msgstr "हामी यो नम्बर मासिक सम्झना सन्देश पठाउन मात्र प्रयोग गर्नेछौं: व्हाट्सएपमा, वा तपाईं नेपालमा हुनुहुन्छ र व्हाट्सएप प्रयोग गर्नुहुन्न भने एसएमएसमा।"
@@ -293,7 +293,7 @@ msgid "No news to show yet."
 msgstr "देखाउनका लागि अहिलेसम्म कुनै समाचार छैन।"
 
 msgid "Follow our news"
-msgstr "हाम्रा समाचार पछ्याउनुहोस्"
+msgstr "हाम्रा समाचार सम्प्रेषणको खबर राख्नुहोस्"
 
 msgid "Get new stories as soon as we publish them in a news reader app, such as Feedly, Inoreader or NetNewsWire. Copy this address and add it in the app."
 msgstr "हाम्रा नयाँ समाचार प्रकाशित हुनासाथ Feedly, Inoreader वा NetNewsWire जस्ता न्युज रिडर एपमा पाउनुहोस्। यो ठेगाना कपी गरेर एपमा थप्नुहोस्।"

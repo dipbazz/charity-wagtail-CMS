@@ -159,7 +159,7 @@ class TestPledgeModelAndForm:
                 "email updates",
                 "Email me stories from our projects and appeals that need help",
             ),
-            ("show_on_website", "show on website", "Show my gift on our website"),
+            ("show_on_website", "show on website", "Show my gift on this website"),
         ],
     )
     def test_the_model_is_named_for_the_team_and_the_form_for_donors(

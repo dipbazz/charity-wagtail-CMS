@@ -132,7 +132,7 @@ class PledgeForm(forms.ModelForm):
             "email_updates": gettext_lazy(
                 "Email me stories from our projects and appeals that need help"
             ),
-            "show_on_website": gettext_lazy("Show my gift on our website"),
+            "show_on_website": gettext_lazy("Show my gift on this website"),
         }
         help_texts = {
             "message": gettext_lazy(
