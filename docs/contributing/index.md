@@ -1,20 +1,22 @@
 # Contributing
 
-How a change gets from an issue to `main`.
+How a change gets from an issue to `main`, and the rules every change follows.
 
 ```{toctree}
 :maxdepth: 1
 
 testing
-qa
-issues-and-board
+performance
+security
+extending
+demo-content
 releases
 writing-docs
 ```
 
 ## The workflow
 
-1. **Start from an issue** on the [project board](issues-and-board.md), and move it to
+1. **Start from an issue** on the [project board](releases.md#the-project-board), and move it to
    *In progress*.
 2. **Branch from `main`:** one feature or fix per branch, named `feat/…`, `fix/…`, `docs/…` or
    `chore/…`.
@@ -23,20 +25,17 @@ writing-docs
    ([Writing docs](writing-docs.md)).
 5. **Add a changelog file** in `changelog.d/`, written for the person the
    change affects, or label the pull request `no changelog` if nobody would notice it
-   ([Versions and releases](releases.md#the-changelog)).
-6. **Run the checks** before pushing:
-
-   ```bash
-   uv run pytest
-   uv run ruff check . && uv run ruff format --check .
-   uv run python manage.py makemigrations --check --dry-run
-   ```
-
-7. **Open a pull request** against `main`. Its description says why, what changed, and how you
-   tested it (the pull request template has the checklist), and is in the version's milestone.
-   Pull requests aren't stacked on each other.
+   ([Releases](releases.md#the-changelog)).
+6. **Run the checks for what you touched** before pushing: its tests
+   (`uv run pytest path/to/tests`), `uv run ruff check . && uv run ruff format --check .`, and
+   `uv run python manage.py makemigrations --check --dry-run` if models changed. CI runs the whole
+   suite on every push.
+7. **Open a pull request** against `main`, in the version's milestone. Its description is short
+   and follows the template: what changed, what to check in the browser before merging, and
+   anything the reviewer must act on; the why goes in the commit messages. Pull requests aren't
+   stacked on each other.
 8. **QA:** CI checks every page layout at six widths; the pull request lists what a person must
-   check in the browser ([QA](qa.md)).
+   check in the browser ([QA](testing.md#qa)).
 9. **The maintainer reviews and merges.**
 
 ## Commits
@@ -61,11 +60,11 @@ The pull request title follows the same format.
 
 ## Design rules
 
-- **Mobile first** for every page, block and component: [Front end](../topics/front-end.md).
+- **Mobile first** for every page, block and component: [Look and feel](../site/look-and-feel.md).
 - **Fast from the start:** query counts, image weight and behaviour at 320–1440px are measured
-  for every new feature: [Performance](../topics/performance.md).
-- **Accessible:** [Front end](../topics/front-end.md#accessibility).
-- **Secure:** read [Security](../topics/security.md) before touching listings, documents,
+  for every new feature: [Performance](performance.md).
+- **Accessible:** [Look and feel](../site/look-and-feel.md#accessibility).
+- **Secure:** read [Security](security.md) before touching listings, documents,
   images, workflows or deployment.
 - **Demo data is fictional:** `brightwell.example` for the charity, `example.org` /
-  `example.com` for third parties ([Demo content](../reference/demo-content.md)).
+  `example.com` for third parties ([Demo content](demo-content.md)).

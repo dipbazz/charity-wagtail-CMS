@@ -12,7 +12,7 @@ Search, the sitemap, the API, the news listings and feed, the appeals page and t
 do. `.public()` costs one query (it reads the restrictions), which the query budgets allow for.
 
 The main menu is the exception: it shows whatever editors tick "Show in menus" for, which may be
-a members-only page. See [the decision record](../decisions/live-public-listings.md).
+a members-only page. See [the decision record](../decisions.md#public-listings-filter-livepublic).
 
 ## Documents are only served through Wagtail's document view
 
@@ -31,7 +31,7 @@ password or login. Never serve `MEDIA_ROOT/documents/` directly (#46, fixed in `
 ## Unconsented images stay out of the API
 
 The images API hides images whose safeguarding consent isn't confirmed. Keep any new image
-endpoint consistent with that. See [Images](images.md).
+endpoint consistent with that. See [Images](../site/images.md).
 
 ## Workflow actions are pinned to a commit
 
@@ -40,7 +40,7 @@ Workflows pin every action to a full commit SHA, with the version in a comment
 `charity/tests/test_workflows.py` fails on an unpinned `uses:`. Dependabot
 (`.github/dependabot.yml`) opens one grouped pull request a week when an action has a new
 release. The Caddy image in `deploy/aws/compose.yaml` is pinned to a digest for the same reason.
-See [the decision record](../decisions/pinned-actions.md).
+See [the decision record](../decisions.md#workflow-actions-pinned-to-commits).
 
 ## Server secrets stay out of git and the image
 
@@ -53,33 +53,14 @@ Server secrets live in `deploy/aws/.env`, which is gitignored and dockerignored.
 Production settings raise at startup without `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS` or
 `DJANGO_SITE_URL`, rather than run with a missing secret or reject every request with a bare
 400. CI runs `check --deploy --fail-level WARNING` against them, and again inside the Docker
-image. See the [settings reference](../reference/settings.md).
+image. See [Running the live site](../hosting.md#environment-variables).
 
 ## Permissions are tested as an editor
 
 Test what editors can do as `editor`, not as a superuser, or a missing permission goes unnoticed.
-See [Permissions](permissions.md).
+See [Editors and permissions](../site/editors-and-permissions.md#testing-permissions).
 
-## Pledges and form submissions hold personal data
+## Supporters' personal data stays with the team
 
-Donate page pledges (the `Pledge` model) hold names, email addresses, optional home addresses
-and, for monthly pledges only, mobile numbers. Editors and moderators can read and export them
-under **Pledges**; only a superuser can delete one, so a donation's record can't be lost by
-accident. Volunteer sign-ups are form submissions: anyone who can edit a form page can read and
-export them (`wagtail.contrib.forms` grants it with the page's edit permission). Give admin
-access only to people who may see supporters' details, and don't leave exported files in shared
-folders.
-
-The mobile number's help text is the supporter's consent to a monthly reminder on WhatsApp or
-by text. Don't use the numbers for anything else.
-
-The same goes for the pledge form's two tick boxes, both unticked unless the supporter ticks
-them:
-
-- **Email updates** (`email_updates`): only email supporters who ticked it, and give every
-  email a way to stop (sending is future work, in the Email epic #81).
-- **Show my gift on our website** (`show_on_website`): the only consent to list a supporter
-  in public, and only their name, amount, appeal and date, once the gift is received.
-
-A pledge's message is free text and may hold personal details (who a gift is in memory of,
-for example). It's for the team only: never show it on the site.
+Pledges and form submissions hold names, contact details and consents. Who can see them, what each
+consent allows, and why a pledge's message is never shown: [Appeals and giving](../site/appeals-and-giving.md#personal-data-and-consent).

@@ -7,10 +7,10 @@ These docs are built with [Sphinx](https://www.sphinx-doc.org/),
 
 ## The rule
 
-**A pull request that changes what a docs page describes updates that page.** A new model,
-setting, command, convention, security rule or gotcha goes on the page that covers it, in the
-same pull request. The [Reference](../reference/index.md) pages and the
-[page tree](../topics/architecture.md#page-tree) are the ones most often affected.
+**A pull request that changes what a docs page describes updates that page**, in the same pull
+request: a new page type, setting, command, convention, security rule or gotcha goes on the page
+that covers it. Once it's merged, bump "Last verified against" in the
+[project map](../project-context.md).
 
 ## Build them
 
@@ -37,29 +37,45 @@ file) for AI agents, with [sphinx-llms-txt](https://sphinx-llms-txt.readthedocs.
 
 ## Where pages go
 
-Pages are grouped by what the reader is doing, as in Wagtail's docs:
+**One page per feature, answering the whole question.** Someone who wants to understand the Donate
+page reads one page, not six. Pages are grouped by who's reading:
 
 | Section | For | Example |
 |---|---|---|
 | [Getting started](../getting-started/index.md) | Someone new, from clone to first change | Install and run |
-| [Topics](../topics/index.md) | Understanding how a part works | Images, permissions |
-| [How-to guides](../how-to/index.md) | Doing one job, step by step | Add a page type |
-| [Reference](../reference/index.md) | Looking up a fact | Settings, commands |
-| [Decisions](../decisions/index.md) | Why a choice was made | SQLite |
-| [Contributing](index.md) | Working on the project | Testing, QA |
-| [Editor guide](../editor-guide/index.md) | The charity's editors | (to come) |
+| [The site](../site/index.md) | How each part works: what it does, why, its rules, where its code is | Appeals and giving, Languages |
+| [Running the live site](../hosting.md) | Whoever hosts it | Environment variables, deploying, backups |
+| [Contributing](index.md) | Working on the code | Testing, performance, security, releases |
+| [Decisions](../decisions.md) | Why a choice was made | SQLite, one server |
+| [Editor guide](../editor-guide.md) | The charity's team | (to come) |
 
-A new page goes in its section's table of contents (the `toctree` in the section's `index.md`),
-or the build fails.
+A new page goes in its section's table of contents (the `toctree` in the section's `index.md`, or
+the home page's), or the build fails. Prefer a new section on an existing page to a new page.
+
+## What a page says
+
+The test for every page: **could someone rebuild this part of the site from the page alone, in
+any codebase, and get the same behaviour?** So a page describes:
+
+1. **what it does**, for visitors and for editors, including the details that matter (what a page
+   shows and in what order, limits, defaults, what happens on an error);
+2. **why**, especially where another way would seem obvious;
+3. **the rules** that keep it working, and the past bugs behind them;
+4. **where the code is**, as pointers (`campaigns/models.py`, `DonatePage`), and how it's tested.
+
+It **doesn't repeat the code**: no field-by-field tables, no lists of files or templates, no
+copied code. Those go stale silently and the code already says them. Name code only to point to
+it. The exceptions are names people use directly: URLs, API fields, environment variables,
+settings, management commands and template tags.
 
 ## How to write
 
 - Plain Markdown that reads well on GitHub, without a build. Use MyST directives (such as
   `{toctree}` or `{warning}`) only where Markdown has nothing equivalent.
-- Link between pages with relative Markdown links (`[Images](../topics/images.md)`), and to a
+- Link between pages with relative Markdown links (`[Images](../site/images.md)`), and to a
   section with its anchor (`images.md#card-listings`).
 - One fact in one place. Link to it rather than repeating it, so pages can't disagree.
-- Short sentences, plain words, British spelling. Say why, not only what.
+- Short sentences, plain words, British spelling.
 - Personal notes and guides stay out of the docs, in gitignored `*.local.md` files; the build
   ignores them too.
 

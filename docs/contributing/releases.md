@@ -1,9 +1,50 @@
-# Versions and releases
+# Issues, versions and releases
 
-Every change to the site belongs to a numbered version, listed in the
-[changelog](../changelog.md) and planned as a milestone on the
-[project board](issues-and-board.md). This page says what the numbers mean, how to write a
-changelog entry, what goes into which version, and how to cut a release.
+How work is planned and shipped: issues and the project board, then versions, the changelog and
+releases. Every change belongs to a numbered version, listed in the [changelog](../changelog.md)
+and planned as a milestone on the [project board](#the-project-board).
+
+## Issues
+
+Open issues with the forms in `.github/ISSUE_TEMPLATE/`: bug, feature or docs. Write them from
+the point of view of the person using the site or the admin: what they're trying to do and what
+gets in their way, not the code change.
+
+Labels:
+
+| Label | |
+|---|---|
+| `P1`, `P2`, `P3` | Priority: P1 is urgent, P3 can wait |
+| `bug`, `enhancement`, `documentation` | Kind of change |
+| `accessibility`, `security` | Areas that need extra care in review |
+| `epic` | A feature track (below) |
+
+## Epics
+
+Each feature track is an issue labelled `epic` and titled `Epic: …`, with the work as its
+sub-issues. It says the goal, why it matters, how the work is split and when it's done.
+Attach every new issue to an epic.
+
+Docs for a new feature aren't separate sub-issues: the feature's pull request updates its own
+docs page, under that feature's epic.
+
+## The project board
+
+The [project board](https://github.com/users/dipbazz/projects/1) plans the work. New and
+updated issues in the repo are added to it automatically.
+
+| Field | |
+|---|---|
+| Status | Backlog → Ready → In progress → In review → Done |
+| Iteration | One-week sprints, Tuesday to Monday |
+| Milestone | The version the work ships in, e.g. `v0.2.0` |
+| Priority | Mirrors the `P1`–`P3` labels |
+
+- Move an issue to *In progress* when you start it, and to *In review* when its pull request is
+  open.
+- An epic is *In progress* while any of its sub-issues is being worked on or done, and *Done*
+  when all of them are closed.
+- Merged pull requests and closed issues go to *Done*.
 
 ## Version numbers
 
@@ -83,7 +124,7 @@ iteration.
      the result once, since it's what people will read;
    - set `version = "X.Y.Z"` in `pyproject.toml`, then run `uv lock`.
 3. **Open a pull request** titled `chore(release): X.Y.Z`, labelled `no changelog`, in the
-   milestone. CI and the QA pass run as usual.
+   milestone. CI runs as usual.
 4. **After it's merged,** tag the merge commit and publish the release:
 
    ```bash
@@ -94,7 +135,7 @@ iteration.
    ```
 
 5. **Close the milestone** and make sure the next one exists, with its goal and due date.
-6. **Deploy it** ([Deploy a change](../how-to/deploy-a-change.md)). The tag says exactly which
+6. **Deploy it** ([Deploy a change](../hosting.md#deploy-a-version)). The tag says exactly which
    code is live.
 
 ## Seeing versions on the board

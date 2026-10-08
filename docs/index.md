@@ -1,32 +1,33 @@
 # Charity Wagtail CMS
 
-A content-managed website for **Brightwell Water Trust**, a fictional water charity, built with
-Django 6.1 and Wagtail 8.0. Editors run fundraising appeals, news, forms and site-wide messages
-from the Wagtail admin. Every feature was built test-first with pytest.
+A website and content management system for small charities in Nepal and the UK, built with
+Django 6.1 and Wagtail 8.0. Supporters read appeals and news, pledge a gift and volunteer, in Nepali
+or English; the charity's team runs it all from the Wagtail admin. The demo charity, **Brightwell
+Water Trust**, is fictional.
 
-These docs are for anyone who works on the site, and for AI agents doing the same. They're
-plain Markdown in the repo's `docs/` folder, so they read the same on GitHub as on the built
-site, and the build publishes `llms.txt` and `llms-full.txt` alongside the pages for AI
-agents.
+These docs are for anyone who works on the site, and for AI agents doing the same. They're plain
+Markdown in the repo's `docs/` folder, so they read the same on GitHub as on the built site, and
+the build publishes `llms.txt` and `llms-full.txt` for AI agents. Each part of the site is
+described on one page, well enough to rebuild it.
 
 ![The homepage](screenshots/home.jpg)
 
 ## Where to start
 
-- **New here?** [Getting started](getting-started/index.md) gets the site running on your
-  computer with demo content, and walks through a first change.
-- **How does it work?** [Topics](topics/index.md) explain each part of the site: the apps,
-  images, the front end, permissions, security, performance and the live server.
-- **Doing a specific job?** [How-to guides](how-to/index.md) cover adding a page type, a snippet
-  or setting, or a StreamField block, deploying a change and restoring a backup.
-- **Looking something up?** [Reference](reference/index.md) lists the models, settings,
-  management commands, template tags, URLs, the API and the test fixtures.
-- **Wondering why?** [Decisions](decisions/index.md) record choices already made, and why.
-- **Opening a pull request?** [Contributing](contributing/index.md) has the workflow, the tests
-  and the QA pass every pull request gets.
-- **Editing the charity's content?** The [editor guide](editor-guide/index.md) is for the
-  charity's own team.
-- **What changed?** The [changelog](changelog.md) lists every version and what it brought.
+- **New here?** [Getting started](getting-started/index.md) runs the site on your computer with
+  demo content and walks through a first change.
+- **How does a part of the site work?** [The site](site/index.md) has one page per part:
+  [overview](site/overview.md), [pages and content](site/pages-and-content.md),
+  [appeals and giving](site/appeals-and-giving.md), [languages](site/languages.md),
+  [images](site/images.md), [look and feel](site/look-and-feel.md) and
+  [editors and permissions](site/editors-and-permissions.md).
+- **Hosting it?** [Running the live site](hosting.md): the server, settings, commands, backups,
+  deploying and restoring.
+- **Changing the code?** [Contributing](contributing/index.md): the workflow, testing and QA,
+  performance, security, extending the site, releases and writing docs.
+- **Wondering why?** [Decisions](decisions.md) records choices already made.
+- **AI session?** Start at the [project map](project-context.md).
+- **What changed?** The [changelog](changelog.md).
 
 ## Contents
 
@@ -37,12 +38,11 @@ agents.
 :titlesonly:
 
 getting-started/index
-topics/index
-how-to/index
-reference/index
-decisions/index
+site/index
+hosting
 contributing/index
-editor-guide/index
+decisions
+editor-guide
 changelog
 project-context
 ```

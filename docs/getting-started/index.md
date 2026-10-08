@@ -38,7 +38,7 @@ stories, a volunteer form, partners, a testimonial, the site settings and the an
 banner. It also copies the `SITE_URL` setting (`http://localhost:8000` in development) into
 Wagtail's Site record, which every full URL is built from: the API, the news feed, the sitemap
 and canonical tags. On a database created before that, run
-`uv run python manage.py update_site_url` once. See [Demo content](../reference/demo-content.md).
+`uv run python manage.py update_site_url` once. See [Demo content](../contributing/demo-content.md).
 
 ### See the site Nepali-first
 
@@ -73,9 +73,9 @@ docker compose down --volumes
 
 Use it to check what only breaks under production settings (static files, security headers,
 the language the site opens in) and to
-[measure page weight with Lighthouse](../how-to/run-lighthouse.md) before pushing. The secret
+[measure page weight with Lighthouse](../contributing/performance.md#measure-page-weight-locally) before pushing. The secret
 key and other values in `compose.yaml` are for your computer only; the live server has its own in
-[`deploy/aws/`](../topics/deployment.md). Safari won't keep the admin login on plain `http`;
+[`deploy/aws/`](../hosting.md). Safari won't keep the admin login on plain `http`;
 use Chrome, Edge or Firefox.
 
 ## Check that everything passes
@@ -96,21 +96,21 @@ in the footer.
 
 1. **Find where it lives.** Site-wide organisation details are in `SiteSettings`
    (`core/models.py`), and the footer template is `charity/templates/includes/footer.html`.
-   [Architecture](../topics/architecture.md) maps the rest of the code.
+   [The site](../site/index.md) says where each part's code is.
 2. **Write a failing test first.** Settings tests live in `core/tests/test_settings.py`. Add one
    that saves a value in the new field and checks the homepage shows it. Run
    `uv run pytest core/tests/test_settings.py` and watch it fail.
 3. **Add the field** to `SiteSettings` and its `panels`, then make a migration:
    `uv run python manage.py makemigrations core`.
 4. **Show it** in `footer.html`, reading `settings.core.SiteSettings`.
-5. **Run the test again**, then the whole suite and ruff.
+5. **Run the test again**, then ruff (CI runs the whole suite when you push).
 6. **Look at it** at <http://localhost:8000> at phone width first, then wider (see
-   [Front end](../topics/front-end.md)).
+   [Look and feel](../site/look-and-feel.md)).
 
 Then follow [Contributing](../contributing/index.md) to open a pull request.
 
 ## Next steps
 
-- [Topics](../topics/index.md) explain how each part of the site works.
-- [How-to guides](../how-to/index.md) walk through the common bigger changes.
-- [Security rules](../topics/security.md) list mistakes this project has already made once.
+- [The site](../site/index.md) explains how each part works.
+- [Extending the site](../contributing/extending.md) walks through adding a page type, a snippet or setting, or a block.
+- [Security](../contributing/security.md) lists mistakes this project has already made once.

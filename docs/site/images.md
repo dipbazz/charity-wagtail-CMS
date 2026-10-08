@@ -16,7 +16,7 @@ everywhere the image appears.
 
 The images API only lists consented images (`ConsentedImagesAPIViewSet` in `charity/api.py`),
 because the API exposes every image's original file, including ones never used on a page. Keep
-any new image endpoint consistent with that. See [Security](security.md).
+any new image endpoint consistent with that. See [Security](../contributing/security.md).
 
 ## Responsive photos
 
@@ -48,10 +48,10 @@ Wagtail's `{% picture %}` can't switch crops by screen width:
 Listings that show cards (appeals, news, the homepage's featured appeals) wrap their queryset in
 `core.images.with_card_images()`, which prefetches the card renditions in one query. Its filters
 (`CARD_IMAGE_FILTERS`) must match the `{% picture %}` filters in the card templates, or each card
-runs a query of its own. The listing tests and the [query budgets](performance.md) catch that.
+runs a query of its own. The listing tests and the [query budgets](../contributing/performance.md) catch that.
 
 ## Measuring image weight
 
 Page weight is measured by the Lighthouse job at phone emulation (412px, pixel density 1.75).
 Measure image savings that way, not in a desktop browser at density 1, which picks smaller files.
-See [Performance](performance.md).
+See [Performance](../contributing/performance.md).
