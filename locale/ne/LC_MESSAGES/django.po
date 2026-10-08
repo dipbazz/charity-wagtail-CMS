@@ -1,0 +1,331 @@
+# Nepali text for the site's menus, buttons, forms and messages.
+# Same license as the project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: charity-cms\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-08 10:16+0100\n"
+"PO-Revision-Date: 2026-10-08 00:00+0000\n"
+"Last-Translator: Charity CMS\n"
+"Language-Team: Nepali\n"
+"Language: ne\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Wherever it's needed most"
+msgstr "जहाँ सबैभन्दा बढी आवश्यक छ"
+
+msgid "Choose an amount or enter your own."
+msgstr "रकम छान्नुहोस् वा आफ्नै रकम लेख्नुहोस्।"
+
+msgid "Country"
+msgstr "देश"
+
+#, python-brace-format
+msgid "{typed}/{limit} characters"
+msgstr "{typed}/{limit} अक्षर"
+
+#, python-brace-format
+msgid "You have {left} characters left."
+msgstr "तपाईंसँग {left} अक्षर बाँकी छन्।"
+
+#, python-brace-format
+msgid "You've reached the limit of {limit} characters."
+msgstr "तपाईं {limit} अक्षरको सीमामा पुग्नुभयो।"
+
+msgid "How often"
+msgstr "कति पटक"
+
+msgid "Your name"
+msgstr "तपाईंको नाम"
+
+msgid "Email address"
+msgstr "इमेल ठेगाना"
+
+msgid "Which appeal would you like to support?"
+msgstr "तपाईं कुन अपिललाई सहयोग गर्न चाहनुहुन्छ?"
+
+msgid "Number"
+msgstr "नम्बर"
+
+msgid "Address"
+msgstr "ठेगाना"
+
+msgid "Postcode or postal code"
+msgstr "हुलाक कोड"
+
+msgid "A message with your gift"
+msgstr "तपाईंको दानसँगै सन्देश"
+
+msgid "Email me stories from our projects and appeals that need help"
+msgstr "हाम्रा परियोजनाका कथा र सहयोग चाहिएका अपिलहरू मलाई इमेलमा पठाउनुहोस्"
+
+msgid "Show my gift on our website"
+msgstr "मेरो दान हाम्रो वेबसाइटमा देखाउनुहोस्"
+
+msgid "For example, if you're giving in memory of someone. Only our team will read it."
+msgstr "उदाहरणका लागि, कसैको सम्झनामा दान दिँदै हुनुहुन्छ भने। यो हाम्रो टोलीले मात्र पढ्नेछ।"
+
+msgid "House or ward number, street or tole, town or municipality, district."
+msgstr "घर वा वडा नम्बर, सडक वा टोल, सहर वा नगरपालिका, जिल्ला।"
+
+msgid "You can ask us to stop at any time."
+msgstr "तपाईं जुनसुकै बेला हामीलाई रोक्न भन्न सक्नुहुन्छ।"
+
+msgid "Once your gift reaches us, we'll list your name, the amount, the appeal and the date. Nothing else about you is shown."
+msgstr "तपाईंको दान हामीकहाँ पुगेपछि, हामी तपाईंको नाम, रकम, अपिल र मिति सूचीमा देखाउनेछौं। तपाईंको अरू कुनै जानकारी देखाइने छैन।"
+
+msgid "We'll only use this to send you a monthly reminder on WhatsApp, or by text message if you're in Nepal and not on WhatsApp."
+msgstr "हामी यो नम्बर मासिक सम्झना सन्देश पठाउन मात्र प्रयोग गर्नेछौं: व्हाट्सएपमा, वा तपाईं नेपालमा हुनुहुन्छ र व्हाट्सएप प्रयोग गर्नुहुन्न भने एसएमएसमा।"
+
+msgid "Enter your name."
+msgstr "आफ्नो नाम लेख्नुहोस्।"
+
+msgid "Enter your email address."
+msgstr "आफ्नो इमेल ठेगाना लेख्नुहोस्।"
+
+msgid "Other amount"
+msgstr "अन्य रकम"
+
+#, python-format
+msgid "Your own amount (%(currency)s)"
+msgstr "तपाईंको आफ्नै रकम (%(currency)s)"
+
+msgid "One-off"
+msgstr "एक पटक"
+
+msgid "Monthly"
+msgstr "मासिक"
+
+msgid "Choose a suggested amount or type your own, not both."
+msgstr "सुझाइएको रकम छान्नुहोस् वा आफ्नै रकम लेख्नुहोस्, दुवै होइन।"
+
+msgid "Open appeals"
+msgstr "खुला अपिलहरू"
+
+msgid "Past appeals"
+msgstr "विगतका अपिलहरू"
+
+msgid "Filter appeals"
+msgstr "अपिलहरू छान्नुहोस्"
+
+msgid "All appeals"
+msgstr "सबै अपिलहरू"
+
+msgid "There are no appeals to show right now."
+msgstr "अहिले देखाउनका लागि कुनै अपिल छैन।"
+
+#, python-format
+msgid "Appeal closes %(closes)s"
+msgstr "अपिल %(closes)s मा बन्द हुन्छ"
+
+msgid "Ongoing appeal"
+msgstr "जारी अपिल"
+
+#, python-format
+msgid "This appeal closed on %(closed)s. Thank you to everyone who gave."
+msgstr "यो अपिल %(closed)s मा बन्द भयो। दान दिनुहुने सबैलाई धन्यवाद।"
+
+msgid "What your gift can do"
+msgstr "तपाईंको दानले के गर्न सक्छ"
+
+msgid "Donate to this appeal"
+msgstr "यो अपिलमा दान दिनुहोस्"
+
+msgid "Please check your pledge"
+msgstr "कृपया आफ्नो प्रतिबद्धता जाँच्नुहोस्"
+
+msgid "How much would you like to give?"
+msgstr "तपाईं कति दान दिन चाहनुहुन्छ?"
+
+msgid "Mobile number"
+msgstr "मोबाइल नम्बर"
+
+msgid "optional"
+msgstr "वैकल्पिक"
+
+msgid "Your details"
+msgstr "तपाईंको विवरण"
+
+msgid "Your choices"
+msgstr "तपाईंका रोजाइहरू"
+
+msgid "Send my pledge"
+msgstr "मेरो प्रतिबद्धता पठाउनुहोस्"
+
+msgid "Thank you"
+msgstr "धन्यवाद"
+
+msgid "We've received your pledge and will be in touch soon."
+msgstr "हामीले तपाईंको प्रतिबद्धता प्राप्त गर्‍यौं र छिट्टै सम्पर्क गर्नेछौं।"
+
+msgid "See all our appeals"
+msgstr "हाम्रा सबै अपिलहरू हेर्नुहोस्"
+
+msgid "This appeal has closed."
+msgstr "यो अपिल बन्द भइसकेको छ।"
+
+#, python-format
+msgid "%(raised)s raised of %(target)s"
+msgstr "%(target)s मध्ये %(raised)s जम्मा भयो"
+
+msgid "Fundraising progress"
+msgstr "कोष सङ्कलनको प्रगति"
+
+msgid "Page not found"
+msgstr "पृष्ठ फेला परेन"
+
+msgid "Sorry, this page could not be found."
+msgstr "माफ गर्नुहोस्, यो पृष्ठ फेला पार्न सकिएन।"
+
+msgid "Internal server error"
+msgstr "सर्भरमा आन्तरिक त्रुटि"
+
+msgid "Sorry, there seems to be an error. Please try again soon."
+msgstr "माफ गर्नुहोस्, कुनै त्रुटि भएजस्तो देखिन्छ। कृपया केही समयपछि फेरि प्रयास गर्नुहोस्।"
+
+msgid "Skip to content"
+msgstr "मुख्य सामग्रीमा जानुहोस्"
+
+msgid "Privacy notice"
+msgstr "गोपनीयता सूचना"
+
+#, python-format
+msgid "Registered charity number %(number)s."
+msgstr "दर्ता भएको परोपकारी संस्था नम्बर %(number)s।"
+
+msgid "Announcement"
+msgstr "घोषणा"
+
+msgid "Menu"
+msgstr "मेनु"
+
+msgid "Search"
+msgstr "खोज्नुहोस्"
+
+msgid "Language"
+msgstr "भाषा"
+
+msgid "Donate"
+msgstr "दान दिनुहोस्"
+
+msgid "Main"
+msgstr "मुख्य"
+
+msgid "Pagination"
+msgstr "पृष्ठहरू"
+
+msgid "Previous"
+msgstr "अघिल्लो"
+
+#, python-format
+msgid "Page %(number)s of %(total)s"
+msgstr "पृष्ठ %(number)s / %(total)s"
+
+msgid "Next"
+msgstr "अर्को"
+
+msgid "How we use your details"
+msgstr "हामी तपाईंको विवरण कसरी प्रयोग गर्छौं"
+
+msgid "Send"
+msgstr "पठाउनुहोस्"
+
+msgid "Thank you, we have received your message."
+msgstr "धन्यवाद, हामीले तपाईंको सन्देश प्राप्त गर्‍यौं।"
+
+msgid "Nepal"
+msgstr "नेपाल"
+
+msgid "India"
+msgstr "भारत"
+
+msgid "United Kingdom"
+msgstr "बेलायत"
+
+msgid "United States"
+msgstr "संयुक्त राज्य अमेरिका"
+
+msgid "Australia"
+msgstr "अष्ट्रेलिया"
+
+msgid "Canada"
+msgstr "क्यानडा"
+
+msgid "Qatar"
+msgstr "कतार"
+
+msgid "United Arab Emirates"
+msgstr "संयुक्त अरब इमिरेट्स"
+
+msgid "Saudi Arabia"
+msgstr "साउदी अरब"
+
+msgid "Kuwait"
+msgstr "कुवेत"
+
+msgid "Malaysia"
+msgstr "मलेसिया"
+
+msgid "Japan"
+msgstr "जापान"
+
+msgid "South Korea"
+msgstr "दक्षिण कोरिया"
+
+#, python-format
+msgid "Enter a mobile number, like %(example)s."
+msgstr "मोबाइल नम्बर लेख्नुहोस्, जस्तै %(example)s।"
+
+msgid "Current appeals"
+msgstr "हालका अपिलहरू"
+
+msgid "News categories"
+msgstr "समाचारका वर्गहरू"
+
+msgid "All news"
+msgstr "सबै समाचार"
+
+msgid "No news to show yet."
+msgstr "देखाउनका लागि अहिलेसम्म कुनै समाचार छैन।"
+
+msgid "Follow our news"
+msgstr "हाम्रा समाचार पछ्याउनुहोस्"
+
+msgid "Get new stories as soon as we publish them in a news reader app, such as Feedly, Inoreader or NetNewsWire. Copy this address and add it in the app."
+msgstr "हाम्रा नयाँ समाचार प्रकाशित हुनासाथ Feedly, Inoreader वा NetNewsWire जस्ता न्युज रिडर एपमा पाउनुहोस्। यो ठेगाना कपी गरेर एपमा थप्नुहोस्।"
+
+msgid "News feed address"
+msgstr "समाचार फिडको ठेगाना"
+
+msgid "Copied"
+msgstr "कपी भयो"
+
+msgid "Link copied. Paste it into your news reader app."
+msgstr "लिङ्क कपी भयो। यसलाई आफ्नो न्युज रिडर एपमा टाँस्नुहोस्।"
+
+msgid "Press Ctrl+C (or ⌘+C) to copy the selected link."
+msgstr "छानिएको लिङ्क कपी गर्न Ctrl+C (वा ⌘+C) थिच्नुहोस्।"
+
+msgid "Copy link"
+msgstr "लिङ्क कपी गर्नुहोस्"
+
+msgid "Categories and tags"
+msgstr "वर्ग र ट्यागहरू"
+
+#, python-format
+msgid "Search results for “%(query)s”"
+msgstr "“%(query)s” को खोज नतिजा"
+
+#, python-format
+msgid "%(counter)s result"
+msgid_plural "%(counter)s results"
+msgstr[0] "%(counter)s नतिजा"
+msgstr[1] "%(counter)s नतिजा"
+
+#, python-format
+msgid "No results found for “%(query)s”."
+msgstr "“%(query)s” का लागि कुनै नतिजा फेला परेन।"

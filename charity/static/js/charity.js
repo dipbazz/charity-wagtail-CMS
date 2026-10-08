@@ -1,5 +1,7 @@
 // "Copy link" buttons: <button data-copy="input-id" hidden> copies that input's value.
 // Buttons stay hidden without JavaScript; visitors can still select the text themselves.
+// The words shown (in the reader's language) come from the button's data-copied,
+// data-copied-status and data-copy-failed-status.
 document.querySelectorAll("[data-copy]").forEach((button) => {
     const input = document.getElementById(button.dataset.copy);
     const status = document.querySelector(`[data-copy-status="${button.dataset.copy}"]`);
@@ -13,17 +15,17 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
             await navigator.clipboard.writeText(input.value);
             // Confirm on the button itself, where the visitor is looking. The tick is decorative;
             // screen readers get the status message below instead.
-            button.textContent = "Copied ";
+            button.textContent = `${button.dataset.copied} `;
             button.insertAdjacentHTML("beforeend", '<span aria-hidden="true">✓</span>');
             clearTimeout(resetTimer);
             resetTimer = setTimeout(() => {
                 button.textContent = label;
             }, 2000);
-            status.textContent = "Link copied. Paste it into your news reader app.";
+            status.textContent = button.dataset.copiedStatus;
         } catch {
             // Clipboard access can be blocked (e.g. on plain http); select the text instead.
             input.select();
-            status.textContent = "Press Ctrl+C (or ⌘+C) to copy the selected link.";
+            status.textContent = button.dataset.copyFailedStatus;
         }
     });
 });
@@ -75,6 +77,9 @@ if (ownAmount) {
 // (950 of 1000) the box and the count turn amber (.is-near-limit in charity.css). Screen readers
 // hear only that and reaching the limit, through a hidden status message, not every keystroke.
 // Without JavaScript there's no count, and maxlength still stops typing at the limit.
+// The words (in the reader's language) are the textarea's data-count-text, data-left-text and
+// data-full-text, with {typed}, {limit} and {left} standing for the numbers.
+const fill = (text, numbers) => text.replace(/\{(\w+)\}/g, (_, name) => numbers[name]);
 document.querySelectorAll("textarea[data-char-count][maxlength]").forEach((box) => {
     const limit = Number(box.getAttribute("maxlength"));
     const warnFrom = Math.ceil(limit * 0.95);
@@ -92,7 +97,7 @@ document.querySelectorAll("textarea[data-char-count][maxlength]").forEach((box) 
     const update = () => {
         const typed = box.value.length;
         const near = typed >= warnFrom;
-        count.textContent = `${typed}/${limit} characters`;
+        count.textContent = fill(box.dataset.countText, { typed, limit });
         count.classList.toggle("is-near-limit", near);
         box.classList.toggle("is-near-limit", near);
 
@@ -101,8 +106,8 @@ document.querySelectorAll("textarea[data-char-count][maxlength]").forEach((box) 
             state = newState;
             status.textContent = {
                 ok: "",
-                near: `You have ${limit - typed} characters left.`,
-                full: `You've reached the limit of ${limit} characters.`,
+                near: fill(box.dataset.leftText, { left: limit - typed }),
+                full: fill(box.dataset.fullText, { limit }),
             }[state];
         }
     };

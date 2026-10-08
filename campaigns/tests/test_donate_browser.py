@@ -182,3 +182,28 @@ class TestMessageCount:
         message.fill("x" * 999)
         message.press_sequentially("x")
         expect(status).to_have_text("You've reached the limit of 1000 characters.")
+
+
+class TestMessageCountInNepali:
+    """The count's words come from the page, so a Nepali page counts in Nepali (#116)."""
+
+    @pytest.fixture
+    def nepali_form(self, site_page, donate_page, nepali_home_page):
+        translation = donate_page.copy_for_translation(nepali_home_page.locale)
+        translation.save_revision().publish()
+        site_page.goto(SITE + translation.url)
+        return site_page
+
+    def test_counts_and_warns_in_nepali(self, nepali_form):
+        message = nepali_form.locator("#id_message")
+        status = nepali_form.locator("#id_message_count_status")
+        expect(nepali_form.locator(".char-count")).to_have_text("0/1000 अक्षर")
+
+        message.fill("x" * 949)
+        message.press_sequentially("x")
+        expect(nepali_form.locator(".char-count")).to_have_text("950/1000 अक्षर")
+        expect(status).to_have_text("तपाईंसँग 50 अक्षर बाँकी छन्।")
+
+        message.fill("x" * 999)
+        message.press_sequentially("x")
+        expect(status).to_have_text("तपाईं 1000 अक्षरको सीमामा पुग्नुभयो।")

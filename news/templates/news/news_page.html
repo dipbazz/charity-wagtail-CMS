@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags wagtailimages_tags wagtailroutablepage_tags %}
+{% load i18n wagtailcore_tags wagtailimages_tags wagtailroutablepage_tags %}
 
 {% block body_class %}template-newspage{% endblock %}
 
@@ -21,7 +21,7 @@
             {% with categories=page.categories.all tags=page.tags.all %}
                 {% if categories or tags %}
                     <footer>
-                        <ul class="tag-list" aria-label="Categories and tags">
+                        <ul class="tag-list" aria-label="{% translate "Categories and tags" %}">
                             {% for category in categories %}
                                 <li><a href="{% routablepageurl index 'category' category.slug %}">{{ category.name }}</a></li>
                             {% endfor %}

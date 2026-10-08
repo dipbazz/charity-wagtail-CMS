@@ -63,6 +63,8 @@ Each is explained on the linked page; they're here because breaking one has caus
 - Test permissions as `editor`, not `admin_client`
   ([Editors and permissions](site/editors-and-permissions.md#testing-permissions)).
 - `min-width` queries in `rem` only; never `max-width` ([Look and feel](site/look-and-feel.md)).
+- Every word a visitor reads is marked for translation, and the Nepali goes in `locale/ne/` with its
+  compiled `.mo` committed ([Languages](site/languages.md#menus-buttons-and-messages)).
 - `{% picture %}` lists the largest size first; card filters must match `CARD_IMAGE_FILTERS`
   ([Images](site/images.md)).
 - Workflow actions are pinned to a commit SHA ([Security](contributing/security.md)).

@@ -1,5 +1,5 @@
-{% load wagtailcore_tags %}
-<nav class="main-nav" aria-label="Main">
+{% load i18n wagtailcore_tags %}
+<nav class="main-nav" aria-label="{% translate "Main" %}">
     <ul>
         {% for item in menu_items %}
             <li><a href="{% pageurl item.page %}"{% if item.aria_current %} aria-current="{{ item.aria_current }}"{% endif %}>{{ item.page.title }}</a></li>

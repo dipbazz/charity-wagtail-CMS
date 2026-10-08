@@ -62,14 +62,14 @@ class TestPrivacyNoticeLink:
 
         html = client.get("/ne/").content.decode()
 
-        assert f'<a href="{translation.url}">Privacy notice</a>' in html
+        assert f'<a href="{translation.url}">गोपनीयता सूचना</a>' in html
 
     def test_nepali_page_links_to_the_main_notice_until_it_is_translated(
         self, client, privacy_notice, nepali_home_page
     ):
         html = client.get("/ne/").content.decode()
 
-        assert f'<a href="{privacy_notice.url}">Privacy notice</a>' in html
+        assert f'<a href="{privacy_notice.url}">गोपनीयता सूचना</a>' in html
 
 
 class TestAnnouncementBanner:

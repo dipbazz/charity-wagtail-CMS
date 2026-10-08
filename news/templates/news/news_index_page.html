@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailroutablepage_tags %}
+{% load i18n wagtailroutablepage_tags %}
 
 {% block body_class %}template-newsindexpage{% endblock %}
 
@@ -13,9 +13,9 @@
         {% if page.introduction and not active_filter %}<p class="lead">{{ page.introduction }}</p>{% endif %}
 
         {% if categories %}
-            <nav aria-label="News categories">
+            <nav aria-label="{% translate "News categories" %}">
                 <ul class="tag-list">
-                    <li><a href="{{ page.url }}"{% if not active_filter %} aria-current="page"{% endif %}>All news</a></li>
+                    <li><a href="{{ page.url }}"{% if not active_filter %} aria-current="page"{% endif %}>{% translate "All news" %}</a></li>
                     {% for category in categories %}
                         <li><a href="{% routablepageurl page 'category' category.slug %}"{% if category == active_category %} aria-current="page"{% endif %}>{{ category.name }}</a></li>
                     {% endfor %}
@@ -31,19 +31,18 @@
             </ul>
             {% include "includes/pagination.html" with items=stories %}
         {% else %}
-            <p>No news to show yet.</p>
+            <p>{% translate "No news to show yet." %}</p>
         {% endif %}
 
         <section class="follow-news" aria-labelledby="follow-news-heading">
-            <h2 id="follow-news-heading">Follow our news</h2>
+            <h2 id="follow-news-heading">{% translate "Follow our news" %}</h2>
             <p>
-                Get new stories as soon as we publish them in a news reader app, such as Feedly,
-                Inoreader or NetNewsWire. Copy this address and add it in the app.
+                {% translate "Get new stories as soon as we publish them in a news reader app, such as Feedly, Inoreader or NetNewsWire. Copy this address and add it in the app." %}
             </p>
-            <label for="feed-url">News feed address</label>
+            <label for="feed-url">{% translate "News feed address" %}</label>
             <div class="copy-field">
                 <input id="feed-url" type="text" value="{{ feed_url }}" readonly>
-                <button type="button" class="button" data-copy="feed-url" hidden>Copy link</button>
+                <button type="button" class="button" data-copy="feed-url" data-copied="{% translate "Copied" %}" data-copied-status="{% translate "Link copied. Paste it into your news reader app." %}" data-copy-failed-status="{% translate "Press Ctrl+C (or ⌘+C) to copy the selected link." %}" hidden>{% translate "Copy link" %}</button>
             </div>
             <p class="copy-status" role="status" data-copy-status="feed-url"></p>
         </section>

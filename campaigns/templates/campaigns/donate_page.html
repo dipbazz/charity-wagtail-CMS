@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static wagtailcore_tags %}
+{% load i18n static wagtailcore_tags %}
 
 {% block body_class %}template-donatepage form-page{% endblock %}
 
@@ -14,7 +14,7 @@
 
         {% if form.errors %}
             <div class="error-summary" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <h2 id="error-summary-heading">Please check your pledge</h2>
+                <h2 id="error-summary-heading">{% translate "Please check your pledge" %}</h2>
                 <ul>
                     {% for field in form %}
                         {% for error in field.errors %}
@@ -30,7 +30,7 @@
             {{ form.submission_id }}
 
             <fieldset class="amount-options"{% if form.amount.errors %} aria-describedby="{{ form.amount.auto_id }}_error"{% endif %}>
-                <legend>How much would you like to give?</legend>
+                <legend>{% translate "How much would you like to give?" %}</legend>
                 {% if form.amount.errors %}
                     <ul class="errorlist" id="{{ form.amount.auto_id }}_error">{% for error in form.amount.errors %}<li>{{ error }}</li>{% endfor %}</ul>
                 {% endif %}
@@ -49,7 +49,7 @@
             <div class="giving-frequency">
                 <div class="field">{{ form.frequency.as_field_group }}</div>
                 <fieldset class="phone-field" aria-describedby="{{ form.phone.auto_id }}_helptext">
-                    <legend>Mobile number <span class="optional">(optional)</span></legend>
+                    <legend>{% translate "Mobile number" %} <span class="optional">({% translate "optional" %})</span></legend>
                     <p class="helptext" id="{{ form.phone.auto_id }}_helptext">{{ form.phone.help_text }}</p>
                     <div class="phone-row">
                         <div class="field phone-country">{{ form.phone_country.as_field_group }}</div>
@@ -66,7 +66,7 @@
             <div class="field">{{ form.message.as_field_group }}</div>
 
             <fieldset>
-                <legend>Your details</legend>
+                <legend>{% translate "Your details" %}</legend>
                 <div class="field">{{ form.name.as_field_group }}</div>
                 <div class="field">{{ form.email.as_field_group }}</div>
                 <div class="field">{{ form.address.as_field_group }}</div>
@@ -74,13 +74,13 @@
             </fieldset>
 
             <fieldset class="choices">
-                <legend>Your choices</legend>
+                <legend>{% translate "Your choices" %}</legend>
                 {% include "campaigns/forms/checkbox.html" with field=form.email_updates %}
                 {% include "campaigns/forms/checkbox.html" with field=form.show_on_website %}
             </fieldset>
 
             {% include "includes/privacy_link.html" %}
-            <button class="button button-large" type="submit">Send my pledge</button>
+            <button class="button button-large" type="submit">{% translate "Send my pledge" %}</button>
         </form>
 
         {% include "includes/streamfield.html" with stream=page.body %}

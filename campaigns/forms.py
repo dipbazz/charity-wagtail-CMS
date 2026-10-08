@@ -5,13 +5,14 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator
 from django.db import IntegrityError, transaction
+from django.utils.translation import gettext, gettext_lazy
 
 from campaigns.models import Frequency, Pledge
 from core.money import CURRENCIES, format_money
 from core.phone import normalise_mobile, phone_country_choices
 
-NEEDED_MOST = "Wherever it's needed most"
-CHOOSE_AN_AMOUNT = "Choose an amount or enter your own."
+NEEDED_MOST = gettext_lazy("Wherever it's needed most")
+CHOOSE_AN_AMOUNT = gettext_lazy("Choose an amount or enter your own.")
 OTHER = "other"
 
 
@@ -53,8 +54,9 @@ class TextareaField(forms.CharField):
 class PledgeForm(forms.ModelForm):
     """A pledge to give, saved as a Pledge. No payment is taken.
 
-    Fields, labels, help text and choices come from the Pledge model; this form only adds how
-    the page asks for them: the amount cards, the supporter's own amount and the phone country.
+    Fields and choices come from the Pledge model; this form adds how the page asks for them: the
+    amount cards, the supporter's own amount and the phone country. Everything a supporter reads
+    is worded here, in the language they're reading, so the model's English stays for the admin.
     """
 
     # Adds "(optional)" to the labels of fields marked show_optional in __init__.
@@ -73,7 +75,9 @@ class PledgeForm(forms.ModelForm):
         max_value=99_999_999,
         widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
     )
-    phone_country = forms.ChoiceField(choices=phone_country_choices, label="Country")
+    phone_country = forms.ChoiceField(
+        choices=lambda: phone_country_choices(translate=True), label=gettext_lazy("Country")
+    )
     # A one-time ID for this copy of the form: sending the same copy again updates its pledge
     # instead of adding a second one. Going back from the thank-you page can reload the page with
     # a new ID, so donate.js puts back the ID that was sent.
@@ -100,40 +104,60 @@ class PledgeForm(forms.ModelForm):
             "email": forms.EmailInput(attrs={"autocomplete": "email"}),
             "address": forms.Textarea(attrs={"rows": 3, "autocomplete": "street-address"}),
             "postcode": forms.TextInput(attrs={"autocomplete": "postal-code"}),
-            # charity.js shows "10/1000 characters" below it (data-char-count).
-            "message": forms.Textarea(attrs={"rows": 3, "data-char-count": ""}),
+            # charity.js shows "10/1000 characters" below it (data-char-count), in these words.
+            "message": forms.Textarea(
+                attrs={
+                    "rows": 3,
+                    "data-char-count": "",
+                    "data-count-text": gettext_lazy("{typed}/{limit} characters"),
+                    "data-left-text": gettext_lazy("You have {left} characters left."),
+                    "data-full-text": gettext_lazy(
+                        "You've reached the limit of {limit} characters."
+                    ),
+                }
+            ),
         }
         field_classes = {"message": TextareaField}
         # The model's names head the admin's columns; donors are asked in their own words.
         labels = {
-            "name": "Your name",
-            "appeal": "Which appeal would you like to support?",
-            "phone": "Number",  # under its "Mobile number (optional)" legend
-            "message": "A message with your gift",
-            "email_updates": "Email me stories from our projects and appeals that need help",
-            "show_on_website": "Show my gift on our website",
+            "frequency": gettext_lazy("How often"),
+            "name": gettext_lazy("Your name"),
+            "email": gettext_lazy("Email address"),
+            "appeal": gettext_lazy("Which appeal would you like to support?"),
+            # Under its "Mobile number (optional)" legend.
+            "phone": gettext_lazy("Number"),
+            "address": gettext_lazy("Address"),
+            "postcode": gettext_lazy("Postcode or postal code"),
+            "message": gettext_lazy("A message with your gift"),
+            "email_updates": gettext_lazy(
+                "Email me stories from our projects and appeals that need help"
+            ),
+            "show_on_website": gettext_lazy("Show my gift on our website"),
         }
         help_texts = {
-            "message": (
+            "message": gettext_lazy(
                 "For example, if you're giving in memory of someone. Only our team will read it."
+            ),
+            "address": gettext_lazy(
+                "House or ward number, street or tole, town or municipality, district."
             ),
             # The supporter's consents. Each says exactly what they agree to; the recent
             # supporters list (#99) must show no more than show_on_website's text promises.
-            "email_updates": "You can ask us to stop at any time.",
-            "show_on_website": (
+            "email_updates": gettext_lazy("You can ask us to stop at any time."),
+            "show_on_website": gettext_lazy(
                 "Once your gift reaches us, we'll list your name, the amount, the appeal and the "
                 "date. Nothing else about you is shown."
             ),
             # The supporter's consent to the monthly reminder (#90): keep its purpose this clear.
-            "phone": (
+            "phone": gettext_lazy(
                 "We'll only use this to send you a monthly reminder on WhatsApp, or by text "
                 "message if you're in Nepal and not on WhatsApp."
             ),
         }
         # Each error says which field it's about, because the summary at the top lists them all.
         error_messages = {
-            "name": {"required": "Enter your name."},
-            "email": {"required": "Enter your email address."},
+            "name": {"required": gettext_lazy("Enter your name.")},
+            "email": {"required": gettext_lazy("Enter your email address.")},
         }
 
     def __init__(self, *args, page, currency, phone_country, link=None, **kwargs):
@@ -149,8 +173,15 @@ class PledgeForm(forms.ModelForm):
         self.fields["amount"].choices = [
             (str(option.amount), AmountLabel(format_money(option.amount, currency), option.impact))
             for option in amounts
-        ] + [(OTHER, AmountLabel("Other amount"))]
-        self.fields["other_amount"].label = f"Your own amount ({CURRENCIES[currency][1].strip()})"
+        ] + [(OTHER, AmountLabel(gettext("Other amount")))]
+        self.fields["other_amount"].label = gettext("Your own amount (%(currency)s)") % {
+            "currency": CURRENCIES[currency][1].strip()
+        }
+        # The model's choices are the admin's English; supporters read them in their language.
+        self.fields["frequency"].choices = [
+            (Frequency.ONE_OFF, gettext("One-off")),
+            (Frequency.MONTHLY, gettext("Monthly")),
+        ]
 
         # Appeals are chosen and linked by slug: /donate/?appeal=flood-relief.
         appeal = self.fields["appeal"]
@@ -212,7 +243,9 @@ class PledgeForm(forms.ModelForm):
                 self.add_error("amount", CHOOSE_AN_AMOUNT)
             elif cleaned_data["amount"] != OTHER and other_amount:
                 # Saving either one could record a gift the supporter didn't mean.
-                self.add_error("amount", "Choose a suggested amount or type your own, not both.")
+                self.add_error(
+                    "amount", gettext("Choose a suggested amount or type your own, not both.")
+                )
 
         # The number is only for the monthly reminder, so a one-off gift doesn't keep it.
         if cleaned_data.get("frequency") != Frequency.MONTHLY:

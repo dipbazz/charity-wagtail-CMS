@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load i18n wagtailcore_tags %}
 
 {% block body_class %}template-formpage{% endblock %}
 
@@ -9,7 +9,7 @@
         {% if page.thank_you_text %}
             {{ page.thank_you_text|richtext }}
         {% else %}
-            <p>Thank you, we have received your message.</p>
+            <p>{% translate "Thank you, we have received your message." %}</p>
         {% endif %}
     </div>
 {% endblock %}
