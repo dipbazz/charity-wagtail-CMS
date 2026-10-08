@@ -2,7 +2,7 @@
 {% wagtail_site as current_site %}
 {% with banner=settings.core.AnnouncementBanner %}
     {% if banner.enabled and banner.message %}
-        <div class="announcement" role="region" aria-label="Announcement">
+        <div class="announcement" role="region" aria-label="{% translate "Announcement" %}">
             <div class="container">
                 {% if banner.link_page %}<a href="{% pageurl banner.link_page %}">{{ banner.message }}</a>{% else %}{{ banner.message }}{% endif %}
             </div>
@@ -18,12 +18,12 @@
     </div>
     <div class="container">
         {# Shown only on pages with JavaScript (the "js" class), so without it the menu simply stays open. #}
-        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu">Menu</button>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu">{% translate "Menu" %}</button>
         <div class="site-menu" id="site-menu">
             {% main_menu %}
             <form class="search-form" action="{% url 'search' %}" method="get" role="search">
-                <label class="visually-hidden" for="header-search">Search</label>
-                <input id="header-search" type="search" name="query" placeholder="Search">
+                <label class="visually-hidden" for="header-search">{% translate "Search" %}</label>
+                <input id="header-search" type="search" name="query" placeholder="{% translate "Search" %}">
             </form>
         </div>
         {# Donate comes last, so Menu and Donate sit at the two ends of the row. #}
@@ -38,7 +38,7 @@
                 </nav>
             {% endif %}
             {% if settings.core.SiteSettings.donate_page %}
-                <a class="button" href="{% pageurl settings.core.SiteSettings.donate_page %}">Donate</a>
+                <a class="button" href="{% pageurl settings.core.SiteSettings.donate_page %}">{% translate "Donate" %}</a>
             {% endif %}
         </div>
     </div>

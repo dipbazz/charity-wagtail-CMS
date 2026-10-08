@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load i18n wagtailcore_tags %}
 
 {% block body_class %}template-formpage form-page{% endblock %}
 
@@ -12,7 +12,7 @@
             {% csrf_token %}
             {{ form.as_p }}
             {% include "includes/privacy_link.html" %}
-            <button class="button button-large" type="submit">Send</button>
+            <button class="button button-large" type="submit">{% translate "Send" %}</button>
         </form>
     </div>
 {% endblock %}

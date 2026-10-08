@@ -9,10 +9,10 @@ import pytest
 
 pytestmark = pytest.mark.django_db
 
-# The card listings (/, /appeals/, /news/) each spend one query prefetching card image renditions
+# The card listings (/, /appeals/, /stories/) each spend one query prefetching card image renditions
 # (core.images.with_card_images). On a just-started server that one query replaces one per card.
-# Public listings (/, /appeals/, /news/ and its feed) also spend one query reading the page privacy
-# restrictions, so pages behind a password or login stay out of them (`.public()`, #47).
+# Public listings (/, /appeals/, /stories/ and its feed) also spend one query reading the page
+# privacy restrictions, so pages behind a password or login stay out of them (`.public()`, #47).
 # /donate/ spends three more than /about/: its suggested amounts, and the open appeals offered in
 # the form with their privacy restrictions (#31). A link naming an appeal costs one more, to check
 # that appeal is on offer before preselecting it.
@@ -28,8 +28,8 @@ BUDGETS = {
     "/": 20,
     "/appeals/": 18,
     "/appeals/flood-relief/": 18,
-    "/news/": 21,
-    "/news/feed/": 11,
+    "/stories/": 21,
+    "/stories/feed/": 11,
     "/about/": 14,
     "/volunteer/": 15,
     "/donate/": 17,
@@ -39,7 +39,7 @@ BUDGETS = {
     "/ne/": 19,
     "/ne/appeals/": 20,
     "/ne/appeals/flood-relief/": 21,
-    "/ne/news/": 23,
+    "/ne/stories/": 23,
 }
 
 

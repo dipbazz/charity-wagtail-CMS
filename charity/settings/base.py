@@ -150,6 +150,11 @@ TIME_ZONE = "Asia/Kathmandu"
 
 USE_I18N = True
 
+# The Nepali words for the site's own text (menus, buttons, forms), in locale/ne/. Django's own
+# Nepali covers its built-in errors and dates. Edit the .po file, then run
+# `python manage.py compilemessages`: the compiled .mo is committed too, see docs/site/languages.md.
+LOCALE_PATHS = [BASE_DIR / "locale"]
+
 # One page tree per language, in the same languages as the site's interface. Editors copy a page
 # into the other language with simple_translation's Translate action. Its
 # WAGTAILSIMPLETRANSLATION_SYNC_PAGE_TREE stays off: it would put a copy of every new page in every

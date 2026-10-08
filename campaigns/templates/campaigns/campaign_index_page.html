@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block body_class %}template-campaignindexpage{% endblock %}
 
@@ -7,9 +8,9 @@
         <h1>{{ page.title }}</h1>
         {% if page.introduction %}<p class="lead">{{ page.introduction }}</p>{% endif %}
 
-        <nav aria-label="Filter appeals">
+        <nav aria-label="{% translate "Filter appeals" %}">
             <ul class="tag-list">
-                <li><a href="{{ page.url }}"{% if not status %} aria-current="page"{% endif %}>All appeals</a></li>
+                <li><a href="{{ page.url }}"{% if not status %} aria-current="page"{% endif %}>{% translate "All appeals" %}</a></li>
                 {% for value, label in status_filters.items %}
                     <li><a href="?status={{ value }}"{% if status == value %} aria-current="page"{% endif %}>{{ label }}</a></li>
                 {% endfor %}
@@ -24,7 +25,7 @@
             </ul>
             {% include "includes/pagination.html" with items=campaigns %}
         {% else %}
-            <p>There are no appeals to show right now.</p>
+            <p>{% translate "There are no appeals to show right now." %}</p>
         {% endif %}
     </div>
 {% endblock %}

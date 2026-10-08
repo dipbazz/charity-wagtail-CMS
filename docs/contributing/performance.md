@@ -42,12 +42,12 @@ Each run's reports are attached as the `lighthouse-reports` artifact.
    ([Getting started](../getting-started/index.md#run-it-as-the-live-site-runs-it)):
    `docker compose up --build`. This works on Windows too, where gunicorn doesn't run outside
    Docker.
-2. Visit `/`, `/appeals/`, `/appeals/flood-relief/` and `/news/` on <http://localhost:8090> once, so
+2. Visit `/`, `/appeals/`, `/appeals/flood-relief/` and `/stories/` on <http://localhost:8090> once, so
    image renditions exist before anything is measured.
 3. Run Lighthouse on those pages (the addresses are given here because CI's are on port 8000):
 
    ```bash
-   npx @lhci/cli@0.15.1 autorun --collect.url=http://localhost:8090/ --collect.url=http://localhost:8090/appeals/ --collect.url=http://localhost:8090/appeals/flood-relief/ --collect.url=http://localhost:8090/news/
+   npx @lhci/cli@0.15.1 autorun --collect.url=http://localhost:8090/ --collect.url=http://localhost:8090/appeals/ --collect.url=http://localhost:8090/appeals/flood-relief/ --collect.url=http://localhost:8090/stories/
    ```
 
    Reports go to `.lighthouseci/reports`. Set `CHROME_PATH` if Chrome isn't found; Edge works too.

@@ -1,5 +1,6 @@
 import pytest
 from django.core.exceptions import ValidationError
+from django.utils import translation
 
 from core.models import SiteSettings
 from core.phone import normalise_mobile, phone_country_choices
@@ -32,6 +33,14 @@ class TestNormaliseMobile:
     def test_rejects_what_cannot_receive_a_message(self, number):
         with pytest.raises(ValidationError, match="like 984-1234567"):
             normalise_mobile(number, "NP")
+
+    def test_the_error_is_in_the_language_being_read(self):
+        with translation.override("ne"):
+            with pytest.raises(ValidationError) as error:
+                normalise_mobile("123", "NP")
+            message = error.value.messages[0]
+
+        assert "मोबाइल नम्बर लेख्नुहोस्, जस्तै 984-1234567" in message
 
 
 class TestPhoneCountryChoices:

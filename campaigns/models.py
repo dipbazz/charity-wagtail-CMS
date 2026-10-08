@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.utils.functional import SimpleLazyObject
+from django.utils.translation import gettext_lazy
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
     FieldPanel,
@@ -43,7 +44,10 @@ class CampaignIndexPage(Page):
     max_count_per_parent = 1
 
     campaigns_per_page = 9
-    status_filters = {"active": "Open appeals", "closed": "Past appeals"}
+    status_filters = {
+        "active": gettext_lazy("Open appeals"),
+        "closed": gettext_lazy("Past appeals"),
+    }
 
     def get_campaigns(self, status=None):
         campaigns = with_card_images(

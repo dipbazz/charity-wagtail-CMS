@@ -29,7 +29,9 @@ A new kind of page, such as an events listing. Copy the shape of an existing one
    ([Images](../site/images.md#card-listings)).
 5. **Write the template** in `<app>/templates/<app>/<model_name>.html`, extending `base.html` and
    rendering the body with `{% include "includes/streamfield.html" with stream=page.body %}`.
-   Style it mobile first (load the `mobile-first` skill).
+   Style it mobile first (load the `mobile-first` skill). Mark every word the template shows for
+   translation and add the Nepali ([Menus, buttons and messages](../site/languages.md#menus-buttons-and-messages));
+   a test fails on unmarked text.
 6. **Measure it:** add the page to `BUDGETS` in `charity/tests/test_query_budgets.py` at the count
    it runs now, add an example to `seed_demo` if the demo should have one, and add its address to
    `PATHS` in `charity/tests/test_demo_layout_browser.py` so CI checks it at six widths.

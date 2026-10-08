@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% load wagtailcore_tags %}
+{% load i18n wagtailcore_tags %}
 
 {% block body_class %}template-searchresults{% endblock %}
 
-{% block title %}{% if search_query %}Search results for “{{ search_query }}”{% else %}Search{% endif %}{% endblock %}
+{% block title %}{% if search_query %}{% blocktranslate trimmed with query=search_query %}Search results for “{{ query }}”{% endblocktranslate %}{% else %}{% translate "Search" %}{% endif %}{% endblock %}
 
 {% block content %}
     <div class="container narrow">
-        <h1>Search</h1>
+        <h1>{% translate "Search" %}</h1>
 
         <form class="search-form" action="{% url 'search' %}" method="get" role="search">
-            <label class="visually-hidden" for="search-page-query">Search</label>
+            <label class="visually-hidden" for="search-page-query">{% translate "Search" %}</label>
             <input id="search-page-query" type="search" name="query" value="{{ search_query }}">
-            <button type="submit" class="button">Search</button>
+            <button type="submit" class="button">{% translate "Search" %}</button>
         </form>
 
         {% if search_query %}
@@ -29,7 +29,7 @@
 
             <div class="search-results">
                 {% if search_results %}
-                    <p class="meta">{{ search_results.paginator.count }} result{{ search_results.paginator.count|pluralize }}</p>
+                    <p class="meta">{% blocktranslate trimmed count counter=search_results.paginator.count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktranslate %}</p>
                     <ul>
                         {% for result in search_results %}
                             {% with specific=result.specific %}
@@ -48,7 +48,7 @@
                     </ul>
                     {% include "includes/pagination.html" with items=search_results %}
                 {% else %}
-                    <p>No results found for “{{ search_query }}”.</p>
+                    <p>{% blocktranslate trimmed with query=search_query %}No results found for “{{ query }}”.{% endblocktranslate %}</p>
                 {% endif %}
             </div>
         {% endif %}

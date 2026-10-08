@@ -3,11 +3,13 @@ from html import escape
 from urllib.parse import urljoin, urlsplit
 
 import pytest
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.management import call_command
 from django.db import connection, transaction
 from django.test.utils import CaptureQueriesContext
+from django.utils import translation
 from wagtail.models import Locale, Site
 
 
@@ -19,6 +21,17 @@ def clear_cache():
     """
     yield
     cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def english_after_each_test():
+    """A request under /ne/ leaves Nepali active in the thread; the next test starts in English.
+
+    Translated text is looked up when it's shown, so a leftover language would make a test read
+    "तपाईंको नाम" where it expects "Your name".
+    """
+    yield
+    translation.activate(settings.LANGUAGE_CODE)
 
 
 @pytest.fixture

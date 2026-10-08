@@ -7,7 +7,8 @@ one-language pages must always work.
 
 Code: `core/languages.py` (which language versions of a page exist), `core/templatetags/language_tags.py`
 (the switch and `hreflang` links), `core/middleware.py` (addresses and fallback), `core/sitemaps.py`,
-`core/apps.py` (creates the languages), settings in `charity/settings/base.py`.
+`core/apps.py` (creates the languages), settings in `charity/settings/base.py`, and the site's own
+Nepali words in `locale/ne/` ([below](#menus-buttons-and-messages)).
 
 ## What readers see
 
@@ -20,6 +21,10 @@ Code: `core/languages.py` (which language versions of a page exist), `core/templ
   shown. It appears once both languages have a published home page.
 - **Menus, listings and search show the language being read.** A page only in one language is
   listed only in that language.
+- **The site's own words are in the language being read too:** the header and footer, buttons, the
+  pledge form with its labels and errors, search, pagination, "Page not found". Editors' content
+  (titles, page text, the banner, testimonials) is shown as written until
+  [#117](https://github.com/dipbazz/Charity-wagtail-CMS/issues/117).
 - **An address with no page in that language** (such as `/ne/news/` before the news page is
   translated) redirects to the same address in the main language, if a page is there.
 
@@ -80,6 +85,54 @@ privacy notice links go to the chosen page's published translation in the langua
 else to the page itself. Done by hand, because Wagtail's `.localized` costs a query even on a
 main-language page.
 
+### Menus, buttons and messages
+
+The site's own words are marked for translation and translated in one catalog,
+`locale/ne/LC_MESSAGES/django.po` (English is the words in the code, so it needs no catalog).
+Django's own Nepali catalog already covers its built-in form errors ("This field is required.")
+and the month names in dates, so those need nothing from us.
+
+**Marking text.** Any text a visitor reads, or their screen reader, is marked:
+
+- Templates: `{% translate "Search" %}` for a phrase, `{% blocktranslate trimmed with n=items.number %}Page {{ n }}{% endblocktranslate %}`
+  for a sentence with a value in it (a filter with an argument, such as `date:"j F Y"`, goes in
+  the `with`), and `{% blocktranslate count %}` for "1 result" / "2 results". Keep a sentence in
+  one piece: Nepali word order differs, so never build it from translated fragments.
+- Python: `gettext_lazy` for text that's set once when the code loads (a form's `labels`, a
+  class attribute) and `gettext` inside a method that runs per request.
+- Scripts: `charity.js` writes no words of its own. Its text comes from `data-` attributes the
+  template fills in (the "Copy link" button's `data-copied`, the message box's `data-count-text`),
+  so it needs no download of its own and the page stays within its weight budget.
+- **Not marked: the admin.** Editors work in English, so model field names, help texts and panel
+  headings stay as they are. The pledge form words itself in `campaigns/forms.py` rather than
+  taking its labels from the `Pledge` model, so the model's English stays for the admin; the
+  countries in Site settings stay English the same way (`phone_country_choices(translate=True)` is
+  the supporters' list).
+
+**Amounts** keep Latin digits and their lakh or western grouping in both languages ("Rs 46,87,500"):
+Nepali digits are a separate piece of work.
+
+**Adding or changing a word:**
+
+1. Mark it as above.
+2. `uv run python manage.py makemessages -l ne --ignore ".venv" --ignore "docs" --ignore "static" --ignore "media" --no-location --no-wrap`
+   adds the new text to the `.po` file with an empty `msgstr`.
+3. Write the Nepali in the `.po` file. Don't leave an entry empty or `fuzzy`: the tests fail. Keep
+   `%(name)s` and `{name}` placeholders exactly as they are.
+4. `uv run python manage.py compilemessages --ignore ".venv" --ignore "docs" --ignore "node_modules"`
+   writes the `.mo` file the site reads.
+5. Commit both files.
+
+**The compiled `.mo` file is committed,** so running the site, the tests and building the Docker
+image need no GNU gettext tools; only whoever edits the `.po` file does. A test compares the two
+and fails if the `.mo` is out of date (it skips where gettext isn't installed, and runs in CI).
+
+**A test fails if visible text isn't marked.** `charity/tests/test_translations.py` reads every
+public template and fails on a word outside `{% translate %}` / `{% blocktranslate %}`, or in an
+`aria-label`, `placeholder`, `title` or `alt` attribute. (Templates only the admin shows, in
+`previews/` and `admin/` folders, are skipped.) It can't see Python strings: mark those as you
+write them. Wording needs a Nepali speaker's eye: have one read the `.po` file before a release.
+
 ### The switch, `hreflang` and the sitemap
 
 `{% language_versions %}` finds, in one query, each language's published home page and the
@@ -122,6 +175,5 @@ Devanagari needs more room than English:
 
 ## Not yet
 
-- Menus, buttons and messages in Nepali (#116).
-- The banner, testimonials, partners and footer in the reader's language (#117).
+- The banner, testimonials, partners and footer's contact details in the reader's language (#117).
 - Nepali digits (०१२…) and Bikram Sambat dates.

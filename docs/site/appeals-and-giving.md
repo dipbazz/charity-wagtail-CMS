@@ -113,7 +113,7 @@ Each consent means exactly what its words say, and nothing more:
   nothing else.
 - **Email updates** (`email_updates`): only email supporters who ticked it, and give every email
   a way to stop (sending is planned under #81).
-- **Show my gift on our website** (`show_on_website`): the only consent to list a supporter in
+- **Show my gift on this website** (`show_on_website`): the only consent to list a supporter in
   public, and then only their name, amount, appeal and date, once the gift has arrived (#99).
 - **The message** may hold personal details (who a gift is in memory of). It's for the team only
   and is never shown on the site.

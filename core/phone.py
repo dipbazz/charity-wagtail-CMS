@@ -2,10 +2,12 @@ import re
 
 import phonenumbers
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy
 from phonenumbers import PhoneNumberFormat, PhoneNumberType
 
 # Countries offered for phone numbers: Nepal, then where most Nepali supporters live or work.
-# Add a country with its ISO 3166 code; the calling code comes from phonenumbers.
+# Add a country with its ISO 3166 code; the calling code comes from phonenumbers. Names stay in
+# English everywhere, so the list reads the same in the admin and on supporters' forms.
 PHONE_COUNTRIES = (
     ("NP", "Nepal"),
     ("IN", "India"),
@@ -30,10 +32,11 @@ PHONE_CHARACTERS = re.compile(r"^[\d\s()+.-]+$")
 
 
 def phone_country_choices():
-    return [
-        (code, f"{name} (+{phonenumbers.country_code_for_region(code)})")
-        for code, name in PHONE_COUNTRIES
-    ]
+    choices = []
+    for code, name in PHONE_COUNTRIES:
+        calling_code = phonenumbers.country_code_for_region(code)
+        choices.append((code, f"{name} (+{calling_code})"))
+    return choices
 
 
 def normalise_mobile(number, region):
@@ -54,7 +57,7 @@ def normalise_mobile(number, region):
     ):
         example = phonenumbers.example_number_for_type(region, PhoneNumberType.MOBILE)
         raise ValidationError(
-            "Enter a mobile number, like %(example)s.",
+            gettext_lazy("Enter a mobile number, like %(example)s."),
             code="invalid_mobile",
             params={"example": phonenumbers.format_number(example, PhoneNumberFormat.NATIONAL)},
         )

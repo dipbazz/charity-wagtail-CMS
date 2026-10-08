@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load money_tags wagtailcore_tags wagtailimages_tags %}
+{% load i18n money_tags wagtailcore_tags wagtailimages_tags %}
 
 {% block body_class %}template-campaignpage{% endblock %}
 
@@ -12,9 +12,9 @@
                 {% include "campaigns/includes/progress.html" with campaign=page %}
                 <p class="meta">
                     {% if page.is_active %}
-                        {% if page.end_date %}Appeal closes {{ page.end_date|date:"j F Y" }}{% else %}Ongoing appeal{% endif %}
+                        {% if page.end_date %}{% blocktranslate trimmed with closes=page.end_date|date:"j F Y" %}Appeal closes {{ closes }}{% endblocktranslate %}{% else %}{% translate "Ongoing appeal" %}{% endif %}
                     {% else %}
-                        This appeal closed on {{ page.end_date|date:"j F Y" }}. Thank you to everyone who gave.
+                        {% blocktranslate trimmed with closed=page.end_date|date:"j F Y" %}This appeal closed on {{ closed }}. Thank you to everyone who gave.{% endblocktranslate %}
                     {% endif %}
                 </p>
             </div>
@@ -29,14 +29,14 @@
         {% with amounts=page.donation_amounts.all %}
             {% if amounts and page.is_active %}
                 <section class="donation-amounts" aria-labelledby="give-heading">
-                    <h2 id="give-heading">What your gift can do</h2>
+                    <h2 id="give-heading">{% translate "What your gift can do" %}</h2>
                     <ul>
                         {% for option in amounts %}
                             <li><strong>{% money option.amount %}</strong> {{ option.impact }}</li>
                         {% endfor %}
                     </ul>
                     {% if donate_page %}
-                        <a class="button button-large" href="{% pageurl donate_page %}?appeal={{ page.slug|urlencode }}">Donate to this appeal</a>
+                        <a class="button button-large" href="{% pageurl donate_page %}?appeal={{ page.slug|urlencode }}">{% translate "Donate to this appeal" %}</a>
                     {% endif %}
                 </section>
             {% endif %}

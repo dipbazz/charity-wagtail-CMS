@@ -30,6 +30,7 @@ Some tests guard the whole project rather than one feature:
 |---|---|
 | `core/tests/test_dependencies.py` | `core` never imports a feature app |
 | `core/tests/test_stylesheet.py` | Width queries in `charity.css` are `min-width` in `rem` |
+| `charity/tests/test_translations.py` | No visible template text is unmarked for translation; no Nepali entry is empty or fuzzy; the `.mo` matches the `.po` |
 | `core/tests/test_permissions.py` | What editors and moderators can do |
 | `charity/tests/test_query_budgets.py` | The most queries each kind of page may run |
 | `charity/tests/test_workflows.py` | Every workflow action is pinned to a commit |
@@ -67,6 +68,12 @@ though production defaults to Nepali: English pages are at `/about/` and Nepali 
 `settings.LANGUAGE_CODE = "ne"` and clear Django's URL caches and the cache before and after, as
 `TestNepaliAsTheMainLanguage` in `charity/tests/test_languages.py` does: reversed URLs and
 Wagtail's site root paths are cached per language.
+
+A request under `/ne/` leaves Nepali active in the test's thread, and translated text is looked
+up when it's shown, so `conftest.py` puts English back after every test. Inside a test, read lazy
+text (a form's label) within `translation.override("ne")`. Tests of the site's own Nepali words
+are `charity/tests/test_nepali_interface.py` (header, footer, search, 404) and
+`campaigns/tests/test_nepali.py` (appeals and the pledge form).
 
 ## Fixtures and factories
 

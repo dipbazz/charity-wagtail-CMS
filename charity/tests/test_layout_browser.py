@@ -50,7 +50,7 @@ def demo_header(site, home_page, nepali_home_page):
     site_settings = SiteSettings.for_site(site)
     site_settings.donate_page = donate
     site_settings.save()
-    for title in ("About us", "Appeals", "News", "Volunteer with us"):
+    for title in ("About us", "Appeals", "Stories", "Volunteer with us"):
         home_page.add_child(instance=StandardPage(title=title, show_in_menus=True))
     return site
 
