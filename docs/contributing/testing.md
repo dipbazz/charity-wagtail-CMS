@@ -29,7 +29,7 @@ Some tests guard the whole project rather than one feature:
 | Test | Guards |
 |---|---|
 | `core/tests/test_dependencies.py` | `core` never imports a feature app |
-| `core/tests/test_stylesheet.py` | Width queries in `charity.css` are `min-width` in `rem` |
+| `core/tests/test_stylesheet.py` | Width queries in `charity.css` are `min-width` in `rem`; every colour outside `:root` is a `var(--…)` token that `:root` defines |
 | `charity/tests/test_translations.py` | No visible template text is unmarked for translation; no Nepali entry is empty or fuzzy; the `.mo` matches the `.po` |
 | `core/tests/test_permissions.py` | What editors and moderators can do |
 | `charity/tests/test_query_budgets.py` | The most queries each kind of page may run |
