@@ -1,6 +1,8 @@
 import re
 from pathlib import Path
 
+from PIL import ImageColor
+
 STYLESHEET = Path(__file__).resolve().parents[2] / "charity" / "static" / "css" / "charity.css"
 
 
@@ -26,6 +28,53 @@ def rules():
     """(selector, declarations) for every rule, comments removed."""
     css = re.sub(r"/\*.*?\*/", "", STYLESHEET.read_text(encoding="utf-8"), flags=re.S)
     return [(selector.strip(), body) for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css)]
+
+
+COLOUR_CODE = re.compile(
+    r"#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\(", re.IGNORECASE
+)
+# A whole word, so "tan" is found in "border: 1px solid tan" but not in "var(--colour-tan)".
+WORD = re.compile(r"(?<![\w-])[a-z]+(?![\w-])", re.IGNORECASE)
+
+
+def is_colour_word(word):
+    try:
+        ImageColor.getrgb(word)
+    except ValueError:
+        return False
+    return True
+
+
+def writes_a_colour(value):
+    return bool(COLOUR_CODE.search(value)) or any(is_colour_word(w) for w in WORD.findall(value))
+
+
+def test_every_colour_outside_root_is_a_design_token():
+    """Rules read their colours from `:root` with `var(--…)`, never write one of their own (#132).
+
+    A colour written into a rule can't be changed from one place, so a charity's brand colours
+    (#131) would reach most of the site and miss the rest.
+    """
+    assert [
+        f"{selector} {{ {declaration.strip()} }}"
+        for selector, body in rules()
+        if selector != ":root"
+        for declaration in body.split(";")
+        if writes_a_colour(declaration.partition(":")[2])
+    ] == []
+
+
+def test_every_token_a_rule_uses_is_defined_in_root():
+    """A misspelt token isn't an error in CSS: the declaration is silently dropped."""
+    defined = {
+        name
+        for selector, body in rules()
+        if selector == ":root"
+        for name in re.findall(r"(--[\w-]+)\s*:", body)
+    }
+    used = {name for _, body in rules() for name in re.findall(r"var\((--[\w-]+)", body)}
+
+    assert used - defined == set()
 
 
 def test_letter_spacing_and_capitals_are_kept_off_nepali_text():

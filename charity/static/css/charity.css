@@ -2,14 +2,31 @@
     --colour-primary: #0b5563;
     --colour-primary-dark: #073b45;
     --colour-accent: #f2b134;
+    --colour-accent-hover: #e09a12;
     --colour-text: #1d2a30;
+    /* Text on the fills above: white on both teals, the body text colour on the amber. */
+    --colour-on-dark: #fff;
+    --colour-on-accent: var(--colour-text);
     --colour-muted: #5b6b72;
+    --colour-background: #fff;
     --colour-surface: #f4f7f6;
     --colour-border: #d7e0de;
     --colour-error: #b3261e;
     /* Nearing a limit: dark amber text (6.4:1 on the surface below) and a pale amber fill. */
     --colour-warning-text: #7a5300;
     --colour-warning-surface: #fff6df;
+    /* Text an editor highlights in rich text. */
+    --colour-highlight: #fde7b4;
+    /* Paler text on the dark teal of the footer and of the home page banner. */
+    --colour-footer-text: #d9e6e4;
+    --colour-footer-meta: #c3d6d3;
+    --colour-hero-lead: #e6f0ef;
+    /* The dark teal at partial opacity: the header's shadow and the photo overlay under the home
+       page banner (the rule that uses them says why 75%). */
+    --colour-shadow: rgb(7 59 69 / 0.15);
+    --colour-overlay: rgb(7 59 69 / 0.75);
+    --colour-overlay-strong: rgb(7 59 69 / 0.85);
+    --colour-overlay-weak: rgb(7 59 69 / 0.3);
     --radius: 6px;
     --container: 1120px;
     /* The device's own fonts; no download. Latin fonts come first, and each lacks Devanagari, so
@@ -32,7 +49,7 @@ body {
     font-size: 1.0625rem;
     line-height: 1.6;
     color: var(--colour-text);
-    background: #fff;
+    background: var(--colour-background);
     /* At least as tall as the window, with <main> taking the spare height, so the footer sits at
        the bottom on short pages. svh: the height with the phone's browser bars showing, so a
        short page doesn't scroll. */
@@ -114,7 +131,7 @@ body:lang(ne) {
     top: 1rem;
     z-index: 100;
     padding: 0.5rem 1rem;
-    background: #fff;
+    background: var(--colour-background);
 }
 
 :focus-visible {
@@ -132,14 +149,14 @@ body:lang(ne) {
     border: 0;
     border-radius: var(--radius);
     background: var(--colour-accent);
-    color: var(--colour-text);
+    color: var(--colour-on-accent);
     font-weight: 700;
     text-decoration: none;
     cursor: pointer;
 }
 
 .button:hover {
-    background: #e09a12;
+    background: var(--colour-accent-hover);
 }
 
 .button-large {
@@ -149,15 +166,15 @@ body:lang(ne) {
 
 .button-secondary {
     background: var(--colour-primary);
-    color: #fff;
+    color: var(--colour-on-dark);
 }
 
 /* Header & navigation */
 .site-header {
     border-bottom: 1px solid var(--colour-border);
-    background: #fff;
+    background: var(--colour-background);
     /* Lifts the header off a white page, which its own white controls row would blend into. */
-    box-shadow: 0 2px 6px rgb(7 59 69 / 0.15);
+    box-shadow: 0 2px 6px var(--colour-shadow);
 }
 
 /* The charity's name on a row of its own, centred, so a long name never crowds the
@@ -179,7 +196,7 @@ body:lang(ne) {
     font-weight: 800;
     line-height: 1.2;
     text-align: center;
-    color: #fff;
+    color: var(--colour-on-dark);
     text-decoration: none;
 }
 
@@ -202,7 +219,7 @@ body:lang(ne) {
     padding: 0 0.6rem;
     border: 2px solid var(--colour-primary);
     border-radius: var(--radius);
-    background: #fff;
+    background: var(--colour-background);
     color: var(--colour-primary);
     font: inherit;
     font-weight: 700;
@@ -211,7 +228,7 @@ body:lang(ne) {
 
 .menu-toggle[aria-expanded="true"] {
     background: var(--colour-primary);
-    color: #fff;
+    color: var(--colour-on-dark);
 }
 
 .js .menu-toggle {
@@ -253,7 +270,7 @@ body:lang(ne) {
 
 .language-switcher a[aria-current] {
     background: var(--colour-primary);
-    color: #fff;
+    color: var(--colour-on-dark);
 }
 
 /* On a phone only the other language is shown; the page itself is already in this one. */
@@ -388,7 +405,7 @@ body:lang(ne) {
     grid-template-columns: minmax(0, 1fr);
     min-height: 26rem;
     background: var(--colour-primary-dark);
-    color: #fff;
+    color: var(--colour-on-dark);
 }
 
 .hero-image {
@@ -403,7 +420,7 @@ body:lang(ne) {
     content: "";
     position: relative;
     grid-area: 1 / 1;
-    background: rgb(7 59 69 / 0.75);
+    background: var(--colour-overlay);
 }
 
 @media (min-width: 64rem) {
@@ -411,9 +428,9 @@ body:lang(ne) {
     .hero::after {
         background: linear-gradient(
             90deg,
-            rgb(7 59 69 / 0.85),
-            rgb(7 59 69 / 0.75) 65%,
-            rgb(7 59 69 / 0.3)
+            var(--colour-overlay-strong),
+            var(--colour-overlay) 65%,
+            var(--colour-overlay-weak)
         );
     }
 }
@@ -431,12 +448,12 @@ body:lang(ne) {
     max-width: 18ch;
     margin: 0 0 1rem;
     font-size: clamp(2.2rem, 5vw, 3.5rem);
-    color: #fff;
+    color: var(--colour-on-dark);
 }
 
 .hero .lead {
     max-width: 40ch;
-    color: #e6f0ef;
+    color: var(--colour-hero-lead);
 }
 
 /* StreamField blocks */
@@ -472,12 +489,12 @@ body:lang(ne) {
     padding: 2rem;
     border-radius: var(--radius);
     background: var(--colour-primary);
-    color: #fff;
+    color: var(--colour-on-dark);
 }
 
 .block-cta h2 {
     margin-top: 0;
-    color: #fff;
+    color: var(--colour-on-dark);
 }
 
 .block-stats dl {
@@ -536,7 +553,7 @@ body:lang(ne) {
     overflow: hidden;
     border: 1px solid var(--colour-border);
     border-radius: var(--radius);
-    background: #fff;
+    background: var(--colour-background);
 }
 
 .card-body {
@@ -594,7 +611,7 @@ body:lang(ne) {
 /* The selected filter: filled, and bold so it doesn't rely on colour alone. */
 .tag-list a[aria-current] {
     background: var(--colour-primary);
-    color: #fff;
+    color: var(--colour-on-dark);
     font-weight: 700;
 }
 
@@ -908,15 +925,15 @@ body:lang(ne) {
     margin-top: 4rem;
     padding: 2.5rem 0;
     background: var(--colour-primary-dark);
-    color: #d9e6e4;
+    color: var(--colour-footer-text);
 }
 
 .site-footer a {
-    color: #fff;
+    color: var(--colour-on-dark);
 }
 
 .site-footer .meta {
-    color: #c3d6d3;
+    color: var(--colour-footer-meta);
 }
 
 /* Centred, so the phone number lines up with the links' taller tap targets. */
@@ -939,12 +956,13 @@ body:lang(ne) {
 .announcement {
     padding: 0.6rem 0;
     background: var(--colour-accent);
+    color: var(--colour-on-accent);
     font-weight: 700;
     text-align: center;
 }
 
 .announcement a {
-    color: var(--colour-text);
+    color: inherit;
 }
 
 /* Testimonials */
@@ -1032,6 +1050,6 @@ body:lang(ne) {
 
 mark {
     padding: 0 0.15em;
-    background: #fde7b4;
+    background: var(--colour-highlight);
     color: inherit;
 }

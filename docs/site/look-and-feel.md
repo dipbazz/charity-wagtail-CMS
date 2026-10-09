@@ -24,26 +24,38 @@ switches its dark overlay for a gradient, and **68rem**, where the whole header 
 
 ## The design
 
-The values are custom properties in `:root` at the top of the stylesheet. Use a token rather than
-a raw value, and add one when a value will be reused.
+The values are custom properties in `:root` at the top of the stylesheet. **Every colour is a
+token:** a rule reads it with `var(--…)` and never writes a colour of its own, so a colour can be
+changed in one place (a charity's own brand colours, #131, rely on this).
+`core/tests/test_stylesheet.py` fails on a hex code, a colour function or a colour name anywhere
+outside `:root`, and on a `var(--…)` that `:root` doesn't define. Add a token when a value is
+missing, and use one rather than a raw value for anything else.
 
 | Token | Value | Used for |
 |---|---|---|
 | `--colour-primary` | teal `#0b5563` | Links, outlined buttons, selected filters |
 | `--colour-primary-dark` | dark teal `#073b45` | Headings, the name bar at the top, the footer |
 | `--colour-accent` | amber `#f2b134` | Main buttons (Donate, Give), progress bars, the banner, the focus outline |
-| `--colour-text` | `#1d2a30` | Body text, and text on amber |
+| `--colour-accent-hover` | darker amber `#e09a12` | A main button under the pointer |
+| `--colour-text` | `#1d2a30` | Body text |
+| `--colour-on-dark` | white | Text on the teals: the name bar, filled buttons and filters, footer links, the home page banner |
+| `--colour-on-accent` | the text colour | Text on amber: main buttons and the announcement banner |
 | `--colour-muted` | `#5b6b72` | Dates, counts, help text |
+| `--colour-background` | white | The page, the header's controls row, cards, the Menu button |
 | `--colour-surface` | `#f4f7f6` | Unselected filter pills, quiet panels |
 | `--colour-border` | `#d7e0de` | Borders, the progress bar's track |
 | `--colour-error` | `#b3261e` | Form errors |
 | `--colour-warning-text`, `--colour-warning-surface` | `#7a5300`, `#fff6df` | A character count near its limit |
+| `--colour-highlight` | pale amber `#fde7b4` | Text an editor highlights in rich text |
+| `--colour-footer-text`, `--colour-footer-meta` | `#d9e6e4`, `#c3d6d3` | The footer's text and its quieter lines |
+| `--colour-hero-lead` | `#e6f0ef` | The home page banner's intro text |
+| `--colour-shadow` | dark teal at 15% | The header's shadow |
+| `--colour-overlay`, `--colour-overlay-strong`, `--colour-overlay-weak` | dark teal at 75%, 85%, 30% | The home page banner's overlay on the photo |
 | `--radius` | 6px | Buttons, cards, fields |
 | `--container` | 1120px | Page width; reading pages use 760px |
 | `--font` | the device's own fonts | No downloads ([Nepali text](languages.md#nepali-text-on-screen)) |
 
-Body text is 1.0625rem with a line height of 1.6; headings are dark teal at 1.2. The highlight in
-rich text is pale amber (`#fde7b4`).
+Body text is 1.0625rem with a line height of 1.6; headings are dark teal at 1.2.
 
 **Components:**
 
