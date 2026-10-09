@@ -1,7 +1,13 @@
 from django.db import models
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
-from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
+from wagtail.admin.panels import (
+    FieldPanel,
+    InlinePanel,
+    MultiFieldPanel,
+    ObjectList,
+    TabbedInterface,
+)
 from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import (
@@ -15,6 +21,14 @@ from wagtail.models import (
 )
 from wagtail.search import index
 
+from core.brand import (
+    DEFAULT_ACCENT,
+    DEFAULT_MAIN,
+    ColourInput,
+    custom_properties,
+    validate_accent_colour,
+    validate_main_colour,
+)
 from core.languages import main_language, reading_language
 from core.money import CURRENCY_CHOICES
 from core.phone import phone_country_choices
@@ -144,8 +158,22 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
     facebook_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
+    main_colour = models.CharField(
+        max_length=7,
+        default=DEFAULT_MAIN,
+        validators=[validate_main_colour],
+        help_text="Links and outlined buttons, and in a darker shade headings, the name bar at the "
+        "top and the footer. White text goes on it, so it must be dark enough to read.",
+    )
+    accent_colour = models.CharField(
+        max_length=7,
+        default=DEFAULT_ACCENT,
+        validators=[validate_accent_colour],
+        help_text="The Donate button and other main buttons, progress bars and the announcement "
+        "banner. The text on it is dark or white, whichever is easier to read.",
+    )
 
-    panels = [
+    organisation_panels = [
         MultiFieldPanel(
             [
                 FieldPanel("charity_number"),
@@ -170,9 +198,31 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
             "another language has its own.",
         ),
     ]
+    brand_panels = [
+        MultiFieldPanel(
+            [
+                FieldPanel("main_colour", widget=ColourInput),
+                FieldPanel("accent_colour", widget=ColourInput),
+            ],
+            heading="Colours",
+            help_text="The site makes its other shades from these two. Every page uses them as "
+            "soon as you save.",
+        ),
+    ]
+    edit_handler = TabbedInterface(
+        [
+            ObjectList(organisation_panels, heading="Organisation"),
+            ObjectList(brand_panels, heading="Brand"),
+        ]
+    )
 
     class Meta:
         verbose_name = "Site settings"
+
+    @property
+    def brand_css(self):
+        """CSS custom properties for the chosen brand colours, or "" for the stylesheet's own."""
+        return custom_properties(self.main_colour, self.accent_colour)
 
     @property
     def address(self):

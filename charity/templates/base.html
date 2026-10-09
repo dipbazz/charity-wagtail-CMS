@@ -24,6 +24,10 @@
         {# Marks the page as having JavaScript before it's drawn, so the CSS can collapse the mobile menu from the start instead of the page jumping when charity.js runs. #}
         <script>document.documentElement.classList.add("js")</script>
         <link rel="stylesheet" href="{% static 'css/charity.css' %}">
+        {# The charity's brand colours, once it has chosen its own: they replace the stylesheet's defaults, so they come after it. #}
+        {% with brand_css=settings.core.SiteSettings.brand_css %}
+            {% if brand_css %}<style>:root { {{ brand_css }} }</style>{% endif %}
+        {% endwith %}
         {% block extra_css %}{% endblock %}
     </head>
 

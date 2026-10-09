@@ -3,6 +3,7 @@ from django.urls import reverse
 from wagtail.models import Locale, Site
 from wagtail.test.utils.form_data import inline_formset, nested_form_data
 
+from core.brand import DEFAULT_ACCENT, DEFAULT_MAIN
 from core.models import AnnouncementBanner, AnnouncementBannerText, SiteSettings, SiteSettingsText
 from home.models import StandardPage
 
@@ -228,6 +229,8 @@ class TestTextInEachLanguageInTheAdmin:
             {
                 "currency": "NPR",
                 "phone_country": "NP",
+                "main_colour": DEFAULT_MAIN,
+                "accent_colour": DEFAULT_ACCENT,
                 "texts": inline_formset(
                     [
                         {"locale": Locale.get_default().pk, "address": "1 Example Street"},
@@ -241,6 +244,79 @@ class TestTextInEachLanguageInTheAdmin:
 
         assert response.status_code == 302
         assert SiteSettings.for_site(site).texts.count() == 2
+
+
+class TestBrandColours:
+    """Site settings → Brand (#133). How shades and contrast are worked out: test_brand.py."""
+
+    def save(self, client, moderator, site, main, accent):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+        form = {
+            "currency": "NPR",
+            "phone_country": "NP",
+            "main_colour": main,
+            "accent_colour": accent,
+            "texts": inline_formset([]),
+        }
+        return client.post(url, nested_form_data(form))
+
+    def test_moderator_chooses_the_brand_colours(self, client, moderator, site):
+        response = self.save(client, moderator, site, "#8e1b3b", "#1f6feb")
+
+        assert response.status_code == 302
+        site_settings = SiteSettings.for_site(site)
+        assert (site_settings.main_colour, site_settings.accent_colour) == ("#8e1b3b", "#1f6feb")
+
+    def test_a_main_colour_too_light_to_read_cant_be_saved(self, client, moderator, site):
+        response = self.save(client, moderator, site, "#f2b134", DEFAULT_ACCENT)
+
+        assert response.status_code == 200
+        assert "Too light to read easily" in response.content.decode()
+        assert SiteSettings.for_site(site).main_colour == DEFAULT_MAIN
+
+    def test_an_accent_colour_no_text_is_readable_on_cant_be_saved(self, client, moderator, site):
+        response = self.save(client, moderator, site, DEFAULT_MAIN, "#0077dd")
+
+        assert response.status_code == 200
+        assert "Neither dark nor white text is easy to read" in response.content.decode()
+        assert SiteSettings.for_site(site).accent_colour == DEFAULT_ACCENT
+
+    def test_the_colours_are_chosen_with_colour_pickers(self, client, moderator, site):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+
+        assert client.get(url).content.decode().count('type="color"') == 2
+
+    def test_a_site_that_hasnt_chosen_keeps_the_stylesheets_colours(self, client, home_page):
+        assert "--colour-primary" not in client.get("/").content.decode()
+
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/",
+            "/about/",
+            "/appeals/",
+            "/appeals/flood-relief/",
+            "/stories/",
+            "/donate/",
+            "/volunteer/",
+            "/search/?query=water",
+            "/ne/",
+            "/ne/donate/",
+            "/no-such-page/",
+        ],
+    )
+    def test_every_page_uses_the_chosen_colours(self, client, demo_site, path):
+        site_settings = SiteSettings.for_site(demo_site)
+        site_settings.main_colour = "#8e1b3b"
+        site_settings.accent_colour = "#1f6feb"
+        site_settings.save()
+
+        html = client.get(path).content.decode()
+
+        assert "<style>:root { --colour-primary:#8e1b3b;" in html
+        assert "--colour-accent:#1f6feb;" in html
 
 
 def test_site_settings_open_in_the_admin(admin_client, site):

@@ -82,8 +82,9 @@ Settings that apply to every page, under **Settings** in the admin (`core/models
   contact email, phone and address (shown in the footer; the address is written in each
   language); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
   the **currency** every amount is shown in ([Money](appeals-and-giving.md#money)); the
-  **default phone country** for mobile numbers on forms; and Facebook, Instagram and LinkedIn
-  links (each shown in the footer only when set).
+  **default phone country** for mobile numbers on forms; Facebook, Instagram and LinkedIn
+  links (each shown in the footer only when set); and, on the **Brand** tab, the charity's main
+  and accent colours ([Look and feel](look-and-feel.md#brand-colours)).
 - **Announcement banner**: one message, written in each language, on or off, optionally linking
   to a page, shown across the top of every page in amber. Editors change it directly, without
   approval, because an emergency appeal can't wait.
