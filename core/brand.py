@@ -15,7 +15,6 @@ import re
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db import models
 
 # The stylesheet's own colours, from `:root` in charity.css (a test keeps them the same).
 DEFAULT_MAIN = "#0b5563"
@@ -38,12 +37,19 @@ class ColourInput(forms.TextInput):
     input_type = "color"
 
 
-class Tone(models.TextChoices):
-    """A dark name bar or footer is the main colour's dark shade with white text; a light name
-    bar is white and a light footer a pale panel, with dark text. Both keep their contrast."""
+DARK = "dark"
+LIGHT = "light"
 
-    DARK = "dark", "Dark, with white text"
-    LIGHT = "light", "Light, with dark text"
+# A light or dark name bar and footer. Each choice says where the main colour goes, so choosing
+# light doesn't look like losing the colour chosen above it. Both keep their contrast.
+NAME_BAR_CHOICES = [
+    (DARK, "Dark: your main colour's dark shade, with the name in white"),
+    (LIGHT, "Light: white, with the name in a dark shade of your main colour"),
+]
+FOOTER_CHOICES = [
+    (DARK, "Dark: your main colour's dark shade, with pale text and white links"),
+    (LIGHT, "Light: a pale tint of your main colour, with dark text and links in your main colour"),
+]
 
 
 def rgb(colour):

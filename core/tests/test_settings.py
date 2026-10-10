@@ -359,6 +359,14 @@ class TestHeaderAndFooter:
         for field in ("name_bar_style", "footer_style"):
             assert html.count(f'type="radio" name="{field}"') == 2
 
+    @pytest.mark.parametrize("field", ["name_bar_style", "footer_style"])
+    def test_each_choice_says_where_the_main_colour_goes(self, field):
+        """So choosing light doesn't look like losing the colour chosen above it."""
+        labels = [label for _, label in SiteSettings._meta.get_field(field).choices]
+
+        assert len(labels) == 2
+        assert all("main colour" in label for label in labels)
+
     def test_a_site_that_hasnt_chosen_keeps_its_dark_name_bar_and_footer(self, client, home_page):
         html = client.get("/").content.decode()
 

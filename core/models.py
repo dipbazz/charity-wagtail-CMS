@@ -23,10 +23,12 @@ from wagtail.models import (
 from wagtail.search import index
 
 from core.brand import (
+    DARK,
     DEFAULT_ACCENT,
     DEFAULT_MAIN,
+    FOOTER_CHOICES,
+    NAME_BAR_CHOICES,
     ColourInput,
-    Tone,
     custom_properties,
     validate_accent_colour,
     validate_main_colour,
@@ -164,8 +166,9 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
         max_length=7,
         default=DEFAULT_MAIN,
         validators=[validate_main_colour],
-        help_text="Links and outlined buttons, and in a darker shade headings, the name bar at the "
-        "top and the footer. White text goes on it, so it must be dark enough to read.",
+        help_text="Links and outlined buttons, and in a darker shade headings and, when they're "
+        "dark, the name bar at the top and the footer. White text goes on it, so it must be dark "
+        "enough to read.",
     )
     accent_colour = models.CharField(
         max_length=7,
@@ -177,15 +180,15 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
     name_bar_style = models.CharField(
         "name bar",
         max_length=5,
-        choices=Tone.choices,
-        default=Tone.DARK,
+        choices=NAME_BAR_CHOICES,
+        default=DARK,
         help_text="The row with your charity's name at the top of every page.",
     )
     footer_style = models.CharField(
         "footer",
         max_length=5,
-        choices=Tone.choices,
-        default=Tone.DARK,
+        choices=FOOTER_CHOICES,
+        default=DARK,
         help_text="Your charity's details at the bottom of every page.",
     )
 
@@ -230,8 +233,9 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
                 FieldPanel("footer_style", widget=forms.RadioSelect),
             ],
             heading="Header and footer",
-            help_text="Choose light if your logo is drawn for a white background. Text stays "
-            "easy to read either way.",
+            help_text="Dark fills the name bar or footer with your main colour. Light keeps it "
+            "white or pale and puts your main colour in the text instead. Choose light if your "
+            "logo is drawn for a white background.",
         ),
     ]
     edit_handler = TabbedInterface(
