@@ -2,13 +2,7 @@ from django import forms
 from django.db import models
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
-from wagtail.admin.panels import (
-    FieldPanel,
-    InlinePanel,
-    MultiFieldPanel,
-    ObjectList,
-    TabbedInterface,
-)
+from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel, ObjectList
 from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import (
@@ -35,6 +29,7 @@ from core.brand import (
 )
 from core.languages import main_language, reading_language
 from core.money import CURRENCY_CHOICES
+from core.panels import TabsOpeningOnErrors
 from core.phone import phone_country_choices
 
 
@@ -238,7 +233,7 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
             "logo is drawn for a white background.",
         ),
     ]
-    edit_handler = TabbedInterface(
+    edit_handler = TabsOpeningOnErrors(
         [
             ObjectList(organisation_panels, heading="Organisation"),
             ObjectList(brand_panels, heading="Brand"),

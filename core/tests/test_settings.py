@@ -396,6 +396,46 @@ class TestHeaderAndFooter:
         assert '<footer class="site-footer is-light">' in html
 
 
+class TestTabsAfterARefusedSave:
+    """A refused save opens the tab with the mistake in it, not always the first tab.
+
+    In a real browser: test_settings_browser.py.
+    """
+
+    def save(self, client, moderator, site, **changes):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+        form = {
+            "currency": "NPR",
+            "phone_country": "NP",
+            "main_colour": DEFAULT_MAIN,
+            "accent_colour": DEFAULT_ACCENT,
+            "name_bar_style": "dark",
+            "footer_style": "dark",
+            "texts": inline_formset([]),
+            **changes,
+        }
+        return client.post(url, nested_form_data(form))
+
+    def test_a_refused_brand_colour_opens_the_brand_tab(self, client, moderator, site):
+        response = self.save(client, moderator, site, main_colour="#f2b134")
+
+        assert response.status_code == 200
+        assert 'data-w-tabs-active-panel-id-value="tab-brand"' in response.content.decode()
+
+    def test_a_mistake_on_the_organisation_tab_opens_that_tab(self, client, moderator, site):
+        response = self.save(client, moderator, site, contact_email="not an email address")
+
+        assert response.status_code == 200
+        assert 'data-w-tabs-active-panel-id-value="tab-organisation"' in response.content.decode()
+
+    def test_opening_site_settings_starts_on_the_first_tab(self, client, moderator, site):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+
+        assert "data-w-tabs-active-panel-id-value" not in client.get(url).content.decode()
+
+
 def test_site_settings_open_in_the_admin(admin_client, site):
     url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
 
