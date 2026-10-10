@@ -33,12 +33,14 @@ SURFACE_TINT = 0.05
 HEX_COLOUR = re.compile(r"#[0-9a-fA-F]{6}")
 
 # The logo's height on a phone, in pixels, from the size the logo was first drawn at to the
-# largest (the stylesheet's own, `--logo-height` in charity.css). From 68rem the name bar has room
-# to spare, so the largest is taller there: `LOGO_MAX_WIDE`. The smallest is the same everywhere.
+# largest. From 68rem the name bar has room to spare, so the largest is taller there:
+# `LOGO_MAX_WIDE`. The smallest is the same everywhere. A charity that hasn't chosen gets the
+# middle, which is the stylesheet's own (`--logo-height` in charity.css).
 LOGO_MIN = 40
 LOGO_MAX = 80
 LOGO_MAX_WIDE = 96
-DEFAULT_LOGO_SIZE = LOGO_MAX
+LOGO_STEP = 4
+DEFAULT_LOGO_SIZE = (LOGO_MIN + LOGO_MAX) // 2
 
 
 class ColourInput(forms.TextInput):
@@ -48,22 +50,41 @@ class ColourInput(forms.TextInput):
 
 
 class LogoSizeInput(forms.NumberInput):
-    """A slider between the smallest and largest logo, with its height beside it."""
+    """A slider from small to large, with those two words under its ends and no number.
+
+    The preview is the answer to "how big is it", and a pixel height would only be exact at the
+    default text size. A screen reader hears how far along it is, since it can't read the words.
+    """
 
     input_type = "range"
 
     def render(self, name, value, attrs=None, renderer=None):
+        span = LOGO_MAX - LOGO_MIN
+        try:
+            size = min(max(int(value), LOGO_MIN), LOGO_MAX)
+        except (TypeError, ValueError):
+            size = DEFAULT_LOGO_SIZE
+        along = round((size - LOGO_MIN) / span * 100)
         attrs = {
             **(attrs or {}),
             # Set here, not in `__init__`: the form field puts its own minimum of 0 on the widget.
             "min": LOGO_MIN,
             "max": LOGO_MAX,
-            "step": 1,
-            # The number beside the slider follows it, without a script of the site's own.
-            "oninput": "this.nextElementSibling.value = this.value + 'px'",
+            "step": LOGO_STEP,
+            "style": "width: 100%",
+            "aria-valuetext": f"{along}% of the way from small to large",
+            # Follows the slider, without a script of the site's own.
+            "oninput": (
+                f"this.setAttribute('aria-valuetext', Math.round((this.value - {LOGO_MIN}) / "
+                f"{span} * 100) + '% of the way from small to large')"
+            ),
         }
         slider = super().render(name, value, attrs, renderer)
-        return format_html("{} <output>{}px</output>", slider, value)
+        return format_html(
+            '{}<div style="display: flex; justify-content: space-between" aria-hidden="true">'
+            "<span>Small</span><span>Large</span></div>",
+            slider,
+        )
 
 
 DARK = "dark"

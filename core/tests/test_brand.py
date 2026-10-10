@@ -68,13 +68,17 @@ def test_every_property_the_brand_writes_replaces_a_stylesheet_token():
 
 
 class TestLogoSize:
-    """How tall the logo is (#123): from the size it was first drawn at up to the largest."""
+    """How tall the logo is (#123): from small, the size it was first drawn at, to large."""
 
-    def test_the_largest_size_is_the_stylesheets_own(self):
+    def test_the_default_is_the_middle_of_the_range(self):
+        assert DEFAULT_LOGO_SIZE == (LOGO_MIN + LOGO_MAX) // 2 == 60
+
+    def test_the_default_size_is_the_stylesheets_own(self):
         tokens = root()
 
-        assert DEFAULT_LOGO_SIZE == LOGO_MAX
-        assert (tokens["--logo-height"], tokens["--logo-height-wide"]) == logo_heights(LOGO_MAX)
+        assert (tokens["--logo-height"], tokens["--logo-height-wide"]) == logo_heights(
+            DEFAULT_LOGO_SIZE
+        )
 
     def test_the_smallest_size_is_the_same_on_every_screen(self):
         """The first logo was 2.5rem tall everywhere; the largest is taller on a wide screen."""
@@ -83,15 +87,21 @@ class TestLogoSize:
 
     def test_in_between_both_heights_grow_in_proportion(self):
         assert logo_heights(60) == ("3.75rem", "4.25rem")
+        assert logo_heights(50) == ("3.125rem", "3.375rem")
 
-    def test_the_largest_size_writes_nothing_so_the_site_looks_as_it_did(self):
+    def test_the_default_size_writes_nothing_so_the_site_looks_as_it_did(self):
         assert custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, DEFAULT_LOGO_SIZE) == ""
         assert custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT) == ""
 
-    def test_another_size_writes_both_heights_and_leaves_the_colours_alone(self):
-        css = custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, 60)
+    def test_the_largest_size_is_written_like_any_other(self):
+        css = custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, LOGO_MAX)
 
-        assert css == "--logo-height:3.75rem;--logo-height-wide:4.25rem"
+        assert css == "--logo-height:5rem;--logo-height-wide:6rem"
+
+    def test_another_size_writes_both_heights_and_leaves_the_colours_alone(self):
+        css = custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, 50)
+
+        assert css == "--logo-height:3.125rem;--logo-height-wide:3.375rem"
 
     def test_it_is_written_beside_the_colours(self):
         css = custom_properties(MAIN, ACCENT, LOGO_MIN)

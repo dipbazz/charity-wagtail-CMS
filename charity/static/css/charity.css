@@ -29,10 +29,10 @@
     --colour-overlay-weak: rgb(7 59 69 / 0.3);
     --radius: 6px;
     --container: 1120px;
-    /* The logo's height on a phone and from 68rem, the largest a charity can choose; its
-       smallest, 2.5rem, is the same on both (#123). */
-    --logo-height: 5rem;
-    --logo-height-wide: 6rem;
+    /* The logo's height on a phone and from 68rem: the middle of what a charity can choose,
+       between 2.5rem (the same on both) and 5rem and 6rem (#123). */
+    --logo-height: 3.75rem;
+    --logo-height-wide: 4.25rem;
     /* The device's own fonts; no download. Latin fonts come first, and each lacks Devanagari, so
        Nepali letters fall through to the phone's Devanagari font: Noto Sans Devanagari on
        Android, Kohinoor Devanagari on iPhone and Mac, Nirmala UI on Windows (#118). */

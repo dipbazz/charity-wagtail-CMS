@@ -182,9 +182,8 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     logo_size = models.PositiveSmallIntegerField(
         default=DEFAULT_LOGO_SIZE,
         validators=[MinValueValidator(LOGO_MIN), MaxValueValidator(LOGO_MAX)],
-        help_text="How tall the logo is on a phone, from the smallest to the largest, in pixels. "
-        "On a wide screen it's a little taller. Open the preview with the phone icon at the top "
-        "right to see it on the site's pages before you save.",
+        help_text="Drag to make the logo smaller or larger. The preview (the phone icon at the "
+        "top right) shows it on the site's pages before you save.",
     )
     main_colour = models.CharField(
         max_length=7,

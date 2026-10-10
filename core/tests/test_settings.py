@@ -591,20 +591,45 @@ class TestLogoSize:
         assert response.status_code == 200
         assert SiteSettings.for_site(site).logo_size == DEFAULT_LOGO_SIZE
 
-    def test_a_new_site_has_the_largest_size(self, site):
-        assert SiteSettings.for_site(site).logo_size == LOGO_MAX
+    def test_a_new_site_has_the_middle_size(self, site):
+        assert SiteSettings.for_site(site).logo_size == DEFAULT_LOGO_SIZE == 60
 
-    def test_the_size_is_chosen_with_a_slider_that_shows_its_value(self, client, moderator, site):
+    def test_the_size_is_a_slider_from_small_to_large_with_no_number(self, client, moderator, site):
         client.force_login(moderator)
         url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
 
-        html = client.get(url).content.decode()
+        soup = BeautifulSoup(client.get(url).content, "html.parser")
 
-        slider = BeautifulSoup(html, "html.parser").find("input", {"name": "logo_size"})
+        slider = soup.find("input", {"name": "logo_size"})
         assert slider["type"] == "range"
-        assert (slider["min"], slider["max"]) == (str(LOGO_MIN), str(LOGO_MAX))
-        assert slider["value"] == str(LOGO_MAX)
-        assert "<output" in html and f">{LOGO_MAX}px</output>" in html
+        assert (slider["min"], slider["max"], slider["step"]) == (
+            str(LOGO_MIN),
+            str(LOGO_MAX),
+            "4",
+        )
+        assert slider["value"] == str(DEFAULT_LOGO_SIZE)
+        ends = slider.find_next_sibling("div").find_all("span")
+        assert [end.get_text() for end in ends] == ["Small", "Large"]
+        assert slider.find_next_sibling("output") is None
+
+    @pytest.mark.parametrize(
+        ("size", "spoken"), [(LOGO_MIN, "0%"), (DEFAULT_LOGO_SIZE, "50%"), (LOGO_MAX, "100%")]
+    )
+    def test_the_slider_says_where_it_is_to_a_screen_reader(
+        self, client, moderator, site, size, spoken
+    ):
+        """Without a number on screen, a bare "60" would mean nothing."""
+        site_settings = SiteSettings.for_site(site)
+        site_settings.logo_size = size
+        site_settings.save()
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+
+        slider = BeautifulSoup(client.get(url).content, "html.parser").find(
+            "input", {"name": "logo_size"}
+        )
+
+        assert slider["aria-valuetext"] == f"{spoken} of the way from small to large"
 
     def test_editors_cant_change_the_size(self, client, editor, site):
         response = self.save(client, editor, site, LOGO_MIN)

@@ -154,10 +154,11 @@ def logo_header(demo_header):
     return demo_header
 
 
-# The charity's logo (#123) sits beside its name, on the name's own row, tall enough to read the
-# lettering in a seal: 5rem on a phone, 6rem where the whole header fits on one line.
+# The charity's logo (#123) sits beside its name, on the name's own row. A charity that hasn't
+# chosen a size gets the middle: 3.75rem on a phone, 4.25rem where the whole header fits on one
+# line.
 @pytest.mark.parametrize(
-    ("width", "height", "logo_height"), [(320, 700, 80), (768, 900, 80), (1440, 900, 96)]
+    ("width", "height", "logo_height"), [(320, 700, 60), (768, 900, 60), (1440, 900, 68)]
 )
 def test_logo_and_name_are_centred_together_on_their_own_row(
     site_page, logo_header, width, height, logo_height
@@ -178,9 +179,12 @@ def test_logo_and_name_are_centred_together_on_their_own_row(
 
 
 # A charity chooses how tall its logo is, from the smallest (2.5rem everywhere) to the largest
-# (5rem, and 6rem from 68rem). In between, both heights grow together.
+# (5rem, and 6rem from 68rem). In between, both heights grow together. The middle is what a site
+# that hasn't chosen gets, so it's the stylesheet's own and writes nothing to the page.
 @pytest.mark.parametrize(
-    ("size", "phone", "wide"), [(40, 40, 40), (60, 60, 68), (80, 80, 96)], ids=["min", "mid", "max"]
+    ("size", "phone", "wide"),
+    [(40, 40, 40), (60, 60, 68), (80, 80, 96)],
+    ids=["small", "default", "large"],
 )
 def test_the_chosen_size_sets_the_logos_height_on_a_phone_and_a_wide_screen(
     site_page, logo_header, size, phone, wide

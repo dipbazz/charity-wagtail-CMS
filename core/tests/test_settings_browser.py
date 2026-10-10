@@ -9,7 +9,7 @@ from playwright.sync_api import expect
 from wagtail_factories import ImageFactory
 
 from conftest import SITE
-from core.brand import DEFAULT_MAIN, LOGO_MAX
+from core.brand import DEFAULT_LOGO_SIZE, DEFAULT_MAIN
 from core.models import SiteSettings
 
 pytestmark = [pytest.mark.browser, pytest.mark.django_db]
@@ -53,7 +53,7 @@ def test_the_preview_follows_the_logo_size_slider(site_page, client, moderator, 
     site_page.get_by_role("tab", name="Brand").click()
     site_page.get_by_role("button", name="Toggle preview").click()
     logo = site_page.frame_locator("#w-preview-iframe").locator(".brand-logo")
-    expect(logo).to_have_css("height", "80px")
+    expect(logo).to_have_css("height", "60px")
 
     # Wagtail takes the form's starting values two seconds after the page loads, and only counts
     # changes after that, which no person is quicker than.
@@ -63,5 +63,6 @@ def test_the_preview_follows_the_logo_size_slider(site_page, client, moderator, 
     slider.press("Home")  # the smallest size, as a keyboard user would choose it
 
     expect(logo).to_have_css("height", "40px")
-    expect(site_page.locator("#id_logo_size + output")).to_have_text("40px")
-    assert SiteSettings.for_site(site).logo_size == LOGO_MAX
+    # A screen reader hears where the slider is, since there's no number to read.
+    expect(slider).to_have_attribute("aria-valuetext", "0% of the way from small to large")
+    assert SiteSettings.for_site(site).logo_size == DEFAULT_LOGO_SIZE

@@ -55,7 +55,7 @@ replace.
 | `--colour-hero-lead` | `#e6f0ef` | The home page banner's intro text |
 | `--colour-shadow` | dark teal at 15% | The header's shadow |
 | `--colour-overlay`, `--colour-overlay-strong`, `--colour-overlay-weak` | dark teal at 75%, 85%, 30% | The home page banner's overlay on the photo |
-| `--logo-height`, `--logo-height-wide` | 5rem, 6rem | The logo's height on a phone and from 68rem: the largest a charity can [choose](#the-logo) |
+| `--logo-height`, `--logo-height-wide` | 3.75rem, 4.25rem | The logo's height on a phone and from 68rem: the middle of the sizes a charity can [choose](#the-logo) |
 | `--radius` | 6px | Buttons, cards, fields |
 | `--container` | 1120px | Page width; reading pages use 760px |
 | `--font` | the device's own fonts | No downloads ([Nepali text](languages.md#nepali-text-on-screen)) |
@@ -176,17 +176,22 @@ and sits in the header's name row, inside the link to the home page, in front of
 - **The name is always shown beside it,** so the logo is decorative (`alt=""`) and a screen
   reader hears the name once. The image's description in the admin is still worth writing: it's
   what the logo is called wherever else the image is used.
-- **Its size is chosen,** with a slider under the logo in the same panel, from **40px** to
-  **80px** tall on a phone, 80 unless the charity chooses. A seal or a crest has lettering in it
-  that needs the larger sizes; a plain mark may look better small. The smallest is 2.5rem on
-  every screen. The largest is 5rem on a phone and **6rem** from 68rem, where the header's other
-  query is, because the name bar has room to spare; in between, both heights grow together
-  (`core.brand.logo_heights`). The name bar grows to hold the logo, and no more.
-- **It's written like the colours:** a size other than the largest adds `--logo-height` and
-  `--logo-height-wide` to the page's `<style>` in `<head>`, so the stylesheet's own largest size
-  is what a site that hasn't chosen gets, and the
-  [preview](#seeing-a-brand-change-before-it-goes-live) follows the slider as it moves. The
-  number beside the slider is its height on a phone.
+- **Its size is chosen,** with a slider under the logo in the same panel, from **Small** to
+  **Large**, with no number: the preview is the answer to "how big is it", and a pixel height
+  would only be exact at the default text size. A screen reader hears how far along it is ("50%
+  of the way from small to large"). A seal or a crest has lettering in it that needs the larger
+  sizes; a plain mark may look better small.
+- **The range** is 40px to 80px tall on a phone, in steps of 4 (`core/brand.py`), and 60px, the
+  middle, until the charity chooses. Small is 2.5rem on every screen. Large is 5rem on a phone
+  and **6rem** from 68rem, where the header's other query is, because the name bar has room to
+  spare; in between, both heights grow together (`core.brand.logo_heights`). The name bar grows
+  to hold the logo, and no more.
+- **It's written like the colours:** a size other than the middle adds `--logo-height` and
+  `--logo-height-wide` to the page's `<style>` in `<head>`, so the stylesheet's own middle size
+  (3.75rem and 4.25rem) is what a site that hasn't chosen gets, and the
+  [preview](#seeing-a-brand-change-before-it-goes-live) follows the slider as it moves.
+  Pixels are for people to picture; the stylesheet uses rem, so a visitor who enlarges their
+  browser's text sees the logo grow with the name beside it.
 - **A wide logo shrinks, not crowds.** One that's wide for its height shrinks inside its box
   (`object-fit: contain`, at most 9rem wide, 16rem from 68rem) so it can't push a long name off a
   320px screen; the name wraps beside it. A logo with a background of its own, as most from a
@@ -206,7 +211,7 @@ and sits in the header's name row, inside the link to the home page, in front of
 
 `seed_demo` draws a logo for the demo charity: a drop of water on an amber disc, which shows on
 a dark bar and a light one. `charity/tests/test_layout_browser.py` checks the logo's height at
-the smallest, a middle and the largest size, its place on the name's row, that the name bar is
+the smallest, the default and the largest size, its place on the name's row, that the name bar is
 the logo and its padding and no taller, that a long name beside a wide logo doesn't scroll a
 320px screen sideways, and that the header's height is the same in both languages;
 `core/tests/test_settings_browser.py` that the preview follows the slider.
