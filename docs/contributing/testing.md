@@ -84,7 +84,9 @@ most tests use:
   **`nepali_locale`**, **`nepali_home_page`**: the published Nepali home page at `/ne/`.
 - **`demo_site`**: the whole `seed_demo` charity, built **once per test module** and rolled back
   at its end, so a module of demo tests costs one build. Use `site` for a test that needs an
-  empty database.
+  empty database. But once one test in a module has used `demo_site`, `site` is the demo charity
+  (its logo, name and Donate page included) for the rest of that module, so a test that needs a
+  setting empty sets it itself.
 - **`editor`**, **`moderator`**: users in those groups, never superusers.
 - **`privacy_notice`**: a published privacy notice chosen in Site settings.
 - **`cold_cache_queries(path)`**: how many queries a page runs on a just-started server.

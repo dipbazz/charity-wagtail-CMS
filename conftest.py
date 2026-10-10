@@ -64,7 +64,8 @@ def demo_content(django_db_setup, django_db_blocker):
 
     It sits in a transaction that's rolled back when the module ends; each test's own transaction
     nests inside it, so tests can read the demo and change it freely. Tests that need an empty
-    database (a first run of `seed_demo`) use `site` instead.
+    database (a first run of `seed_demo`) use `site` instead; but after a test in the module has
+    used this fixture, `site` is the demo charity, so set whatever the test needs empty.
     """
     with django_db_blocker.unblock():
         outer = transaction.atomic()
