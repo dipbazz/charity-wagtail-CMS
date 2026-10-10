@@ -36,9 +36,14 @@ updated issues in the repo are added to it automatically.
 | Field | |
 |---|---|
 | Status | Backlog → Ready → In progress → In review → Done |
-| Iteration | One-week sprints, Tuesday to Monday |
-| Milestone | The version the work ships in, e.g. `v0.2.0` |
+| Milestone | The version the work ships in, e.g. `v0.4.0` |
 | Priority | Mirrors the `P1`–`P3` labels |
+
+The **Current version** view shows the version being built, in a column for each status, and
+**Next version** the one planned after it. Each filters on its milestone, such as
+`milestone:"v0.4.0"`, so both move on when a version is released ([below](#cutting-a-release)).
+The board's Iteration field is no longer used: versions set the pace instead
+([Decisions](../decisions.md#release-each-version-when-its-done)).
 
 - Move an issue to *In progress* when you start it, and to *In review* when its pull request is
   open.
@@ -98,22 +103,27 @@ check. Dependabot's pull requests are skipped automatically.
 
 ## What goes into which version
 
-Each version is a [milestone](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) with a
-goal and a due date. Usually one minor version is released at the end of each one-week
-iteration.
+Each version is a [milestone](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) for one
+kind of feature, such as "brand the site from the admin". Its goal says what the version is for,
+and its due date is a rough target, not a deadline. One version is built at a time, and it's
+released as soon as it's done, whatever the day: a version is usually a few days' work.
 
-- **An issue joins a milestone at planning,** when the iteration starts. The milestone's goal
-  says what the version is for.
-- **New work found during an iteration goes into the next milestone,** not the current one: a
-  new feature, a redesign, a big refactor, anything that changes the plan. It's discussed when
-  the next version is planned. This keeps each version finishable.
+- **The next version is planned when one is released:** choose its issues from the Backlog, and
+  give the milestone its goal and a due date.
+- **Work started straight away joins the version being built,** such as a fix found while
+  testing it.
+- **New work filed for later goes into the next milestone,** not the current one: a new
+  feature, a redesign, a big refactor, anything that changes the plan. It's discussed when the
+  next version is planned. This keeps each version finishable.
 - **The exception is a bug on the live site** that stops people using it (`P1`). Its fix can
   join the current version, or ship on its own as a PATCH release.
 - Issues nobody has planned yet stay in the Backlog with no milestone. So does planned work
-  that turns out not to matter for this version: take it out of the milestone and clear its
-  iteration, and it's considered again when the next iteration is planned.
+  that turns out not to matter for this version: take it out of the milestone, and it's
+  considered again when the next version is planned.
 
 ## Cutting a release
+
+Release a version as soon as the last issue in its milestone is closed.
 
 1. **Check the milestone.** Every issue in it is closed, or moved to the next milestone or the
    Backlog with a comment saying why.
@@ -134,13 +144,15 @@ iteration.
    gh release create vX.Y.Z --title "X.Y.Z" --notes "<this version's changelog section>"
    ```
 
-5. **Close the milestone** and make sure the next one exists, with its goal and due date.
+5. **Close the milestone and plan the next version** ([above](#what-goes-into-which-version)).
+   On the board, change the filters of the **Current version** and **Next version** views to the
+   new milestones.
 6. **Deploy it** ([Deploy a change](../hosting.md#deploy-a-version)). The tag says exactly which
    code is live.
 
 ## Seeing versions on the board
 
-The board's **Milestone** field shows each issue's version. For a roadmap, add a view in the
-browser: on the [project board](https://github.com/users/dipbazz/projects/1), **New view →
-Board** (or Table), then **Group by → Milestone**. Each version becomes a column, with the
-Backlog as "No milestone".
+The board's **Milestone** field shows each issue's version. For a roadmap of every version, add
+a view in the browser: on the [project board](https://github.com/users/dipbazz/projects/1),
+**New view → Board** (or Table), then **Group by → Milestone**. Each version becomes a column,
+with the Backlog as "No milestone".
