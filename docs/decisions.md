@@ -183,8 +183,8 @@ history.
   open pull requests conflict.
 - **GitHub milestones for versions,** because issues and pull requests carry them everywhere,
   the board has a Milestone field to group by, and each milestone shows how much is done.
-  Iterations stay as time boxes: two weeks at first, one week since 6 October 2026, because
-  the work planned for two weeks was finishing in one.
+  Iterations stayed as time boxes: two weeks at first, then one week from 6 October 2026, until
+  they were dropped on 10 October ([below](#release-each-version-when-its-done)).
 - **New work goes into the next milestone,** apart from fixes for bugs that stop people using the
   live site.
 
@@ -196,6 +196,37 @@ history.
 - The changelog is in the docs and in `llms.txt`, so AI agents read what changed without the git
   log.
 - [Versions and releases](contributing/releases.md) has the rules and the release steps.
+
+## Release each version when it's done
+
+**Status:** in use (since 10 October 2026)
+
+**Context**
+
+Each version was meant to be one week's work, released at the end of a one-week iteration. It
+took far less: 0.2.0 and 0.3.0 were both released within days of 0.1.0, and 0.4.0 was half done
+while the board still said it belonged to the following week. The board's "current iteration"
+showed finished versions and work planned for later, not the version being built, and
+iterations had already been halved once (from two weeks) for the same reason.
+
+**Decision**
+
+- **A version is one kind of feature,** and it's released, and the live site deployed, as soon
+  as its milestone is done, whatever the day. Only tagged versions go live, as before.
+- **Iterations are dropped.** The next version is planned when one is released, from the
+  Backlog. A milestone's due date is a rough target.
+- **The board follows versions:** its Current version and Next version views filter on
+  milestones, and move on at each release.
+- Shorter iterations were the other option. They would still split a version across two time
+  boxes whenever its size didn't match, and they'd keep needing to shrink.
+
+**Consequences**
+
+- More releases: a release pull request, a tag and a deploy each time a version is done, often
+  more than once a week. Each version is small, with its own changelog section, so the live
+  site changes in small steps.
+- A release has one more step: pointing the board's two views at the new milestones.
+- The board's Iteration field is no longer used. It stays, so old items keep their history.
 
 ## Phone numbers with `phonenumbers`
 

@@ -36,9 +36,14 @@ updated issues in the repo are added to it automatically.
 | Field | |
 |---|---|
 | Status | Backlog → Ready → In progress → In review → Done |
-| Iteration | One-week sprints, Tuesday to Monday |
-| Milestone | The version the work ships in, e.g. `v0.2.0` |
+| Milestone | The version the work ships in, e.g. `v0.4.0` |
 | Priority | Mirrors the `P1`–`P3` labels |
+
+The **Current version** view shows the version being built, in a column for each status, and
+**Next version** the one planned after it. Each filters on its milestone, such as
+`milestone:"v0.4.0"`, so both move on when a version is released ([below](#cutting-a-release)).
+The board's Iteration field is no longer used: versions set the pace instead
+([Decisions](../decisions.md#release-each-version-when-its-done)).
 
 - Move an issue to *In progress* when you start it, and to *In review* when its pull request is
   open.
@@ -98,22 +103,27 @@ check. Dependabot's pull requests are skipped automatically.
 
 ## What goes into which version
 
-Each version is a [milestone](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) with a
-goal and a due date. Usually one minor version is released at the end of each one-week
-iteration.
+Each version is a [milestone](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) for one
+kind of feature, such as "brand the site from the admin". Its goal says what the version is for,
+and its due date is a rough target, not a deadline. One version is built at a time, and it's
+released as soon as it's done, whatever the day: a version is usually a few days' work.
 
-- **An issue joins a milestone at planning,** when the iteration starts. The milestone's goal
-  says what the version is for.
-- **New work found during an iteration goes into the next milestone,** not the current one: a
-  new feature, a redesign, a big refactor, anything that changes the plan. It's discussed when
-  the next version is planned. This keeps each version finishable.
+- **The next version is planned when one is released:** choose its issues from the Backlog, and
+  give the milestone its goal and a due date.
+- **Work started straight away joins the version being built,** such as a fix found while
+  testing it.
+- **New work filed for later goes into the next milestone,** not the current one: a new
+  feature, a redesign, a big refactor, anything that changes the plan. It's discussed when the
+  next version is planned. This keeps each version finishable.
 - **The exception is a bug on the live site** that stops people using it (`P1`). Its fix can
-  join the current version, or ship on its own as a PATCH release.
+  join the current version, or ship on its own as a [patch release](#patch-releases).
 - Issues nobody has planned yet stay in the Backlog with no milestone. So does planned work
-  that turns out not to matter for this version: take it out of the milestone and clear its
-  iteration, and it's considered again when the next iteration is planned.
+  that turns out not to matter for this version: take it out of the milestone, and it's
+  considered again when the next version is planned.
 
 ## Cutting a release
+
+Release a version as soon as the last issue in its milestone is closed.
 
 1. **Check the milestone.** Every issue in it is closed, or moved to the next milestone or the
    Backlog with a comment saying why.
@@ -134,13 +144,57 @@ iteration.
    gh release create vX.Y.Z --title "X.Y.Z" --notes "<this version's changelog section>"
    ```
 
-5. **Close the milestone** and make sure the next one exists, with its goal and due date.
+5. **Close the milestone and plan the next version** ([above](#what-goes-into-which-version)).
+   On the board, change the filters of the **Current version** and **Next version** views to the
+   new milestones.
 6. **Deploy it** ([Deploy a change](../hosting.md#deploy-a-version)). The tag says exactly which
    code is live.
 
+## Patch releases
+
+Only for a bug on the live site that stops people using it (`P1`) and can't wait for the
+version being built; any other fix goes into that version. A patch release, such as 0.4.1 while
+0.4.0 is live, holds that fix and nothing else, so it's made from the live version's tag, not
+from `main`, which already has work for the next version. Give it a milestone (`v0.4.1`) holding
+the bug's issue.
+
+1. **Fix it on `main` first,** in a normal pull request with its `fixed` file in `changelog.d/`,
+   so the next version has the fix too. If the fix needs a migration, write it to follow the live
+   version's last migration, so the same file works on both branches. When `main` already has
+   newer migrations, add the merge migration (`makemigrations --merge`) in a commit of its own.
+2. **Make the patch branch from the live tag** (or use it, if an earlier patch made it):
+
+   ```bash
+   git checkout -b patch/0.4.x v0.4.0
+   git push -u origin patch/0.4.x
+   ```
+
+3. **Prepare the release in a second folder,** so your local database, which already has the next
+   version's migrations, isn't touched (`db.sqlite3` and `media/` belong to the folder). Copy
+   `.env` or `charity/settings/local.py` across if you use them.
+
+   ```bash
+   git worktree add -b chore/release-0.4.1 ../charity-patch patch/0.4.x
+   cd ../charity-patch && uv sync
+   git cherry-pick <the fix's commit on main>    # not the merge migration's
+   uv run python manage.py migrate && uv run python manage.py seed_demo
+   ```
+
+   Check the fix there, then follow step 2 of [Cutting a release](#cutting-a-release) and open
+   the pull request against `patch/0.4.x`, labelled `no changelog`. CI runs on it as usual.
+4. **After it's merged,** tag the merge commit and publish the release as in step 4 above, with
+   `patch/0.4.x` in place of `main`, then [deploy](../hosting.md#deploy-a-version) `v0.4.1`.
+5. **Bring the release onto `main`** in a pull request labelled `no changelog`, so the next
+   version's notes don't list the fix again: take `CHANGELOG.md` from the patch branch
+   (`git checkout patch/0.4.x -- CHANGELOG.md`; `main`'s copy only changes at a release, so this
+   adds just the new section), delete the fix's file from `changelog.d/`, set `version` in
+   `pyproject.toml` to `0.4.1` and run `uv lock`.
+6. **Close the milestone** and remove the second folder (`git worktree remove ../charity-patch`).
+   Keep the patch branch for any later patch to the same version.
+
 ## Seeing versions on the board
 
-The board's **Milestone** field shows each issue's version. For a roadmap, add a view in the
-browser: on the [project board](https://github.com/users/dipbazz/projects/1), **New view →
-Board** (or Table), then **Group by → Milestone**. Each version becomes a column, with the
-Backlog as "No milestone".
+The board's **Milestone** field shows each issue's version. For a roadmap of every version, add
+a view in the browser: on the [project board](https://github.com/users/dipbazz/projects/1),
+**New view → Board** (or Table), then **Group by → Milestone**. Each version becomes a column,
+with the Backlog as "No milestone".

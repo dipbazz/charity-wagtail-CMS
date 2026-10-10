@@ -11,9 +11,10 @@ the docs must build with `uv run --group docs sphinx-build -W --keep-going docs 
 
 Every PR adds a file `changelog.d/<slug>.<group>.md` (the entry, written for the person the change
 affects), or is labelled `no changelog` (CI checks this). Never edit `CHANGELOG.md` in a PR. Each version is a GitHub milestone: put a
-PR in the milestone of the issue it closes. New work found mid-iteration goes into the next
-milestone, not the current one, unless it fixes a P1 bug on the live site. Rules and release
-steps: `docs/contributing/releases.md`.
+PR in the milestone of the issue it closes. One version is built at a time and released when it's
+done (there are no iterations). Work started straight away joins the version being built; work
+filed for later goes into the next milestone, unless it fixes a P1 bug on the live site. Rules
+and release steps: `docs/contributing/releases.md`.
 
 ## Design mobile first
 
