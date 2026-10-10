@@ -26,10 +26,14 @@ switches its dark overlay for a gradient, and **68rem**, where the whole header 
 
 The values are custom properties in `:root` at the top of the stylesheet. **Every colour is a
 token:** a rule reads it with `var(--…)` and never writes a colour of its own, so a colour can be
-changed in one place (a charity's own brand colours, #131, rely on this).
+changed in one place, which is how a charity's [brand colours](#brand-colours) reach every page.
 `core/tests/test_stylesheet.py` fails on a hex code, a colour function or a colour name anywhere
 outside `:root`, and on a `var(--…)` that `:root` doesn't define. Add a token when a value is
-missing, and use one rather than a raw value for anything else.
+missing, and use one rather than a raw value for anything else. A new token that should follow
+a brand colour is also made in `core/brand.py`.
+
+The colours below are the defaults, the demo charity's teal and amber, which a charity's own
+replace.
 
 | Token | Value | Used for |
 |---|---|---|
@@ -70,6 +74,45 @@ Body text is 1.0625rem with a line height of 1.6; headings are dark teal at 1.2.
   readable over any photo; from 64rem a gradient, darker on the left behind the text, lets the
   photo show on the right. The heading scales from 2.2rem to 3.5rem with the screen.
 - **Footer**: dark teal with pale text; on a short page it sits at the bottom of the window.
+
+## Brand colours
+
+A charity chooses two colours in **Site settings → Brand** (moderators only, like the rest of
+Site settings): a **main colour**, the teal by default, and an **accent colour**, the amber.
+`core/brand.py` makes the other shades from them, and `base.html` writes them into each page's
+`<head>`, after the stylesheet, as a `<style>` that replaces those tokens (about 450 bytes with
+both chosen). Every page uses a new colour as soon as it's saved.
+
+| From | Token | Made by |
+|---|---|---|
+| Main colour | `--colour-primary` | The colour itself |
+| | `--colour-primary-dark` | Mixing it into black (70% of it) |
+| | `--colour-surface`, `--colour-hero-lead`, `--colour-footer-text`, `--colour-border`, `--colour-footer-meta` | Mixing it into white (5%, 10%, 15%, 16% and 24% of it) |
+| | `--colour-shadow`, `--colour-overlay`, `--colour-overlay-strong`, `--colour-overlay-weak` | The dark shade, see-through |
+| Accent colour | `--colour-accent` | The colour itself |
+| | `--colour-on-accent` | The text colour or white, whichever has more contrast on it |
+| | `--colour-accent-hover` | 10% darker, or 10% lighter if the text on it would then fail 4.5:1 (or the accent is black) |
+| | `--colour-highlight` | Mixing it into white (35% of it) |
+
+The other colours (text, quieter text, errors, warnings, white) are the same for every charity.
+
+**A colour that makes text hard to read can't be saved.** Text needs a contrast of at least
+4.5:1 (WCAG AA), and the admin checks it:
+
+- **Main colour:** links in it on the pale panels (`--colour-surface`) must reach 4.5:1. That's
+  where it's hardest to read, so white text on it, links on white and the footer's text pass too
+  (`core/tests/test_brand.py` checks every pair for 4,096 colours). So `#767676`, which is 4.5:1 on
+  white, is refused: on a panel it's 4.3:1.
+- **Accent colour:** dark or white text, whichever reads better on it, must reach 4.5:1. Mid tones
+  that neither does are refused.
+
+The message gives the colour's contrast and suggests the nearest shade of it that passes: darker
+for the main colour, lighter or darker for the accent.
+
+**A colour left at its default writes nothing,** so a site that hasn't chosen looks exactly as
+the stylesheet says. (The shades made from the teal and amber are close to the stylesheet's own
+but not the same.) The defaults in `core/brand.py` must match `:root`, which a test checks. A
+value that isn't a `#rrggbb` code, which only a change outside the admin could save, is ignored.
 
 ## Header
 
@@ -113,10 +156,10 @@ A requirement, not a polish step. Every page has:
 - `aria-current` on the menu item for the current page or section, and on the selected filter;
 - the language switch named in each language's own script, with `lang` and `hreflang` on each
   link, inside a `<nav>` labelled "Language";
-- a visible focus outline (3px amber) on everything you can tab to;
+- a visible focus outline (3px, in the accent colour) on everything you can tab to;
 - tap targets of at least 44px (2.75rem), checked by CI on every kind of page;
 - alt text on every image, taken from the image's description in the admin;
-- text that passes WCAG AA contrast.
+- text that passes WCAG AA contrast, whatever [brand colours](#brand-colours) are chosen.
 
 ## Images in templates
 

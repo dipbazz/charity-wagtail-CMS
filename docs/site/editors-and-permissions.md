@@ -22,7 +22,7 @@ whoever hosts the site.
 | **Announcement banner** | Change, in each language (no approval needed) | ✅ | ✅ |
 | **Partners** | Add, change, delete and translate | ✅ | ✅ |
 | **News categories** | Add, change, delete and translate | ✅ | ✅ |
-| **Site settings** (charity number, contact details and the address in each language, Donate page, privacy notice, currency) | Change | ❌ | ✅ |
+| **Site settings** (charity number, contact details and the address in each language, Donate page, privacy notice, currency, brand colours) | Change | ❌ | ✅ |
 | **Pledges** | View, filter and export | ✅ | ✅ |
 | | Add, change or delete | ❌ | ❌ |
 | **Form submissions** | View and export (comes with editing the form page) | ✅ | ✅ |
@@ -32,7 +32,8 @@ Why the differences:
 
 - **The banner** is direct for editors because an emergency message can't wait for approval.
 - **Testimonials** quote real people, so a moderator signs them off.
-- **Site settings** hold the charity's identity and where the Donate button goes.
+- **Site settings** hold the charity's identity, including its brand colours, and where the
+  Donate button goes.
 - **Pledges** come from supporters, so nobody adds or edits them, and only a superuser can delete
   one: they hold personal details, and a pledge deleted by accident loses the record of a gift.
 
