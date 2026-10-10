@@ -84,7 +84,8 @@ Settings that apply to every page, under **Settings** in the admin (`core/models
   the **currency** every amount is shown in ([Money](appeals-and-giving.md#money)); the
   **default phone country** for mobile numbers on forms; Facebook, Instagram and LinkedIn
   links (each shown in the footer only when set); and, on the **Brand** tab, the charity's
-  [logo](look-and-feel.md#the-logo), shown beside its name in the header, its main and accent
+  [logo](look-and-feel.md#the-logo), shown beside its name in the header, at a size it chooses,
+  its main and accent
   colours ([Look and feel](look-and-feel.md#brand-colours)) and a light or dark name bar and
   footer ([Look and feel](look-and-feel.md#a-light-or-dark-name-bar-and-footer)). A
   change shows on every page as soon as it's saved, so its preview panel shows it on real pages

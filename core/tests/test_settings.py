@@ -5,7 +5,7 @@ from wagtail.models import Locale, Site
 from wagtail.test.utils.form_data import inline_formset, nested_form_data
 from wagtail_factories import ImageFactory
 
-from core.brand import DEFAULT_ACCENT, DEFAULT_MAIN
+from core.brand import DEFAULT_ACCENT, DEFAULT_LOGO_SIZE, DEFAULT_MAIN, LOGO_MAX, LOGO_MIN
 from core.models import AnnouncementBanner, AnnouncementBannerText, SiteSettings, SiteSettingsText
 from home.models import StandardPage
 
@@ -234,6 +234,7 @@ class TestTextInEachLanguageInTheAdmin:
                 "main_colour": DEFAULT_MAIN,
                 "accent_colour": DEFAULT_ACCENT,
                 "name_bar_style": "dark",
+                "logo_size": DEFAULT_LOGO_SIZE,
                 "footer_style": "dark",
                 "texts": inline_formset(
                     [
@@ -262,6 +263,7 @@ class TestBrandColours:
             "main_colour": main,
             "accent_colour": accent,
             "name_bar_style": "dark",
+            "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
             "texts": inline_formset([]),
         }
@@ -340,6 +342,7 @@ class TestHeaderAndFooter:
             "main_colour": DEFAULT_MAIN,
             "accent_colour": DEFAULT_ACCENT,
             "name_bar_style": name_bar,
+            "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": footer,
             "texts": inline_formset([]),
         }
@@ -414,6 +417,7 @@ class TestLogo:
             "main_colour": DEFAULT_MAIN,
             "accent_colour": DEFAULT_ACCENT,
             "name_bar_style": "dark",
+            "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
             "logo": logo.pk if logo else "",
             "texts": inline_formset([]),
@@ -554,6 +558,78 @@ class TestLogo:
         assert image["alt"] == ""
 
 
+class TestLogoSize:
+    """Site settings → Brand → Logo → size (#123): how tall the logo is, from the size it was
+    first drawn at up to the largest. How the heights are worked out: test_brand.py."""
+
+    def save(self, client, user, site, size):
+        client.force_login(user)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+        form = {
+            "currency": "NPR",
+            "phone_country": "NP",
+            "main_colour": DEFAULT_MAIN,
+            "accent_colour": DEFAULT_ACCENT,
+            "name_bar_style": "dark",
+            "footer_style": "dark",
+            "logo_size": size,
+            "texts": inline_formset([]),
+        }
+        return client.post(url, nested_form_data(form))
+
+    @pytest.mark.parametrize("size", [LOGO_MIN, 60, LOGO_MAX])
+    def test_moderator_chooses_a_size_in_the_range(self, client, moderator, site, size):
+        response = self.save(client, moderator, site, size)
+
+        assert response.status_code == 302
+        assert SiteSettings.for_site(site).logo_size == size
+
+    @pytest.mark.parametrize("size", [LOGO_MIN - 1, LOGO_MAX + 1])
+    def test_a_size_outside_the_range_cant_be_saved(self, client, moderator, site, size):
+        response = self.save(client, moderator, site, size)
+
+        assert response.status_code == 200
+        assert SiteSettings.for_site(site).logo_size == DEFAULT_LOGO_SIZE
+
+    def test_a_new_site_has_the_largest_size(self, site):
+        assert SiteSettings.for_site(site).logo_size == LOGO_MAX
+
+    def test_the_size_is_chosen_with_a_slider_that_shows_its_value(self, client, moderator, site):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+
+        html = client.get(url).content.decode()
+
+        slider = BeautifulSoup(html, "html.parser").find("input", {"name": "logo_size"})
+        assert slider["type"] == "range"
+        assert (slider["min"], slider["max"]) == (str(LOGO_MIN), str(LOGO_MAX))
+        assert slider["value"] == str(LOGO_MAX)
+        assert "<output" in html and f">{LOGO_MAX}px</output>" in html
+
+    def test_editors_cant_change_the_size(self, client, editor, site):
+        response = self.save(client, editor, site, LOGO_MIN)
+
+        assert response.status_code == 302
+        assert response.url == reverse("wagtailadmin_home")
+        assert SiteSettings.for_site(site).logo_size == DEFAULT_LOGO_SIZE
+
+    def test_a_site_that_hasnt_chosen_keeps_the_stylesheets_size(self, client, home_page):
+        assert "--logo-height" not in client.get("/").content.decode()
+
+    @pytest.mark.parametrize(
+        "path",
+        ["/", "/about/", "/appeals/", "/donate/", "/search/?query=water", "/ne/", "/no-such-page/"],
+    )
+    def test_every_page_uses_the_chosen_size(self, client, demo_site, path):
+        site_settings = SiteSettings.for_site(demo_site)
+        site_settings.logo_size = 48
+        site_settings.save()
+
+        html = client.get(path).content.decode()
+
+        assert "--logo-height:3rem;--logo-height-wide:3.2rem" in html
+
+
 class TestTabsAfterARefusedSave:
     """A refused save opens the tab with the mistake in it, not always the first tab.
 
@@ -569,6 +645,7 @@ class TestTabsAfterARefusedSave:
             "main_colour": DEFAULT_MAIN,
             "accent_colour": DEFAULT_ACCENT,
             "name_bar_style": "dark",
+            "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
             "texts": inline_formset([]),
             **changes,
@@ -615,6 +692,7 @@ class TestPreview:
             "main_colour": site_settings.main_colour,
             "accent_colour": site_settings.accent_colour,
             "name_bar_style": site_settings.name_bar_style,
+            "logo_size": site_settings.logo_size,
             "footer_style": site_settings.footer_style,
             "logo": site_settings.logo_id or "",
             "texts": inline_formset([]),
@@ -673,6 +751,14 @@ class TestPreview:
         assert 'class="brand-logo"' in kept.content.decode()
         assert 'class="brand-logo"' not in removed.content.decode()
 
+    def test_the_home_page_shows_the_unsaved_logo_size(self, client, moderator, site, home_page):
+        saved = SiteSettings.for_site(site).logo_size
+
+        response = self.preview(client, moderator, site, logo_size=LOGO_MIN)
+
+        assert "--logo-height:2.5rem;--logo-height-wide:2.5rem" in response.content.decode()
+        assert SiteSettings.for_site(site).logo_size == saved
+
     def test_visitors_dont_see_the_preview(self, client, moderator, site, home_page):
         self.preview(client, moderator, site, main_colour="#8e1b3b", name_bar_style="light")
 
@@ -698,6 +784,7 @@ class TestPreview:
             "main_colour": "#f2b134",
             "accent_colour": DEFAULT_ACCENT,
             "name_bar_style": "dark",
+            "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
             "texts": inline_formset([]),
         }

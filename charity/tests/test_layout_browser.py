@@ -177,6 +177,30 @@ def test_logo_and_name_are_centred_together_on_their_own_row(
     assert site_page.evaluate("document.documentElement.scrollWidth") == width
 
 
+# A charity chooses how tall its logo is, from the smallest (2.5rem everywhere) to the largest
+# (5rem, and 6rem from 68rem). In between, both heights grow together.
+@pytest.mark.parametrize(
+    ("size", "phone", "wide"), [(40, 40, 40), (60, 60, 68), (80, 80, 96)], ids=["min", "mid", "max"]
+)
+def test_the_chosen_size_sets_the_logos_height_on_a_phone_and_a_wide_screen(
+    site_page, logo_header, size, phone, wide
+):
+    site_settings = SiteSettings.for_site(logo_header)
+    site_settings.logo_size = size
+    site_settings.save()
+
+    for width, expected in ((320, phone), (1440, wide)):
+        site_page.set_viewport_size({"width": width, "height": 900})
+        site_page.goto(SITE + "/")
+
+        assert box(site_page, ".brand-logo")["height"] == pytest.approx(expected, abs=0.5)
+        # The row is at least 44px, the smallest tap target, whatever the logo's height.
+        assert box(site_page, ".brand-bar")["height"] == pytest.approx(
+            max(expected, 44) + 12, abs=1
+        )
+        assert site_page.evaluate("document.documentElement.scrollWidth") == width
+
+
 def test_a_long_name_beside_a_wide_logo_wraps_without_moving_the_controls(site_page, logo_header):
     logo_header.site_name = "Apanga Bal Sikshya Sarokar Kendra Nepal"
     logo_header.save()

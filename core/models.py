@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import translation
 from modelcluster.fields import ParentalKey
@@ -20,10 +21,14 @@ from wagtail.search import index
 from core.brand import (
     DARK,
     DEFAULT_ACCENT,
+    DEFAULT_LOGO_SIZE,
     DEFAULT_MAIN,
     FOOTER_CHOICES,
+    LOGO_MAX,
+    LOGO_MIN,
     NAME_BAR_CHOICES,
     ColourInput,
+    LogoSizeInput,
     custom_properties,
     validate_accent_colour,
     validate_main_colour,
@@ -174,6 +179,13 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         "transparent background, about as wide as it is tall, works best. If it's drawn for a "
         "white background, choose a light name bar below.",
     )
+    logo_size = models.PositiveSmallIntegerField(
+        default=DEFAULT_LOGO_SIZE,
+        validators=[MinValueValidator(LOGO_MIN), MaxValueValidator(LOGO_MAX)],
+        help_text="How tall the logo is on a phone, from the smallest to the largest, in pixels. "
+        "On a wide screen it's a little taller. Open the preview with the phone icon at the top "
+        "right to see it on the site's pages before you save.",
+    )
     main_colour = models.CharField(
         max_length=7,
         default=DEFAULT_MAIN,
@@ -230,7 +242,10 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         ),
     ]
     brand_panels = [
-        FieldPanel("logo"),
+        MultiFieldPanel(
+            [FieldPanel("logo"), FieldPanel("logo_size", widget=LogoSizeInput)],
+            heading="Logo",
+        ),
         MultiFieldPanel(
             [
                 FieldPanel("main_colour", widget=ColourInput),
@@ -302,7 +317,7 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     @property
     def brand_css(self):
         """CSS custom properties for the chosen brand colours, or "" for the stylesheet's own."""
-        return custom_properties(self.main_colour, self.accent_colour)
+        return custom_properties(self.main_colour, self.accent_colour, self.logo_size)
 
     @property
     def address(self):

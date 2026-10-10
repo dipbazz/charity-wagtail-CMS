@@ -6,7 +6,8 @@ footer's text) and writes them into each page as CSS custom properties, which re
 defaults at the top of `charity.css`. A colour that would make text hard to read can't be saved.
 
 The name bar and the footer can each be light or dark (#134), so a logo can sit on the
-background it was drawn for.
+background it was drawn for, and the logo's height is chosen between the size it was first drawn
+at and the largest (#123).
 """
 
 import colorsys
@@ -15,6 +16,7 @@ import re
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils.html import format_html
 
 # The stylesheet's own colours, from `:root` in charity.css (a test keeps them the same).
 DEFAULT_MAIN = "#0b5563"
@@ -30,11 +32,38 @@ SURFACE_TINT = 0.05
 
 HEX_COLOUR = re.compile(r"#[0-9a-fA-F]{6}")
 
+# The logo's height on a phone, in pixels, from the size the logo was first drawn at to the
+# largest (the stylesheet's own, `--logo-height` in charity.css). From 68rem the name bar has room
+# to spare, so the largest is taller there: `LOGO_MAX_WIDE`. The smallest is the same everywhere.
+LOGO_MIN = 40
+LOGO_MAX = 80
+LOGO_MAX_WIDE = 96
+DEFAULT_LOGO_SIZE = LOGO_MAX
+
 
 class ColourInput(forms.TextInput):
     """The browser's own colour picker."""
 
     input_type = "color"
+
+
+class LogoSizeInput(forms.NumberInput):
+    """A slider between the smallest and largest logo, with its height beside it."""
+
+    input_type = "range"
+
+    def render(self, name, value, attrs=None, renderer=None):
+        attrs = {
+            **(attrs or {}),
+            # Set here, not in `__init__`: the form field puts its own minimum of 0 on the widget.
+            "min": LOGO_MIN,
+            "max": LOGO_MAX,
+            "step": 1,
+            # The number beside the slider follows it, without a script of the site's own.
+            "oninput": "this.nextElementSibling.value = this.value + 'px'",
+        }
+        slider = super().render(name, value, attrs, renderer)
+        return format_html("{} <output>{}px</output>", slider, value)
 
 
 DARK = "dark"
@@ -209,16 +238,38 @@ def validate_accent_colour(colour):
         )
 
 
-def custom_properties(main, accent):
-    """The CSS declarations that put a site's brand colours on its pages, or "" for the defaults.
+def rem(pixels):
+    return f"{pixels / 16:g}rem"
 
-    A colour left at its default writes nothing, so the stylesheet's own shades stay exactly as
-    they are. A value that isn't a hex colour (one set outside the admin, which checks it) is
-    ignored, so only colours made here reach the page.
+
+def logo_heights(size):
+    """The logo's height on a phone and from 68rem, in rem, for a chosen `size` in pixels.
+
+    Both ends meet the stylesheet's: the smallest is 2.5rem everywhere, the largest 5rem and 6rem.
+    Between them the wide height grows in proportion, so the slider moves both together.
+    """
+    share = (size - LOGO_MIN) / (LOGO_MAX - LOGO_MIN)
+    return rem(size), rem(LOGO_MIN + share * (LOGO_MAX_WIDE - LOGO_MIN))
+
+
+def custom_properties(main, accent, logo_size=DEFAULT_LOGO_SIZE):
+    """The CSS declarations that put a site's brand on its pages, or "" for the defaults.
+
+    A colour or size left at its default writes nothing, so the stylesheet's own values stay
+    exactly as they are. A value that isn't a hex colour or a size in range (one set outside the
+    admin, which checks it) is ignored, so only values made here reach the page.
     """
     properties = {}
     if HEX_COLOUR.fullmatch(main) and main.lower() != DEFAULT_MAIN:
         properties |= main_shades(main.lower())
     if HEX_COLOUR.fullmatch(accent) and accent.lower() != DEFAULT_ACCENT:
         properties |= accent_shades(accent.lower())
+    if (
+        isinstance(logo_size, int)
+        and not isinstance(logo_size, bool)
+        and LOGO_MIN <= logo_size <= LOGO_MAX
+        and logo_size != DEFAULT_LOGO_SIZE
+    ):
+        phone, wide = logo_heights(logo_size)
+        properties |= {"--logo-height": phone, "--logo-height-wide": wide}
     return ";".join(f"{name}:{value}" for name, value in properties.items())
