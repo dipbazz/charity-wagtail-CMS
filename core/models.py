@@ -1,3 +1,4 @@
+from django import forms
 from django.db import models
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
@@ -25,6 +26,7 @@ from core.brand import (
     DEFAULT_ACCENT,
     DEFAULT_MAIN,
     ColourInput,
+    Tone,
     custom_properties,
     validate_accent_colour,
     validate_main_colour,
@@ -172,6 +174,20 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
         help_text="The Donate button and other main buttons, progress bars and the announcement "
         "banner. The text on it is dark or white, whichever is easier to read.",
     )
+    name_bar_style = models.CharField(
+        "name bar",
+        max_length=5,
+        choices=Tone.choices,
+        default=Tone.DARK,
+        help_text="The row with your charity's name at the top of every page.",
+    )
+    footer_style = models.CharField(
+        "footer",
+        max_length=5,
+        choices=Tone.choices,
+        default=Tone.DARK,
+        help_text="Your charity's details at the bottom of every page.",
+    )
 
     organisation_panels = [
         MultiFieldPanel(
@@ -207,6 +223,15 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
             heading="Colours",
             help_text="The site makes its other shades from these two. Every page uses them as "
             "soon as you save.",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("name_bar_style", widget=forms.RadioSelect),
+                FieldPanel("footer_style", widget=forms.RadioSelect),
+            ],
+            heading="Header and footer",
+            help_text="Choose light if your logo is drawn for a white background. Text stays "
+            "easy to read either way.",
         ),
     ]
     edit_handler = TabbedInterface(

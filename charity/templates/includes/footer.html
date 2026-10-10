@@ -1,7 +1,7 @@
 {% load i18n wagtailcore_tags %}
 {% wagtail_site as current_site %}
 {% with site_settings=settings.core.SiteSettings %}
-<footer class="site-footer">
+<footer class="site-footer{% if site_settings.footer_style == 'light' %} is-light{% endif %}">
     <div class="container">
         <p><strong>{{ current_site.site_name|default:"Charity" }}</strong></p>
         {% if site_settings.address %}<address>{{ site_settings.address|linebreaksbr }}</address>{% endif %}

@@ -231,6 +231,8 @@ class TestTextInEachLanguageInTheAdmin:
                 "phone_country": "NP",
                 "main_colour": DEFAULT_MAIN,
                 "accent_colour": DEFAULT_ACCENT,
+                "name_bar_style": "dark",
+                "footer_style": "dark",
                 "texts": inline_formset(
                     [
                         {"locale": Locale.get_default().pk, "address": "1 Example Street"},
@@ -257,6 +259,8 @@ class TestBrandColours:
             "phone_country": "NP",
             "main_colour": main,
             "accent_colour": accent,
+            "name_bar_style": "dark",
+            "footer_style": "dark",
             "texts": inline_formset([]),
         }
         return client.post(url, nested_form_data(form))
@@ -317,6 +321,71 @@ class TestBrandColours:
 
         assert "<style>:root { --colour-primary:#8e1b3b;" in html
         assert "--colour-accent:#1f6feb;" in html
+
+
+class TestHeaderAndFooter:
+    """Site settings → Brand → Header and footer (#134): a light or dark name bar and footer.
+
+    That every combination keeps its text readable: test_brand.py and test_demo_layout_browser.py.
+    """
+
+    def save(self, client, moderator, site, name_bar, footer):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+        form = {
+            "currency": "NPR",
+            "phone_country": "NP",
+            "main_colour": DEFAULT_MAIN,
+            "accent_colour": DEFAULT_ACCENT,
+            "name_bar_style": name_bar,
+            "footer_style": footer,
+            "texts": inline_formset([]),
+        }
+        return client.post(url, nested_form_data(form))
+
+    def test_moderator_chooses_a_light_name_bar_and_a_dark_footer(self, client, moderator, site):
+        response = self.save(client, moderator, site, "light", "dark")
+
+        assert response.status_code == 302
+        site_settings = SiteSettings.for_site(site)
+        assert (site_settings.name_bar_style, site_settings.footer_style) == ("light", "dark")
+
+    def test_each_is_a_choice_of_light_or_dark(self, client, moderator, site):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+
+        html = client.get(url).content.decode()
+
+        for field in ("name_bar_style", "footer_style"):
+            assert html.count(f'type="radio" name="{field}"') == 2
+
+    def test_a_site_that_hasnt_chosen_keeps_its_dark_name_bar_and_footer(self, client, home_page):
+        html = client.get("/").content.decode()
+
+        assert '<div class="brand-bar">' in html
+        assert '<footer class="site-footer">' in html
+
+    def test_the_name_bar_and_footer_are_chosen_separately(self, client, site, home_page):
+        site_settings = SiteSettings.for_site(site)
+        site_settings.footer_style = "light"
+        site_settings.save()
+
+        html = client.get("/").content.decode()
+
+        assert '<div class="brand-bar">' in html
+        assert '<footer class="site-footer is-light">' in html
+
+    @pytest.mark.parametrize("path", ["/", "/donate/", "/ne/", "/ne/donate/", "/no-such-page/"])
+    def test_every_page_has_the_chosen_name_bar_and_footer(self, client, demo_site, path):
+        site_settings = SiteSettings.for_site(demo_site)
+        site_settings.name_bar_style = "light"
+        site_settings.footer_style = "light"
+        site_settings.save()
+
+        html = client.get(path).content.decode()
+
+        assert '<div class="brand-bar is-light">' in html
+        assert '<footer class="site-footer is-light">' in html
 
 
 def test_site_settings_open_in_the_admin(admin_client, site):

@@ -4,6 +4,9 @@ The site makes every other colour it needs from those two (a dark shade for head
 bar and the footer, a hover shade for main buttons, pale tints for panels, borders and the
 footer's text) and writes them into each page as CSS custom properties, which replace the
 defaults at the top of `charity.css`. A colour that would make text hard to read can't be saved.
+
+The name bar and the footer can each be light or dark (#134), so a logo can sit on the
+background it was drawn for.
 """
 
 import colorsys
@@ -12,6 +15,7 @@ import re
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db import models
 
 # The stylesheet's own colours, from `:root` in charity.css (a test keeps them the same).
 DEFAULT_MAIN = "#0b5563"
@@ -32,6 +36,14 @@ class ColourInput(forms.TextInput):
     """The browser's own colour picker."""
 
     input_type = "color"
+
+
+class Tone(models.TextChoices):
+    """A dark name bar or footer is the main colour's dark shade with white text; a light name
+    bar is white and a light footer a pale panel, with dark text. Both keep their contrast."""
+
+    DARK = "dark", "Dark, with white text"
+    LIGHT = "light", "Light, with dark text"
 
 
 def rgb(colour):

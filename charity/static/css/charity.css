@@ -187,6 +187,13 @@ body:lang(ne) {
     background: var(--colour-primary-dark);
 }
 
+/* Light, for a logo drawn for a white background: white like the controls row below, so a
+   line sets them apart. */
+.brand-bar.is-light {
+    border-bottom: 1px solid var(--colour-border);
+    background: var(--colour-background);
+}
+
 .brand {
     display: flex;
     align-items: center;
@@ -198,6 +205,10 @@ body:lang(ne) {
     text-align: center;
     color: var(--colour-on-dark);
     text-decoration: none;
+}
+
+.brand-bar.is-light .brand {
+    color: var(--colour-primary-dark);
 }
 
 /* Narrow screens: Menu on the left, the other language and Donate on the right; the menu and
@@ -934,6 +945,21 @@ body:lang(ne) {
 
 .site-footer .meta {
     color: var(--colour-footer-meta);
+}
+
+/* Light: a pale panel with dark text, and a line that sets it apart from a white page. */
+.site-footer.is-light {
+    border-top: 1px solid var(--colour-border);
+    background: var(--colour-surface);
+    color: var(--colour-text);
+}
+
+.site-footer.is-light a {
+    color: var(--colour-primary);
+}
+
+.site-footer.is-light .meta {
+    color: var(--colour-muted);
 }
 
 /* Centred, so the phone number lines up with the links' taller tap targets. */
