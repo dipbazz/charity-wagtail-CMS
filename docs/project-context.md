@@ -35,7 +35,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | Appeals, the Donate page, the pledge form, pledges in the admin, money, consent, the privacy notice? | [Appeals and giving](site/appeals-and-giving.md) |
 | Nepali and English: addresses, translating pages, snippets and settings text, the switch, `hreflang`, Nepali text? | [Languages](site/languages.md) |
 | How are photos stored, protected and served? What's `with_card_images`? | [Images](site/images.md) |
-| Colours, a charity's brand colours, fonts, header, breakpoints, JavaScript, accessibility? How do I style something? | [Look and feel](site/look-and-feel.md) and the `mobile-first` skill |
+| Colours, a charity's brand colours and previewing them, fonts, header, breakpoints, JavaScript, accessibility? How do I style something? | [Look and feel](site/look-and-feel.md) and the `mobile-first` skill |
 | Who can change what? Why can't editors see my new snippet? | [Editors and permissions](site/editors-and-permissions.md) |
 | How does the live server work? Environment variables, commands, backups, logs, deploying, restoring? | [Running the live site](hosting.md) |
 | Branches, commits, pull requests, code style? | [Contributing](contributing/index.md) |

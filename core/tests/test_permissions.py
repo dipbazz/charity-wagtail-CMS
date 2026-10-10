@@ -76,6 +76,15 @@ def test_editor_cannot_open_site_settings(client, site, editor):
     assert_denied(response)
 
 
+@pytest.mark.parametrize("method", ["get", "post"])
+def test_editor_cannot_preview_site_settings(client, site, editor, method):
+    """Previewing sends the form and shows the result (#136), so it's refused like saving."""
+    client.force_login(editor)
+    url = reverse("wagtailsettings:preview_on_edit", args=["core", "sitesettings", site.pk])
+
+    assert_denied(getattr(client, method)(url))
+
+
 def test_moderator_can_open_site_settings(client, site, moderator):
     client.force_login(moderator)
 

@@ -1,5 +1,6 @@
 from django import forms
 from django.db import models
+from django.utils import translation
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel, ObjectList
@@ -27,7 +28,7 @@ from core.brand import (
     validate_accent_colour,
     validate_main_colour,
 )
-from core.languages import main_language, reading_language
+from core.languages import language_codes, main_language, reading_language
 from core.money import CURRENCY_CHOICES
 from core.panels import TabsOpeningOnErrors
 from core.phone import phone_country_choices
@@ -116,8 +117,11 @@ class TextInEachLanguageMixin:
 
 
 @register_setting(icon="cog")
-class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
-    """Organisation details that appear site-wide, editable per Site."""
+class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, BaseSiteSetting):
+    """Organisation details that appear site-wide, editable per Site.
+
+    Saved changes reach every page at once, so the admin previews them on real pages first (#136).
+    """
 
     charity_number = models.CharField(max_length=20, blank=True)
     contact_email = models.EmailField(blank=True)
@@ -220,7 +224,8 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
             ],
             heading="Colours",
             help_text="The site makes its other shades from these two. Every page uses them as "
-            "soon as you save.",
+            "soon as you save: to see them on the site's pages first, open the preview with the "
+            "phone icon at the top right.",
         ),
         MultiFieldPanel(
             [
@@ -242,6 +247,43 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
 
     class Meta:
         verbose_name = "Site settings"
+
+    @property
+    def preview_modes(self):
+        """The pages the preview shows unsaved changes on: the home page, which is long and shows
+        the most of the brand, the Donate form, and the home page in each other language. Only
+        the pages the site has."""
+        modes = [("", "Home page")]
+        if self.donate_page_id:
+            modes.append(("donate", "Donate page"))
+        for code in self.home_pages_in_other_languages():
+            modes.append((code, f"{translation.get_language_info(code)['name']} home page"))
+        return modes
+
+    def home_pages_in_other_languages(self):
+        """The site's published home page in each language but the main one, by language code."""
+        translations = self.site.root_page.get_translations().live().select_related("locale")
+        by_language = {page.locale.language_code: page for page in translations}
+        return {code: by_language[code] for code in language_codes() if code in by_language}
+
+    def serve_preview(self, request, mode_name):
+        """The page for `mode_name`, as visitors would see it with these settings.
+
+        The preview's request carries these settings, unsaved, in place of the saved ones, so the
+        page draws as its own preview does. A page's address sets its language, and the preview's
+        address isn't the page's, so the page's language is switched on until it's drawn.
+        """
+        page = self.preview_page(mode_name).specific
+        with translation.override(page.locale.language_code):
+            response = page.serve_preview(request, page.default_preview_mode)
+            if hasattr(response, "render"):
+                response.render()
+        return response
+
+    def preview_page(self, mode_name):
+        if mode_name == "donate" and self.donate_page is not None:
+            return self.donate_page
+        return self.home_pages_in_other_languages().get(mode_name, self.site.root_page)
 
     @property
     def brand_css(self):

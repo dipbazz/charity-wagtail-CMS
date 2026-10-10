@@ -82,7 +82,8 @@ A charity chooses two colours in **Site settings → Brand** (moderators only, l
 Site settings): a **main colour**, the teal by default, and an **accent colour**, the amber.
 `core/brand.py` makes the other shades from them, and `base.html` writes them into each page's
 `<head>`, after the stylesheet, as a `<style>` that replaces those tokens (about 450 bytes with
-both chosen). Every page uses a new colour as soon as it's saved.
+both chosen). Every page uses a new colour as soon as it's saved, so the admin
+[previews it on real pages first](#seeing-a-brand-change-before-it-goes-live).
 
 | From | Token | Made by |
 |---|---|---|
@@ -133,6 +134,36 @@ panel are among the pairs `core/tests/test_brand.py` checks for every colour, an
 `charity/tests/test_demo_layout_browser.py` measures the contrast of each combination in the
 browser. The controls row below the name bar stays white, so the Menu button and language
 switch don't change.
+
+### Seeing a brand change before it goes live
+
+A saved brand is on every page at once, and Wagtail can't keep settings as drafts, so Site
+settings has the same **preview panel** as a page. The phone icon at the top right opens it
+next to the form. It shows a real page drawn with the form as it stands, unsaved, and redraws
+it as the form changes. **Preview mode** chooses the page:
+
+| Preview mode | Why | Listed |
+|---|---|---|
+| Home page | The longest page, with the most of the brand: the banner over its photo, cards, progress bars, buttons, the footer | Always |
+| Donate page | The pledge form and its main buttons | When a Donate page is chosen |
+| Nepali home page | The other language's text, in its own fonts | For each other language with a published home page (English home page when Nepali is the main language) |
+
+Visitors see nothing until **Save**, so a mistake is undone by changing it back or leaving
+without saving. A colour that can't be saved can't be previewed either: the panel says the
+preview is out of date until it's fixed. The panel previews the whole form, so a change on the
+Organisation tab, such as the address, shows too. Editors can't preview Site settings, as they
+can't change them.
+
+How it works: `SiteSettings` is a `PreviewableMixin`, which Wagtail's settings views support.
+Wagtail puts the unsaved settings on the preview's request, where `{{ settings.core.SiteSettings }}`
+and `SiteSettings.for_request` find them in place of the saved ones. `SiteSettings.serve_preview`
+then draws the chosen page with the page's own `serve_preview`, in the page's language: its
+address would set the language, but the preview's address isn't the page's. The tests are in
+`core/tests/test_settings.py` (`TestPreview`) and, in a browser, `test_settings_browser.py`.
+
+What it can't do: a change can't be kept as a draft to finish later, sent for approval or
+scheduled, and there's no history of earlier brands to go back to. [Decisions](../decisions.md#brand-previews-in-site-settings)
+says why that was chosen over a brand with drafts.
 
 ## Header
 

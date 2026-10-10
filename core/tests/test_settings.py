@@ -436,6 +436,123 @@ class TestTabsAfterARefusedSave:
         assert "data-w-tabs-active-panel-id-value" not in client.get(url).content.decode()
 
 
+class TestPreview:
+    """Seeing unsaved Site settings on real pages before saving them (#136).
+
+    Wagtail's preview panel sends the form to the preview address, then shows what that address
+    renders with it. In a real browser: test_settings_browser.py. Who can preview:
+    test_permissions.py.
+    """
+
+    def preview(self, client, user, site, mode="", **changes):
+        """What the preview panel shows for Site settings changed by `changes`, unsaved."""
+        client.force_login(user)
+        url = reverse("wagtailsettings:preview_on_edit", args=["core", "sitesettings", site.pk])
+        site_settings = SiteSettings.for_site(site)
+        form = {
+            "currency": site_settings.currency,
+            "phone_country": site_settings.phone_country,
+            "donate_page": site_settings.donate_page_id or "",
+            "privacy_page": site_settings.privacy_page_id or "",
+            "main_colour": site_settings.main_colour,
+            "accent_colour": site_settings.accent_colour,
+            "name_bar_style": site_settings.name_bar_style,
+            "footer_style": site_settings.footer_style,
+            "texts": inline_formset([]),
+            **changes,
+        }
+        sent = client.post(url, nested_form_data(form))
+        assert sent.json() == {"is_valid": True, "is_available": True}
+        return client.get(url, {"mode": mode, "in_preview_panel": "true"})
+
+    def test_site_settings_have_a_preview_panel(self, client, moderator, site):
+        client.force_login(moderator)
+        edit = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+        preview = reverse("wagtailsettings:preview_on_edit", args=["core", "sitesettings", site.pk])
+
+        assert preview in client.get(edit).content.decode()
+
+    def test_the_home_page_shows_the_unsaved_brand(self, client, moderator, site, home_page):
+        response = self.preview(
+            client,
+            moderator,
+            site,
+            main_colour="#8e1b3b",
+            accent_colour="#1f6feb",
+            name_bar_style="light",
+            footer_style="light",
+        )
+
+        html = response.content.decode()
+        assert response.status_code == 200
+        assert f"<title>\n            {home_page.title}" in html
+        assert "<style>:root { --colour-primary:#8e1b3b;" in html
+        assert "--colour-accent:#1f6feb;" in html
+        assert '<div class="brand-bar is-light">' in html
+        assert '<footer class="site-footer is-light">' in html
+
+    def test_visitors_dont_see_the_preview(self, client, moderator, site, home_page):
+        self.preview(client, moderator, site, main_colour="#8e1b3b", name_bar_style="light")
+
+        assert SiteSettings.for_site(site).main_colour == DEFAULT_MAIN
+        client.logout()
+        html = client.get("/").content.decode()
+        assert "--colour-primary" not in html
+        assert '<div class="brand-bar">' in html
+
+    def test_the_unsaved_address_shows_in_the_footer(self, client, moderator, site, home_page):
+        texts = inline_formset([{"locale": Locale.get_default().pk, "address": "2 New Street"}])
+
+        response = self.preview(client, moderator, site, texts=texts)
+
+        assert "2 New Street" in response.content.decode()
+
+    def test_a_colour_that_cant_be_saved_cant_be_previewed(self, client, moderator, site):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:preview_on_edit", args=["core", "sitesettings", site.pk])
+        form = {
+            "currency": "NPR",
+            "phone_country": "NP",
+            "main_colour": "#f2b134",
+            "accent_colour": DEFAULT_ACCENT,
+            "name_bar_style": "dark",
+            "footer_style": "dark",
+            "texts": inline_formset([]),
+        }
+
+        assert client.post(url, nested_form_data(form)).json()["is_valid"] is False
+
+    def test_the_pages_to_preview(self, demo_site):
+        """A long page (the home page), the Donate form and a page in the other language."""
+        modes = SiteSettings.for_site(demo_site).preview_modes
+
+        assert modes == [("", "Home page"), ("donate", "Donate page"), ("ne", "Nepali home page")]
+
+    def test_only_pages_the_site_has(self, demo_site):
+        site_settings = SiteSettings.for_site(demo_site)
+        site_settings.donate_page = None
+        demo_site.root_page.get_translations().unpublish()
+
+        assert site_settings.preview_modes == [("", "Home page")]
+
+    def test_the_donate_page_shows_its_form_in_the_unsaved_brand(
+        self, client, moderator, demo_site
+    ):
+        response = self.preview(client, moderator, demo_site, "donate", accent_colour="#1f6feb")
+
+        html = response.content.decode()
+        assert '<form class="pledge-form"' in html
+        assert "--colour-accent:#1f6feb;" in html
+
+    def test_the_nepali_home_page_is_in_nepali(self, client, moderator, demo_site):
+        response = self.preview(client, moderator, demo_site, "ne", main_colour="#8e1b3b")
+
+        html = response.content.decode()
+        assert '<html lang="ne">' in html
+        assert "मुख्य सामग्रीमा जानुहोस्" in html
+        assert "--colour-primary:#8e1b3b;" in html
+
+
 def test_site_settings_open_in_the_admin(admin_client, site):
     url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
 

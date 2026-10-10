@@ -22,7 +22,7 @@ whoever hosts the site.
 | **Announcement banner** | Change, in each language (no approval needed) | ✅ | ✅ |
 | **Partners** | Add, change, delete and translate | ✅ | ✅ |
 | **News categories** | Add, change, delete and translate | ✅ | ✅ |
-| **Site settings** (charity number, contact details and the address in each language, Donate page, privacy notice, currency, brand colours) | Change | ❌ | ✅ |
+| **Site settings** (charity number, contact details and the address in each language, Donate page, privacy notice, currency, brand colours) | Change, and preview changes before saving | ❌ | ✅ |
 | **Pledges** | View, filter and export | ✅ | ✅ |
 | | Add, change or delete | ❌ | ❌ |
 | **Form submissions** | View and export (comes with editing the form page) | ✅ | ✅ |
