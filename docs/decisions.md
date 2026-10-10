@@ -347,3 +347,54 @@ a generic setting (one per installation) to a site setting (one per Site) at the
   whole installation. If several charities ever share one, they need a link to their Site.
 - Text a new setting shows readers goes in a row model like these
   ([Extending the site](contributing/extending.md#add-a-snippet-or-setting)).
+
+## Brand previews in Site settings
+
+**Status:** in use (since #136)
+
+**Context**
+
+A charity's brand (its colours and a light or dark name bar and footer, and next its logo, #123,
+and a font style, #135) is in Site settings, and Wagtail can't keep settings as drafts: a saved
+change is on every page at once. A moderator trying a brand needs to see it on real pages (a long
+page, the Donate form, a page in the other language) before supporters do, and to back out of a
+mistake without visitors seeing it.
+
+Options considered:
+
+- **A: keep the brand in Site settings and preview it.** Wagtail 8's settings views support
+  `PreviewableMixin`: the form gets the preview panel pages have, and the preview's request
+  carries the unsaved setting, which templates then read in place of the saved one.
+- **B: move the brand into a snippet with drafts** (`DraftStateMixin`, `RevisionMixin`,
+  `PreviewableMixin`), saved, sent for approval and published like a page.
+
+**Decision**
+
+A. `SiteSettings` is a `PreviewableMixin`, and its preview draws the home page, the Donate page or
+the home page in another language with the unsaved form
+([Look and feel](site/look-and-feel.md#seeing-a-brand-change-before-it-goes-live)).
+
+B adds drafts, approval, scheduling and a history to go back to. A small charity's moderator sets
+the brand once and changes it rarely, so those are worth less than what B costs:
+
+- **A snippet is a list, and a brand is one per Site.** Nothing in Wagtail stops a second brand
+  or the deletion of the only one, and snippets belong to the whole installation, not a Site
+  (the same problem as [settings text](#settings-text-in-a-row-per-language)).
+- **The brand would move out of Site settings,** and the logo and font style after it, away from
+  the charity's other details.
+- **Every page would look up the published brand,** one more query on every page, where Site
+  settings are already loaded.
+- **The saved colours would move** in a data migration, with a permissions migration for the new
+  snippet.
+
+A is a mixin and two methods, with no migration and no change to what visitors download.
+
+**Consequences**
+
+- A brand change can't be kept as a draft, sent for approval or scheduled: a moderator previews
+  it and saves it in one sitting.
+- There's no history of earlier brands. Once saved, the old colours are gone unless someone noted
+  them; a way back to the default look is #137. If charities ask for drafts or a history, B can
+  still be built, and its preview would be this one.
+- The preview covers the whole Site settings form, so a new address or Donate page can be
+  previewed too, and Wagtail's accessibility checks panel comes with it.

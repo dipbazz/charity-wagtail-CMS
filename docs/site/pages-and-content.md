@@ -85,7 +85,9 @@ Settings that apply to every page, under **Settings** in the admin (`core/models
   **default phone country** for mobile numbers on forms; Facebook, Instagram and LinkedIn
   links (each shown in the footer only when set); and, on the **Brand** tab, the charity's main
   and accent colours ([Look and feel](look-and-feel.md#brand-colours)) and a light or dark name
-  bar and footer ([Look and feel](look-and-feel.md#a-light-or-dark-name-bar-and-footer)).
+  bar and footer ([Look and feel](look-and-feel.md#a-light-or-dark-name-bar-and-footer)). A
+  change shows on every page as soon as it's saved, so its preview panel shows it on real pages
+  first ([Look and feel](look-and-feel.md#seeing-a-brand-change-before-it-goes-live)).
 - **Announcement banner**: one message, written in each language, on or off, optionally linking
   to a page, shown across the top of every page in amber. Editors change it directly, without
   approval, because an emergency appeal can't wait.
