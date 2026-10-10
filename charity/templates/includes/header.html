@@ -18,7 +18,7 @@
     <div class="brand-bar{% if settings.core.SiteSettings.name_bar_style == 'light' %} is-light{% endif %}">
         <a class="brand" href="{% url 'wagtail_serve' '' %}" lang="{{ languages.main_language }}">
             {% with logo=settings.core.SiteSettings.logo %}
-                {% if logo %}{% image logo max-320x80 class="brand-logo" alt="" %}{% endif %}
+                {% if logo %}{% picture logo max-384x192 format-{avif,webp,png} class="brand-logo" alt="" %}{% endif %}
             {% endwith %}
             {{ current_site.site_name|default:"Charity" }}
         </a>

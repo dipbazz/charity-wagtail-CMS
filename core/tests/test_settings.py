@@ -508,13 +508,34 @@ class TestLogo:
         assert int(image["height"]) > 0
 
     def test_the_logo_is_a_small_copy_not_the_original_file(self, client, site, home_page):
-        """A phone downloads a logo the size of the name bar, not a leaflet's print file."""
-        self.use(site, ImageFactory(width=2400, height=800))
+        """A phone downloads a logo the size of the name bar (twice over, for a dense screen),
+        not a leaflet's print file."""
+        self.use(site, ImageFactory(file__width=2400, file__height=800))
 
         image = self.brand_link(client).find("img")
 
-        assert int(image["height"]) <= 80
-        assert int(image["width"]) <= 320
+        assert int(image["height"]) <= 192
+        assert int(image["width"]) <= 384
+
+    def test_a_small_logo_is_not_enlarged(self, client, site, home_page):
+        self.use(site, ImageFactory(file__width=60, file__height=60))
+
+        image = self.brand_link(client).find("img")
+
+        assert (int(image["width"]), int(image["height"])) == (60, 60)
+
+    def test_the_logo_is_offered_in_the_modern_formats_with_a_png_fallback(
+        self, client, site, home_page, logo
+    ):
+        self.use(site, logo)
+
+        picture = self.brand_link(client).find("picture")
+
+        assert [source["type"] for source in picture.find_all("source")] == [
+            "image/avif",
+            "image/webp",
+        ]
+        assert picture.find("img")["src"].endswith(".png")
 
     def test_without_a_logo_the_header_shows_the_name_alone(self, client, named_site, home_page):
         self.use(named_site, None)
@@ -636,7 +657,7 @@ class TestPreview:
 
         response = self.preview(client, moderator, site, logo=logo.pk)
 
-        assert logo.get_rendition("max-320x80").url in response.content.decode()
+        assert logo.get_rendition("max-384x192|format-png").url in response.content.decode()
         assert SiteSettings.for_site(site).logo_id == saved
 
     def test_a_saved_logo_stays_in_the_preview_until_it_is_removed(

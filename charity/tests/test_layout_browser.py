@@ -149,14 +149,19 @@ def logo_header(demo_header):
     """The demo header with a logo four times as wide as it is tall: the hardest shape for the
     name bar of a 320px phone."""
     site_settings = SiteSettings.for_site(demo_header)
-    site_settings.logo = ImageFactory(width=1200, height=300)
+    site_settings.logo = ImageFactory(file__width=1200, file__height=300)
     site_settings.save()
     return demo_header
 
 
-# The charity's logo (#123) sits beside its name, at a fixed height, on the name's own row.
-@pytest.mark.parametrize(("width", "height"), [(320, 700), (1440, 900)])
-def test_logo_and_name_are_centred_together_on_their_own_row(site_page, logo_header, width, height):
+# The charity's logo (#123) sits beside its name, on the name's own row, tall enough to read the
+# lettering in a seal: 5rem on a phone, 6rem where the whole header fits on one line.
+@pytest.mark.parametrize(
+    ("width", "height", "logo_height"), [(320, 700, 80), (768, 900, 80), (1440, 900, 96)]
+)
+def test_logo_and_name_are_centred_together_on_their_own_row(
+    site_page, logo_header, width, height, logo_height
+):
     site_page.set_viewport_size({"width": width, "height": height})
     site_page.goto(SITE + "/")
 
@@ -164,7 +169,7 @@ def test_logo_and_name_are_centred_together_on_their_own_row(site_page, logo_hea
     brand = box(site_page, ".brand")
     controls = box(site_page, ".site-header > .container")
 
-    assert logo["height"] == pytest.approx(40, abs=0.5)
+    assert logo["height"] == pytest.approx(logo_height, abs=0.5)
     assert logo["x"] >= 16 - 1
     assert logo["x"] + logo["width"] <= width - 16 + 1
     assert brand["y"] + brand["height"] <= controls["y"]
@@ -189,18 +194,17 @@ def test_a_long_name_beside_a_wide_logo_wraps_without_moving_the_controls(site_p
 
 
 @pytest.mark.parametrize(("width", "height"), [(320, 700), (1440, 900)])
-def test_a_logo_doesnt_make_the_header_taller(site_page, demo_header, width, height):
+def test_the_name_bar_is_the_logo_and_its_padding_and_no_taller(
+    site_page, logo_header, width, height
+):
+    """The row grows to hold the logo, by its padding (0.375rem above and below) and no more."""
     site_page.set_viewport_size({"width": width, "height": height})
     site_page.goto(SITE + "/")
-    without_a_logo = box(site_page, ".site-header")["height"]
 
-    site_settings = SiteSettings.for_site(demo_header)
-    site_settings.logo = ImageFactory(width=300, height=300)
-    site_settings.save()
-    site_page.goto(SITE + "/")
+    logo = box(site_page, ".brand-logo")
+    name_bar = box(site_page, ".brand-bar")
 
-    assert site_page.locator(".brand-logo").count() == 1
-    assert box(site_page, ".site-header")["height"] == pytest.approx(without_a_logo, abs=0.5)
+    assert name_bar["height"] == pytest.approx(logo["height"] + 12, abs=1)
 
 
 @pytest.mark.parametrize(("width", "height"), [(320, 700), (1440, 900)])

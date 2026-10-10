@@ -175,23 +175,30 @@ and sits in the header's name row, inside the link to the home page, in front of
 - **The name is always shown beside it,** so the logo is decorative (`alt=""`) and a screen
   reader hears the name once. The image's description in the admin is still worth writing: it's
   what the logo is called wherever else the image is used.
-- **A small copy, at a fixed height.** The template asks for `max-320x80`: twice the 2.5rem
-  (40px) the stylesheet draws it at, for a dense phone screen. The rendition's `width` and
-  `height` attributes give the browser the shape before the file arrives, so the name bar doesn't
-  shift as it loads. A logo wider than 10rem shrinks inside its box (`object-fit: contain`) so
-  it can't crowd a long name off a 320px screen; the name wraps beside it.
+- **Tall enough to read.** A seal or a crest has lettering in it, so the logo is **5rem** (80px)
+  tall on a phone and **6rem** (96px) from 68rem, where the header's other query is, and the name
+  bar grows to hold it. A logo that's wide for its height shrinks inside its box
+  (`object-fit: contain`, at most 9rem wide, 16rem from 68rem) so it can't crowd a long name off
+  a 320px screen; the name wraps beside it. A logo with a background of its own, as most from a
+  leaflet or a Facebook page have, gets the corners of a button.
+- **A small copy, in the modern formats.** The template uses `{% picture %}` with
+  `max-384x192` and AVIF, WebP and PNG, twice the largest size it's drawn at, for a dense phone
+  screen. `max` never enlarges, so a small logo stays as it is. The `width` and `height`
+  attributes give the browser the shape before the file arrives, so the name bar doesn't shift
+  as it loads.
 - **No logo, no change:** the header shows the name alone, as it did.
-- **No extra query:** the logo is read with the settings (`select_related`), and its rendition
-  comes from Wagtail's cache after the first visit.
+- **No extra query:** the logo is read with the settings (`select_related`), and its renditions
+  come from Wagtail's cache after the first visit.
 - **PNG, JPEG or WebP,** not SVG: [Decisions](../decisions.md#the-logo-is-a-raster-image-not-an-svg)
   says why. Draw it for the name bar it will sit on: a logo in dark colours disappears on the
   default dark bar, so such a charity chooses a
   [light name bar](#a-light-or-dark-name-bar-and-footer).
 
 `seed_demo` draws a logo for the demo charity: a drop of water on an amber disc, which shows on
-a dark bar and a light one. `charity/tests/test_layout_browser.py` checks the logo's height, its
-place on the name's row, that a long name beside a wide logo doesn't scroll a 320px screen
-sideways, and that the header's height doesn't change with a logo or between languages.
+a dark bar and a light one. `charity/tests/test_layout_browser.py` checks the logo's height at
+each size, its place on the name's row, that the name bar is the logo and its padding and no
+taller, that a long name beside a wide logo doesn't scroll a 320px screen sideways, and that the
+header's height is the same in both languages.
 
 ## Header
 

@@ -417,8 +417,9 @@ Options considered:
 
 **Decision**
 
-A. The logo is any image the library holds, served as a `max-320x80` rendition, which is twice
-the size it's drawn at ([The logo](site/look-and-feel.md#the-logo)).
+A. The logo is any image the library holds, served as a `max-384x192` rendition in AVIF, WebP
+and PNG, which is twice the largest size it's drawn at
+([The logo](site/look-and-feel.md#the-logo)).
 
 B would let an SVG into every image field, and the photo templates can't render one:
 `{% picture %}` asks for `format-avif`, `format-webp` and `format-jpeg`, and Wagtail raises
@@ -428,8 +429,8 @@ the library is open to editors, not only to the moderators who choose the logo.
 
 **Consequences**
 
-- A logo is a raster image. At 80px high, a PNG drawn at that size or larger is sharp on every
-  phone, and the copy is a few kilobytes.
+- A logo is a raster image. At 192px high, a PNG drawn at that size or larger is sharp on every
+  phone, and the copy is a few kilobytes in AVIF or WebP.
 - A charity whose logo only exists as an SVG exports a PNG of it first.
 - If SVG is wanted later, it needs `preserve-svg` in every photo filter, a sanitiser on upload,
   and a test that picks an SVG for each image field: a decision of its own, replacing this one.

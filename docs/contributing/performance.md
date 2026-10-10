@@ -35,8 +35,8 @@ stylesheet change therefore never needs a budget edit; raise the allowance only 
 CSS have genuinely grown, and say why.
 
 The charity's [logo](../site/look-and-feel.md#the-logo) is one more image on every page, so each
-image budget includes the demo logo's 1.6KB (#123). A real charity's logo costs about as much, as
-the header serves it as a copy no larger than 320 by 80 pixels.
+image budget includes the demo logo (#123). A real charity's logo costs a few kilobytes, as the
+header serves it as a copy no larger than 384 by 192 pixels, in AVIF where the browser can.
 
 Each run's reports are attached as the `lighthouse-reports` artifact.
 

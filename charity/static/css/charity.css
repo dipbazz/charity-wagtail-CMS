@@ -211,15 +211,18 @@ body:lang(ne) {
     color: var(--colour-primary-dark);
 }
 
-/* A fixed height, so the bar is the same on every page. The width and height attributes give the
-   browser the ratio before the file arrives, so nothing moves as it loads. A wide logo shrinks
-   inside its box rather than crowding the name off a 320px screen. */
+/* A fixed height, so the bar is the same on every page, and tall enough to read a seal's ring of
+   lettering. The width and height attributes give the browser the ratio before the file
+   arrives, so nothing moves as it loads. A wide logo shrinks inside its box rather than
+   crowding the name off a 320px screen. A logo with a background of its own gets the corners
+   of a button, not a sticker's. */
 .brand-logo {
     flex: none;
-    height: 2.5rem;
+    height: 5rem;
     width: auto;
-    max-width: 10rem;
+    max-width: 9rem;
     object-fit: contain;
+    border-radius: var(--radius);
 }
 
 /* Narrow screens: Menu on the left, the other language and Donate on the right; the menu and
@@ -352,6 +355,11 @@ body:lang(ne) {
 @media (min-width: 68rem) {
     .brand {
         font-size: 1.4rem;
+    }
+
+    .brand-logo {
+        height: 6rem;
+        max-width: 16rem;
     }
 
     .site-header > .container {

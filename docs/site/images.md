@@ -30,8 +30,9 @@ Photos use Wagtail's `{% picture %}` tag with `format-{avif,webp,jpeg}`, several
   as if the `<picture>` weren't there. `<source>` elements are hidden explicitly, or they become
   empty grid rows.
 
-Partner logos stay PNG, through `{% image %}`. So does the charity's own logo in the header, in a
-small copy ([The logo](look-and-feel.md#the-logo)); SVG isn't accepted
+Partner logos stay PNG, through `{% image %}`. The charity's own logo in the header is a
+`{% picture %}` in AVIF, WebP and a PNG fallback, at most 384 by 192 pixels
+([The logo](look-and-feel.md#the-logo)); SVG isn't accepted
 ([Decisions](../decisions.md#the-logo-is-a-raster-image-not-an-svg)).
 
 ## The homepage banner

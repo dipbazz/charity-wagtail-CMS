@@ -143,10 +143,11 @@ def make_charity_logo():
     """Draw the demo charity's logo: a drop of water on an amber disc.
 
     The disc has its own colour, so the logo shows on a dark name bar and on a light one. It's
-    drawn at the size the header serves it (twice the 40px it's shown at) and in few colours, so
-    it weighs about a kilobyte: it's on every page, and the image budgets are tight.
+    drawn at the largest size the header serves (192px, twice the 96px it's shown at on a wide
+    screen) and in few colours, so it stays small: it's on every page, and the image budgets are
+    tight.
     """
-    size, scale = 80, 8  # drawn large and shrunk, so the edges are smooth
+    size, scale = 192, 4  # drawn large and shrunk, so the edges are smooth
     amber, teal = (242, 177, 52, 255), (7, 59, 69, 255)
     big = size * scale
     unit = big / 160
