@@ -25,29 +25,29 @@
         {
           "matchingUrlPattern": "^https?://[^/]+/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 219000, "aggregationMethod": "median"}],
-            "resource-summary:image:size": ["error", {"maxNumericValue": 194000, "aggregationMethod": "median"}]
+            "resource-summary:total:size": ["error", {"maxNumericValue": 223000, "aggregationMethod": "median"}],
+            "resource-summary:image:size": ["error", {"maxNumericValue": 198000, "aggregationMethod": "median"}]
           }
         },
         {
           "matchingUrlPattern": "/appeals/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 182000, "aggregationMethod": "median"}],
-            "resource-summary:image:size": ["error", {"maxNumericValue": 157000, "aggregationMethod": "median"}]
+            "resource-summary:total:size": ["error", {"maxNumericValue": 186000, "aggregationMethod": "median"}],
+            "resource-summary:image:size": ["error", {"maxNumericValue": 161000, "aggregationMethod": "median"}]
           }
         },
         {
           "matchingUrlPattern": "/appeals/flood-relief/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 69000, "aggregationMethod": "median"}],
-            "resource-summary:image:size": ["error", {"maxNumericValue": 44000, "aggregationMethod": "median"}]
+            "resource-summary:total:size": ["error", {"maxNumericValue": 73000, "aggregationMethod": "median"}],
+            "resource-summary:image:size": ["error", {"maxNumericValue": 48000, "aggregationMethod": "median"}]
           }
         },
         {
           "matchingUrlPattern": "/stories/$",
           "assertions": {
-            "resource-summary:total:size": ["error", {"maxNumericValue": 106000, "aggregationMethod": "median"}],
-            "resource-summary:image:size": ["error", {"maxNumericValue": 81000, "aggregationMethod": "median"}]
+            "resource-summary:total:size": ["error", {"maxNumericValue": 110000, "aggregationMethod": "median"}],
+            "resource-summary:image:size": ["error", {"maxNumericValue": 85000, "aggregationMethod": "median"}]
           }
         }
       ]

@@ -29,6 +29,10 @@
     --colour-overlay-weak: rgb(7 59 69 / 0.3);
     --radius: 6px;
     --container: 1120px;
+    /* The logo's height on a phone and from 68rem: the middle of what a charity can choose,
+       between 2.5rem (the same on both) and 5rem and 6rem (#123). */
+    --logo-height: 3.75rem;
+    --logo-height-wide: 4.25rem;
     /* The device's own fonts; no download. Latin fonts come first, and each lacks Devanagari, so
        Nepali letters fall through to the phone's Devanagari font: Noto Sans Devanagari on
        Android, Kohinoor Devanagari on iPhone and Mac, Nirmala UI on Windows (#118). */
@@ -211,6 +215,20 @@ body:lang(ne) {
     color: var(--colour-primary-dark);
 }
 
+/* A fixed height, so the bar is the same on every page, and tall enough to read a seal's ring of
+   lettering. The width and height attributes give the browser the ratio before the file
+   arrives, so nothing moves as it loads. A wide logo shrinks inside its box rather than
+   crowding the name off a 320px screen. A logo with a background of its own gets the corners
+   of a button, not a sticker's. */
+.brand-logo {
+    flex: none;
+    height: var(--logo-height);
+    width: auto;
+    max-width: 9rem;
+    object-fit: contain;
+    border-radius: var(--radius);
+}
+
 /* Narrow screens: Menu on the left, the other language and Donate on the right; the menu and
    search open below them. */
 .site-header > .container {
@@ -341,6 +359,11 @@ body:lang(ne) {
 @media (min-width: 68rem) {
     .brand {
         font-size: 1.4rem;
+    }
+
+    .brand-logo {
+        height: var(--logo-height-wide);
+        max-width: 16rem;
     }
 
     .site-header > .container {

@@ -55,6 +55,7 @@ replace.
 | `--colour-hero-lead` | `#e6f0ef` | The home page banner's intro text |
 | `--colour-shadow` | dark teal at 15% | The header's shadow |
 | `--colour-overlay`, `--colour-overlay-strong`, `--colour-overlay-weak` | dark teal at 75%, 85%, 30% | The home page banner's overlay on the photo |
+| `--logo-height`, `--logo-height-wide` | 3.75rem, 4.25rem | The logo's height on a phone and from 68rem: the middle of the sizes a charity can [choose](#the-logo) |
 | `--radius` | 6px | Buttons, cards, fields |
 | `--container` | 1120px | Page width; reading pages use 760px |
 | `--font` | the device's own fonts | No downloads ([Nepali text](languages.md#nepali-text-on-screen)) |
@@ -78,12 +79,12 @@ Body text is 1.0625rem with a line height of 1.6; headings are dark teal at 1.2.
 
 ## Brand colours
 
-A charity chooses two colours in **Site settings → Brand** (moderators only, like the rest of
-Site settings): a **main colour**, the teal by default, and an **accent colour**, the amber.
-`core/brand.py` makes the other shades from them, and `base.html` writes them into each page's
-`<head>`, after the stylesheet, as a `<style>` that replaces those tokens (about 450 bytes with
-both chosen). Every page uses a new colour as soon as it's saved, so the admin
-[previews it on real pages first](#seeing-a-brand-change-before-it-goes-live).
+A charity chooses its [logo](#the-logo) and two colours in **Site settings → Brand** (moderators
+only, like the rest of Site settings). The colours are a **main colour**, the teal by default,
+and an **accent colour**, the amber. `core/brand.py` makes the other shades from them, and
+`base.html` writes them into each page's `<head>`, after the stylesheet, as a `<style>` that
+replaces those tokens (about 450 bytes with both chosen). Every page uses a new colour as soon
+as it's saved, so the admin [previews it on real pages first](#seeing-a-brand-change-before-it-goes-live).
 
 | From | Token | Made by |
 |---|---|---|
@@ -137,8 +138,8 @@ switch don't change.
 
 ### Seeing a brand change before it goes live
 
-A saved brand is on every page at once, and Wagtail can't keep settings as drafts, so Site
-settings has the same **preview panel** as a page. The phone icon at the top right opens it
+A saved brand, logo and logo size are on every page at once, and Wagtail can't keep settings as
+drafts, so Site settings has the same **preview panel** as a page. The phone icon at the top right opens it
 next to the form. It shows a real page drawn with the form as it stands, unsaved, and redraws
 it as the form changes. **Preview mode** chooses the page:
 
@@ -165,12 +166,63 @@ What it can't do: a change can't be kept as a draft to finish later, sent for ap
 scheduled, and there's no history of earlier brands to go back to. [Decisions](../decisions.md#brand-previews-in-site-settings)
 says why that was chosen over a brand with drafts.
 
+## The logo
+
+A moderator chooses the charity's logo in **Site settings → Brand → Logo**: an image from the
+library, optional, previewed like the colours
+([seeing a brand change](#seeing-a-brand-change-before-it-goes-live)). It's `SiteSettings.logo`
+and sits in the header's name row, inside the link to the home page, in front of the name:
+
+- **The name is always shown beside it,** so the logo is decorative (`alt=""`) and a screen
+  reader hears the name once. The image's description in the admin is still worth writing: it's
+  what the logo is called wherever else the image is used.
+- **Its size is chosen,** with a slider under the logo in the same panel, from **Small** to
+  **Large**, with no number: the preview is the answer to "how big is it", and a pixel height
+  would only be exact at the default text size. A screen reader hears how far along it is ("50%
+  of the way from small to large"). A seal or a crest has lettering in it that needs the larger
+  sizes; a plain mark may look better small.
+- **The range** is 40px to 80px tall on a phone, in steps of 4 (`core/brand.py`), and 60px, the
+  middle, until the charity chooses. Small is 2.5rem on every screen. Large is 5rem on a phone
+  and **6rem** from 68rem, where the header's other query is, because the name bar has room to
+  spare; in between, both heights grow together (`core.brand.logo_heights`). The name bar grows
+  to hold the logo, and no more.
+- **It's written like the colours:** a size other than the middle adds `--logo-height` and
+  `--logo-height-wide` to the page's `<style>` in `<head>`, so the stylesheet's own middle size
+  (3.75rem and 4.25rem) is what a site that hasn't chosen gets, and the
+  [preview](#seeing-a-brand-change-before-it-goes-live) follows the slider as it moves.
+  Pixels are for people to picture; the stylesheet uses rem, so a visitor who enlarges their
+  browser's text sees the logo grow with the name beside it.
+- **A wide logo shrinks, not crowds.** One that's wide for its height shrinks inside its box
+  (`object-fit: contain`, at most 9rem wide, 16rem from 68rem) so it can't push a long name off a
+  320px screen; the name wraps beside it. A logo with a background of its own, as most from a
+  leaflet or a Facebook page have, gets the corners of a button.
+- **A small copy, in the modern formats.** The template uses `{% picture %}` with
+  `max-384x192` and AVIF, WebP and PNG, twice the largest size it's drawn at, for a dense phone
+  screen. `max` never enlarges, so a small logo stays as it is. The `width` and `height`
+  attributes give the browser the shape before the file arrives, so the name bar doesn't shift
+  as it loads.
+- **No logo, no change:** the header shows the name alone, as it did.
+- **No extra query:** the logo is read with the settings (`select_related`), and its renditions
+  come from Wagtail's cache after the first visit.
+- **PNG, JPEG or WebP,** not SVG: [Decisions](../decisions.md#the-logo-is-a-raster-image-not-an-svg)
+  says why. Draw it for the name bar it will sit on: a logo in dark colours disappears on the
+  default dark bar, so such a charity chooses a
+  [light name bar](#a-light-or-dark-name-bar-and-footer).
+
+`seed_demo` draws a logo for the demo charity: a drop of water on an amber disc, which shows on
+a dark bar and a light one. `charity/tests/test_layout_browser.py` checks the logo's height at
+the smallest, the default and the largest size, its place on the name's row, that the name bar is
+the logo and its padding and no taller, that a long name beside a wide logo doesn't scroll a
+320px screen sideways, and that the header's height is the same in both languages;
+`core/tests/test_settings_browser.py` that the preview follows the slider.
+
 ## Header
 
-Two rows. The charity's name is centred on a row of its own, dark teal unless the charity
-[chooses light](#a-light-or-dark-name-bar-and-footer), so a long name (and later a logo, #123)
-never crowds the controls, and the header and footer frame the page. Below it, on a white row
-with a soft shadow that lifts it off a white page:
+Two rows. The charity's name, with its [logo](#the-logo) beside it if it has one, is centred on
+a row of its own, dark teal unless the charity
+[chooses light](#a-light-or-dark-name-bar-and-footer), so a long name never crowds the controls,
+and the header and footer frame the page. Below it, on a white row with a soft shadow that lifts
+it off a white page:
 
 - **On a phone:** Menu on the left; the other language and Donate on the right, Donate last, so
   Menu and Donate sit at the two ends. Menu opens the main menu and search below.

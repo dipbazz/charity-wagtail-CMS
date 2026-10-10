@@ -37,6 +37,13 @@ def test_configures_site_settings_and_menu(seeded, client):
     assert seeded.root_page.get_children().live().in_menu().count() >= 3
 
 
+def test_gives_the_charity_a_logo_in_the_header(seeded, client):
+    logo = SiteSettings.for_site(seeded).logo
+
+    assert logo is not None
+    assert "brand-logo" in client.get("/").content.decode()
+
+
 def test_adds_a_placeholder_privacy_notice_linked_from_every_page(seeded, client):
     privacy = SiteSettings.for_site(seeded).privacy_page
     html = client.get(privacy.url).content.decode()
@@ -85,7 +92,8 @@ def test_every_live_page_renders(seeded, client):
 
 
 def test_every_photo_is_a_credited_real_photograph(seeded):
-    photos = core_models.CustomImage.objects.exclude(pk__in=Partner.objects.values("logo"))
+    logos = [*Partner.objects.values_list("logo", flat=True), SiteSettings.for_site(seeded).logo_id]
+    photos = core_models.CustomImage.objects.exclude(pk__in=logos)
 
     assert photos.count() >= 5
     for photo in photos:

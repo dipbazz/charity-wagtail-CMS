@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import translation
 from modelcluster.fields import ParentalKey
@@ -20,10 +21,14 @@ from wagtail.search import index
 from core.brand import (
     DARK,
     DEFAULT_ACCENT,
+    DEFAULT_LOGO_SIZE,
     DEFAULT_MAIN,
     FOOTER_CHOICES,
+    LOGO_MAX,
+    LOGO_MIN,
     NAME_BAR_CHOICES,
     ColourInput,
+    LogoSizeInput,
     custom_properties,
     validate_accent_colour,
     validate_main_colour,
@@ -123,6 +128,9 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     Saved changes reach every page at once, so the admin previews them on real pages first (#136).
     """
 
+    # The logo is on every page: fetch it with the settings, not in a query of its own.
+    select_related = ("logo",)
+
     charity_number = models.CharField(max_length=20, blank=True)
     contact_email = models.EmailField(blank=True)
     phone = models.CharField(max_length=30, blank=True)
@@ -161,6 +169,22 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     facebook_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
+    logo = models.ForeignKey(
+        "core.CustomImage",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Shown beside your charity's name at the top of every page. A PNG with a "
+        "transparent background, about as wide as it is tall, works best. If it's drawn for a "
+        "white background, choose a light name bar below.",
+    )
+    logo_size = models.PositiveSmallIntegerField(
+        default=DEFAULT_LOGO_SIZE,
+        validators=[MinValueValidator(LOGO_MIN), MaxValueValidator(LOGO_MAX)],
+        help_text="Drag to make the logo smaller or larger. The preview (the phone icon at the "
+        "top right) shows it on the site's pages before you save.",
+    )
     main_colour = models.CharField(
         max_length=7,
         default=DEFAULT_MAIN,
@@ -217,6 +241,10 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         ),
     ]
     brand_panels = [
+        MultiFieldPanel(
+            [FieldPanel("logo"), FieldPanel("logo_size", widget=LogoSizeInput)],
+            heading="Logo",
+        ),
         MultiFieldPanel(
             [
                 FieldPanel("main_colour", widget=ColourInput),
@@ -288,7 +316,7 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     @property
     def brand_css(self):
         """CSS custom properties for the chosen brand colours, or "" for the stylesheet's own."""
-        return custom_properties(self.main_colour, self.accent_colour)
+        return custom_properties(self.main_colour, self.accent_colour, self.logo_size)
 
     @property
     def address(self):

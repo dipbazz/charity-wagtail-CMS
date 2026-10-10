@@ -7,7 +7,10 @@ from django.core.exceptions import ValidationError
 
 from core.brand import (
     DEFAULT_ACCENT,
+    DEFAULT_LOGO_SIZE,
     DEFAULT_MAIN,
+    LOGO_MAX,
+    LOGO_MIN,
     MIN_CONTRAST,
     TEXT,
     WHITE,
@@ -15,6 +18,7 @@ from core.brand import (
     accent_shades,
     contrast,
     custom_properties,
+    logo_heights,
     luminance,
     main_contrast,
     main_shades,
@@ -61,6 +65,60 @@ def test_every_property_the_brand_writes_replaces_a_stylesheet_token():
     written = main_shades(MAIN).keys() | accent_shades(ACCENT).keys()
 
     assert written - root().keys() == set()
+
+
+class TestLogoSize:
+    """How tall the logo is (#123): from small, the size it was first drawn at, to large."""
+
+    def test_the_default_is_the_middle_of_the_range(self):
+        assert DEFAULT_LOGO_SIZE == (LOGO_MIN + LOGO_MAX) // 2 == 60
+
+    def test_the_default_size_is_the_stylesheets_own(self):
+        tokens = root()
+
+        assert (tokens["--logo-height"], tokens["--logo-height-wide"]) == logo_heights(
+            DEFAULT_LOGO_SIZE
+        )
+
+    def test_the_smallest_size_is_the_same_on_every_screen(self):
+        """The first logo was 2.5rem tall everywhere; the largest is taller on a wide screen."""
+        assert logo_heights(LOGO_MIN) == ("2.5rem", "2.5rem")
+        assert logo_heights(LOGO_MAX) == ("5rem", "6rem")
+
+    def test_in_between_both_heights_grow_in_proportion(self):
+        assert logo_heights(60) == ("3.75rem", "4.25rem")
+        assert logo_heights(50) == ("3.125rem", "3.375rem")
+
+    def test_the_default_size_writes_nothing_so_the_site_looks_as_it_did(self):
+        assert custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, DEFAULT_LOGO_SIZE) == ""
+        assert custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT) == ""
+
+    def test_the_largest_size_is_written_like_any_other(self):
+        css = custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, LOGO_MAX)
+
+        assert css == "--logo-height:5rem;--logo-height-wide:6rem"
+
+    def test_another_size_writes_both_heights_and_leaves_the_colours_alone(self):
+        css = custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, 50)
+
+        assert css == "--logo-height:3.125rem;--logo-height-wide:3.375rem"
+
+    def test_it_is_written_beside_the_colours(self):
+        css = custom_properties(MAIN, ACCENT, LOGO_MIN)
+
+        assert f"--colour-primary:{MAIN};" in css
+        assert css.endswith("--logo-height:2.5rem;--logo-height-wide:2.5rem")
+
+    def test_every_property_it_writes_replaces_a_stylesheet_token(self):
+        css = custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, LOGO_MIN)
+        written = {declaration.split(":")[0] for declaration in css.split(";")}
+
+        assert written - root().keys() == set()
+
+    @pytest.mark.parametrize("size", [LOGO_MIN - 1, LOGO_MAX + 1, 0, -5, "big", None, True])
+    def test_a_size_outside_the_range_is_ignored(self, size):
+        """Only a change made outside the admin, which checks it, could save one."""
+        assert custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, size) == ""
 
 
 def test_a_main_colour_writes_its_shades_and_leaves_the_accent_alone():

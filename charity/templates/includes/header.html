@@ -1,4 +1,4 @@
-{% load i18n wagtailcore_tags navigation_tags %}
+{% load i18n wagtailcore_tags wagtailimages_tags navigation_tags %}
 {% wagtail_site as current_site %}
 {% with banner=settings.core.AnnouncementBanner %}
     {% if banner.enabled and banner.message %}
@@ -14,8 +14,14 @@
     {# It links to the home page in the language being read: / or /ne/ (or /en/ on a Nepali site). #}
     {# The site name is written in the main language, so it keeps that lang on every page. #}
     {# Dark unless the charity chose light in Site settings, for a logo drawn for a white background. #}
+    {# The logo, if there is one, is decorative (alt=""): the name beside it already names the link. #}
     <div class="brand-bar{% if settings.core.SiteSettings.name_bar_style == 'light' %} is-light{% endif %}">
-        <a class="brand" href="{% url 'wagtail_serve' '' %}" lang="{{ languages.main_language }}">{{ current_site.site_name|default:"Charity" }}</a>
+        <a class="brand" href="{% url 'wagtail_serve' '' %}" lang="{{ languages.main_language }}">
+            {% with logo=settings.core.SiteSettings.logo %}
+                {% if logo %}{% picture logo max-384x192 format-{avif,webp,png} class="brand-logo" alt="" %}{% endif %}
+            {% endwith %}
+            {{ current_site.site_name|default:"Charity" }}
+        </a>
     </div>
     <div class="container">
         {# Shown only on pages with JavaScript (the "js" class), so without it the menu simply stays open. #}

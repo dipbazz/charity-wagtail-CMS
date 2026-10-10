@@ -139,6 +139,35 @@ def make_logo(name, colour, shape):
     )
 
 
+def make_charity_logo():
+    """Draw the demo charity's logo: a drop of water on an amber disc.
+
+    The disc has its own colour, so the logo shows on a dark name bar and on a light one. It's
+    drawn at the largest size the header serves (192px, twice the 96px it's shown at on a wide
+    screen) and in few colours, so it stays small: it's on every page, and the image budgets are
+    tight.
+    """
+    size, scale = 192, 4  # drawn large and shrunk, so the edges are smooth
+    amber, teal = (242, 177, 52, 255), (7, 59, 69, 255)
+    big = size * scale
+    unit = big / 160
+    image = Image.new("RGBA", (big, big), (255, 255, 255, 0))
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((0, 0, big - 1, big - 1), fill=amber)
+    drop = [(80, 26), (51, 78), (109, 78)]
+    draw.polygon([(x * unit, y * unit) for x, y in drop], fill=teal)
+    draw.ellipse((48 * unit, 60 * unit, 112 * unit, 124 * unit), fill=teal)
+    small = image.resize((size, size), Image.Resampling.LANCZOS)
+    small = small.quantize(colors=16, method=Image.Quantize.FASTOCTREE)
+    buffer = io.BytesIO()
+    small.save(buffer, format="PNG", optimize=True)
+    return CustomImage.objects.create(
+        title=f"{SITE_NAME} logo",
+        description=f"{SITE_NAME} logo: a drop of water",
+        file=ImageFile(buffer, name="brightwell-logo.png"),
+    )
+
+
 def publish(parent, page):
     parent.add_child(instance=page)
     page.save_revision().publish()
@@ -521,6 +550,7 @@ class Command(BaseCommand):
         ]
         settings.donate_page = donate
         settings.privacy_page = privacy
+        settings.logo = make_charity_logo()
         settings.currency = "NPR"
         settings.phone_country = "NP"
         settings.instagram_url = "https://instagram.example/brightwell"
