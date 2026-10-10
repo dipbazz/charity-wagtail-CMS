@@ -116,7 +116,7 @@ released as soon as it's done, whatever the day: a version is usually a few days
   feature, a redesign, a big refactor, anything that changes the plan. It's discussed when the
   next version is planned. This keeps each version finishable.
 - **The exception is a bug on the live site** that stops people using it (`P1`). Its fix can
-  join the current version, or ship on its own as a PATCH release.
+  join the current version, or ship on its own as a [patch release](#patch-releases).
 - Issues nobody has planned yet stay in the Backlog with no milestone. So does planned work
   that turns out not to matter for this version: take it out of the milestone, and it's
   considered again when the next version is planned.
@@ -149,6 +149,48 @@ Release a version as soon as the last issue in its milestone is closed.
    new milestones.
 6. **Deploy it** ([Deploy a change](../hosting.md#deploy-a-version)). The tag says exactly which
    code is live.
+
+## Patch releases
+
+Only for a bug on the live site that stops people using it (`P1`) and can't wait for the
+version being built; any other fix goes into that version. A patch release, such as 0.4.1 while
+0.4.0 is live, holds that fix and nothing else, so it's made from the live version's tag, not
+from `main`, which already has work for the next version. Give it a milestone (`v0.4.1`) holding
+the bug's issue.
+
+1. **Fix it on `main` first,** in a normal pull request with its `fixed` file in `changelog.d/`,
+   so the next version has the fix too. If the fix needs a migration, write it to follow the live
+   version's last migration, so the same file works on both branches. When `main` already has
+   newer migrations, add the merge migration (`makemigrations --merge`) in a commit of its own.
+2. **Make the patch branch from the live tag** (or use it, if an earlier patch made it):
+
+   ```bash
+   git checkout -b patch/0.4.x v0.4.0
+   git push -u origin patch/0.4.x
+   ```
+
+3. **Prepare the release in a second folder,** so your local database, which already has the next
+   version's migrations, isn't touched (`db.sqlite3` and `media/` belong to the folder). Copy
+   `.env` or `charity/settings/local.py` across if you use them.
+
+   ```bash
+   git worktree add -b chore/release-0.4.1 ../charity-patch patch/0.4.x
+   cd ../charity-patch && uv sync
+   git cherry-pick <the fix's commit on main>    # not the merge migration's
+   uv run python manage.py migrate && uv run python manage.py seed_demo
+   ```
+
+   Check the fix there, then follow step 2 of [Cutting a release](#cutting-a-release) and open
+   the pull request against `patch/0.4.x`, labelled `no changelog`. CI runs on it as usual.
+4. **After it's merged,** tag the merge commit and publish the release as in step 4 above, with
+   `patch/0.4.x` in place of `main`, then [deploy](../hosting.md#deploy-a-version) `v0.4.1`.
+5. **Bring the release onto `main`** in a pull request labelled `no changelog`, so the next
+   version's notes don't list the fix again: take `CHANGELOG.md` from the patch branch
+   (`git checkout patch/0.4.x -- CHANGELOG.md`; `main`'s copy only changes at a release, so this
+   adds just the new section), delete the fix's file from `changelog.d/`, set `version` in
+   `pyproject.toml` to `0.4.1` and run `uv lock`.
+6. **Close the milestone** and remove the second folder (`git worktree remove ../charity-patch`).
+   Keep the patch branch for any later patch to the same version.
 
 ## Seeing versions on the board
 
