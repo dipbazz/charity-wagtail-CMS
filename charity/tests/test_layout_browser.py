@@ -5,6 +5,7 @@ pytest's HTML checks can't see where things end up on screen. Run
 """
 
 import pytest
+from wagtail_factories import ImageFactory
 
 from campaigns.tests.factories import CampaignIndexPageFactory, DonatePageFactory
 from conftest import SITE
@@ -141,6 +142,79 @@ def test_a_long_charity_name_wraps_without_moving_the_controls(site_page, demo_h
 
     assert menu["y"] == pytest.approx(donate["y"], abs=4)
     assert site_page.evaluate("document.documentElement.scrollWidth") == 320
+
+
+@pytest.fixture
+def logo_header(demo_header):
+    """The demo header with a logo four times as wide as it is tall: the hardest shape for the
+    name bar of a 320px phone."""
+    site_settings = SiteSettings.for_site(demo_header)
+    site_settings.logo = ImageFactory(width=1200, height=300)
+    site_settings.save()
+    return demo_header
+
+
+# The charity's logo (#123) sits beside its name, at a fixed height, on the name's own row.
+@pytest.mark.parametrize(("width", "height"), [(320, 700), (1440, 900)])
+def test_logo_and_name_are_centred_together_on_their_own_row(site_page, logo_header, width, height):
+    site_page.set_viewport_size({"width": width, "height": height})
+    site_page.goto(SITE + "/")
+
+    logo = box(site_page, ".brand-logo")
+    brand = box(site_page, ".brand")
+    controls = box(site_page, ".site-header > .container")
+
+    assert logo["height"] == pytest.approx(40, abs=0.5)
+    assert logo["x"] >= 16 - 1
+    assert logo["x"] + logo["width"] <= width - 16 + 1
+    assert brand["y"] + brand["height"] <= controls["y"]
+    assert brand["x"] + brand["width"] / 2 == pytest.approx(width / 2, abs=1)
+    assert site_page.evaluate("document.documentElement.scrollWidth") == width
+
+
+def test_a_long_name_beside_a_wide_logo_wraps_without_moving_the_controls(site_page, logo_header):
+    logo_header.site_name = "Apanga Bal Sikshya Sarokar Kendra Nepal"
+    logo_header.save()
+    site_page.set_viewport_size({"width": 320, "height": 700})
+    site_page.goto(SITE + "/")
+
+    menu = box(site_page, ".menu-toggle")
+    donate = box(site_page, ".header-actions .button")
+    brand = box(site_page, ".brand")
+
+    assert menu["y"] == pytest.approx(donate["y"], abs=4)
+    assert brand["x"] >= 0
+    assert brand["x"] + brand["width"] <= 320
+    assert site_page.evaluate("document.documentElement.scrollWidth") == 320
+
+
+@pytest.mark.parametrize(("width", "height"), [(320, 700), (1440, 900)])
+def test_a_logo_doesnt_make_the_header_taller(site_page, demo_header, width, height):
+    site_page.set_viewport_size({"width": width, "height": height})
+    site_page.goto(SITE + "/")
+    without_a_logo = box(site_page, ".site-header")["height"]
+
+    site_settings = SiteSettings.for_site(demo_header)
+    site_settings.logo = ImageFactory(width=300, height=300)
+    site_settings.save()
+    site_page.goto(SITE + "/")
+
+    assert site_page.locator(".brand-logo").count() == 1
+    assert box(site_page, ".site-header")["height"] == pytest.approx(without_a_logo, abs=0.5)
+
+
+@pytest.mark.parametrize(("width", "height"), [(320, 700), (1440, 900)])
+def test_header_with_a_logo_is_the_same_height_in_both_languages(
+    site_page, logo_header, width, height
+):
+    site_page.set_viewport_size({"width": width, "height": height})
+    heights = {}
+    for path in ("/", "/ne/"):
+        site_page.goto(SITE + path)
+        assert site_page.locator(".brand-logo").count() == 1
+        heights[path] = box(site_page, ".site-header")["height"]
+
+    assert heights["/ne/"] == pytest.approx(heights["/"], abs=0.5)
 
 
 # Regression: ISSUE-002 — the privacy notice links were 22px (footer) and 27px (forms) tall, under

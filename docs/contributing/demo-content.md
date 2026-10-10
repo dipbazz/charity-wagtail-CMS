@@ -51,7 +51,8 @@ the people pictured, so the demo leaves them unconsented and they stay out of th
 | `school.jpg` | Jonathan Shembere | [Pexels](https://www.pexels.com/photo/boy-standing-by-faucet-on-wall-and-washing-hands-15204073/) | [Pexels License](https://www.pexels.com/license/) |
 | `volunteers.jpg` | RDNE Stock project | [Pexels](https://www.pexels.com/photo/three-people-donating-goods-6646918/) | [Pexels License](https://www.pexels.com/license/) |
 
-The partner logos are drawn by `seed_demo` for the fictional partners.
+The partner logos, and the charity's own logo in the header (a drop of water on an amber disc),
+are drawn by `seed_demo`.
 
 ## Tests that depend on it
 

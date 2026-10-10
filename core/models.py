@@ -123,6 +123,9 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     Saved changes reach every page at once, so the admin previews them on real pages first (#136).
     """
 
+    # The logo is on every page: fetch it with the settings, not in a query of its own.
+    select_related = ("logo",)
+
     charity_number = models.CharField(max_length=20, blank=True)
     contact_email = models.EmailField(blank=True)
     phone = models.CharField(max_length=30, blank=True)
@@ -161,6 +164,16 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     facebook_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
+    logo = models.ForeignKey(
+        "core.CustomImage",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="Shown beside your charity's name at the top of every page. A PNG with a "
+        "transparent background, about as wide as it is tall, works best. If it's drawn for a "
+        "white background, choose a light name bar below.",
+    )
     main_colour = models.CharField(
         max_length=7,
         default=DEFAULT_MAIN,
@@ -217,6 +230,7 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         ),
     ]
     brand_panels = [
+        FieldPanel("logo"),
         MultiFieldPanel(
             [
                 FieldPanel("main_colour", widget=ColourInput),

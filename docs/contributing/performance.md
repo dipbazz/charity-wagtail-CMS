@@ -34,6 +34,10 @@ page, so they share one fixed allowance: **each page's total budget is its image
 stylesheet change therefore never needs a budget edit; raise the allowance only if the markup and
 CSS have genuinely grown, and say why.
 
+The charity's [logo](../site/look-and-feel.md#the-logo) is one more image on every page, so each
+image budget includes the demo logo's 1.6KB (#123). A real charity's logo costs about as much, as
+the header serves it as a copy no larger than 320 by 80 pixels.
+
 Each run's reports are attached as the `lighthouse-reports` artifact.
 
 ## Measure page weight locally

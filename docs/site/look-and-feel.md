@@ -78,12 +78,12 @@ Body text is 1.0625rem with a line height of 1.6; headings are dark teal at 1.2.
 
 ## Brand colours
 
-A charity chooses two colours in **Site settings → Brand** (moderators only, like the rest of
-Site settings): a **main colour**, the teal by default, and an **accent colour**, the amber.
-`core/brand.py` makes the other shades from them, and `base.html` writes them into each page's
-`<head>`, after the stylesheet, as a `<style>` that replaces those tokens (about 450 bytes with
-both chosen). Every page uses a new colour as soon as it's saved, so the admin
-[previews it on real pages first](#seeing-a-brand-change-before-it-goes-live).
+A charity chooses its [logo](#the-logo) and two colours in **Site settings → Brand** (moderators
+only, like the rest of Site settings). The colours are a **main colour**, the teal by default,
+and an **accent colour**, the amber. `core/brand.py` makes the other shades from them, and
+`base.html` writes them into each page's `<head>`, after the stylesheet, as a `<style>` that
+replaces those tokens (about 450 bytes with both chosen). Every page uses a new colour as soon
+as it's saved, so the admin [previews it on real pages first](#seeing-a-brand-change-before-it-goes-live).
 
 | From | Token | Made by |
 |---|---|---|
@@ -165,12 +165,41 @@ What it can't do: a change can't be kept as a draft to finish later, sent for ap
 scheduled, and there's no history of earlier brands to go back to. [Decisions](../decisions.md#brand-previews-in-site-settings)
 says why that was chosen over a brand with drafts.
 
+## The logo
+
+A moderator chooses the charity's logo in **Site settings → Brand → Logo**: an image from the
+library, optional, previewed like the colours
+([seeing a brand change](#seeing-a-brand-change-before-it-goes-live)). It's `SiteSettings.logo`
+and sits in the header's name row, inside the link to the home page, in front of the name:
+
+- **The name is always shown beside it,** so the logo is decorative (`alt=""`) and a screen
+  reader hears the name once. The image's description in the admin is still worth writing: it's
+  what the logo is called wherever else the image is used.
+- **A small copy, at a fixed height.** The template asks for `max-320x80`: twice the 2.5rem
+  (40px) the stylesheet draws it at, for a dense phone screen. The rendition's `width` and
+  `height` attributes give the browser the shape before the file arrives, so the name bar doesn't
+  shift as it loads. A logo wider than 10rem shrinks inside its box (`object-fit: contain`) so
+  it can't crowd a long name off a 320px screen; the name wraps beside it.
+- **No logo, no change:** the header shows the name alone, as it did.
+- **No extra query:** the logo is read with the settings (`select_related`), and its rendition
+  comes from Wagtail's cache after the first visit.
+- **PNG, JPEG or WebP,** not SVG: [Decisions](../decisions.md#the-logo-is-a-raster-image-not-an-svg)
+  says why. Draw it for the name bar it will sit on: a logo in dark colours disappears on the
+  default dark bar, so such a charity chooses a
+  [light name bar](#a-light-or-dark-name-bar-and-footer).
+
+`seed_demo` draws a logo for the demo charity: a drop of water on an amber disc, which shows on
+a dark bar and a light one. `charity/tests/test_layout_browser.py` checks the logo's height, its
+place on the name's row, that a long name beside a wide logo doesn't scroll a 320px screen
+sideways, and that the header's height doesn't change with a logo or between languages.
+
 ## Header
 
-Two rows. The charity's name is centred on a row of its own, dark teal unless the charity
-[chooses light](#a-light-or-dark-name-bar-and-footer), so a long name (and later a logo, #123)
-never crowds the controls, and the header and footer frame the page. Below it, on a white row
-with a soft shadow that lifts it off a white page:
+Two rows. The charity's name, with its [logo](#the-logo) beside it if it has one, is centred on
+a row of its own, dark teal unless the charity
+[chooses light](#a-light-or-dark-name-bar-and-footer), so a long name never crowds the controls,
+and the header and footer frame the page. Below it, on a white row with a soft shadow that lifts
+it off a white page:
 
 - **On a phone:** Menu on the left; the other language and Donate on the right, Donate last, so
   Menu and Donate sit at the two ends. Menu opens the main menu and search below.

@@ -398,3 +398,38 @@ A is a mixin and two methods, with no migration and no change to what visitors d
   still be built, and its preview would be this one.
 - The preview covers the whole Site settings form, so a new address or Donate page can be
   previewed too, and Wagtail's accessibility checks panel comes with it.
+
+## The logo is a raster image, not an SVG
+
+**Status:** in use (since #123)
+
+**Context**
+
+The issue for the charity's logo asked for "SVG or a small PNG". Wagtail 8 only accepts an SVG
+upload once `svg` is added to `WAGTAILIMAGES_EXTENSIONS`, and that setting is for the whole image
+library, not for one field.
+
+Options considered:
+
+- **A: accept PNG, JPEG and WebP, as the library does now,** and serve the logo as a small copy
+  at the height the name bar draws it.
+- **B: add `svg` to `WAGTAILIMAGES_EXTENSIONS`.**
+
+**Decision**
+
+A. The logo is any image the library holds, served as a `max-320x80` rendition, which is twice
+the size it's drawn at ([The logo](site/look-and-feel.md#the-logo)).
+
+B would let an SVG into every image field, and the photo templates can't render one:
+`{% picture %}` asks for `format-avif`, `format-webp` and `format-jpeg`, and Wagtail raises
+`InvalidFilterSpecError` for those on an SVG, so an editor who picked one as an appeal's photo
+would break that appeal's page and the listings it appears in. An SVG can also carry scripts, and
+the library is open to editors, not only to the moderators who choose the logo.
+
+**Consequences**
+
+- A logo is a raster image. At 80px high, a PNG drawn at that size or larger is sharp on every
+  phone, and the copy is a few kilobytes.
+- A charity whose logo only exists as an SVG exports a PNG of it first.
+- If SVG is wanted later, it needs `preserve-svg` in every photo filter, a sanitiser on upload,
+  and a test that picks an SVG for each image field: a decision of its own, replacing this one.

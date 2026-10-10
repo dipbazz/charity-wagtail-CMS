@@ -211,6 +211,17 @@ body:lang(ne) {
     color: var(--colour-primary-dark);
 }
 
+/* A fixed height, so the bar is the same on every page. The width and height attributes give the
+   browser the ratio before the file arrives, so nothing moves as it loads. A wide logo shrinks
+   inside its box rather than crowding the name off a 320px screen. */
+.brand-logo {
+    flex: none;
+    height: 2.5rem;
+    width: auto;
+    max-width: 10rem;
+    object-fit: contain;
+}
+
 /* Narrow screens: Menu on the left, the other language and Donate on the right; the menu and
    search open below them. */
 .site-header > .container {
