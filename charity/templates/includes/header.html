@@ -13,7 +13,8 @@
     {# The charity's name has a row of its own, so a long name never crowds the controls below it. #}
     {# It links to the home page in the language being read: / or /ne/ (or /en/ on a Nepali site). #}
     {# The site name is written in the main language, so it keeps that lang on every page. #}
-    <div class="brand-bar">
+    {# Dark unless the charity chose light in Site settings, for a logo drawn for a white background. #}
+    <div class="brand-bar{% if settings.core.SiteSettings.name_bar_style == 'light' %} is-light{% endif %}">
         <a class="brand" href="{% url 'wagtail_serve' '' %}" lang="{{ languages.main_language }}">{{ current_site.site_name|default:"Charity" }}</a>
     </div>
     <div class="container">

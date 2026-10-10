@@ -185,6 +185,22 @@ def style(site_page, selector, prop):
     )
 
 
+# A light name bar is white, like the controls row below it, and a light footer is pale, like
+# the page above it, so each is set apart by a line (#134).
+def test_a_light_name_bar_and_footer_are_set_apart_by_a_line(site_page, demo_header):
+    site_settings = SiteSettings.for_site(demo_header)
+    site_settings.name_bar_style = "light"
+    site_settings.footer_style = "light"
+    site_settings.save()
+    site_page.set_viewport_size({"width": 320, "height": 700})
+    site_page.goto(SITE + "/")
+
+    assert style(site_page, ".brand-bar", "backgroundColor") == WHITE
+    assert style(site_page, ".brand-bar", "borderBottomWidth") == "1px"
+    assert style(site_page, ".site-footer", "backgroundColor") not in (WHITE, NO_FILL)
+    assert style(site_page, ".site-footer", "borderTopWidth") == "1px"
+
+
 # A bold current language beside an underlined link read as "the bold one isn't selected". Found
 # in review of #122: the current language is filled, the other is an outlined button, no underlines.
 def test_the_current_language_is_filled_and_the_other_is_an_outlined_button(site_page, demo_header):

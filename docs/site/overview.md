@@ -90,7 +90,7 @@ Each part uses what Wagtail already provides before adding code of its own:
 | News | `RoutablePageMixin` (tag, category and feed routes), `ClusterTaggableManager`, `ParentalManyToManyField`, Django's syndication feed |
 | Forms | `wagtail.contrib.forms` (`AbstractEmailForm`) |
 | Partners and testimonials | Snippets with `SnippetViewSet(Group)`; `TranslatableMixin`, `DraftStateMixin`, `RevisionMixin`, `LockableMixin`, `PreviewableMixin` |
-| Site settings and banner | `wagtail.contrib.settings` (per-site settings), with `ClusterableModel` and `InlinePanel` for their text in each language |
+| Site settings and banner | `wagtail.contrib.settings` (per-site settings), with `ClusterableModel` and `InlinePanel` for their text in each language; Site settings' tabs are a `TabbedInterface` (`core/panels.py`) that opens on the tab with the mistake when a save is refused |
 | Images | A custom image model with its own renditions, `{% picture %}`, focal points, a custom API viewset |
 | Languages | `WAGTAIL_I18N_ENABLED`, `Locale`, `wagtail.contrib.simple_translation`, Django's `i18n_patterns` |
 | Search | The database search backend, `search_fields`, `wagtail.contrib.search_promotions` |

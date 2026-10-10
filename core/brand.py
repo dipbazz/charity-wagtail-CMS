@@ -4,6 +4,9 @@ The site makes every other colour it needs from those two (a dark shade for head
 bar and the footer, a hover shade for main buttons, pale tints for panels, borders and the
 footer's text) and writes them into each page as CSS custom properties, which replace the
 defaults at the top of `charity.css`. A colour that would make text hard to read can't be saved.
+
+The name bar and the footer can each be light or dark (#134), so a logo can sit on the
+background it was drawn for.
 """
 
 import colorsys
@@ -32,6 +35,21 @@ class ColourInput(forms.TextInput):
     """The browser's own colour picker."""
 
     input_type = "color"
+
+
+DARK = "dark"
+LIGHT = "light"
+
+# A light or dark name bar and footer. Each choice says where the main colour goes, so choosing
+# light doesn't look like losing the colour chosen above it. Both keep their contrast.
+NAME_BAR_CHOICES = [
+    (DARK, "Dark: your main colour's dark shade, with the name in white"),
+    (LIGHT, "Light: white, with the name in a dark shade of your main colour"),
+]
+FOOTER_CHOICES = [
+    (DARK, "Dark: your main colour's dark shade, with pale text and white links"),
+    (LIGHT, "Light: a pale tint of your main colour, with dark text and links in your main colour"),
+]
 
 
 def rgb(colour):

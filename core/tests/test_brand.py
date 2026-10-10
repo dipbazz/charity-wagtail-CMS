@@ -126,7 +126,11 @@ def test_text_on_the_accent_is_dark_or_white_whichever_is_easier_to_read(accent,
 
 
 def test_every_main_colour_that_can_be_saved_keeps_all_its_text_readable():
-    """One check guards every text the main colour sets: links in it on its pale panels."""
+    """One check guards every text the main colour sets: links in it on its pale panels.
+
+    That includes a light name bar and footer (#134): the name in the dark shade on white, and
+    the footer's text, links and quieter lines on a panel.
+    """
     muted = root()["--colour-muted"]
     problems = []
     for main in (colour for colour in GRID if main_contrast(colour) >= MIN_CONTRAST):
@@ -136,11 +140,13 @@ def test_every_main_colour_that_can_be_saved_keeps_all_its_text_readable():
             "links on white": (main, WHITE),
             "links on a panel": (main, shades["--colour-surface"]),
             "white text on the dark shade": (WHITE, shades["--colour-primary-dark"]),
+            "the dark shade on white": (shades["--colour-primary-dark"], WHITE),
             "footer text": (shades["--colour-footer-text"], shades["--colour-primary-dark"]),
             "footer's quieter lines": (
                 shades["--colour-footer-meta"],
                 shades["--colour-primary-dark"],
             ),
+            "text on a panel": (TEXT, shades["--colour-surface"]),
             "quieter text on a panel": (muted, shades["--colour-surface"]),
         }
         problems += [f"{main}: {name}" for name, pair in pairs.items() if contrast(*pair) < 4.5]

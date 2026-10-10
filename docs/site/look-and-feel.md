@@ -38,20 +38,20 @@ replace.
 | Token | Value | Used for |
 |---|---|---|
 | `--colour-primary` | teal `#0b5563` | Links, outlined buttons, selected filters |
-| `--colour-primary-dark` | dark teal `#073b45` | Headings, the name bar at the top, the footer |
+| `--colour-primary-dark` | dark teal `#073b45` | Headings, the name bar at the top and the footer when they're dark, the name on a light name bar |
 | `--colour-accent` | amber `#f2b134` | Main buttons (Donate, Give), progress bars, the banner, the focus outline |
 | `--colour-accent-hover` | darker amber `#e09a12` | A main button under the pointer |
 | `--colour-text` | `#1d2a30` | Body text |
 | `--colour-on-dark` | white | Text on the teals: the name bar, filled buttons and filters, footer links, the home page banner |
 | `--colour-on-accent` | the text colour | Text on amber: main buttons and the announcement banner |
 | `--colour-muted` | `#5b6b72` | Dates, counts, help text |
-| `--colour-background` | white | The page, the header's controls row, cards, the Menu button |
-| `--colour-surface` | `#f4f7f6` | Unselected filter pills, quiet panels |
-| `--colour-border` | `#d7e0de` | Borders, the progress bar's track |
+| `--colour-background` | white | The page, the header's controls row, a light name bar, cards, the Menu button |
+| `--colour-surface` | `#f4f7f6` | Unselected filter pills, quiet panels, a light footer |
+| `--colour-border` | `#d7e0de` | Borders, the progress bar's track, the line under a light name bar and above a light footer |
 | `--colour-error` | `#b3261e` | Form errors |
 | `--colour-warning-text`, `--colour-warning-surface` | `#7a5300`, `#fff6df` | A character count near its limit |
 | `--colour-highlight` | pale amber `#fde7b4` | Text an editor highlights in rich text |
-| `--colour-footer-text`, `--colour-footer-meta` | `#d9e6e4`, `#c3d6d3` | The footer's text and its quieter lines |
+| `--colour-footer-text`, `--colour-footer-meta` | `#d9e6e4`, `#c3d6d3` | A dark footer's text and its quieter lines |
 | `--colour-hero-lead` | `#e6f0ef` | The home page banner's intro text |
 | `--colour-shadow` | dark teal at 15% | The header's shadow |
 | `--colour-overlay`, `--colour-overlay-strong`, `--colour-overlay-weak` | dark teal at 75%, 85%, 30% | The home page banner's overlay on the photo |
@@ -73,7 +73,8 @@ Body text is 1.0625rem with a line height of 1.6; headings are dark teal at 1.2.
 - **The home page banner**: the photo under a 75% dark teal overlay on phones, so white text stays
   readable over any photo; from 64rem a gradient, darker on the left behind the text, lets the
   photo show on the right. The heading scales from 2.2rem to 3.5rem with the screen.
-- **Footer**: dark teal with pale text; on a short page it sits at the bottom of the window.
+- **Footer**: dark teal with pale text, or [light](#a-light-or-dark-name-bar-and-footer); on a
+  short page it sits at the bottom of the window.
 
 ## Brand colours
 
@@ -114,11 +115,31 @@ the stylesheet says. (The shades made from the teal and amber are close to the s
 but not the same.) The defaults in `core/brand.py` must match `:root`, which a test checks. A
 value that isn't a `#rrggbb` code, which only a change outside the admin could save, is ignored.
 
+### A light or dark name bar and footer
+
+Under **Site settings → Brand → Header and footer**, the name bar at the top and the footer are
+each **dark** (the default) or **light**, so a logo can sit on the background it was drawn for:
+a dark logo disappears on the dark name bar. The template adds `is-light` to `.brand-bar` or
+`.site-footer`, and the stylesheet does the rest with the same tokens, so brand colours apply
+either way.
+
+| | Dark | Light |
+|---|---|---|
+| Name bar | White name on the dark shade | The name in the dark shade on white, with a line (`--colour-border`) between it and the white controls row |
+| Footer | Pale text and white links on the dark shade | Body text and links in the main colour on a pale panel (`--colour-surface`), with a line above it |
+
+Both stay readable whatever main colour is saved: the dark shade on white and body text on a
+panel are among the pairs `core/tests/test_brand.py` checks for every colour, and
+`charity/tests/test_demo_layout_browser.py` measures the contrast of each combination in the
+browser. The controls row below the name bar stays white, so the Menu button and language
+switch don't change.
+
 ## Header
 
-Two rows. The charity's name is centred on a dark teal row of its own, so a long name (and later
-a logo, #123) never crowds the controls, and the header and footer frame the page. Below it, on a
-white row with a soft shadow that lifts it off a white page:
+Two rows. The charity's name is centred on a row of its own, dark teal unless the charity
+[chooses light](#a-light-or-dark-name-bar-and-footer), so a long name (and later a logo, #123)
+never crowds the controls, and the header and footer frame the page. Below it, on a white row
+with a soft shadow that lifts it off a white page:
 
 - **On a phone:** Menu on the left; the other language and Donate on the right, Donate last, so
   Menu and Donate sit at the two ends. Menu opens the main menu and search below.

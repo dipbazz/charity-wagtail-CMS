@@ -1,13 +1,8 @@
+from django import forms
 from django.db import models
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
-from wagtail.admin.panels import (
-    FieldPanel,
-    InlinePanel,
-    MultiFieldPanel,
-    ObjectList,
-    TabbedInterface,
-)
+from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel, ObjectList
 from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import (
@@ -22,8 +17,11 @@ from wagtail.models import (
 from wagtail.search import index
 
 from core.brand import (
+    DARK,
     DEFAULT_ACCENT,
     DEFAULT_MAIN,
+    FOOTER_CHOICES,
+    NAME_BAR_CHOICES,
     ColourInput,
     custom_properties,
     validate_accent_colour,
@@ -31,6 +29,7 @@ from core.brand import (
 )
 from core.languages import main_language, reading_language
 from core.money import CURRENCY_CHOICES
+from core.panels import TabsOpeningOnErrors
 from core.phone import phone_country_choices
 
 
@@ -162,8 +161,9 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
         max_length=7,
         default=DEFAULT_MAIN,
         validators=[validate_main_colour],
-        help_text="Links and outlined buttons, and in a darker shade headings, the name bar at the "
-        "top and the footer. White text goes on it, so it must be dark enough to read.",
+        help_text="Links and outlined buttons, and in a darker shade headings and, when they're "
+        "dark, the name bar at the top and the footer. White text goes on it, so it must be dark "
+        "enough to read.",
     )
     accent_colour = models.CharField(
         max_length=7,
@@ -171,6 +171,20 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
         validators=[validate_accent_colour],
         help_text="The Donate button and other main buttons, progress bars and the announcement "
         "banner. The text on it is dark or white, whichever is easier to read.",
+    )
+    name_bar_style = models.CharField(
+        "name bar",
+        max_length=5,
+        choices=NAME_BAR_CHOICES,
+        default=DARK,
+        help_text="The row with your charity's name at the top of every page.",
+    )
+    footer_style = models.CharField(
+        "footer",
+        max_length=5,
+        choices=FOOTER_CHOICES,
+        default=DARK,
+        help_text="Your charity's details at the bottom of every page.",
     )
 
     organisation_panels = [
@@ -208,8 +222,18 @@ class SiteSettings(TextInEachLanguageMixin, ClusterableModel, BaseSiteSetting):
             help_text="The site makes its other shades from these two. Every page uses them as "
             "soon as you save.",
         ),
+        MultiFieldPanel(
+            [
+                FieldPanel("name_bar_style", widget=forms.RadioSelect),
+                FieldPanel("footer_style", widget=forms.RadioSelect),
+            ],
+            heading="Header and footer",
+            help_text="Dark fills the name bar or footer with your main colour. Light keeps it "
+            "white or pale and puts your main colour in the text instead. Choose light if your "
+            "logo is drawn for a white background.",
+        ),
     ]
-    edit_handler = TabbedInterface(
+    edit_handler = TabsOpeningOnErrors(
         [
             ObjectList(organisation_panels, heading="Organisation"),
             ObjectList(brand_panels, heading="Brand"),
