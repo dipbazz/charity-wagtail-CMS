@@ -5,11 +5,12 @@ pytest's HTML checks can't see where things end up on screen. Run
 """
 
 import pytest
+from wagtail.models import Locale
 from wagtail_factories import ImageFactory
 
 from campaigns.tests.factories import CampaignIndexPageFactory, DonatePageFactory
 from conftest import SITE
-from core.models import SiteSettings
+from core.models import SiteSettings, SiteSettingsText
 from home.models import StandardPage
 
 pytestmark = [pytest.mark.browser, pytest.mark.django_db]
@@ -136,6 +137,29 @@ def test_a_long_charity_name_wraps_without_moving_the_controls(site_page, demo_h
     demo_header.save()
     site_page.set_viewport_size({"width": 320, "height": 700})
     site_page.goto(SITE + "/")
+
+    menu = box(site_page, ".menu-toggle")
+    donate = box(site_page, ".header-actions .button")
+
+    assert menu["y"] == pytest.approx(donate["y"], abs=4)
+    assert site_page.evaluate("document.documentElement.scrollWidth") == 320
+
+
+# A charity's name can differ by language (#157), and either can be the long one.
+@pytest.mark.parametrize("path", ["/", "/ne/"])
+def test_a_long_name_in_each_language_wraps_without_moving_the_controls(
+    site_page, demo_header, nepali_locale, path
+):
+    site_settings = SiteSettings.for_site(demo_header)
+    site_settings.texts = [
+        SiteSettingsText(
+            locale=Locale.get_default(), name="Center for Education for Children with Disabilities"
+        ),
+        SiteSettingsText(locale=nepali_locale, name="अपाङ्ग बाल शिक्षा सरोकार केन्द्र नेपाल"),
+    ]
+    site_settings.save()
+    site_page.set_viewport_size({"width": 320, "height": 700})
+    site_page.goto(SITE + path)
 
     menu = box(site_page, ".menu-toggle")
     donate = box(site_page, ".header-actions .button")

@@ -110,6 +110,13 @@ class TextInEachLanguageMixin:
         A blank field counts as missing. One query for the rows, kept for the rest of the request
         (Wagtail keeps a setting per request).
         """
+        return self._language_and_text(field)[1]
+
+    def language_of_text(self, field):
+        """The language `text_in_reading_language(field)` is written in, or "" if it's blank."""
+        return self._language_and_text(field)[0]
+
+    def _language_and_text(self, field):
         if not hasattr(self, "_texts_by_language"):
             self._texts_by_language = {
                 text.locale.language_code: text for text in self.texts.select_related("locale")
@@ -117,8 +124,8 @@ class TextInEachLanguageMixin:
         for language in (reading_language(), main_language()):
             value = getattr(self._texts_by_language.get(language), field, "")
             if value:
-                return value
-        return ""
+                return language, value
+        return "", ""
 
 
 @register_setting(icon="cog")
@@ -128,8 +135,9 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     Saved changes reach every page at once, so the admin previews them on real pages first (#136).
     """
 
-    # The logo is on every page: fetch it with the settings, not in a query of its own.
-    select_related = ("logo",)
+    # The logo, and the Site for its name, are on every page: fetch them with the settings, not
+    # in queries of their own.
+    select_related = ("logo", "site")
 
     charity_number = models.CharField(max_length=20, blank=True)
     contact_email = models.EmailField(blank=True)
@@ -319,6 +327,19 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         return custom_properties(self.main_colour, self.accent_colour, self.logo_size)
 
     @property
+    def name(self):
+        """The charity's name in the language being read, else in the main language (#157).
+
+        Without either, the Site's name from Settings → Sites, which only admins can change.
+        """
+        return self.text_in_reading_language("name") or self.site.site_name
+
+    @property
+    def name_language(self):
+        """The language `name` is written in: a Site's name is in the main language."""
+        return self.language_of_text("name") or main_language()
+
+    @property
     def address(self):
         return self.text_in_reading_language("address")
 
@@ -334,9 +355,15 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
 
 class SiteSettingsText(TextInEachLanguage):
     settings = ParentalKey(SiteSettings, on_delete=models.CASCADE, related_name="texts")
+    name = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Your charity's name in this language, at the top and bottom of every page. "
+        "Until it's filled in, the site shows the name it was set up with.",
+    )
     address = models.TextField(blank=True, help_text="Shown in the footer of every page.")
 
-    panels = [FieldPanel("locale"), FieldPanel("address")]
+    panels = [FieldPanel("locale"), FieldPanel("name"), FieldPanel("address")]
 
     class Meta:
         constraints = [

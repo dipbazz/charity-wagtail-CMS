@@ -545,7 +545,9 @@ class Command(BaseCommand):
         settings.phone = "0123 456 7890"
         settings.texts = [
             SiteSettingsText(
-                locale=Locale.get_default(), address="1 Example Street\nBirmingham\nB1 1AA"
+                locale=Locale.get_default(),
+                name=SITE_NAME,
+                address="1 Example Street\nBirmingham\nB1 1AA",
             )
         ]
         settings.donate_page = donate
@@ -704,14 +706,19 @@ class Command(BaseCommand):
         )
 
     def add_nepali_snippets(self, settings, banner, testimonial, categories):
-        """Translate the banner, the footer's address, the testimonial and the news categories.
+        """Translate the banner, the charity's name and address, the testimonial and the news
+        categories.
 
         The partners stay in English: their names are in their logos, and they show a snippet
         with no translation falling back to the main language.
         """
         nepali = Locale.objects.get(language_code="ne")
         settings.texts.add(
-            SiteSettingsText(locale=nepali, address="1 एक्जाम्पल स्ट्रिट\nबर्मिङ्घम\nB1 1AA")
+            SiteSettingsText(
+                locale=nepali,
+                name="ब्राइटवेल जल ट्रस्ट",
+                address="1 एक्जाम्पल स्ट्रिट\nबर्मिङ्घम\nB1 1AA",
+            )
         )
         settings.save()
         banner.texts.add(
