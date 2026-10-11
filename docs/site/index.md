@@ -11,6 +11,7 @@ come with it, and where its code is. Start with the overview.
 :maxdepth: 1
 
 overview
+standard
 pages-and-content
 appeals-and-giving
 languages

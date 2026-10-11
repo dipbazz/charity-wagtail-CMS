@@ -14,9 +14,10 @@ Before proposing a fix, feature or design, read the Principles section of
 `docs/contributing/index.md` and answer its questions in the proposal: who else has the problem,
 where the shared cause is, which standard applies, what it costs each charity, and which test
 stops it coming back. Never offer a template, CSS, code or branch for one charity only. Follow
-the standard (WCAG 2.2 AA, web conventions, the structure every charity's site shares, the law)
-before modern styling, and add modern styling only through the design tokens and shared
-components.
+the standards (WCAG 2.2 AA, web conventions, the charity site standard in
+`docs/site/standard.md`, the law) before modern styling, and add modern styling only through the
+design tokens and shared components. Each charity has its own installation on a shared server;
+never build several charities into one (`docs/decisions.md`).
 
 ## Versions and changelog
 
