@@ -7,6 +7,17 @@ repo. Catch up with `git log --oneline <last verified commit>..HEAD --stat` and 
 changed. A PR that changes what a docs page describes updates that page in the same PR, and
 the docs must build with `uv run --group docs sphinx-build -W --keep-going docs docs/_build/html`.
 
+## Every charity, standard first
+
+Many charities run this one product, so a proposal is judged by what it does for all of them.
+Before proposing a fix, feature or design, read the Principles section of
+`docs/contributing/index.md` and answer its questions in the proposal: who else has the problem,
+where the shared cause is, which standard applies, what it costs each charity, and which test
+stops it coming back. Never offer a template, CSS, code or branch for one charity only. Follow
+the standard (WCAG 2.2 AA, web conventions, the structure every charity's site shares, the law)
+before modern styling, and add modern styling only through the design tokens and shared
+components.
+
 ## Versions and changelog
 
 Every PR adds a file `changelog.d/<slug>.<group>.md` (the entry, written for the person the change
