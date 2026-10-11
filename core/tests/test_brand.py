@@ -4,11 +4,16 @@ import re
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.utils.html import escape
 
 from core.brand import (
     DEFAULT_ACCENT,
+    DEFAULT_FONT_STYLE,
     DEFAULT_LOGO_SIZE,
     DEFAULT_MAIN,
+    DEVANAGARI,
+    FONT_STACKS,
+    FONT_STYLE_CHOICES,
     LOGO_MAX,
     LOGO_MIN,
     MIN_CONTRAST,
@@ -119,6 +124,75 @@ class TestLogoSize:
     def test_a_size_outside_the_range_is_ignored(self, size):
         """Only a change made outside the admin, which checks it, could save one."""
         assert custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, size) == ""
+
+
+class TestFontStyle:
+    """The font a charity chooses (#135): a stack of the device's own fonts, never a download."""
+
+    OTHER_STYLES = [style for style in FONT_STACKS if style != DEFAULT_FONT_STYLE]
+
+    def names(self, style):
+        return FONT_STACKS[style].split(",")
+
+    def test_each_style_is_a_choice_and_the_default_comes_first(self):
+        assert [style for style, _ in FONT_STYLE_CHOICES] == list(FONT_STACKS)
+        assert FONT_STYLE_CHOICES[0][0] == DEFAULT_FONT_STYLE
+
+    def test_the_default_is_the_stylesheets_own_font(self):
+        in_stylesheet = [name.strip().strip('"') for name in root()["--font"].split(",")]
+
+        assert self.names(DEFAULT_FONT_STYLE) == in_stylesheet
+
+    def test_the_default_writes_nothing_so_the_site_looks_as_it_did(self):
+        css = custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, DEFAULT_LOGO_SIZE, DEFAULT_FONT_STYLE)
+
+        assert css == ""
+
+    @pytest.mark.parametrize("style", OTHER_STYLES)
+    def test_another_style_writes_the_font_and_leaves_the_rest_alone(self, style):
+        css = custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, DEFAULT_LOGO_SIZE, style)
+
+        assert css == f"--font:{FONT_STACKS[style]}"
+
+    @pytest.mark.parametrize("style", list(FONT_STACKS))
+    def test_every_style_ends_in_the_devanagari_fonts_so_nepali_text_is_unchanged(self, style):
+        """Latin fonts first, none of which has Devanagari, so Nepali falls through to the device's
+        own, then a generic family for anything else (#118)."""
+        names = self.names(style)
+
+        assert names[-4:-1] == list(DEVANAGARI)
+        assert names[-1] in ("sans-serif", "serif")
+        assert len(names) > 4  # and a Latin font before them
+
+    @pytest.mark.parametrize("style", list(FONT_STACKS))
+    def test_no_style_downloads_a_font(self, style):
+        stack = FONT_STACKS[style]
+
+        assert not re.search(r"url\(|@font-face|@import", stack)
+
+    @pytest.mark.parametrize("style", list(FONT_STACKS))
+    def test_what_is_written_survives_the_templates_escaping(self, style):
+        """A quoted name would turn into `&quot;` inside the page's <style> and break the rule."""
+        css = custom_properties(MAIN, ACCENT, LOGO_MIN, style)
+
+        assert escape(css) == css
+
+    def test_it_replaces_a_stylesheet_token(self):
+        written = custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, DEFAULT_LOGO_SIZE, "traditional")
+
+        assert written.split(":")[0] in root()
+
+    def test_it_is_written_after_the_colours_and_the_logo_size(self):
+        css = custom_properties(MAIN, ACCENT, LOGO_MIN, "traditional")
+
+        assert f"--colour-primary:{MAIN};" in css
+        assert "--logo-height:2.5rem;--logo-height-wide:2.5rem;--font:" in css
+        assert css.endswith(FONT_STACKS["traditional"])
+
+    @pytest.mark.parametrize("style", ["", "gothic", "MODERN", None, 5, True])
+    def test_a_style_that_isnt_one_of_the_choices_is_ignored(self, style):
+        """Only a change made outside the admin, which checks it, could save one."""
+        assert custom_properties(DEFAULT_MAIN, DEFAULT_ACCENT, DEFAULT_LOGO_SIZE, style) == ""
 
 
 def test_a_main_colour_writes_its_shades_and_leaves_the_accent_alone():
@@ -317,4 +391,6 @@ def test_a_value_that_isnt_a_colour_never_reaches_the_page():
 
 
 def test_the_brand_adds_well_under_a_kilobyte_to_a_page():
-    assert len(custom_properties(MAIN, ACCENT).encode()) < 1024
+    longest = max(FONT_STACKS, key=lambda style: len(FONT_STACKS[style]))
+
+    assert len(custom_properties(MAIN, ACCENT, LOGO_MIN, longest).encode()) < 1024

@@ -7,7 +7,8 @@ defaults at the top of `charity.css`. A colour that would make text hard to read
 
 The name bar and the footer can each be light or dark (#134), so a logo can sit on the
 background it was drawn for, and the logo's height is chosen between the size it was first drawn
-at and the largest (#123).
+at and the largest (#123). The font is one of a few styles, each a stack of the device's own
+fonts that ends in its Devanagari fonts, so Nepali text is the same in all of them (#135).
 """
 
 import colorsys
@@ -99,6 +100,44 @@ NAME_BAR_CHOICES = [
 FOOTER_CHOICES = [
     (DARK, "Dark: your main colour's dark shade, with pale text and white links"),
     (LIGHT, "Light: a pale tint of your main colour, with dark text and links in your main colour"),
+]
+
+
+# The device's own Devanagari fonts, which end every font style so Nepali letters fall through to
+# one: Noto Sans Devanagari on Android, Kohinoor Devanagari on iPhone and Mac, Nirmala UI on
+# Windows (#118). None of the Latin fonts before them has Devanagari.
+DEVANAGARI = ("Noto Sans Devanagari", "Kohinoor Devanagari", "Nirmala UI")
+
+
+def font_stack(latin, generic):
+    """A font stack for a `font-family`: Latin fonts, then Devanagari, then a generic family.
+
+    Names are left unquoted, which CSS allows for words: a quote would be escaped by the page's
+    template (`&quot;`) inside its <style>, and the rule would be lost.
+    """
+    return ",".join((*latin, *DEVANAGARI, generic))
+
+
+MODERN = "modern"
+
+# Every style is fonts already on the device, so nothing is downloaded. `modern` is the
+# stylesheet's own (`--font` in charity.css; a test keeps them the same), so a charity that
+# hasn't chosen is unchanged. Each device has few fonts, so a style looks a little different from
+# phone to phone.
+FONT_STACKS = {
+    MODERN: font_stack(("system-ui", "-apple-system", "Segoe UI", "Roboto"), "sans-serif"),
+    "traditional": font_stack(
+        ("Georgia", "Charter", "Iowan Old Style", "Noto Serif", "Cambria"), "serif"
+    ),
+    "friendly": font_stack(
+        ("ui-rounded", "Avenir Next", "Avenir", "Candara", "Trebuchet MS"), "sans-serif"
+    ),
+}
+DEFAULT_FONT_STYLE = MODERN
+FONT_STYLE_CHOICES = [
+    (MODERN, "Modern: clean and plain, in the font your visitors' phones use for their own apps"),
+    ("traditional", "Traditional: a serif font, with small strokes on the letters, like a book"),
+    ("friendly", "Friendly: rounded, open letters that feel warm and informal"),
 ]
 
 
@@ -273,12 +312,13 @@ def logo_heights(size):
     return rem(size), rem(LOGO_MIN + share * (LOGO_MAX_WIDE - LOGO_MIN))
 
 
-def custom_properties(main, accent, logo_size=DEFAULT_LOGO_SIZE):
+def custom_properties(main, accent, logo_size=DEFAULT_LOGO_SIZE, font_style=DEFAULT_FONT_STYLE):
     """The CSS declarations that put a site's brand on its pages, or "" for the defaults.
 
-    A colour or size left at its default writes nothing, so the stylesheet's own values stay
-    exactly as they are. A value that isn't a hex colour or a size in range (one set outside the
-    admin, which checks it) is ignored, so only values made here reach the page.
+    A colour, size or font left at its default writes nothing, so the stylesheet's own values stay
+    exactly as they are. A value that isn't a hex colour, a size in range or one of the font
+    styles (one set outside the admin, which checks it) is ignored, so only values made here
+    reach the page.
     """
     properties = {}
     if HEX_COLOUR.fullmatch(main) and main.lower() != DEFAULT_MAIN:
@@ -293,4 +333,10 @@ def custom_properties(main, accent, logo_size=DEFAULT_LOGO_SIZE):
     ):
         phone, wide = logo_heights(logo_size)
         properties |= {"--logo-height": phone, "--logo-height-wide": wide}
+    if (
+        isinstance(font_style, str)
+        and font_style in FONT_STACKS
+        and font_style != DEFAULT_FONT_STYLE
+    ):
+        properties["--font"] = FONT_STACKS[font_style]
     return ";".join(f"{name}:{value}" for name, value in properties.items())

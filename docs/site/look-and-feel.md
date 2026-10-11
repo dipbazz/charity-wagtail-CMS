@@ -58,7 +58,7 @@ replace.
 | `--logo-height`, `--logo-height-wide` | 3.75rem, 4.25rem | The logo's height on a phone and from 68rem: the middle of the sizes a charity can [choose](#the-logo) |
 | `--radius` | 6px | Buttons, cards, fields |
 | `--container` | 1120px | Page width; reading pages use 760px |
-| `--font` | the device's own fonts | No downloads ([Nepali text](languages.md#nepali-text-on-screen)) |
+| `--font` | the device's own fonts | No downloads ([Nepali text](languages.md#nepali-text-on-screen)); a charity can [choose a style](#a-font-style) |
 
 Body text is 1.0625rem with a line height of 1.6; headings are dark teal at 1.2.
 
@@ -136,9 +136,43 @@ panel are among the pairs `core/tests/test_brand.py` checks for every colour, an
 browser. The controls row below the name bar stays white, so the Menu button and language
 switch don't change.
 
+### A font style
+
+Under **Site settings → Brand → Font style**, a moderator chooses how every page's letters look:
+**modern** (the default), **traditional** or **friendly**. It's one choice for headings and text,
+because only `body` sets a font and everything else inherits it, so one token (`--font`)
+restyles the site. Each style is a stack of fonts already on the visitor's device, so **nothing is
+downloaded** and a page weighs the same:
+
+| Style | Latin fonts, in order | Then |
+|---|---|---|
+| Modern | `system-ui`, `-apple-system`, Segoe UI, Roboto | The Devanagari fonts, then `sans-serif` |
+| Traditional | Georgia, Charter, Iowan Old Style, Noto Serif, Cambria | The Devanagari fonts, then `serif` |
+| Friendly | `ui-rounded`, Avenir Next, Avenir, Candara, Trebuchet MS | The Devanagari fonts, then `sans-serif` |
+
+- **Nepali text is the same in every style.** Every stack ends in the same three Devanagari fonts
+  after its Latin ones, so Nepali letters fall through to the device's own
+  ([Nepali text](languages.md#nepali-text-on-screen)); line spacing is set by `:lang(ne)` rules
+  that no style touches.
+- **A style looks a little different from phone to phone,** because each device has few fonts: an
+  Android phone has Roboto and Noto Serif, an iPhone has Georgia and SF Rounded. The admin's help
+  text says so.
+- **A site that hasn't chosen is unchanged.** The default writes nothing, and `modern` is the
+  stylesheet's own stack, which a test keeps the same.
+- **Names are written without quotes** (`Segoe UI`, which CSS allows for plain words). A quote in
+  the `<style>` that `base.html` writes would be escaped by the template and the rule lost; a
+  test checks that what `core/brand.py` writes survives escaping.
+- **It's previewed like the colours** ([seeing a brand change](#seeing-a-brand-change-before-it-goes-live)).
+  `charity/tests/test_demo_layout_browser.py` loads each style at every width in both languages
+  and fails on sideways scrolling, a tap target under 44px, or a page not drawn in the font.
+
+To add a style, add its name and stack to `FONT_STACKS` and its label to `FONT_STYLE_CHOICES` in
+`core/brand.py`. Keep the Devanagari fonts and a generic family at the end: a test checks every
+stack. A new choice needs a migration, because the field's choices are part of the model.
+
 ### Seeing a brand change before it goes live
 
-A saved brand, logo and logo size are on every page at once, and Wagtail can't keep settings as
+A saved brand, logo, logo size and font style are on every page at once, and Wagtail can't keep settings as
 drafts, so Site settings has the same **preview panel** as a page. The phone icon at the top right opens it
 next to the form. It shows a real page drawn with the form as it stands, unsaved, and redraws
 it as the form changes. **Preview mode** chooses the page:

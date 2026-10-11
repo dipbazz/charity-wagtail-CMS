@@ -5,7 +5,14 @@ from wagtail.models import Locale, Site
 from wagtail.test.utils.form_data import inline_formset, nested_form_data
 from wagtail_factories import ImageFactory
 
-from core.brand import DEFAULT_ACCENT, DEFAULT_LOGO_SIZE, DEFAULT_MAIN, LOGO_MAX, LOGO_MIN
+from core.brand import (
+    DEFAULT_ACCENT,
+    DEFAULT_LOGO_SIZE,
+    DEFAULT_MAIN,
+    FONT_STACKS,
+    LOGO_MAX,
+    LOGO_MIN,
+)
 from core.models import AnnouncementBanner, AnnouncementBannerText, SiteSettings, SiteSettingsText
 from home.models import StandardPage
 
@@ -295,6 +302,7 @@ class TestTextInEachLanguageInTheAdmin:
                 "name_bar_style": "dark",
                 "logo_size": DEFAULT_LOGO_SIZE,
                 "footer_style": "dark",
+                "font_style": "modern",
                 "texts": inline_formset(
                     [
                         {
@@ -335,6 +343,7 @@ class TestBrandColours:
             "name_bar_style": "dark",
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
+            "font_style": "modern",
             "texts": inline_formset([]),
         }
         return client.post(url, nested_form_data(form))
@@ -414,6 +423,7 @@ class TestHeaderAndFooter:
             "name_bar_style": name_bar,
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": footer,
+            "font_style": "modern",
             "texts": inline_formset([]),
         }
         return client.post(url, nested_form_data(form))
@@ -471,6 +481,79 @@ class TestHeaderAndFooter:
         assert '<footer class="site-footer is-light">' in html
 
 
+class TestFontStyle:
+    """Site settings → Brand → Font style (#135): the device's own fonts in one of a few styles.
+
+    That every style keeps the Devanagari fonts and writes nothing a browser would download:
+    test_brand.py. That each fits at every width: test_demo_layout_browser.py. Previewing it:
+    TestPreview and test_settings_browser.py.
+    """
+
+    def save(self, client, moderator, site, font_style):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+        form = {
+            "currency": "NPR",
+            "phone_country": "NP",
+            "main_colour": DEFAULT_MAIN,
+            "accent_colour": DEFAULT_ACCENT,
+            "name_bar_style": "dark",
+            "logo_size": DEFAULT_LOGO_SIZE,
+            "footer_style": "dark",
+            "font_style": font_style,
+            "texts": inline_formset([]),
+        }
+        return client.post(url, nested_form_data(form))
+
+    def test_moderator_chooses_a_font_style(self, client, moderator, site):
+        response = self.save(client, moderator, site, "traditional")
+
+        assert response.status_code == 302
+        assert SiteSettings.for_site(site).font_style == "traditional"
+
+    def test_a_style_that_isnt_one_of_the_choices_is_refused(self, client, moderator, site):
+        response = self.save(client, moderator, site, "gothic")
+
+        assert response.status_code == 200
+        assert SiteSettings.for_site(site).font_style == "modern"
+
+    def test_it_is_a_choice_of_each_style(self, client, moderator, site):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+
+        html = client.get(url).content.decode()
+
+        assert html.count('type="radio" name="font_style"') == len(FONT_STACKS)
+
+    def test_a_site_that_hasnt_chosen_keeps_the_stylesheets_font(self, client, home_page):
+        html = client.get("/").content.decode()
+
+        assert "--font" not in html
+        assert SiteSettings.for_site(home_page.get_site()).font_style == "modern"
+
+    @pytest.mark.parametrize("path", ["/", "/donate/", "/ne/", "/ne/donate/", "/no-such-page/"])
+    def test_every_page_has_the_chosen_font(self, client, demo_site, path):
+        site_settings = SiteSettings.for_site(demo_site)
+        site_settings.font_style = "traditional"
+        site_settings.save()
+
+        html = client.get(path).content.decode()
+
+        assert f"--font:{FONT_STACKS['traditional']}" in html
+
+    def test_the_font_is_written_in_a_rule_the_browser_can_read(self, client, demo_site):
+        """Escaped, a name with a space or a quote would be lost, and so would the rule."""
+        site_settings = SiteSettings.for_site(demo_site)
+        site_settings.font_style = "friendly"
+        site_settings.save()
+
+        html = client.get("/").content.decode()
+
+        style = BeautifulSoup(html, "html.parser").select_one("head style").string
+        assert f"--font:{FONT_STACKS['friendly']}" in style
+        assert "&" not in style
+
+
 class TestLogo:
     """Site settings → Brand → Logo (#123): beside the charity's name at the top of every page.
 
@@ -489,6 +572,7 @@ class TestLogo:
             "name_bar_style": "dark",
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
+            "font_style": "modern",
             "logo": logo.pk if logo else "",
             "texts": inline_formset([]),
         }
@@ -642,6 +726,7 @@ class TestLogoSize:
             "accent_colour": DEFAULT_ACCENT,
             "name_bar_style": "dark",
             "footer_style": "dark",
+            "font_style": "modern",
             "logo_size": size,
             "texts": inline_formset([]),
         }
@@ -742,6 +827,7 @@ class TestTabsAfterARefusedSave:
             "name_bar_style": "dark",
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
+            "font_style": "modern",
             "texts": inline_formset([]),
             **changes,
         }
@@ -789,6 +875,7 @@ class TestPreview:
             "name_bar_style": site_settings.name_bar_style,
             "logo_size": site_settings.logo_size,
             "footer_style": site_settings.footer_style,
+            "font_style": site_settings.font_style,
             "logo": site_settings.logo_id or "",
             "texts": inline_formset([]),
             **changes,
@@ -854,6 +941,14 @@ class TestPreview:
         assert "--logo-height:2.5rem;--logo-height-wide:2.5rem" in response.content.decode()
         assert SiteSettings.for_site(site).logo_size == saved
 
+    def test_the_home_page_shows_the_unsaved_font_style(self, client, moderator, site, home_page):
+        saved = SiteSettings.for_site(site).font_style
+
+        response = self.preview(client, moderator, site, font_style="friendly")
+
+        assert f"--font:{FONT_STACKS['friendly']}" in response.content.decode()
+        assert SiteSettings.for_site(site).font_style == saved
+
     def test_visitors_dont_see_the_preview(self, client, moderator, site, home_page):
         self.preview(client, moderator, site, main_colour="#8e1b3b", name_bar_style="light")
 
@@ -888,6 +983,7 @@ class TestPreview:
             "name_bar_style": "dark",
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
+            "font_style": "modern",
             "texts": inline_formset([]),
         }
 
