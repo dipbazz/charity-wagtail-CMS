@@ -38,6 +38,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | Colours, a charity's brand colours and previewing them, fonts, header, breakpoints, JavaScript, accessibility? How do I style something? | [Look and feel](site/look-and-feel.md) and the `mobile-first` skill |
 | Who can change what? Why can't editors see my new snippet? | [Editors and permissions](site/editors-and-permissions.md) |
 | How does the live server work? Environment variables, commands, backups, logs, deploying, restoring? | [Running the live site](hosting.md) |
+| How is a fix, feature or design judged? Quick fix or lasting one? Standard or modern? | [Contributing: Principles](contributing/index.md#principles) |
 | Branches, commits, pull requests, code style? | [Contributing](contributing/index.md) |
 | How do I write tests? Fixtures? What does CI run? What must I check by hand? | [Testing and QA](contributing/testing.md) |
 | Why did CI fail on query counts or page weight? | [Performance](contributing/performance.md) |
@@ -53,6 +54,8 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 
 Each is explained on the linked page; they're here because breaking one has caused a bug before.
 
+- A change works for every charity and fixes the shared cause; standards come before modern
+  styling ([Principles](contributing/index.md#principles)).
 - Public listings filter `.live().public()`, never just `.live()`
   ([Security](contributing/security.md)).
 - Page queries visitors see, other than `child_of(self)`, filter by `locale_id`, or Nepali and
