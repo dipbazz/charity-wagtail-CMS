@@ -1,9 +1,8 @@
 {% load wagtailcore_tags wagtailimages_tags seo_tags %}
 {% if page %}
-    {% wagtail_site as current_site %}
     <link rel="canonical" href="{{ page.full_url }}">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="{{ current_site.site_name|default:'Charity' }}">
+    <meta property="og:site_name" content="{{ settings.core.SiteSettings.name|default:'Charity' }}">
     <meta property="og:title" content="{{ page.seo_title|default:page.title }}">
     {% if page.search_description %}<meta property="og:description" content="{{ page.search_description }}">{% endif %}
     <meta property="og:url" content="{{ page.full_url }}">

@@ -192,6 +192,14 @@ def test_translates_the_banner_address_testimonial_and_categories(seeded, client
     assert "सफलताका कथा" in stories
 
 
+def test_names_the_charity_in_both_languages(seeded, client):
+    english = client.get("/").content.decode()
+    nepali = client.get("/ne/").content.decode()
+
+    assert "Brightwell Water Trust" in english and "ब्राइटवेल" not in english
+    assert "ब्राइटवेल" in nepali and "Brightwell Water Trust" not in nepali
+
+
 def flood_story_in(locale):
     english = NewsPage.objects.get(locale__language_code="en", slug__contains="bhote-koshi")
     return english.get_translation(locale)

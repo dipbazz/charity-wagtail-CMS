@@ -15,7 +15,8 @@ Every page shares one layout (`charity/templates/base.html`):
 - **Footer**: the charity's name, address, email, phone and social links, the privacy notice
   link, and "© year, name. Registered charity number …", all from Site settings. On a short page
   it sits at the bottom of the window.
-- In `<head>`: the title (the page's SEO title or title, then "| site name"), its search
+- In `<head>`: the title (the page's SEO title or title, then "| the charity's name" in the
+  language being read, [Languages](languages.md#snippets-and-settings-text)), its search
   description, social sharing tags and links to its translations
   ([SEO and sharing](#seo-and-sharing)).
 

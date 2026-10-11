@@ -87,6 +87,65 @@ class TestFooterAddress:
         assert "1 Example Street" in client.get("/ne/").content.decode()
 
 
+class TestNameInEachLanguage:
+    """The charity's name in each language (#157), written next to the address. Without one,
+    the site shows the Site's name from Settings → Sites, as it did before."""
+
+    ENGLISH = "Brightwell Water Trust"
+    NEPALI = "ब्राइटवेल जल ट्रस्ट"
+
+    def page(self, client, path):
+        return BeautifulSoup(client.get(path).content, "html.parser")
+
+    def brand_link(self, client, path):
+        return self.page(client, path).select_one(".brand-bar a.brand")
+
+    def test_each_language_shows_its_own_name(self, client, nepali_home_page, site_settings):
+        add_texts(site_settings, english=self.ENGLISH, nepali=self.NEPALI, field="name")
+
+        assert self.brand_link(client, "/").get_text(strip=True) == self.ENGLISH
+        assert self.brand_link(client, "/ne/").get_text(strip=True) == self.NEPALI
+
+    def test_the_name_is_marked_with_its_language(self, client, nepali_home_page, site_settings):
+        add_texts(site_settings, english=self.ENGLISH, nepali=self.NEPALI, field="name")
+
+        assert self.brand_link(client, "/")["lang"] == "en"
+        assert self.brand_link(client, "/ne/")["lang"] == "ne"
+
+    def test_a_language_without_a_name_shows_the_main_languages_name_marked_as_such(
+        self, client, nepali_home_page, site_settings
+    ):
+        """So a screen reader reads an English name on a Nepali page as English."""
+        add_texts(site_settings, english=self.ENGLISH, nepali="", field="name")
+
+        brand = self.brand_link(client, "/ne/")
+
+        assert brand.get_text(strip=True) == self.ENGLISH
+        assert brand["lang"] == "en"
+
+    def test_without_names_the_site_shows_its_name_from_sites(
+        self, client, site, home_page, site_settings
+    ):
+        site.site_name = self.ENGLISH
+        site.save()
+
+        assert self.brand_link(client, "/").get_text(strip=True) == self.ENGLISH
+
+    def test_the_footer_tab_title_and_link_previews_show_the_name_in_the_language_being_read(
+        self, client, nepali_home_page, site_settings
+    ):
+        add_texts(site_settings, english=self.ENGLISH, nepali=self.NEPALI, field="name")
+
+        page = self.page(client, "/ne/")
+
+        footer = page.select_one(".site-footer")
+        assert footer.find("strong").get_text(strip=True) == self.NEPALI
+        assert self.NEPALI in footer.select_one(".meta").get_text()
+        assert page.title.get_text(" ", strip=True).endswith(f"| {self.NEPALI}")
+        assert page.find("meta", property="og:site_name")["content"] == self.NEPALI
+        assert self.ENGLISH not in str(page)
+
+
 def test_no_donate_button_without_a_donate_page(client, home_page, site_settings):
     assert 'class="button" href=' not in client.get("/").content.decode()
 
@@ -222,7 +281,7 @@ class TestTextInEachLanguageInTheAdmin:
         assert response.status_code == 200
         assert not AnnouncementBanner.for_site(site).texts.exists()
 
-    def test_moderator_writes_the_address_in_each_language(
+    def test_moderator_writes_the_name_and_address_in_each_language(
         self, client, moderator, site, nepali_locale
     ):
         client.force_login(moderator)
@@ -238,8 +297,16 @@ class TestTextInEachLanguageInTheAdmin:
                 "footer_style": "dark",
                 "texts": inline_formset(
                     [
-                        {"locale": Locale.get_default().pk, "address": "1 Example Street"},
-                        {"locale": nepali_locale.pk, "address": "1 एक्जाम्पल स्ट्रिट"},
+                        {
+                            "locale": Locale.get_default().pk,
+                            "name": "Brightwell Water Trust",
+                            "address": "1 Example Street",
+                        },
+                        {
+                            "locale": nepali_locale.pk,
+                            "name": "ब्राइटवेल जल ट्रस्ट",
+                            "address": "1 एक्जाम्पल स्ट्रिट",
+                        },
                     ]
                 ),
             }
@@ -248,7 +315,10 @@ class TestTextInEachLanguageInTheAdmin:
         response = client.post(url, form)
 
         assert response.status_code == 302
-        assert SiteSettings.for_site(site).texts.count() == 2
+        assert sorted(SiteSettings.for_site(site).texts.values_list("name", "address")) == [
+            ("Brightwell Water Trust", "1 Example Street"),
+            ("ब्राइटवेल जल ट्रस्ट", "1 एक्जाम्पल स्ट्रिट"),
+        ]
 
 
 class TestBrandColours:
@@ -800,6 +870,13 @@ class TestPreview:
 
         assert "2 New Street" in response.content.decode()
 
+    def test_the_unsaved_name_shows_in_the_header(self, client, moderator, site, home_page):
+        texts = inline_formset([{"locale": Locale.get_default().pk, "name": "Brightwell Trust"}])
+
+        response = self.preview(client, moderator, site, texts=texts)
+
+        assert "Brightwell Trust" in response.content.decode()
+
     def test_a_colour_that_cant_be_saved_cant_be_previewed(self, client, moderator, site):
         client.force_login(moderator)
         url = reverse("wagtailsettings:preview_on_edit", args=["core", "sitesettings", site.pk])
@@ -872,10 +949,10 @@ def show_banner(site, message, nepali=None, link_page=None):
     banner.save()
 
 
-def add_texts(site_settings, english, nepali=None):
-    site_settings.texts = [SiteSettingsText(locale=Locale.get_default(), address=english)]
+def add_texts(site_settings, english, nepali=None, field="address"):
+    site_settings.texts = [SiteSettingsText(locale=Locale.get_default(), **{field: english})]
     if nepali is not None:
         site_settings.texts.add(
-            SiteSettingsText(locale=Locale.objects.get(language_code="ne"), address=nepali)
+            SiteSettingsText(locale=Locale.objects.get(language_code="ne"), **{field: nepali})
         )
     site_settings.save()

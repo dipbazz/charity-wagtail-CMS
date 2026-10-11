@@ -49,9 +49,10 @@ each language), settings in `charity/settings/base.py`, and the site's own Nepal
   menu, as for a page. A translated testimonial starts as a draft for a moderator to publish, like
   its original. A partner's or category's copy is shown at once, with the original's text until
   it's rewritten. A category's translation keeps its slug.
-- **Write the banner and the footer's address in each language** in their settings: each has a
-  **Text in each language** section with one row per language. The banner is editors' to change;
-  the address is in Site settings, which only moderators change.
+- **Write the charity's name, its address and the banner in each language** in their settings:
+  each has a **Text in each language** section with one row per language. The banner is editors'
+  to change; the name and address are in Site settings, which only moderators change. Until a
+  name is written, the site shows the one in **Settings → Sites**, which only admins can change.
 - **Promote a search result in each language**: a promoted page shows only in its own language,
   so add one promotion per language. A promoted link to another website shows in both.
 - **The admin stays in English**: Wagtail has no Nepali translation of its admin.
@@ -136,7 +137,8 @@ else in the main language; a snippet only in another language is left out, as a 
 language is. A page that was translated keeps the snippets chosen for the original (its
 testimonial block, a story's categories), so those are looked up by `translation_key`.
 
-**Settings text** (the banner's message and the footer's address) can't be translated that way:
+**Settings text** (the charity's name, its address and the banner's message) can't be translated
+that way:
 Wagtail keeps exactly one Site settings record per Site, with no Translate action. The settings
 keep everything that's the same in every language; the text that differs is in a table of rows
 attached to them, one per language:
@@ -151,21 +153,26 @@ core_sitesettings  (one per Site)
    │
    ▼ has one row per language
 core_sitesettingstext
-┌──────────┬────────┬──────────────────┐
-│ settings │ locale │ address          │
-├──────────┼────────┼──────────────────┤
-│ 1        │ ne     │ दमक, झापा          │
-│ 1        │ en     │ Damak, Jhapa     │
-└──────────┴────────┴──────────────────┘
+┌──────────┬────────┬────────────────────────┬──────────────┐
+│ settings │ locale │ name                   │ address      │
+├──────────┼────────┼────────────────────────┼──────────────┤
+│ 1        │ ne     │ ब्राइटवेल जल ट्रस्ट       │ दमक, झापा      │
+│ 1        │ en     │ Brightwell Water Trust │ Damak, Jhapa │
+└──────────┴────────┴────────────────────────┴──────────────┘
    (settings, locale) is unique: one row per language
 ```
 
 `AnnouncementBanner` and `AnnouncementBannerText` (with `message`) have the same shape. Editors
 see the rows as a **Text in each language** section in the same settings form, so a third
-language needs no migration, only another row. In templates `site_settings.address` and
-`banner.message` are properties that return the row in the language being read, else the main
-language's (`TextInEachLanguageMixin`); a blank field counts as missing. Both settings are per
-Site, so each charity on a shared installation would have its own.
+language needs no migration, only another row. In templates `site_settings.name`,
+`site_settings.address` and `banner.message` are properties that return the row in the language
+being read, else the main language's (`TextInEachLanguageMixin`); a blank field counts as missing.
+Both settings are per Site, so each charity on a shared installation would have its own.
+
+The name is in the header, the footer, the tab title and `og:site_name`. Without a row, it is the
+Site's `site_name`. Because it can fall back to another language, the header and footer mark it
+with `lang="{{ site_settings.name_language }}"`, the language of the text shown, so a screen
+reader reads an English name on a Nepali page as English.
 
 Why rows rather than a translatable snippet or one field per language:
 [Decisions](../decisions.md#settings-text-in-a-row-per-language).
@@ -241,9 +248,9 @@ Devanagari needs more room than English:
   (Windows). The Latin fonts have no Devanagari letters, so the browser takes those from the next
   font.
 - **More line height**, because vowel signs sit above and below the letters: 1.8 for Nepali body
-  text and 1.45 for headings, against 1.6 and 1.2 for English. Buttons and form fields hold one
-  line and keep 1.6, and the charity's name keeps the main language, so the header is the same
-  height in both languages.
+  text and 1.45 for headings and the charity's name, against 1.6 and 1.2 for English. Buttons and
+  form fields hold one line and keep 1.6, so the header's controls are the same height in both
+  languages.
 - **No letter spacing or capitals transform on Nepali text**: spacing breaks joined letters apart,
   and Devanagari has no capitals. A rule may set them only for English (`:lang(en)`);
   `core/tests/test_stylesheet.py` checks this.

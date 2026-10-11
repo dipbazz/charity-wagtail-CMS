@@ -1,9 +1,8 @@
 {% load i18n wagtailcore_tags %}
-{% wagtail_site as current_site %}
 {% with site_settings=settings.core.SiteSettings %}
 <footer class="site-footer{% if site_settings.footer_style == 'light' %} is-light{% endif %}">
     <div class="container">
-        <p><strong>{{ current_site.site_name|default:"Charity" }}</strong></p>
+        <p lang="{{ site_settings.name_language }}"><strong>{{ site_settings.name|default:"Charity" }}</strong></p>
         {% if site_settings.address %}<address>{{ site_settings.address|linebreaksbr }}</address>{% endif %}
         <ul>
             {% if site_settings.contact_email %}<li><a href="mailto:{{ site_settings.contact_email }}">{{ site_settings.contact_email }}</a></li>{% endif %}
@@ -12,7 +11,7 @@
             {% if privacy_page %}<li><a href="{% pageurl privacy_page %}">{% translate "Privacy notice" %}</a></li>{% endif %}
         </ul>
         <p class="meta">
-            &copy; {% now "Y" %} {{ current_site.site_name|default:"Charity" }}.
+            &copy; {% now "Y" %} <span lang="{{ site_settings.name_language }}">{{ site_settings.name|default:"Charity" }}</span>.
             {% if site_settings.charity_number %}{% blocktranslate trimmed with number=site_settings.charity_number %}Registered charity number {{ number }}.{% endblocktranslate %}{% endif %}
         </p>
     </div>
