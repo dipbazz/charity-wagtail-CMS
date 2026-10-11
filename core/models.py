@@ -21,8 +21,10 @@ from wagtail.search import index
 from core.brand import (
     DARK,
     DEFAULT_ACCENT,
+    DEFAULT_FONT_STYLE,
     DEFAULT_LOGO_SIZE,
     DEFAULT_MAIN,
+    FONT_STYLE_CHOICES,
     FOOTER_CHOICES,
     LOGO_MAX,
     LOGO_MIN,
@@ -222,6 +224,15 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         default=DARK,
         help_text="Your charity's details at the bottom of every page.",
     )
+    font_style = models.CharField(
+        "font style",
+        max_length=11,
+        choices=FONT_STYLE_CHOICES,
+        default=DEFAULT_FONT_STYLE,
+        help_text="The letters of every page, headings and text. Each style uses fonts already on "
+        "your visitors' phones, so nothing is downloaded and pages load as fast, but a style "
+        "looks a little different from phone to phone. Nepali text keeps its own fonts.",
+    )
 
     organisation_panels = [
         MultiFieldPanel(
@@ -273,6 +284,7 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
             "white or pale and puts your main colour in the text instead. Choose light if your "
             "logo is drawn for a white background.",
         ),
+        FieldPanel("font_style", widget=forms.RadioSelect),
     ]
     edit_handler = TabsOpeningOnErrors(
         [
@@ -323,8 +335,11 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
 
     @property
     def brand_css(self):
-        """CSS custom properties for the chosen brand colours, or "" for the stylesheet's own."""
-        return custom_properties(self.main_colour, self.accent_colour, self.logo_size)
+        """CSS custom properties for the chosen brand colours, logo size and font style, or ""
+        for the stylesheet's own."""
+        return custom_properties(
+            self.main_colour, self.accent_colour, self.logo_size, self.font_style
+        )
 
     @property
     def name(self):

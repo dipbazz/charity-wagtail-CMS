@@ -3,13 +3,15 @@
 Run `uv run playwright install chromium` once; `uv run pytest -m "not browser"` leaves these out.
 """
 
+import re
+
 import pytest
 from django.urls import reverse
 from playwright.sync_api import expect
 from wagtail_factories import ImageFactory
 
 from conftest import SITE
-from core.brand import DEFAULT_LOGO_SIZE, DEFAULT_MAIN
+from core.brand import DEFAULT_FONT_STYLE, DEFAULT_LOGO_SIZE, DEFAULT_MAIN
 from core.models import SiteSettings
 
 pytestmark = [pytest.mark.browser, pytest.mark.django_db]
@@ -66,3 +68,17 @@ def test_the_preview_follows_the_logo_size_slider(site_page, client, moderator, 
     # A screen reader hears where the slider is, since there's no number to read.
     expect(slider).to_have_attribute("aria-valuetext", "0% of the way from small to large")
     assert SiteSettings.for_site(site).logo_size == DEFAULT_LOGO_SIZE
+
+
+def test_the_preview_shows_an_unsaved_font_style(site_page, client, moderator, site, home_page):
+    """Choosing a style redraws the preview in its font; nothing is saved until Save (#135)."""
+    client.force_login(moderator)
+    site_page.goto(SITE + reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk]))
+    site_page.get_by_role("tab", name="Brand").click()
+    site_page.get_by_role("radio", name=re.compile("^Traditional")).check()
+
+    site_page.get_by_role("button", name="Toggle preview").click()
+
+    body = site_page.frame_locator("#w-preview-iframe").locator("body")
+    expect(body).to_have_css("font-family", re.compile("^Georgia"))
+    assert SiteSettings.for_site(site).font_style == DEFAULT_FONT_STYLE

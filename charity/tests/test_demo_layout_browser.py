@@ -11,7 +11,7 @@ import re
 import pytest
 
 from conftest import SITE
-from core.brand import contrast
+from core.brand import FONT_STACKS, contrast
 from core.models import SiteSettings
 
 pytestmark = [pytest.mark.browser, pytest.mark.django_db]
@@ -117,5 +117,23 @@ def test_a_light_or_dark_name_bar_and_footer_fit_and_stay_readable(
             ratio = contrast(hex_colour(colour), hex_colour(fill))
             if ratio < 4.5:
                 problems.append(f"{path} {text}: contrast {ratio:.1f}:1")
+
+    assert not problems, "\n".join(problems)
+
+
+# A font style (#135) can be wider than the stylesheet's own, so each fits and can be tapped at
+# every width, in both languages, and is the font the page is drawn in.
+@pytest.mark.parametrize("font_style", [style for style in FONT_STACKS if style != "modern"])
+def test_each_font_style_fits_and_can_be_tapped_at_every_width(site_page, demo_site, font_style):
+    site_settings = SiteSettings.for_site(demo_site)
+    site_settings.font_style = font_style
+    site_settings.save()
+    problems = []
+    for path in ("/", "/appeals/flood-relief/", "/donate/", "/ne/", "/ne/donate/"):
+        problems += [f"{path} {item}" for item in layout_problems(site_page, path)]
+        font = site_page.evaluate("getComputedStyle(document.body).fontFamily")
+        first = FONT_STACKS[font_style].split(",")[0]
+        if not font.startswith(first) or "Devanagari" not in font:
+            problems.append(f"{path} is drawn in {font}, not the {font_style} style")
 
     assert not problems, "\n".join(problems)
