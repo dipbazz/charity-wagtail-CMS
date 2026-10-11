@@ -10,6 +10,41 @@ version number.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-11
+
+### Added
+
+- Moderators can give the site their charity's own colours: a main and an accent colour in
+  **Site settings → Brand**, from which the site makes its other shades, on every page. A colour
+  that would make text hard to read can't be saved, and the message suggests a shade of it that
+  works. A site that doesn't choose looks exactly as before
+  ([#133](https://github.com/dipbazz/Charity-wagtail-CMS/issues/133)).
+- Moderators can see changes to Site settings, such as new brand colours, on real pages before
+  saving them: the preview panel shows the home page, the Donate page or the Nepali home page with
+  the unsaved choices, and visitors see nothing until they're saved
+  ([#136](https://github.com/dipbazz/Charity-wagtail-CMS/issues/136)).
+- Moderators can choose a font style in **Site settings → Brand → Font style**: modern, which is
+  what the site uses now, traditional, with a serif font like a printed book, or friendly, with
+  rounded letters. Each uses fonts already on visitors' phones, so pages load as fast as before, and
+  Nepali text keeps its own fonts. The preview (the phone icon at the top right) shows a style on
+  the site's pages before you save, and a site that doesn't choose keeps its font
+  ([#135](https://github.com/dipbazz/Charity-wagtail-CMS/issues/135)).
+- Moderators can choose a light or dark name bar at the top of every page, and a light or dark
+  footer, in **Site settings → Brand → Header and footer**, so a logo drawn for a white background
+  has one. Text stays easy to read either way, and a site that doesn't choose keeps its dark name
+  bar and footer ([#134](https://github.com/dipbazz/Charity-wagtail-CMS/issues/134)).
+- Moderators can write the charity's name in each language in **Site settings → Text in each
+  language**, next to the address, for a charity whose Nepali and English names differ. Readers see
+  the name in their language in the header, the footer, the browser tab and link previews, and the
+  main language's name until another language has its own. A site that hasn't written one keeps
+  the name it was set up with ([#157](https://github.com/dipbazz/Charity-wagtail-CMS/issues/157)).
+- Moderators can add the charity's logo in **Site settings → Brand → Logo**, and it shows beside
+  the charity's name at the top of every page, in both languages. A slider sets how big it is,
+  from small to large enough to read the lettering in a seal or a crest, and the preview follows
+  it before anything is saved. A long name wraps beside the logo instead of crowding the page, and
+  a site without a logo looks exactly as before
+  ([#123](https://github.com/dipbazz/Charity-wagtail-CMS/issues/123)).
+
 ## [0.3.0] - 2026-10-08
 
 ### Upgrade notes
@@ -242,7 +277,8 @@ The first tracked release. It collects everything built before versioning starte
 - Every CI action is pinned to a commit, and Dependabot proposes updates
   ([#69](https://github.com/dipbazz/Charity-wagtail-CMS/pull/69)).
 
-[Unreleased]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dipbazz/Charity-wagtail-CMS/releases/tag/v0.1.0
