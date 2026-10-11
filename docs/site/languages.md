@@ -246,7 +246,8 @@ Devanagari needs more room than English:
 - **The phone's own Devanagari font, no download.** The font list names the Latin system fonts,
   then Noto Sans Devanagari (Android), Kohinoor Devanagari (iPhone and Mac) and Nirmala UI
   (Windows). The Latin fonts have no Devanagari letters, so the browser takes those from the next
-  font.
+  font. A charity can [choose a font style](look-and-feel.md#a-font-style), and every style ends in
+  the same Devanagari fonts, so this stays true whichever it chooses.
 - **More line height**, because vowel signs sit above and below the letters: 1.8 for Nepali body
   text and 1.45 for headings and the charity's name, against 1.6 and 1.2 for English. Buttons and
   form fields hold one line and keep 1.6, so the header's controls are the same height in both
