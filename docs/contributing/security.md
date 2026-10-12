@@ -85,6 +85,15 @@ as the container starts, so it stops the site too. See
 Test what editors can do as `editor`, not as a superuser, or a missing permission goes unnoticed.
 See [Editors and permissions](../site/editors-and-permissions.md#testing-permissions).
 
+## Exports show what visitors typed as text
+
+A spreadsheet runs a cell that starts with `=` as a formula (in a CSV file, `+`, `-` and `@` too),
+so a pledge "from" `=HYPERLINK(…)` could send other donors' details away when the team opens the
+export (CWE-1236). Wagtail writes text as it is, so every export of what visitors typed (Pledges,
+form submissions) goes through `core.exports.VisitorTextExportMixin`: an Excel file keeps such text
+in a text cell, shown as typed, and a CSV file puts `'` in front of it. A new export of visitors'
+text puts the mixin first among its view's bases.
+
 ## Supporters' personal data stays with the team
 
 Pledges and form submissions hold names, contact details and consents. Who can see them, what each

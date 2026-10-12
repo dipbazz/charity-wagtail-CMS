@@ -43,6 +43,11 @@ class FormPage(AbstractEmailForm):
     parent_page_types = ["home.HomePage", "home.StandardPage"]
     subpage_types = []
 
+    def get_submissions_list_view_class(self):
+        from contact.views import FormSubmissionsListView  # admin views need the models loaded
+
+        return FormSubmissionsListView
+
     def send_mail(self, form):
         """Email the team, with Reply-To set to the sender so staff can answer directly."""
         email_fields = [
