@@ -3,6 +3,10 @@
 
 {% block body_class %}template-donatepage form-page{% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/donate.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="container narrow">
         <h1>{{ page.title }}</h1>

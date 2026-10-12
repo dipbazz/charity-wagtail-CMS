@@ -37,6 +37,12 @@ def soup(response):
     return BeautifulSoup(response.content, "html.parser")
 
 
+def stylesheets(response):
+    """The file names of the stylesheets a page links to, in order."""
+    links = soup(response).find_all("link", rel="stylesheet")
+    return [link["href"].rsplit("/", 1)[-1] for link in links]
+
+
 def is_checked(response, name, value):
     """Whether the radio button or select option with this value starts out chosen."""
     html = soup(response)
@@ -92,6 +98,14 @@ class TestDonatePage:
         html = client.get(donate_page.url).content.decode()
 
         assert html.index("</form>") < html.index("Where every Rs 100 goes")
+
+    def test_loads_its_own_stylesheet_after_the_main_one(self, client, donate_page):
+        assert stylesheets(client.get(donate_page.url)) == ["charity.css", "donate.css"]
+
+    def test_other_pages_dont_download_its_stylesheet(self, client, donate_page, appeals):
+        """Its styles are only for the Donate page and its pay pages (#142 splits the rest)."""
+        for page in (donate_page.get_parent(), appeals, appeals.get_children().first()):
+            assert "donate.css" not in stylesheets(client.get(page.url))
 
     def test_links_to_the_privacy_notice_before_the_send_button(
         self, client, donate_page, privacy_notice
@@ -321,7 +335,7 @@ class TestPledging:
 
 
 class TestOwnAmountField:
-    """Only "Other amount" reveals "Your own amount"; charity.css hides it otherwise."""
+    """Only "Other amount" reveals "Your own amount"; donate.css hides it otherwise."""
 
     def own_amount(self, response):
         return (
@@ -443,7 +457,7 @@ class TestOptionalLabels:
 
 
 class TestMobileNumber:
-    """Asked for only with a monthly gift, for the monthly reminder; charity.css hides it
+    """Asked for only with a monthly gift, for the monthly reminder; donate.css hides it
     until Monthly is chosen."""
 
     def phone_field(self, response):
