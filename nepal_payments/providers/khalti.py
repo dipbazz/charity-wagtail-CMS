@@ -75,7 +75,9 @@ class Khalti(PaymentProvider):
         if not isinstance(answer, dict) or not (answer.get("pidx") and answer.get("payment_url")):
             raise ProviderUnavailable(f"Khalti's answer had no payment page: {answer!r}")
         page = urlsplit(answer["payment_url"])
-        if (page.scheme, page.hostname) != ("https", PAYMENT_PAGE_HOST[self.live]):
+        # The whole host part, not .hostname: Python takes "example.com\@test-pay.khalti.com"
+        # to be Khalti, while a browser reads the backslash as a slash and goes to example.com.
+        if (page.scheme, page.netloc.lower()) != ("https", PAYMENT_PAGE_HOST[self.live]):
             logger.warning("Khalti named an unexpected payment page: %r", answer)
             raise ProviderUnavailable("Khalti named a payment page that isn't its own.")
         return Started(Redirect(answer["payment_url"]), provider_id=answer["pidx"])

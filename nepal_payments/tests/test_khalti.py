@@ -132,6 +132,9 @@ class TestStart:
             (False, f"https://test-pay.khalti.com.example.com/?pidx={PIDX}"),
             (False, f"https://pay.khalti.com/?pidx={PIDX}"),  # live, in test mode
             (True, f"https://test-pay.khalti.com/?pidx={PIDX}"),  # test, in live mode
+            # Regression: ISSUE-008 — Python read this as Khalti's page, but a browser reads the
+            # backslash as a slash and goes to example.com. Found by /qa on 2026-10-12.
+            (False, f"https://example.com\\@test-pay.khalti.com/?pidx={PIDX}"),
         ],
     )
     def test_sends_the_payer_nowhere_but_khaltis_own_page(self, provider_server, live, payment_url):
