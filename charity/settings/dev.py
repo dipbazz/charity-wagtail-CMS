@@ -3,7 +3,10 @@ import os
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
+from nepal_payments.providers.esewa import ESewa
+
 from .base import *
+from .payments import payment_keys
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -36,3 +39,11 @@ if LANGUAGE_CODE not in dict(LANGUAGES):
     raise ImproperlyConfigured(
         f"Set DJANGO_LANGUAGE_CODE to one of {', '.join(dict(LANGUAGES))}, not {LANGUAGE_CODE!r}."
     )
+
+# Paying pledges, in the providers' test systems: eSewa publishes its test keys, so it works here
+# with nothing set up. Khalti's needs your own test key, from test-admin.khalti.com, as
+# DJANGO_PAYMENT_KHALTI_SECRET_KEY in .env.local.
+PAYMENT_KEYS = {
+    **{f"ESEWA_{key}": value for key, value in ESewa.test_keys.items()},
+    **payment_keys(os.environ),
+}

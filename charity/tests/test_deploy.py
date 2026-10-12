@@ -38,3 +38,11 @@ def test_logs_cant_fill_the_disk():
 
     assert "max-size" in compose
     assert "max-file" in compose
+
+
+def test_the_web_service_gets_every_setting_in_env():
+    """So a payment provider's DJANGO_PAYMENT_* keys reach the app with no change here."""
+    compose = (DEPLOY / "compose.yaml").read_text(encoding="utf-8")
+    web = compose.split("\n  web:\n")[1].split("\n  caddy:\n")[0]
+
+    assert re.search(r"^    env_file:\n      - path: \.env\n", web, flags=re.MULTILINE)

@@ -4,6 +4,7 @@ from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 
 from .base import *
+from .payments import payment_keys
 
 DEBUG = False
 
@@ -60,6 +61,11 @@ MAILERS = {
 DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "webmaster@localhost")
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
+# Paying pledges online: no provider is offered until its keys are set, and the providers' test
+# systems are used unless real money is asked for in so many words.
+PAYMENT_KEYS = payment_keys(os.environ)
+LIVE_PAYMENTS = os.environ.get("DJANGO_LIVE_PAYMENTS", "false").lower() == "true"
+
 # Errors and warnings go to stderr, which Docker keeps (`docker compose logs web`). Django's
 # defaults print nothing with DEBUG off and email ADMINS instead, which is empty, so server
 # errors left no trace (#78). Request errors are logged at ERROR only: 404s are WARNINGs and
@@ -86,6 +92,7 @@ LOGGING = {
                 "news",
                 "contact",
                 "search",
+                "nepal_payments",
             ]
         },
     },

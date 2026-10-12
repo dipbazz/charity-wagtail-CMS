@@ -226,6 +226,13 @@ SITE_URL = "http://localhost:8000"
 # Base URL for full URLs in the Wagtail admin, e.g. in notification emails.
 WAGTAILADMIN_BASE_URL = SITE_URL
 
+# Paying pledges online (#93). A payment provider (nepal_payments/providers/) is offered once its
+# keys are set here, as "<PROVIDER>_<KEY>" (e.g. "KHALTI_SECRET_KEY"), read from
+# DJANGO_PAYMENT_<PROVIDER>_<KEY> variables by charity.settings.payments. Payments use the
+# providers' test systems, where no money moves, unless LIVE_PAYMENTS is on.
+PAYMENT_KEYS = {}
+LIVE_PAYMENTS = False
+
 # Allowed file extensions for documents in the document library.
 # This can be omitted to allow all files, but note that this may present a security risk
 # if untrusted users are allowed to upload files -

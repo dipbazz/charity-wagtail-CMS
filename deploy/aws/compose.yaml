@@ -17,6 +17,12 @@ services:
     build: ../..
     image: charity-web
     restart: unless-stopped
+    # Every setting in .env reaches the app, so a payment provider's DJANGO_PAYMENT_* keys need no
+    # change here. The values under environment: below win over .env's. Not required, so CI can
+    # check this file without one; on the server the checks below stop Compose without it.
+    env_file:
+      - path: .env
+        required: false
     environment:
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env}
       DJANGO_ALLOWED_HOSTS: ${SITE_HOST:?Set SITE_HOST in .env}
