@@ -199,3 +199,41 @@ class TestThePledgeModelStaysEnglishForTheAdmin:
         with translation.override("ne"):
             assert Pledge._meta.get_field("frequency").verbose_name == "how often"
             assert str(Pledge._meta.get_field("address").help_text).startswith("House or ward")
+
+
+class TestPayingInNepali:
+    """How paying works, and the pay page (#93), in the reader's language."""
+
+    def test_the_form_says_no_payment_is_taken_online_in_nepali(
+        self, client, nepali_donate_page, settings
+    ):
+        settings.PAYMENT_KEYS = {}
+
+        assert "यो वेबसाइटमा अहिलेसम्म भुक्तानी लिइँदैन।" in visible_text(
+            client.get(nepali_donate_page.url)
+        )
+
+    def test_the_form_names_the_providers_in_nepali(self, client, nepali_donate_page, settings):
+        settings.PAYMENT_KEYS = {
+            "ESEWA_PRODUCT_CODE": "EPAYTEST",
+            "ESEWA_SECRET_KEY": "s",
+            "KHALTI_SECRET_KEY": "k",
+        }
+
+        text = visible_text(client.get(nepali_donate_page.url))
+
+        assert "तपाईं eSewa वा Khalti बाट, वा आफैं आएर भुक्तानी गर्न सक्नुहुन्छ।" in text
+        assert "भुक्तानीतर्फ जानुहोस्" in text
+
+    def test_the_pay_page_is_in_nepali(self, client, nepali_donate_page, fake_provider):
+        pledge = Pledge.objects.create(
+            page=nepali_donate_page, amount=2500, currency="NPR", name="सीता", email="s@example.com"
+        )
+
+        text = visible_text(client.get(f"{nepali_donate_page.url}pay/{pledge.reference}/"))
+
+        assert "आफ्नो दान तिर्नुहोस्" in text
+        assert "Fake Pay बाट तिर्नुहोस्" in text
+        assert "आफैं आएर तिर्नुहोस्" in text
+        assert "परीक्षण मोड:" in text
+        assert "जहाँ सबैभन्दा बढी आवश्यक छ" in text

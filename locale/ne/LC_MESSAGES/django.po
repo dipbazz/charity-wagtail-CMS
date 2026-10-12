@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 10:16+0100\n"
+"POT-Creation-Date: 2026-10-12 07:39+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -109,6 +109,26 @@ msgstr "खुला अपिलहरू"
 msgid "Past appeals"
 msgstr "विगतका अपिलहरू"
 
+msgid "ID"
+msgstr "आईडी"
+
+msgid "password"
+msgstr "पासवर्ड"
+
+msgid "MPIN"
+msgstr "MPIN"
+
+msgid "OTP"
+msgstr "OTP"
+
+#, python-format
+msgid "%(names)s or %(last)s"
+msgstr "%(names)s वा %(last)s"
+
+#, python-format
+msgid "A gift to %(charity)s: %(appeal)s"
+msgstr "%(charity)s लाई दान: %(appeal)s"
+
 msgid "Filter appeals"
 msgstr "अपिलहरू छान्नुहोस्"
 
@@ -135,6 +155,16 @@ msgstr "तपाईंको दानले के गर्न सक्छ"
 msgid "Donate to this appeal"
 msgstr "यो अपिलमा दान दिनुहोस्"
 
+#, python-format
+msgid "After you send this form, you can pay with %(pay_with)s, or in person."
+msgstr "यो फारम पठाएपछि तपाईं %(pay_with)s बाट, वा आफैं आएर भुक्तानी गर्न सक्नुहुन्छ।"
+
+msgid "If you choose monthly, you'll pay the first month now."
+msgstr "मासिक रोज्नुभयो भने, पहिलो महिनाको दान अहिले नै तिर्नुहुनेछ।"
+
+msgid "No payment is taken on this website yet. Send this form and we'll contact you about how to pay. If you choose monthly, we'll help you set up a regular payment."
+msgstr "यो वेबसाइटमा अहिलेसम्म भुक्तानी लिइँदैन। यो फारम पठाउनुहोस्, कसरी भुक्तानी गर्ने भनेर हामी तपाईंलाई सम्पर्क गर्नेछौं। मासिक रोज्नुभयो भने, नियमित भुक्तानी मिलाउन हामी सहयोग गर्नेछौं।"
+
 msgid "Please check your pledge"
 msgstr "कृपया आफ्नो प्रतिबद्धता जाँच्नुहोस्"
 
@@ -153,6 +183,9 @@ msgstr "तपाईंको विवरण"
 msgid "Your choices"
 msgstr "तपाईंका रोजाइहरू"
 
+msgid "Continue to payment"
+msgstr "भुक्तानीतर्फ जानुहोस्"
+
 msgid "Send my pledge"
 msgstr "मेरो प्रतिबद्धता पठाउनुहोस्"
 
@@ -164,6 +197,83 @@ msgstr "हामीले तपाईंको प्रतिबद्धत�
 
 msgid "See all our appeals"
 msgstr "हाम्रा सबै अपिलहरू हेर्नुहोस्"
+
+msgid "Pay your gift"
+msgstr "आफ्नो दान तिर्नुहोस्"
+
+#, python-format
+msgid "Your gift of %(amount)s has reached us."
+msgstr "तपाईंको %(amount)s दान हामीलाई प्राप्त भयो।"
+
+#, python-format
+msgid "%(provider)s reference: %(reference)s"
+msgstr "%(provider)s सन्दर्भ नम्बर: %(reference)s"
+
+msgid "This was a test payment, so no money was taken."
+msgstr "यो परीक्षण भुक्तानी थियो, त्यसैले कुनै पैसा लिइएन।"
+
+msgid "Your gift"
+msgstr "तपाईंको दान"
+
+#, python-format
+msgid "%(amount)s a month"
+msgstr "मासिक %(amount)s"
+
+msgid "Appeal"
+msgstr "अपिल"
+
+msgid "You'll pay this month's gift now."
+msgstr "यस महिनाको दान अहिले तिर्नुहुनेछ।"
+
+msgid "Your payment didn't go through, and no money was taken. You can try again, or pay another way."
+msgstr "तपाईंको भुक्तानी पूरा भएन, र कुनै पैसा लिइएन। फेरि प्रयास गर्न, वा अर्को तरिकाले तिर्न सक्नुहुन्छ।"
+
+#, python-format
+msgid "Did you finish paying with %(provider)s? Check before paying again, so you don't pay twice."
+msgstr "के तपाईंले %(provider)s बाट भुक्तानी पूरा गर्नुभयो? दुई पटक नतिर्नका लागि, फेरि तिर्नुअघि जाँच्नुहोस्।"
+
+#, python-format
+msgid "Check my %(provider)s payment"
+msgstr "मेरो %(provider)s भुक्तानी जाँच्नुहोस्"
+
+msgid "Test mode:"
+msgstr "परीक्षण मोड:"
+
+msgid "no real money is taken. To try paying, sign in with the test account each provider gives:"
+msgstr "वास्तविक पैसा लिइँदैन। भुक्तानी गरेर हेर्न, प्रत्येक सेवाले दिएको परीक्षण खाताबाट साइन इन गर्नुहोस्:"
+
+msgid "Pay online"
+msgstr "अनलाइन तिर्नुहोस्"
+
+msgid "You'll pay on their own secure page, then come back here."
+msgstr "तपाईं उनीहरूकै सुरक्षित पृष्ठमा तिर्नुहुनेछ, अनि यहाँ फर्कनुहुनेछ।"
+
+#, python-format
+msgid "Pay with %(provider)s"
+msgstr "%(provider)s बाट तिर्नुहोस्"
+
+msgid "Pay in person"
+msgstr "आफैं आएर तिर्नुहोस्"
+
+msgid "Pay in cash at our office, and tell us your name when you pay."
+msgstr "हाम्रो कार्यालयमा नगद तिर्नुहोस्, र तिर्दा आफ्नो नाम बताउनुहोस्।"
+
+msgid "If you'd rather pay another way, we'll contact you about how to pay."
+msgstr "अर्को तरिकाले तिर्न चाहनुहुन्छ भने, कसरी तिर्ने भनेर हामी तपाईंलाई सम्पर्क गर्नेछौं।"
+
+msgid "I'll pay later"
+msgstr "म पछि तिर्छु"
+
+#, python-format
+msgid "Taking you to %(provider)s"
+msgstr "तपाईंलाई %(provider)s मा लैजाँदै"
+
+msgid "If nothing happens, press the button."
+msgstr "केही भएन भने, बटन थिच्नुहोस्।"
+
+#, python-format
+msgid "Continue to %(provider)s"
+msgstr "%(provider)s मा जानुहोस्"
 
 msgid "This appeal has closed."
 msgstr "यो अपिल बन्द भइसकेको छ।"
