@@ -138,8 +138,14 @@ Release a version as soon as the last issue in its milestone is closed.
      against this version's code: names, paths, settings, counts, addresses, and what a page
      looks like. Fix what has drifted in this pull request, in a `docs:` commit of its own, and
      retake a screenshot when the page it shows has changed. Then set "Last verified against"
-     in the [project map](../project-context.md) to `vX.Y.Z`. A bug found this way that the
-     docs can't fix (the code is wrong, not the page) becomes an issue.
+     in the [project map](../project-context.md) to `vX.Y.Z`.
+   - **A bug the check finds in the code** (the code is wrong, not the page) becomes an issue.
+     If it blocks the release, put the issue in this version's milestone and fix it before
+     releasing: in a pull request of its own, test-first and with its `changelog.d/` file, then
+     bring this branch up to date with `main`. A bug blocks the release when this version
+     broke it or added it, when it stops people using the site (`P1`), or when it's a security
+     or personal-data problem. Any other bug goes into the next milestone, as new work does
+     ([above](#what-goes-into-which-version)).
 3. **Open a pull request** titled `chore(release): X.Y.Z`, labelled `no changelog`, in the
    milestone. CI runs as usual.
 4. **After it's merged,** tag the merge commit and publish the release:
