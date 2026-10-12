@@ -59,5 +59,6 @@ def request_json(url, *, method="GET", data=None, headers=None):
         raise ProviderUnavailable(f"{method} {url} answered {status}.")
     try:
         return status, json.loads(raw)
-    except ValueError as error:
+    # Nested deeper than Python recurses is RecursionError, not a ValueError.
+    except (ValueError, RecursionError) as error:
         raise ProviderUnavailable(f"{method} {url} answered {status}, not in JSON.") from error

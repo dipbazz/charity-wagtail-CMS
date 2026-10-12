@@ -35,7 +35,10 @@ class Answers(BaseHTTPRequestHandler):
             return
         if kind == "slow":
             time.sleep(1)
-        body = b"<html>Busy</html>" if kind == "text" else b'{"status": "Completed"}'
+        body = {
+            "text": b"<html>Busy</html>",
+            "deep": b"[" * 200_000 + b"]" * 200_000,  # JSON nested deeper than Python recurses
+        }.get(kind, b'{"status": "Completed"}')
         self.send_response(int(status))
         self.send_header("Content-Type", "text/html" if kind == "text" else "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -75,6 +78,13 @@ def test_passes_on_the_json_of_a_success_or_a_refusal(server, status):
 def test_an_error_or_an_answer_that_isnt_json_means_unavailable(server, path):
     with pytest.raises(ProviderUnavailable):
         http.request_json(server + path)
+
+
+# Regression: ISSUE-006 — JSON nested too deep to read raised RecursionError, which isn't a
+# ValueError, so a payer coming back got a server error. Found by /qa on 2026-10-12.
+def test_json_too_deep_to_read_means_unavailable(server):
+    with pytest.raises(ProviderUnavailable):
+        http.request_json(f"{server}/200/deep")
 
 
 # Regression: ISSUE-004 — a redirect from a provider's API was followed with the merchant's key,
