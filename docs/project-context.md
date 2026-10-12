@@ -3,17 +3,21 @@
 A one-page map into these docs for anyone (or any AI session) starting work here: each question
 points to the one page that answers it, so there's no need to read everything or scan the code.
 
-**Last verified against:** `5956f44` (main, 2026-10-11, v0.4.0)
+**Last verified against:** `v0.4.0` (every page and screenshot checked on 2026-10-12)
 
 ## Keeping the docs current
 
-- **Starting a session:** trust the docs. Run `git log --oneline 5956f44..HEAD --stat` (the commit
+- **Starting a session:** trust the docs. Run `git log --oneline v0.4.0..HEAD --stat` (the version
   above) and re-read only the pages for the areas those commits touched. Re-scan the repo only if
   most areas changed, or if the docs contradict the code.
 - **Before reading code to answer a question,** read the page below that answers it. Always read
   the actual code before *changing* it.
-- **A pull request that changes what a page describes updates that page,** and bumps "Last
-  verified against" once it's merged ([Writing docs](contributing/writing-docs.md)).
+- **A pull request that changes what a page describes updates that page**
+  ([Writing docs](contributing/writing-docs.md)).
+- **Each release checks every page against the code** and fixes what has drifted, in the release
+  pull request, then sets "Last verified against" to the new version
+  ([Cutting a release](contributing/releases.md#cutting-a-release)). So the version above is always
+  one whose docs were checked in full.
 
 ## In one paragraph
 
@@ -22,7 +26,8 @@ fictional water charity. Supporters read appeals and news, pledge (no payment is
 volunteer, in Nepali or English; the team edits in the Wagtail admin, editors drafting and
 moderators publishing. SQLite, no JavaScript build step. Feature apps (`home`, `campaigns`, `news`,
 `contact`, `search`) depend on `core`, which never imports them. Production runs the Docker image on
-one EC2 server behind Caddy, configured by `DJANGO_*` environment variables. Built test-first with
+one EC2 server behind Caddy, configured by `DJANGO_*` environment variables; each charity gets its
+own installation there, built to one standard structure. Built test-first with
 pytest, styled mobile first, and budgeted for queries and page weight in CI.
 
 ## Where to find things
@@ -31,6 +36,8 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 |---|---|
 | How do I run it, locally or as production runs it? | [Getting started](getting-started/index.md) |
 | What's the stack? Which app owns what? What's the page tree? Which Wagtail features are used? | [Overview](site/overview.md) |
+| What must every charity's site have: header, menu, footer, pages? What may a charity change? | [The charity site standard](site/standard.md) |
+| How do several charities share the platform? | [Decisions: one installation per charity](decisions.md#one-installation-per-charity-on-a-shared-server) |
 | What does the home page, a standard page, a block, news, search, a form, the footer or the API do? Which URLs exist? | [Pages and content](site/pages-and-content.md) |
 | Appeals, the Donate page, the pledge form, pledges in the admin, money, consent, the privacy notice? | [Appeals and giving](site/appeals-and-giving.md) |
 | Nepali and English: addresses, translating pages, snippets and settings text, the switch, `hreflang`, Nepali text? | [Languages](site/languages.md) |

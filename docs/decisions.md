@@ -186,7 +186,8 @@ history.
   Iterations stayed as time boxes: two weeks at first, then one week from 6 October 2026, until
   they were dropped on 10 October ([below](#release-each-version-when-its-done)).
 - **New work goes into the next milestone,** apart from fixes for bugs that stop people using the
-  live site.
+  live site. Since 10 October 2026, work started straight away (such as a fix found while testing)
+  joins the version being built ([below](#release-each-version-when-its-done)).
 
 **Consequences**
 
@@ -344,7 +345,8 @@ a generic setting (one per installation) to a site setting (one per Site) at the
   the banner is on. The links chosen in settings (Donate page, the banner's page, the privacy
   notice) are found together in one query, which saves as many queries as the text costs.
 - Partners, testimonials and news categories are translatable snippets and so still belong to the
-  whole installation. If several charities ever share one, they need a link to their Site.
+  whole installation, which is right because each charity has its own installation
+  ([One installation per charity on a shared server](#one-installation-per-charity-on-a-shared-server)).
 - Text a new setting shows readers goes in a row model like these
   ([Extending the site](contributing/extending.md#add-a-snippet-or-setting)).
 
@@ -434,3 +436,95 @@ the library is open to editors, not only to the moderators who choose the logo.
 - A charity whose logo only exists as an SVG exports a PNG of it first.
 - If SVG is wanted later, it needs `preserve-svg` in every photo filter, a sanitiser on upload,
   and a test that picks an SVG for each image field: a decision of its own, replacing this one.
+
+## One standard structure for every charity
+
+**Status:** decided on 11 October 2026; being built in #191
+
+**Context**
+
+The site is offered free to small charities in Nepal and the UK, and the aim is that a supporter
+who has used one charity's site on it understands any other: where to read about the charity,
+where its appeals are, and how to give. On 11 October 2026 the demo was compared with two Nepali
+and four international charity sites. The Nepali ones named their menus differently (Services,
+Events, Gallery, Testimonials and FAQs on one; Projects, Stories, Notice, Fundraising and Get
+involved on the other) and barely showed who they were. The best international ones showed their
+registration, accounts and ratings on every page, which is what donors look for first.
+
+Options considered:
+
+- **Each charity arranges its own site,** as now: the menu is whichever pages editors tick. Every
+  site drifts, supporters relearn each one, and nothing promises the trust details are there.
+- **A few themes to choose from.** More looks, the same drift in structure, and every theme to
+  keep working at every release.
+- **One standard structure, with each charity's own brand.** The approach of LocalGov Drupal for
+  UK councils, the US Web Design System for federal websites and the shared theme of Nepal's
+  municipal websites.
+
+**Decision**
+
+One standard ([The charity site standard](site/standard.md)): the same header, menu sections and
+order, footer, required pages, and home and Donate page order on every charity's site. Every site
+starts with the standard pages; a charity can add its own pages after the standard menu sections
+or under one, but can't remove, rename or reorder the standard ones. A charity's look comes only
+from its brand settings, words and photos. The look is restyled within the standard afterwards
+(#192); a heading font is tried on real pages and reviewed before any is chosen (#177).
+
+**Consequences**
+
+- A supporter who knows one charity's site knows them all, and every site shows who runs the
+  charity, its registration and its reports.
+- Menu names come from translations in `locale/ne`, not page titles, so a charity can't use its
+  own word for a standard section.
+- New page types and settings: a Contact page, an accessibility statement, the people who run the
+  charity, reports and accounts, and Nepali registration details.
+- A charity that wants a different structure can't have one: the request becomes a change to the
+  standard for every charity, or it waits ([Principles](contributing/index.md#principles)).
+
+## One installation per charity on a shared server
+
+**Status:** decided on 11 October 2026; tooling in #193, built when the second charity signs up
+
+**Context**
+
+The first real charity is going live on a server meant to be shared by every future charity site
+([One EC2 server](#one-ec2-server-with-docker-compose)), and more charities may follow. Earlier
+records left open whether several charities would share one installation or each have its own
+([Settings text in a row per language](#settings-text-in-a-row-per-language)). Wagtail's docs
+describe three ways to serve several organisations: multi-site, multi-instance and multi-tenancy
+(AWS's SaaS guidance calls them pool, silo and bridge).
+
+Options considered:
+
+- **One installation with a Wagtail Site per charity (multi-site).** One process and one database
+  for everyone. But users, groups, snippets (partners, testimonials, news categories) and the
+  permission to edit Sites and settings belong to the whole installation, so every query visitors
+  or editors see would need a filter by charity, like the filter by language whose misses have
+  caused bugs here. One missed filter would show one charity's supporters to another; restoring a
+  backup would roll back every charity at once; one SQLite file would take every charity's writes.
+  Wagtail's docs say it "does not support full multi-tenancy at this moment" and that "if you
+  require full separation of content, then multi-instance might be a better fit".
+- **A tenancy layer** (django-tenants or wagtail-tenants, with a PostgreSQL schema per charity).
+  Good separation in one process, but it needs PostgreSQL instead of SQLite, a third-party package
+  that keeps up with each Wagtail release, and more to run.
+- **One installation per charity on a shared server (multi-instance).**
+
+**Decision**
+
+Each charity has its own installation: the same Docker image and release as every other charity,
+with its own container, data folder (the SQLite database and uploads), secret key, admin, users
+and domain, all on one shared server behind one Caddy. The tooling to add, upgrade, back up,
+restore and watch many charities (#193) is built when the second charity signs up, after the
+standard (#191) and the restyle (#192).
+
+**Consequences**
+
+- Full separation: one charity's data can't appear on another's site or in its admin, and no code
+  has to filter by charity.
+- Backups and restores already work for one installation, and a charity can leave with its
+  database and uploads.
+- Each installation needs its own memory (an estimated 150 to 300 MB, to be measured in #185), so
+  one server holds a limited number. Past about 50 charities, look at a shared database again if
+  running separate installations costs more than building the isolation.
+- An upgrade runs once for each charity, so it has to be one command for all of them (#183).
+- Snippets belong to the whole installation, which is now right: an installation is one charity.

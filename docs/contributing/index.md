@@ -32,7 +32,7 @@ against each other, the earlier one wins.
    isn't finished.
 3. **Standards first, then modern.** Follow the published standard before a fashion: WCAG 2.2 AA,
    the web's conventions (the logo top left goes home, Donate sits top right, the menu and search
-   are where people expect them), the structure every charity's site shares, and the law on
+   are where people expect them), [the charity site standard](../site/standard.md), and the law on
    giving and personal data in Nepal and the UK. Modern styling is welcome inside those rules,
    through the design tokens and shared components ([Look and feel](../site/look-and-feel.md)),
    never by breaking one. A design proposal names the standard it follows.

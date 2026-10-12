@@ -10,6 +10,11 @@ free. Supporters read appeals and news, pledge a gift and sign up to volunteer, 
 English; the charity's team runs everything from the Wagtail admin, without a developer. The
 demo charity, **Brightwell Water Trust**, is fictional ([Demo content](../contributing/demo-content.md)).
 
+Each charity runs its own installation of the same product on a shared server
+([Decisions](../decisions.md#one-installation-per-charity-on-a-shared-server)), and every
+charity's site has the same structure: the same menu, footer and pages, in each charity's own
+brand ([The charity site standard](standard.md)).
+
 Three things shape every decision:
 
 - **Most visitors are on a phone, often on a slow connection.** Pages are designed for a 320px
@@ -69,8 +74,8 @@ Root
 │  ├─ Donate page  /donate/         (one per home page; no children)
 │  ├─ Appeals  /appeals/            (one per home page)
 │  │   └─ Appeal  /appeals/flood-relief/
-│  ├─ News  /news/                  (one per home page)
-│  │   └─ Story  /news/<slug>/
+│  ├─ Stories  /stories/            (the news page; one per home page)
+│  │   └─ Story  /stories/<slug>/
 │  └─ Form page  /volunteer/        (no children)
 └─ Home page  /ne/  (the Nepali tree, with the same rules)
 ```

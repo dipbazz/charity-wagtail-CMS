@@ -9,8 +9,13 @@ These docs are built with [Sphinx](https://www.sphinx-doc.org/),
 
 **A pull request that changes what a docs page describes updates that page**, in the same pull
 request: a new page type, setting, command, convention, security rule or gotcha goes on the page
-that covers it. Once it's merged, bump "Last verified against" in the
-[project map](../project-context.md).
+that covers it.
+
+**Each release checks every page against the code.** Pull requests miss things: a page that
+mentions a setting another pull request renamed, a screenshot taken before the header changed.
+So the release pull request reads every page and screenshot against the version's code, fixes
+what has drifted, and sets "Last verified against" to the new version in the [project map](../project-context.md)
+([Cutting a release](releases.md#cutting-a-release)).
 
 ## Build them
 

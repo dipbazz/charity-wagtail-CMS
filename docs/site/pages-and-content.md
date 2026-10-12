@@ -79,16 +79,17 @@ main language ([Languages](languages.md#snippets-and-settings-text)).
 
 Settings that apply to every page, under **Settings** in the admin (`core/models.py`):
 
-- **Site settings** (moderators only, because they hold the charity's identity): charity number,
-  contact email, phone and address (shown in the footer; the address is written in each
-  language); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
+- **Site settings** (moderators only, because they hold the charity's identity): the charity's
+  **name** (in the header, the footer and the tab title) and its address, each written in each
+  language; charity number, contact email and phone (shown in the footer); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
   the **currency** every amount is shown in ([Money](appeals-and-giving.md#money)); the
   **default phone country** for mobile numbers on forms; Facebook, Instagram and LinkedIn
   links (each shown in the footer only when set); and, on the **Brand** tab, the charity's
   [logo](look-and-feel.md#the-logo), shown beside its name in the header, at a size it chooses,
   its main and accent
-  colours ([Look and feel](look-and-feel.md#brand-colours)) and a light or dark name bar and
-  footer ([Look and feel](look-and-feel.md#a-light-or-dark-name-bar-and-footer)). A
+  colours ([Look and feel](look-and-feel.md#brand-colours)), a light or dark name bar and
+  footer ([Look and feel](look-and-feel.md#a-light-or-dark-name-bar-and-footer)) and a
+  [font style](look-and-feel.md#a-font-style). A
   change shows on every page as soon as it's saved, so its preview panel shows it on real pages
   first ([Look and feel](look-and-feel.md#seeing-a-brand-change-before-it-goes-live)).
 - **Announcement banner**: one message, written in each language, on or off, optionally linking
@@ -116,15 +117,17 @@ Stories the charity publishes, with editor-managed categories and free tags (`ne
 
 - **The news page** lists stories newest first, ten per page, as cards, with a row of category
   filters ("All news" and each category).
-- **Tag and category pages** (`/news/tag/<tag>/`, `/news/category/<slug>/`) show the same
+- **Tag and category pages** (`/stories/tag/<tag>/`, `/stories/category/<slug>/`, under the
+  news page's own address) show the same
   listing, filtered, with the filter in the heading.
 - **A story** shows the news page's name and the date, the title, an introduction, a photo with
   its credit, the body, then its categories and tags as links to those pages.
-- **The RSS feed** (`/news/feed/`) has the latest 20 stories. A "Follow our news" box on the news
+- **The RSS feed** (`/stories/feed/`) has the latest 20 stories. A "Follow our news" box on the news
   page gives its address with a Copy link button, for readers who use a feed app.
 - Categories are managed under **News categories** in the admin and translated with
   **Translate**. A slug is unique in each language, and a translation keeps it, so
-  `/news/category/stories/` and `/ne/news/category/stories/` are the same category. A translated
+  `/stories/category/field-updates/` and `/ne/stories/category/field-updates/` are the same
+  category. A translated
   story keeps the original's categories and shows them in the language being read.
 
 ## Search
@@ -164,7 +167,7 @@ Every full URL (feed, sitemap, canonical, API) comes from the Wagtail Site recor
 | `/search/?query=…` | Search |
 | `/donate/?appeal=<slug>&amount=<n>` | The Donate page with an appeal and amount preselected ([Appeals and giving](appeals-and-giving.md#donate-page)) |
 | `/donate/thank-you/` | Where a sent pledge lands; opening or reloading it saves nothing |
-| `/news/tag/…`, `/news/category/…`, `/news/feed/` | News listings and the RSS feed |
+| `/stories/tag/…`, `/stories/category/…`, `/stories/feed/` | News listings and the RSS feed, under the news page's address |
 | `/documents/<id>/<filename>` | Document downloads, through Wagtail's view, which checks a private collection's password or login |
 | `/media/<path>` | Uploads, when Django serves them; never documents ([Security](../contributing/security.md)) |
 | `/sitemap.xml`, `/robots.txt` | As above |

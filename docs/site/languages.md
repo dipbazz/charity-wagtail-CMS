@@ -30,7 +30,7 @@ each language), settings in `charity/settings/base.py`, and the site's own Nepal
   translated, so nothing disappears while a translation is missing.
 - **Links chosen in settings follow the language too:** on a Nepali page the header's Donate button
   and the banner's link go to the Nepali version of their page once it's published.
-- **An address with no page in that language** (such as `/ne/news/` before the news page is
+- **An address with no page in that language** (such as `/ne/about/` before the About page is
   translated) redirects to the same address in the main language, if a page is there.
 
 ## What editors do
@@ -167,7 +167,8 @@ see the rows as a **Text in each language** section in the same settings form, s
 language needs no migration, only another row. In templates `site_settings.name`,
 `site_settings.address` and `banner.message` are properties that return the row in the language
 being read, else the main language's (`TextInEachLanguageMixin`); a blank field counts as missing.
-Both settings are per Site, so each charity on a shared installation would have its own.
+Both settings are per Site, as all Wagtail settings are; each charity has its own installation
+([Decisions](../decisions.md#one-installation-per-charity-on-a-shared-server)).
 
 The name is in the header, the footer, the tab title and `og:site_name`. Without a row, it is the
 Site's `site_name`. Because it can fall back to another language, the header and footer mark it

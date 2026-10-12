@@ -73,6 +73,7 @@ The AWS setup builds these from a shorter `deploy/aws/.env`:
 | `DJANGO_SECRET_KEY` | **Required** |
 | `BACKUP_BUCKET` | The S3 bucket backups go to |
 | `DATA_DIR` | Where the data lives on the server; default `/srv/charity/data` |
+| `DJANGO_LANGUAGE_CODE` | The language the site opens in: `ne` (the default) or `en` |
 | `DJANGO_SECURE_HSTS_SECONDS` | Raise to a year (31536000) once HTTPS has worked for a while |
 | `WEB_CONCURRENCY` | Default 2 |
 

@@ -132,7 +132,20 @@ Release a version as soon as the last issue in its milestone is closed.
      `CHANGELOG.md`'s `Unreleased` section, renames that to `## [X.Y.Z] - YYYY-MM-DD` (today),
      starts a new empty `Unreleased`, updates the links at the bottom and deletes the files; read
      the result once, since it's what people will read;
-   - set `version = "X.Y.Z"` in `pyproject.toml`, then run `uv lock`.
+   - set `version = "X.Y.Z"` in `pyproject.toml`, then run `uv lock`;
+   - **check every docs page against the code.** Pull requests update the pages they change,
+     but they miss things, so read every page in `docs/`, the README and every screenshot
+     against this version's code: names, paths, settings, counts, addresses, and what a page
+     looks like. Fix what has drifted in this pull request, in a `docs:` commit of its own, and
+     retake a screenshot when the page it shows has changed. Then set "Last verified against"
+     in the [project map](../project-context.md) to `vX.Y.Z`.
+   - **A bug the check finds in the code** (the code is wrong, not the page) becomes an issue.
+     If it blocks the release, put the issue in this version's milestone and fix it before
+     releasing: in a pull request of its own, test-first and with its `changelog.d/` file, then
+     bring this branch up to date with `main`. A bug blocks the release when this version
+     broke it or added it, when it stops people using the site (`P1`), or when it's a security
+     or personal-data problem. Any other bug goes into the next milestone, as new work does
+     ([above](#what-goes-into-which-version)).
 3. **Open a pull request** titled `chore(release): X.Y.Z`, labelled `no changelog`, in the
    milestone. CI runs as usual.
 4. **After it's merged,** tag the merge commit and publish the release:
@@ -171,7 +184,7 @@ the bug's issue.
 
 3. **Prepare the release in a second folder,** so your local database, which already has the next
    version's migrations, isn't touched (`db.sqlite3` and `media/` belong to the folder). Copy
-   `.env` or `charity/settings/local.py` across if you use them.
+   `.env.local` across if you use one.
 
    ```bash
    git worktree add -b chore/release-0.4.1 ../charity-patch patch/0.4.x

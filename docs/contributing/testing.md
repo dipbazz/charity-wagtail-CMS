@@ -37,7 +37,7 @@ Some tests guard the whole project rather than one feature:
 | `charity/tests/test_deploy.py` | `.env` stays out of git and the image; images pinned; logs capped |
 | `charity/tests/test_production_settings.py` | Production refuses to start half-configured; every app's warnings are logged |
 | `home/tests/test_seed_demo.py` | Every demo page renders |
-| `charity/tests/test_demo_layout_browser.py` | Each kind of demo page at six widths: no sideways scrolling, no tap target under 44px; readable text in every light or dark name bar and footer ([QA](#qa)) |
+| `charity/tests/test_demo_layout_browser.py` | Each kind of demo page at six widths: no sideways scrolling, no tap target under 44px; readable text in every light or dark name bar and footer; each font style fits ([QA](#qa)) |
 | `charity/tests/test_lighthouse_budgets.py` | Each page's total weight budget is its image budget plus the fixed allowance ([Performance](performance.md)) |
 | `charity/tests/test_changelog.py`, `test_changelog_fragments.py` | The changelog is well-formed, its newest version matches `pyproject.toml`, and `changelog.d/` files are named `<slug>.<group>.md` |
 | `charity/tests/test_docs.py` | The docs sidebar menu isn't hidden |
@@ -136,7 +136,9 @@ paragraph are exempt). The failure names the page, the width and the element. Ad
 page to `PATHS`, and a new kind of control to `TAP_TARGETS`. It also runs the home page in both
 languages with each light or dark name bar and footer
 ([Look and feel](../site/look-and-feel.md#a-light-or-dark-name-bar-and-footer)), and fails when
-text in them has a contrast under 4.5:1.
+text in them has a contrast under 4.5:1, and loads the home page, an
+appeal and the Donate page in both languages with each
+[font style](../site/look-and-feel.md#a-font-style).
 
 **A person checks what only eyes catch**: wording, whether a page looks right, whether a flow
 makes sense. Each pull request's **Check before merging** section names the pages, widths and
