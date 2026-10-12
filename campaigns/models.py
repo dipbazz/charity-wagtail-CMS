@@ -1,13 +1,15 @@
 import datetime
+import uuid
 from decimal import Decimal
 
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.http import HttpResponseRedirect
+from django.utils import timezone
 from django.utils.translation import gettext_lazy
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
@@ -26,6 +28,7 @@ from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
 from wagtail.search import index
 
+from campaigns.payments import method_choices
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
 from core.models import SiteSettings, SocialMetaMixin
@@ -309,8 +312,26 @@ class Frequency(models.TextChoices):
     MONTHLY = "monthly", "Monthly"
 
 
+class PaymentStatus(models.TextChoices):
+    """Whether a pledge or a payment has been paid: the payment providers' statuses
+    (nepal_payments.Status), with the names the team reads in the admin."""
+
+    WAITING = "waiting", "Waiting"
+    PAID = "paid", "Paid"
+    FAILED = "failed", "Failed"
+
+
+# The statuses a payment may change from, to each status: paid never goes back, and a failed
+# attempt may still turn out paid (eSewa sends the payer back to one address, paid or not).
+CHANGES_FROM = {
+    PaymentStatus.PAID: [PaymentStatus.WAITING, PaymentStatus.FAILED],
+    PaymentStatus.FAILED: [PaymentStatus.WAITING],
+}
+
+
 class Pledge(models.Model):
-    """A supporter's promise to give, sent from the Donate page. No payment is taken yet."""
+    """A supporter's promise to give, sent from the Donate page, then paid online (a Payment)
+    or arranged with the team."""
 
     page = models.ForeignKey(
         DonatePage, null=True, on_delete=models.SET_NULL, related_name="pledges"
@@ -356,6 +377,14 @@ class Pledge(models.Model):
     # The one-time ID of the copy of the form it was sent from. Sending that copy again (after
     # going back from the thank-you page) updates this pledge instead of adding another.
     submission_id = models.UUIDField(null=True, unique=True, editable=False)
+    # Whether it's been paid online (#93): only Payment.record() changes these.
+    payment_status = models.CharField(
+        "payment", max_length=7, choices=PaymentStatus, default=PaymentStatus.WAITING
+    )
+    paid_at = models.DateTimeField("paid", null=True, blank=True)
+    # The address of its pay page. Not submission_id: whoever holds that can send the form again
+    # and change the pledge.
+    reference = models.UUIDField(null=True, unique=True, editable=False)
 
     class Meta:
         ordering = ["-created_at"]
@@ -363,6 +392,86 @@ class Pledge(models.Model):
     def __str__(self):
         return f"{self.name}: {self.display_amount()} {self.get_frequency_display().lower()}"
 
+    def save(self, *args, **kwargs):
+        if self.reference is None:
+            self.reference = uuid.uuid4()
+        super().save(*args, **kwargs)
+
     @admin.display(description="Amount")
     def display_amount(self):
         return format_money(self.amount, self.currency)
+
+    def start_payment(self, method, live):
+        """A new attempt to pay this pledge, with the provider whose code is `method`. After a
+        failed attempt, the pledge is waiting for payment again."""
+        with transaction.atomic():
+            Pledge.objects.filter(pk=self.pk, payment_status=PaymentStatus.FAILED).update(
+                payment_status=PaymentStatus.WAITING
+            )
+            return self.payments.create(
+                method=method, amount=self.amount, currency=self.currency, live=live
+            )
+
+
+class Payment(models.Model):
+    """One attempt to pay a pledge online, with one provider (nepal_payments). Its status changes
+    only through record(), from what the provider says when asked."""
+
+    pledge = models.ForeignKey(Pledge, on_delete=models.CASCADE, related_name="payments")
+    method = models.CharField("paid with", max_length=20, choices=method_choices)
+    amount = models.PositiveIntegerField(help_text="A whole amount in the payment's currency.")
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES)
+    status = models.CharField(max_length=7, choices=PaymentStatus, default=PaymentStatus.WAITING)
+    # Ours, sent to the provider (eSewa's transaction_uuid, Khalti's purchase_order_id), and the
+    # address the payer comes back to.
+    reference = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    provider_id = models.CharField(
+        max_length=100, blank=True, help_text="The provider's ID for the attempt (Khalti's pidx)."
+    )
+    provider_reference = models.CharField(
+        "provider's reference",
+        max_length=100,
+        blank=True,
+        help_text="The provider's transaction ID, to find the payment in its statements.",
+    )
+    live = models.BooleanField(
+        default=False, help_text="Unticked: made in the provider's test system, so no money moved."
+    )
+    created_at = models.DateTimeField("started", auto_now_add=True)
+    updated_at = models.DateTimeField("updated", auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        amount = format_money(self.amount, self.currency)
+        return f"{self.get_method_display()} {amount}: {self.get_status_display().lower()}"
+
+    def record(self, status, provider_reference=""):
+        """Save what the provider says about this payment, and what that means for its pledge.
+        Returns whether anything changed.
+
+        A conditional update rather than a read then a save: the payer's return and a later
+        check can arrive at once, and SQLite can't lock a row.
+        """
+        status = PaymentStatus(status)
+        now = timezone.now()
+        changes = {"status": status, "updated_at": now}
+        if provider_reference:
+            changes["provider_reference"] = provider_reference
+        with transaction.atomic():
+            unpaid = Pledge.objects.filter(pk=self.pledge_id).exclude(
+                payment_status=PaymentStatus.PAID
+            )
+            changed = Payment.objects.filter(
+                pk=self.pk, status__in=CHANGES_FROM.get(status, [])
+            ).update(**changes)
+            if not changed:
+                return False
+            if status == PaymentStatus.PAID:
+                unpaid.update(payment_status=PaymentStatus.PAID, paid_at=now)
+            else:
+                unpaid.update(payment_status=PaymentStatus.FAILED)
+        for name, value in changes.items():
+            setattr(self, name, value)
+        return True

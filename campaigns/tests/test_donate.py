@@ -8,6 +8,7 @@ from campaigns.models import CampaignPage, DonatePage, Frequency, Pledge
 from campaigns.tests.factories import CampaignPageFactory, DonatePageFactory
 from core.models import SiteSettings
 from home.models import StandardPage
+from nepal_payments import Status
 
 pytestmark = pytest.mark.django_db
 
@@ -313,6 +314,21 @@ class TestPledging:
         assert response.status_code == 303
         assert Pledge.objects.count() == 1
         assert stored(donate_page).amount == 10000
+
+    def test_sending_a_paid_pledges_copy_again_adds_a_new_pledge(self, client, donate_page):
+        """A paid pledge records money received, so going back after paying and sending the form
+        again, even with another amount, starts a new pledge instead of changing it."""
+        copy = self.form_copy(client, donate_page)
+        pledge(client, donate_page, submission_id=copy)
+        paid = stored(donate_page)
+        paid.start_payment("esewa", live=False).record(Status.PAID, "000AWEO")
+
+        response = pledge(client, donate_page, submission_id=copy, amount="10000")
+
+        assert response.status_code == 303
+        paid.refresh_from_db()
+        assert paid.amount == 2500
+        assert Pledge.objects.exclude(pk=paid.pk).get().amount == 10000
 
     def test_each_newly_opened_copy_is_a_new_pledge(self, client, donate_page):
         for _ in range(2):
