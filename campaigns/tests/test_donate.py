@@ -1,5 +1,8 @@
+import importlib
+
 import pytest
 from bs4 import BeautifulSoup
+from django.apps import apps
 from django.urls import reverse
 from wagtail.test.utils.form_data import inline_formset, nested_form_data, rich_text, streamfield
 
@@ -143,6 +146,97 @@ class TestDonatePage:
         assert appeal_options(nepali_donate_page) == ["बाढी राहत"]
         assert donate_page.get_appeals_page().pk == appeals.pk
         assert nepali_donate_page.get_appeals_page().pk == nepali_appeals.pk
+
+
+class TestHowPayingWorks:
+    """The page says how paying works on this site, in the reader's language, before any notice
+    the charity adds: online with the providers set up here (#93), or not online at all."""
+
+    def notice(self, client, donate_page):
+        return soup(client.get(donate_page.url)).find(class_="payment-notice")
+
+    def button(self, client, donate_page):
+        return soup(client.get(donate_page.url)).find("button", type="submit").get_text(strip=True)
+
+    def test_with_no_provider_set_up_says_no_payment_is_taken_online(
+        self, client, donate_page, settings
+    ):
+        settings.PAYMENT_KEYS = {}
+
+        assert (
+            self.notice(client, donate_page)
+            .p.get_text(strip=True)
+            .startswith("No payment is taken on this website yet.")
+        )
+        assert self.button(client, donate_page) == "Send my pledge"
+
+    def test_names_the_providers_set_up_here(self, client, donate_page, settings):
+        settings.PAYMENT_KEYS = {"KHALTI_SECRET_KEY": "k"}
+
+        sentence = self.notice(client, donate_page).p.get_text(" ", strip=True)
+
+        assert sentence.startswith(
+            "After you send this form, you can pay with Khalti, or in person."
+        )
+        assert "If you choose monthly, you'll pay the first month now." in sentence
+        assert self.button(client, donate_page) == "Continue to payment"
+
+    def test_names_every_provider_set_up_here(self, client, donate_page, settings):
+        settings.PAYMENT_KEYS = {
+            "ESEWA_PRODUCT_CODE": "EPAYTEST",
+            "ESEWA_SECRET_KEY": "s",
+            "KHALTI_SECRET_KEY": "k",
+        }
+
+        assert "pay with eSewa or Khalti, or in person" in self.notice(client, donate_page).text
+
+    def test_a_site_in_pounds_takes_no_rupee_payments_online(
+        self, client, site, donate_page, settings
+    ):
+        settings.PAYMENT_KEYS = {"KHALTI_SECRET_KEY": "k"}
+        site_settings = SiteSettings.for_site(site)
+        site_settings.currency = "GBP"
+        site_settings.save()
+
+        assert "No payment is taken" in self.notice(client, donate_page).text
+        assert self.button(client, donate_page) == "Send my pledge"
+
+    def test_the_charitys_own_notice_follows(self, client, donate_page):
+        notice = self.notice(client, donate_page)
+
+        assert notice.find_all("p")[-1].get_text(strip=True) == (
+            "No payment is taken online yet. We'll be in touch about how to pay."
+        )
+
+    def test_a_page_without_a_notice_of_its_own_has_just_the_sentence(self, client, donate_page):
+        donate_page.payment_notice = ""
+        donate_page.save_revision().publish()
+
+        assert len(self.notice(client, donate_page).find_all("p")) == 1
+
+    def test_a_new_donate_page_has_no_notice_of_its_own(self):
+        assert DonatePage().payment_notice == ""
+
+
+def test_pages_still_saying_the_old_default_lose_it(donate_page):
+    """Before #93 every Donate page said "No payment is taken on this website yet" by default,
+    which isn't true once a provider is set up. The site's own sentence says it now, so the
+    default goes, from the page and from its revisions, so publishing again can't bring it back.
+    A charity's own notice stays."""
+    migration = importlib.import_module("campaigns.migrations.0010_payment_notice")
+    donate_page.payment_notice = migration.OLD_DEFAULT
+    donate_page.save_revision().publish()
+    own = DonatePageFactory(
+        parent=donate_page.get_parent(), slug="donate-2", payment_notice="<p>Ours.</p>"
+    )
+
+    migration.clear_the_old_default(apps, schema_editor=None)
+
+    donate_page.refresh_from_db()
+    assert donate_page.payment_notice == ""
+    assert donate_page.get_latest_revision_as_object().payment_notice == ""
+    own.refresh_from_db()
+    assert own.payment_notice == "<p>Ours.</p>"
 
 
 class TestPledgeModelAndForm:

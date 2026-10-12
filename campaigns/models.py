@@ -233,10 +233,12 @@ def test_accounts(providers):
     ]
 
 
-DEFAULT_PAYMENT_NOTICE = (
-    "<p>No payment is taken on this website yet. Send this form and we'll contact you about how "
-    "to pay. If you choose monthly, we'll help you set up a regular payment.</p>"
-)
+def either(names):
+    """The names as a choice, in the reader's language: "eSewa or Khalti", "eSewa, Khalti or
+    IME Pay"."""
+    if len(names) < 2:
+        return "".join(names)
+    return gettext("%(names)s or %(last)s") % {"names": ", ".join(names[:-1]), "last": names[-1]}
 
 
 class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
@@ -248,9 +250,12 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     """
 
     introduction = models.TextField(blank=True)
+    # The page itself says how paying works on this site (online with the providers set up here,
+    # or not online at all), so this is only for what a charity wants to add.
     payment_notice = RichTextField(
-        default=DEFAULT_PAYMENT_NOTICE,
-        help_text="Shown above the form: say plainly how payment works and what happens next.",
+        blank=True,
+        help_text="Anything to add about paying, such as bank details for a transfer. Shown above "
+        "the form, after the page's own sentence on how to pay.",
     )
     body = StreamField(
         BaseStreamBlock(),
@@ -312,7 +317,14 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 return self.redirect_to(request, "thank_you")
         else:
             form = self.get_form(site_settings=site_settings, link=request.GET)
-        return self.render(request, context_overrides={"form": form})
+        providers = providers_for(site_settings.currency)
+        return self.render(
+            request,
+            context_overrides={
+                "form": form,
+                "pay_with": either([provider.name for provider in providers]),
+            },
+        )
 
     @path("thank-you/", name="thank_you")
     def thank_you(self, request):
