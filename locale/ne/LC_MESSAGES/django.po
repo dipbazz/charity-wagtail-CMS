@@ -199,7 +199,7 @@ msgid "See all our appeals"
 msgstr "हाम्रा सबै अपिलहरू हेर्नुहोस्"
 
 msgid "Pay your gift"
-msgstr "आफ्नो दान तिर्नुहोस्"
+msgstr "तपाईंको दान भुक्तानी गर्नुहोस्"
 
 #, python-format
 msgid "Your gift of %(amount)s has reached us."
@@ -243,17 +243,17 @@ msgid "no real money is taken. To try paying, sign in with the test account each
 msgstr "वास्तविक पैसा लिइँदैन। भुक्तानी गरेर हेर्न, प्रत्येक सेवाले दिएको परीक्षण खाताबाट साइन इन गर्नुहोस्:"
 
 msgid "Pay online"
-msgstr "अनलाइन तिर्नुहोस्"
+msgstr "अनलाइनबाट भुक्तानी गर्नुहोस्"
 
 msgid "You'll pay on their own secure page, then come back here."
-msgstr "तपाईं उनीहरूकै सुरक्षित पृष्ठमा तिर्नुहुनेछ, अनि यहाँ फर्कनुहुनेछ।"
+msgstr "तपाईं उनीहरूकै सुरक्षित पृष्ठमा भुक्तानी गर्नुहुनेछ, अनि यहाँ फिर्ता आउनुहुनेछ।"
 
 #, python-format
 msgid "Pay with %(provider)s"
 msgstr "%(provider)s बाट तिर्नुहोस्"
 
 msgid "Pay in person"
-msgstr "आफैं आएर तिर्नुहोस्"
+msgstr "आफैं आएर भुक्तानी गर्नुहोस्"
 
 msgid "Pay in cash at our office, and tell us your name when you pay."
 msgstr "हाम्रो कार्यालयमा नगद तिर्नुहोस्, र तिर्दा आफ्नो नाम बताउनुहोस्।"
@@ -266,7 +266,7 @@ msgstr "म पछि तिर्छु"
 
 #, python-format
 msgid "Taking you to %(provider)s"
-msgstr "तपाईंलाई %(provider)s मा लैजाँदै"
+msgstr "तपाईंलाई %(provider)s मा लगिंदै छ"
 
 msgid "If nothing happens, press the button."
 msgstr "केही भएन भने, बटन थिच्नुहोस्।"

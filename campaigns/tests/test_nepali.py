@@ -232,8 +232,8 @@ class TestPayingInNepali:
 
         text = visible_text(client.get(f"{nepali_donate_page.url}pay/{pledge.reference}/"))
 
-        assert "आफ्नो दान तिर्नुहोस्" in text
+        assert "तपाईंको दान भुक्तानी गर्नुहोस्" in text
         assert "Fake Pay बाट तिर्नुहोस्" in text
-        assert "आफैं आएर तिर्नुहोस्" in text
+        assert "आफैं आएर भुक्तानी गर्नुहोस्" in text
         assert "परीक्षण मोड:" in text
         assert "जहाँ सबैभन्दा बढी आवश्यक छ" in text
