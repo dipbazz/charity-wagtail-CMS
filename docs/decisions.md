@@ -528,3 +528,53 @@ standard (#191) and the restyle (#192).
   running separate installations costs more than building the isolation.
 - An upgrade runs once for each charity, so it has to be one command for all of them (#183).
 - Snippets belong to the whole installation, which is now right: an installation is one charity.
+
+## Payment providers are a drop-in package
+
+**Status:** in use (since #93); to be published as its own package (#196)
+
+**Context**
+
+Pledges are paid online from #93, starting with eSewa and Khalti in Nepal. More gateways will
+follow: IME Pay, Fonepay and connectIPS in Nepal, a card gateway for supporters abroad (#94). Each
+charity has merchant accounts with only some of them, and other developers in Nepal integrate the
+same gateways again and again. Adding a gateway should be one file, not changes across models,
+migrations, URLs, templates and settings.
+
+Options considered for how a gateway is added:
+
+| Pattern | Used by | Adding a gateway |
+|---|---|---|
+| A settings entry naming each class | django-payments (`PAYMENT_VARIANTS`) | A class and a settings entry |
+| A registry filled from installed apps | django-getpaid | A Django app per gateway |
+| A plugin manager with its settings in the database | Saleor | A class, a settings entry and admin configuration |
+| A file found by its folder | Django's management commands | One file |
+
+Each Nepali gateway works the same way: send the payer to the gateway's page (a link or a posted
+form), and ask the gateway afterwards whether they paid, as Omnipay's purchase and complete
+purchase steps model it. No maintained library covers them: `paradox-pay` needs Django REST
+framework, and `valoris-payment-gateway` is for FastAPI and installs from GitHub.
+
+**Decision**
+
+- **A provider is one file** in `nepal_payments/providers/`, defining one `PaymentProvider`
+  subclass, and the package finds it by itself. Its contract is `start()`, which says where to
+  send the payer, and `check()`, which asks the gateway what became of a payment. A contract test
+  runs against every provider found.
+- **`nepal_payments` stands alone:** it imports only the standard library (HTTP through `urllib`,
+  so no new dependency) and nothing from Django or this site, and a test keeps it that way. It
+  owns no models or settings: the site keeps the `Payment` records, the pay page and the
+  settings (`campaigns/payments.py`). It's built here and moves to its own public repository and
+  PyPI after #93 (#196).
+- **Keys per installation, in the environment:** `DJANGO_PAYMENT_<PROVIDER>_<KEY>`, read by one
+  rule, so a provider needs no settings code; real money only with `DJANGO_LIVE_PAYMENTS=true`.
+- **Paid only when the gateway says so,** asked by the server, never from the payer's redirect.
+
+**Consequences**
+
+- A new gateway is a file and its tests. A payment's `method` choices are a function, which
+  migrations name rather than copy, so there's no migration either.
+- A provider's code is stored with its payments, so it can't change once used.
+- Keys aren't editable in the admin: whoever runs the server sets them, once per charity. A
+  charity can't switch a provider on by itself.
+- Until it's published, the package's API can still change; after, others depend on it.

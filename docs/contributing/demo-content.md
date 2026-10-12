@@ -16,8 +16,8 @@ the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is Eng
   for third parties. These are reserved domains that never reach a real inbox or site.
 - The flood appeal describes the real flash flood in Nepal on 26 August 2026. The page says
   Brightwell takes no donations and links to the Government of Nepal's relief fund instead. The
-  Donate page's pledge form works, but its notice says no payment is taken and nobody will be
-  in touch.
+  Donate page's pledge form works, but its notice says paying online uses the providers' test
+  systems, so no real money is taken, and nobody will be in touch.
   No freely licensed photo of that flood exists, so the appeal uses a representative photo of a
   flooded camp, labelled as such in its caption and alt text.
 - A placeholder **Privacy notice** (`/privacy/`), chosen in Site settings, describes what the

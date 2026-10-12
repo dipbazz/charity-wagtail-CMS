@@ -63,6 +63,8 @@ and `wsgi.py` fall back to the development settings.
 | `DJANGO_EMAIL_HOST`, `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_USE_TLS` | SMTP server for form notifications and moderation emails; port 587 and TLS by default |
 | `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD` | SMTP credentials |
 | `DJANGO_DEFAULT_FROM_EMAIL` | Sender address for workflow and error emails |
+| `DJANGO_PAYMENT_<PROVIDER>_<KEY>` | A payment provider's merchant keys, such as `DJANGO_PAYMENT_KHALTI_SECRET_KEY` ([Paying pledges online](#paying-pledges-online)). A provider is offered once all its keys are set; an empty value is a key not set |
+| `DJANGO_LIVE_PAYMENTS` | `true` takes real money. Anything else, or nothing, uses the providers' test systems |
 | `WEB_CONCURRENCY` | gunicorn's number of workers (each takes roughly 100–150 MB) |
 
 The AWS setup builds these from a shorter `deploy/aws/.env`:
@@ -76,6 +78,7 @@ The AWS setup builds these from a shorter `deploy/aws/.env`:
 | `DJANGO_LANGUAGE_CODE` | The language the site opens in: `ne` (the default) or `en` |
 | `DJANGO_SECURE_HSTS_SECONDS` | Raise to a year (31536000) once HTTPS has worked for a while |
 | `WEB_CONCURRENCY` | Default 2 |
+| `DJANGO_PAYMENT_<PROVIDER>_<KEY>`, `DJANGO_LIVE_PAYMENTS` | As above. The `web` service reads the whole `.env` (`env_file` in `compose.yaml`), so a new provider's keys need no change to `compose.yaml` |
 
 Other production behaviour:
 
@@ -119,6 +122,29 @@ emailed.
 
 Read them on the server with `sudo docker compose logs --tail 200 web` in `deploy/aws/`. A new app
 needs its name added to the loggers in `charity/settings/production.py`.
+
+## Paying pledges online
+
+Each charity's installation offers the payment providers it has merchant accounts for
+([Paying a pledge](site/appeals-and-giving.md#paying-a-pledge)). A provider is offered once all
+its keys are set, as `DJANGO_PAYMENT_<PROVIDER>_<KEY>`. With only some of them set, Django's
+checks stop the site starting (`migrate` runs them as the container starts), so a provider half set
+up can't go unnoticed; a key that matches no provider, such as a misspelling, is a warning.
+
+| Provider | Keys | Where the charity gets them |
+|---|---|---|
+| eSewa | `DJANGO_PAYMENT_ESEWA_PRODUCT_CODE`, `DJANGO_PAYMENT_ESEWA_SECRET_KEY` | A merchant agreement with eSewa. Its test system's keys are published (`EPAYTEST`), and development uses them unless others are set |
+| Khalti | `DJANGO_PAYMENT_KHALTI_SECRET_KEY` | admin.khalti.com for live payments; test-admin.khalti.com for its test system |
+
+A provider added later lists its keys here.
+
+**Test or live:** payments use each provider's test system, where no money moves, until
+`DJANGO_LIVE_PAYMENTS=true`, and the pay page says so while they do. Set it only together with the
+charity's live merchant keys: test keys don't work on the live systems, nor live keys on the test
+ones. Payments made in a test system are marked "(test)" in the admin's export, and aren't checked
+with the live system later.
+
+The keys are secrets: they go in the server's `.env` only, never in git, a chat or the admin.
 
 ## Email
 

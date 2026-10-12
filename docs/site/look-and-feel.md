@@ -1,8 +1,15 @@
 # Look and feel
 
-How the site looks and why, and the rules every page, block and component follows. Code: one
-stylesheet (`charity/static/css/charity.css`), `charity/static/js/charity.js` on every page,
-`charity/static/js/donate.js` on the Donate page, and Django templates. No build step.
+How the site looks and why, and the rules every page, block and component follows. Code:
+`charity/static/css/charity.css` and `charity/static/js/charity.js` on every page,
+`charity/static/css/donate.css` and `charity/static/js/donate.js` on the Donate page and its pay
+pages only, and Django templates. No build step.
+
+**Styles one kind of page uses go in a stylesheet of their own,** linked by that page's templates
+through `{% block extra_css %}` in `base.html`, so other pages don't download them. `donate.css`
+is the first; #142 splits the rest the same way. A page's stylesheet only uses the tokens
+`charity.css` defines in `:root`, and never defines its own. `core/tests/test_stylesheet.py` checks
+every file in `charity/static/css/` by the rules below.
 
 ## Mobile first
 
@@ -285,6 +292,9 @@ Every page works without JavaScript:
   stops typing at the limit.
 - **Scripts for one page go in their own file** (like `donate.js`), so other pages stay within
   their weight budgets.
+- **A form for a payment provider sends itself** (`donate.js`, `form[data-auto-submit]`), except
+  when the page is reached with Back, so the payer can leave it. Without JavaScript it has a
+  button.
 
 ## Accessibility
 

@@ -29,12 +29,14 @@ Some tests guard the whole project rather than one feature:
 | Test | Guards |
 |---|---|
 | `core/tests/test_dependencies.py` | `core` never imports a feature app |
-| `core/tests/test_stylesheet.py` | Width queries in `charity.css` are `min-width` in `rem`; every colour outside `:root` is a `var(--…)` token that `:root` defines |
+| `core/tests/test_stylesheet.py` | In every stylesheet, width queries are `min-width` in `rem`, and every colour outside `:root` is a `var(--…)` token that `charity.css`'s `:root` defines |
+| `nepal_payments/tests/test_independence.py` | The payment package imports only the standard library and itself, so it can be published unchanged |
+| `nepal_payments/tests/test_contract.py` | Every payment provider found meets the contract: it needs its keys, sends the payer only to `https`, never says *paid* for an answer it can't read, and keeps its test mode off the live system |
 | `charity/tests/test_translations.py` | No visible template text is unmarked for translation; no Nepali entry is empty or fuzzy; the `.mo` matches the `.po` |
 | `core/tests/test_permissions.py` | What editors and moderators can do |
 | `charity/tests/test_query_budgets.py` | The most queries each kind of page may run |
 | `charity/tests/test_workflows.py` | Every workflow action is pinned to a commit |
-| `charity/tests/test_deploy.py` | `.env` stays out of git and the image; images pinned; logs capped |
+| `charity/tests/test_deploy.py` | `.env` stays out of git and the image, and reaches the app; images pinned; logs capped |
 | `charity/tests/test_production_settings.py` | Production refuses to start half-configured; every app's warnings are logged |
 | `home/tests/test_seed_demo.py` | Every demo page renders |
 | `charity/tests/test_demo_layout_browser.py` | Each kind of demo page at six widths: no sideways scrolling, no tap target under 44px; readable text in every light or dark name bar and footer; each font style fits ([QA](#qa)) |
@@ -55,6 +57,10 @@ Some tests guard the whole project rather than one feature:
   `FileSystemStorage` (see `core/tests/test_media.py`).
 - **Query counts:** a listing test should check that its query count doesn't grow per item,
   with `cold_cache_queries`.
+- **Payments never reach a real provider.** The pay flow is tested with `FakePay`, a provider
+  that does what the test says (the `fake_provider` fixture in `campaigns/tests/conftest.py`). A
+  provider's own tests answer in place of its servers with the `provider_server` fixture
+  (`nepal_payments/tests/conftest.py`), which replaces `nepal_payments.http.request_json`.
 - If pytest can't catch a bug (something purely visual, such as spacing), say so in the pull
   request rather than skipping it silently.
 
