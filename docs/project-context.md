@@ -3,17 +3,21 @@
 A one-page map into these docs for anyone (or any AI session) starting work here: each question
 points to the one page that answers it, so there's no need to read everything or scan the code.
 
-**Last verified against:** `5956f44` (main, 2026-10-11, v0.4.0)
+**Last verified against:** `v0.4.0` (every page and screenshot checked on 2026-10-12)
 
 ## Keeping the docs current
 
-- **Starting a session:** trust the docs. Run `git log --oneline 5956f44..HEAD --stat` (the commit
+- **Starting a session:** trust the docs. Run `git log --oneline v0.4.0..HEAD --stat` (the version
   above) and re-read only the pages for the areas those commits touched. Re-scan the repo only if
   most areas changed, or if the docs contradict the code.
 - **Before reading code to answer a question,** read the page below that answers it. Always read
   the actual code before *changing* it.
-- **A pull request that changes what a page describes updates that page,** and bumps "Last
-  verified against" once it's merged ([Writing docs](contributing/writing-docs.md)).
+- **A pull request that changes what a page describes updates that page**
+  ([Writing docs](contributing/writing-docs.md)).
+- **Each release checks every page against the code** and fixes what has drifted, in the release
+  pull request, then sets "Last verified against" to the new version
+  ([Cutting a release](contributing/releases.md#cutting-a-release)). So the version above is always
+  one whose docs were checked in full.
 
 ## In one paragraph
 

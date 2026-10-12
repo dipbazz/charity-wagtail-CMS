@@ -3,7 +3,7 @@
 The project's documentation is in `docs/` (Sphinx with MyST Markdown; plain Markdown you can read
 directly). Read `docs/project-context.md` before exploring the code: it's a one-page map that
 says which docs page answers which question. Open the page you need rather than re-scanning the
-repo. Catch up with `git log --oneline <last verified commit>..HEAD --stat` and re-read only what
+repo. Catch up with `git log --oneline <last verified version>..HEAD --stat` and re-read only what
 changed. A PR that changes what a docs page describes updates that page in the same PR, and
 the docs must build with `uv run --group docs sphinx-build -W --keep-going docs docs/_build/html`.
 
