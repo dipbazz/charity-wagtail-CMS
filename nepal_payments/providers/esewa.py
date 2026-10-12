@@ -116,6 +116,8 @@ def amount_text(amount):
 def read_amount(value):
     """An amount from eSewa, which may write 2500.0 or "2,500.0"; None if it isn't one."""
     try:
-        return Decimal(str(value).replace(",", ""))
+        amount = Decimal(str(value).replace(",", ""))
     except InvalidOperation:
         return None
+    # NaN and infinity aren't amounts, and comparing "sNaN" with one raises InvalidOperation.
+    return amount if amount.is_finite() else None

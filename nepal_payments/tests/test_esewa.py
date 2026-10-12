@@ -183,6 +183,15 @@ class TestCheck:
         with pytest.raises(ProviderUnavailable):
             esewa().check(REFERENCE, Decimal(2500))
 
+    # Regression: ISSUE-007 — an amount of "sNaN" raised decimal.InvalidOperation when compared,
+    # so a payer coming back got a server error. Found by /qa on 2026-10-12.
+    @pytest.mark.parametrize("total", ["sNaN", "NaN", "Infinity", "", None, "two thousand"])
+    def test_an_amount_that_isnt_one_tells_us_nothing(self, provider_server, total):
+        provider_server.answer(200, status_answer(total_amount=total))
+
+        with pytest.raises(ProviderUnavailable):
+            esewa().check(REFERENCE, Decimal(2500))
+
     def test_esewa_saying_its_unavailable_tells_us_nothing(self, provider_server):
         unavailable = {"code": 0, "error_message": "Service is currently unavailable"}
         provider_server.answer(200, unavailable)
