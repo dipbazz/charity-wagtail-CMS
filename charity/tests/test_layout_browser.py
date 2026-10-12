@@ -355,3 +355,17 @@ def test_on_a_phone_the_other_language_is_an_outlined_button(site_page, demo_hea
     assert style(site_page, other, "borderTopWidth") == "2px"
     assert style(site_page, other, "textDecorationLine") == "none"
     assert site_page.evaluate("document.documentElement.scrollWidth") == 320
+
+
+# Regression: a <button class="button"> (Search, Send, Pay with eSewa) was drawn in the browser's
+# own font, not the site's, while a link styled as a button had the site's. Found while testing
+# #93 on 2026-10-12.
+def test_a_button_has_the_sites_font(site_page, home_page):
+    site_page.goto(SITE + "/search/")
+
+    body, button = site_page.evaluate(
+        """() => [document.body, document.querySelector("button.button")]
+            .map((element) => getComputedStyle(element).fontFamily)"""
+    )
+
+    assert button == body

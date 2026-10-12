@@ -154,6 +154,8 @@ body:lang(ne) {
     border-radius: var(--radius);
     background: var(--colour-accent);
     color: var(--colour-on-accent);
+    /* A <button> doesn't take the page's font by itself, as a link does. */
+    font: inherit;
     font-weight: 700;
     text-decoration: none;
     cursor: pointer;
