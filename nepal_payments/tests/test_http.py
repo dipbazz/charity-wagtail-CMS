@@ -26,6 +26,13 @@ class Answers(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
         Answers.received.append((self.command, dict(self.headers), self.rfile.read(length)))
         _, status, kind = self.path.split("/")
+        if kind == "redirect":
+            # To another host (this server by another name), as a moved or hijacked API might.
+            self.send_response(int(status))
+            self.send_header("Location", f"http://localhost:{self.server.server_port}/200/json")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
         if kind == "slow":
             time.sleep(1)
         body = b"<html>Busy</html>" if kind == "text" else b'{"status": "Completed"}'
@@ -68,6 +75,24 @@ def test_passes_on_the_json_of_a_success_or_a_refusal(server, status):
 def test_an_error_or_an_answer_that_isnt_json_means_unavailable(server, path):
     with pytest.raises(ProviderUnavailable):
         http.request_json(server + path)
+
+
+# Regression: ISSUE-004 — a redirect from a provider's API was followed with the merchant's key,
+# and the answer from wherever it pointed was believed. Found by /qa on 2026-10-12.
+@pytest.mark.parametrize("status", [301, 302, 303, 307, 308])
+@pytest.mark.parametrize("method", ["GET", "POST"])
+def test_a_redirect_isnt_followed(server, received, method, status):
+    """Following it would hand the merchant's key, and the say on whether a payment is paid, to
+    whatever address it names, even over plain http (the flaw of CVE-2018-18074 in requests)."""
+    with pytest.raises(ProviderUnavailable):
+        http.request_json(
+            f"{server}/{status}/redirect",
+            method=method,
+            data={"pidx": "abc"} if method == "POST" else None,
+            headers={"Authorization": "Key s3cret"},
+        )
+
+    assert len(received) == 1
 
 
 def test_a_provider_that_cant_be_reached_is_unavailable():

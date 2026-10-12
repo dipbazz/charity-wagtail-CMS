@@ -62,6 +62,9 @@ anyone can type it; a test sends a forged return and checks that nothing changes
   paying Rs 10 could mark a Rs 1,00,000 pledge as received.
 - **Merchant keys live in the environment** (`DJANGO_PAYMENT_*`), never in git, the admin or the
   database. Providers keep them out of their `repr()` and logs.
+- **A provider's answer comes only from the provider.** `nepal_payments.http` never follows a
+  redirect: it would carry the merchant's key, and the say on whether a payment is paid, to
+  whatever address the redirect names (CVE-2018-18074 was this flaw in `requests`).
 - **The payer is sent only to the provider's own page.** A Khalti answer naming any other address
   is refused, and the contract test (`nepal_payments/tests/test_contract.py`) fails any provider
   that sends a payer anywhere but `https`.

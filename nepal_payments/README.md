@@ -110,5 +110,7 @@ A project can also add a provider of its own without changing this package, with
   stored reference and amount. Never from the redirect back.
 - **Keys stay with the caller.** Providers keep them in memory, never log or show them
   (`repr()` leaves them out), and send them only to their gateway over HTTPS.
+- **Redirects aren't followed.** A gateway's API answers where it's asked; a redirect would
+  carry the key, and the say on whether a payment is paid, to whatever address it names.
 - **A provider sends the payer only to an `https` page** on its gateway.
 - **No payer's personal details** are sent to gateways unless a gateway requires them.

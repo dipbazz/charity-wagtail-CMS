@@ -17,10 +17,22 @@ TIMEOUT = 10
 USER_AGENT = "nepal-payments/0.1"
 
 
+class NoRedirects(urllib.request.HTTPRedirectHandler):
+    """A provider's API answers where it's asked. Following a redirect would hand the merchant's
+    key, and the say on whether a payment is paid, to whatever address it names, even over plain
+    http (as requests did before CVE-2018-18074). Refused, urllib raises HTTPError instead."""
+
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+opener = urllib.request.build_opener(NoRedirects)
+
+
 def request_json(url, *, method="GET", data=None, headers=None):
     """(status, JSON) from the provider, for a success or a refusal (4xx), which providers
-    explain in JSON. Raises ProviderUnavailable when it can't be reached, has a server error
-    (5xx) or answers with something that isn't JSON.
+    explain in JSON. Raises ProviderUnavailable when it can't be reached, redirects, has a server
+    error (5xx) or answers with something that isn't JSON.
     """
     body = None if data is None else json.dumps(data).encode()
     request = urllib.request.Request(
@@ -36,14 +48,14 @@ def request_json(url, *, method="GET", data=None, headers=None):
     )
     try:
         try:
-            with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+            with opener.open(request, timeout=TIMEOUT) as response:
                 status, raw = response.status, response.read()
-        except urllib.error.HTTPError as error:  # urllib raises for 4xx and 5xx answers
+        except urllib.error.HTTPError as error:  # urllib raises for 3xx, 4xx and 5xx answers
             with error:
                 status, raw = error.code, error.read()
     except (OSError, http.client.HTTPException) as error:  # URLError and timeouts are OSErrors
         raise ProviderUnavailable(f"{method} {url} failed: {error}") from error
-    if status >= 500:
+    if 300 <= status < 400 or status >= 500:
         raise ProviderUnavailable(f"{method} {url} answered {status}.")
     try:
         return status, json.loads(raw)
