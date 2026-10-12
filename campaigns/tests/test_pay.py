@@ -345,6 +345,19 @@ class TestComingBack:
         assert len(fake_provider.checked) == 1
         assert Pledge.objects.get().payment_status == PaymentStatus.PAID
 
+    # Regression: ISSUE-002 — after the pledge was changed in the admin, paying the attempt for
+    # the old amount thanked the payer for the new one. Found by /qa on 2026-10-12.
+    def test_paying_what_the_pledge_no_longer_says_isnt_thanked_for_it(
+        self, client, donate_page, pledge, payment
+    ):
+        Pledge.objects.filter(pk=pledge.pk).update(amount=10000)
+
+        client.get(return_url(donate_page, payment))
+
+        page = text(client.get(pay_url(donate_page, pledge)))
+        assert "has reached us" not in page
+        assert "Pay your gift" in page
+
     def test_an_unknown_payment_isnt_found(self, client, donate_page, fake_provider):
         assert client.get(f"{donate_page.url}payment/{uuid.uuid4()}/").status_code == 404
 

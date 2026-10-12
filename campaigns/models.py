@@ -338,7 +338,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             Pledge.objects.select_related("appeal"), reference=reference, page=self
         )
         payments = list(pledge.payments.all())  # newest first
-        paid = next((p for p in payments if p.status == PaymentStatus.PAID), None)
+        paid = None
+        # The pledge says whether it's paid: an attempt for another amount doesn't pay it.
+        if pledge.payment_status == PaymentStatus.PAID:
+            paid = next((p for p in payments if p.status == PaymentStatus.PAID), None)
         latest = payments[0] if payments else None
         site_settings = SiteSettings.for_request(request)
         providers = [] if paid else providers_for(pledge.currency, Decimal(pledge.amount))
@@ -626,7 +629,11 @@ class Payment(models.Model):
             if not changed:
                 return False
             if status == PaymentStatus.PAID:
-                unpaid.update(payment_status=PaymentStatus.PAID, paid_at=now)
+                # Only for what the pledge says now: one changed since this attempt started (in
+                # the admin, say) stays unpaid until a person looks.
+                unpaid.filter(amount=self.amount, currency=self.currency).update(
+                    payment_status=PaymentStatus.PAID, paid_at=now
+                )
             else:
                 unpaid.update(payment_status=PaymentStatus.FAILED)
         for name, value in changes.items():

@@ -56,6 +56,10 @@ back to the return address (eSewa's `?data=`, Khalti's `?status=Completed`) is n
 anyone can type it; a test sends a forged return and checks that nothing changes. Only
 `Payment.record()` changes a status, and paid never goes back.
 
+- **A pledge is paid only by a payment of its own amount.** Once someone starts paying a pledge,
+  sending its form again starts a new pledge rather than changing it, and a payment for another
+  amount or currency (a pledge changed in the admin meanwhile) leaves the pledge unpaid. Otherwise
+  paying Rs 10 could mark a Rs 1,00,000 pledge as received.
 - **Merchant keys live in the environment** (`DJANGO_PAYMENT_*`), never in git, the admin or the
   database. Providers keep them out of their `repr()` and logs.
 - **The payer is sent only to the provider's own page.** A Khalti answer naming any other address

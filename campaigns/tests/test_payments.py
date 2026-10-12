@@ -192,6 +192,23 @@ class TestPayment:
         assert payment.record(Status.PAID, "000AWEO") is True
         assert Pledge.objects.get(pk=pledge.pk).payment_status == PaymentStatus.PAID
 
+    # Regression: ISSUE-002 — a Rs 1,000 attempt marked its pledge paid after the pledge was
+    # changed to Rs 10,000 in the admin. Found by /qa on 2026-10-12.
+    @pytest.mark.parametrize("change", [{"amount": 10000}, {"currency": "GBP"}])
+    def test_paid_for_what_the_pledge_no_longer_says_leaves_it_unpaid(self, pledge, change):
+        """An attempt pays its pledge only if it was for what the pledge says now. One changed
+        after the attempt started (an admin's edit, or a resent form racing the start) waits for
+        a person to look."""
+        payment = pledge.start_payment("esewa", live=False)
+        Pledge.objects.filter(pk=pledge.pk).update(**change)
+
+        assert payment.record(Status.PAID, "000AWEO") is True
+
+        assert Payment.objects.get(pk=payment.pk).status == PaymentStatus.PAID
+        pledge.refresh_from_db()
+        assert pledge.payment_status == PaymentStatus.WAITING
+        assert pledge.paid_at is None
+
     def test_still_waiting_changes_nothing(self, pledge):
         payment = pledge.start_payment("esewa", live=False)
 
