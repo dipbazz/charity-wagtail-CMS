@@ -39,9 +39,14 @@ class Answers(BaseHTTPRequestHandler):
         pass  # keep test output quiet
 
 
+class QuietServer(ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        pass  # the slow answer's client has hung up by the time it's written
+
+
 @pytest.fixture(scope="module")
 def server():
-    httpd = ThreadingHTTPServer(("127.0.0.1", 0), Answers)
+    httpd = QuietServer(("127.0.0.1", 0), Answers)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{httpd.server_port}"
     httpd.shutdown()

@@ -14,6 +14,7 @@ by itself. Adding a gateway means adding one file.
 
 | Code | Gateway | Currencies | Keys | Test system |
 |---|---|---|---|---|
+| `esewa` | [eSewa ePay v2](https://developer.esewa.com.np/pages/Epay) | NPR | `PRODUCT_CODE`, `SECRET_KEY` | Works with no account: `ESewa.test_keys` are eSewa's published test keys. Pay with eSewa ID 9711111111, password Nepal@123, token 123456 |
 
 ## How a payment works
 
@@ -69,15 +70,15 @@ Every provider can say which payments it takes, so a page can offer only those t
 
    ```python
    class IMEPay(PaymentProvider):
-       code = "imepay"         # permanent: stored with payments; lowercase letters and digits
-       name = "IME Pay"        # the brand, as payers know it
+       code = "imepay"  # permanent: stored with payments; lowercase letters and digits
+       name = "IME Pay"  # the brand, as payers know it
        currencies = frozenset({"NPR"})
        min_amount = Decimal(10)
        keys = ("MERCHANT_CODE", "API_USER", "API_PASSWORD")
-       test_login = {}         # an account on its test system anyone may use, if it publishes one
-       order = 30              # where it's suggested in a list of providers
+       test_login = {}  # an account on its test system anyone may use, if it publishes one
+       order = 30  # where it's suggested in a list of providers
 
-       def start(self, request): ...   # return Started(Redirect(...), provider_id=...)
+       def start(self, request): ...  # return Started(Redirect(...), provider_id=...)
        def check(self, reference, amount, provider_id=""): ...  # return Outcome(...)
    ```
 
