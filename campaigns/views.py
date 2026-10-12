@@ -1,7 +1,14 @@
 from wagtail.admin.ui.tables import Column
+from wagtail.admin.views.generic import IndexView
 from wagtail.admin.viewsets.model import ModelViewSet
 
 from campaigns.models import Pledge
+
+
+class PledgeIndexView(IndexView):
+    def get_base_queryset(self):
+        # The export's "Paid with" reads each pledge's payments: fetched together, not one by one.
+        return super().get_base_queryset().prefetch_related("payments")
 
 
 class PledgeViewSet(ModelViewSet):
@@ -19,6 +26,7 @@ class PledgeViewSet(ModelViewSet):
     menu_order = 250
     inspect_view_enabled = True
     copy_view_enabled = False
+    index_view_class = PledgeIndexView
 
     # Wagtail needs these for its add and edit views, which only a superuser can open.
     form_fields = [
@@ -42,8 +50,16 @@ class PledgeViewSet(ModelViewSet):
         "display_amount",
         Column("frequency", label="How often", accessor="get_frequency_display"),
         "appeal",
+        Column("payment_status", label="Payment", accessor="get_payment_status_display"),
     ]
-    list_filter = ["frequency", "appeal", "email_updates", "show_on_website", "created_at"]
+    list_filter = [
+        "frequency",
+        "appeal",
+        "payment_status",
+        "email_updates",
+        "show_on_website",
+        "created_at",
+    ]
     search_fields = ["name", "email"]
     search_backend_name = None  # plain database search; pledges aren't in the site search index
 
@@ -61,11 +77,17 @@ class PledgeViewSet(ModelViewSet):
         "message",
         "email_updates",
         "show_on_website",
+        "get_payment_status_display",
+        "paid_at",
+        "paid_with",
     ]
     export_headings = {
         "created_at": "Sent",
         "get_frequency_display": "How often",
         "email_updates": "Email updates",
         "show_on_website": "Show on website",
+        "get_payment_status_display": "Payment",
+        "paid_at": "Paid",
+        "paid_with": "Paid with",
     }
     export_filename = "pledges"

@@ -536,6 +536,16 @@ class Pledge(models.Model):
     def display_amount(self):
         return format_money(self.amount, self.currency)
 
+    @admin.display(description="Paid with")
+    def paid_with(self):
+        """The provider and its reference for the payment, e.g. "eSewa 000AWEO", marked "(test)"
+        when no money moved. Reads payments as fetched, so a list can prefetch them."""
+        paid = next((p for p in self.payments.all() if p.status == PaymentStatus.PAID), None)
+        if paid is None:
+            return ""
+        made = f"{paid.get_method_display()} {paid.provider_reference}".strip()
+        return made if paid.live else f"{made} (test)"
+
     def start_payment(self, method, live):
         """A new attempt to pay this pledge, with the provider whose code is `method`. After a
         failed attempt, the pledge is waiting for payment again."""

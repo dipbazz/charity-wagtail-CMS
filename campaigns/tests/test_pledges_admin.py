@@ -3,15 +3,20 @@
 Logged in as group members, not superusers, except where only a superuser may act.
 """
 
+import csv
 import importlib
+import re
 
 import pytest
 from bs4 import BeautifulSoup
 from django.apps import apps
 from django.contrib.auth.models import Group, Permission
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from campaigns.models import CampaignPage, Frequency, Pledge
+from nepal_payments import Status
 
 pytestmark = pytest.mark.django_db
 
@@ -111,6 +116,54 @@ class TestTheTeam:
         assert "Show on website" in header
         assert "In memory of my father, Hari." in row
 
+    def test_see_whether_each_pledge_is_paid(self, client, request, member, sent_pledge):
+        Pledge.objects.create(
+            page=sent_pledge.page,
+            amount=1500,
+            currency="NPR",
+            name="Ram Thapa",
+            email="r@example.com",
+        ).start_payment("esewa", live=False).record(Status.PAID, "000AWEO")
+        client.force_login(request.getfixturevalue(member))
+
+        page = BeautifulSoup(client.get(reverse("pledges:index")).content, "html.parser")
+
+        assert "Payment" in [th.get_text(strip=True) for th in page.select("thead th")]
+        row = {
+            name: page.find(string=re.compile(name)).find_parent("tr").get_text(" ", strip=True)
+            for name in ("Sita Sharma", "Ram Thapa")
+        }
+        assert "Waiting" in row["Sita Sharma"]
+        assert "Paid" in row["Ram Thapa"]
+
+    def test_can_filter_to_paid_pledges(self, client, request, member, sent_pledge):
+        Pledge.objects.create(
+            page=sent_pledge.page,
+            amount=1500,
+            currency="NPR",
+            name="Ram Thapa",
+            email="r@example.com",
+        ).start_payment("khalti", live=False).record(Status.PAID, "GFq9PFS7")
+        client.force_login(request.getfixturevalue(member))
+
+        html = client.get(reverse("pledges:index"), {"payment_status": "paid"}).content
+        assert b"Ram Thapa" in html
+        assert b"Sita Sharma" not in html
+
+    def test_export_says_how_and_when_each_pledge_was_paid(
+        self, client, request, member, sent_pledge
+    ):
+        sent_pledge.start_payment("esewa", live=False).record(Status.PAID, "000AWEO")
+        client.force_login(request.getfixturevalue(member))
+
+        response = client.get(reverse("pledges:index"), {"export": "csv"})
+
+        rows = list(csv.DictReader(b"".join(response.streaming_content).decode().splitlines()))
+        assert rows[0]["Payment"] == "Paid"
+        assert rows[0]["Paid"]
+        # A test payment says so: no money moved.
+        assert rows[0]["Paid with"] == "eSewa 000AWEO (test)"
+
     def test_can_read_a_pledge(self, client, request, member, sent_pledge):
         client.force_login(request.getfixturevalue(member))
 
@@ -162,3 +215,22 @@ def test_permission_migration_gives_view_only_and_creates_no_duplicates(
         assert not user.has_perm("campaigns.add_pledge")
         assert not user.has_perm("campaigns.change_pledge")
         assert not user.has_perm("campaigns.delete_pledge")
+
+
+def test_the_export_doesnt_ask_once_per_pledge(admin_client, sent_pledge):
+    """Each pledge's payments come in one query for the whole list."""
+
+    def export_queries():
+        with CaptureQueriesContext(connection) as queries:
+            response = admin_client.get(reverse("pledges:index"), {"export": "csv"})
+            b"".join(response.streaming_content)
+        return len(queries)
+
+    sent_pledge.start_payment("esewa", live=False).record(Status.PAID, "000AWEO")
+    one = export_queries()
+    for name in ("Ram", "Hari", "Gita"):
+        Pledge.objects.create(
+            page=sent_pledge.page, amount=500, currency="NPR", name=name, email="x@example.com"
+        ).start_payment("khalti", live=False).record(Status.PAID, "GFq9PFS7")
+
+    assert export_queries() == one
