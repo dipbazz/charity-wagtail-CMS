@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load i18n static wagtailcore_tags wagtailroutablepage_tags %}
+
+{% block title %}{% if paid %}{% translate "Thank you" %}{% else %}{% translate "Pay your gift" %}{% endif %}{% endblock %}
+
+{% block body_class %}template-donatepage pay-page{% endblock %}
+
+{% block extra_meta %}
+    {# A pledge's own page: if its address is ever shared, it still stays out of search results. #}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/donate.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container narrow">
+        {% if paid %}
+            <h1>{% translate "Thank you" %}</h1>
+            <p class="lead">{% blocktranslate with amount=pledge.display_amount %}Your gift of {{ amount }} has reached us.{% endblocktranslate %}</p>
+            {% if paid.provider_reference %}
+                <p>{% blocktranslate with provider=paid.get_method_display reference=paid.provider_reference %}{{ provider }} reference: {{ reference }}{% endblocktranslate %}</p>
+            {% endif %}
+            {% if not paid.live %}
+                <p>{% translate "This was a test payment, so no money was taken." %}</p>
+            {% endif %}
+            {% if appeals_page %}
+                <p><a class="button" href="{% pageurl appeals_page %}">{% translate "See all our appeals" %}</a></p>
+            {% endif %}
+        {% else %}
+            <h1>{% translate "Pay your gift" %}</h1>
+            <dl class="gift-summary">
+                <div>
+                    <dt>{% translate "Your gift" %}</dt>
+                    <dd>{% if pledge.frequency == "monthly" %}{% blocktranslate with amount=pledge.display_amount %}{{ amount }} a month{% endblocktranslate %}{% else %}{{ pledge.display_amount }}{% endif %}</dd>
+                </div>
+                <div>
+                    <dt>{% translate "Appeal" %}</dt>
+                    <dd>{% if pledge.appeal %}{{ pledge.appeal.title }}{% else %}{% translate "Wherever it's needed most" %}{% endif %}</dd>
+                </div>
+            </dl>
+            {% if pledge.frequency == "monthly" %}
+                <p>{% translate "You'll pay this month's gift now." %}</p>
+            {% endif %}
+
+            {% if pledge.payment_status == "failed" %}
+                <div class="payment-message is-problem" role="alert">
+                    <p>{% translate "Your payment didn't go through, and no money was taken. You can try again, or pay another way." %}</p>
+                </div>
+            {% elif unfinished %}
+                <div class="payment-message">
+                    <p>{% blocktranslate with provider=unfinished.get_method_display %}Did you finish paying with {{ provider }}? Check before paying again, so you don't pay twice.{% endblocktranslate %}</p>
+                    <p><a class="button button-secondary" href="{% routablepageurl page 'payment_return' unfinished.reference %}">{% blocktranslate with provider=unfinished.get_method_display %}Check my {{ provider }} payment{% endblocktranslate %}</a></p>
+                </div>
+            {% endif %}
+
+            {% if test_accounts %}
+                <div class="test-mode">
+                    <p><strong>{% translate "Test mode:" %}</strong> {% translate "no real money is taken. To try paying, sign in with the test account each provider gives:" %}</p>
+                    <ul>
+                        {% for provider, details in test_accounts %}
+                            <li>{{ provider }}: {% for label, value in details %}{{ label }} <span lang="en">{{ value }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if providers %}
+                <section aria-labelledby="pay-online">
+                    <h2 id="pay-online">{% translate "Pay online" %}</h2>
+                    <p>{% translate "You'll pay on their own secure page, then come back here." %}</p>
+                    <div class="payment-options">
+                        {% for code, name in providers %}
+                            <form method="post" action="{% routablepageurl page 'start_payment' pledge.reference code %}">
+                                {% csrf_token %}
+                                <button class="button button-large" type="submit">{% blocktranslate with provider=name %}Pay with {{ provider }}{% endblocktranslate %}</button>
+                            </form>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
+
+            <section class="pay-in-person" aria-labelledby="pay-in-person">
+                <h2 id="pay-in-person">{% translate "Pay in person" %}</h2>
+                {% if site_settings.address or site_settings.phone %}
+                    <p>{% translate "Pay in cash at our office, and tell us your name when you pay." %}</p>
+                    {% if site_settings.address %}<address>{{ site_settings.address|linebreaksbr }}</address>{% endif %}
+                    {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
+                {% else %}
+                    <p>{% translate "If you'd rather pay another way, we'll contact you about how to pay." %}</p>
+                {% endif %}
+                <p><a href="{% routablepageurl page 'thank_you' %}">{% translate "I'll pay later" %}</a></p>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}

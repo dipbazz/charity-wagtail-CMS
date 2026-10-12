@@ -1,16 +1,20 @@
 import datetime
+import logging
+import re
 import uuid
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import Q
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext, gettext_lazy
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
     FieldPanel,
@@ -28,11 +32,14 @@ from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
 from wagtail.search import index
 
-from campaigns.payments import method_choices
+from campaigns.payments import method_choices, provider_for, providers_for
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
 from core.models import SiteSettings, SocialMetaMixin
 from core.money import CURRENCY_CHOICES, format_money
+from nepal_payments import PaymentError, PaymentRequest
+
+logger = logging.getLogger(__name__)
 
 
 class CampaignIndexPage(Page):
@@ -204,6 +211,28 @@ class DonationAmount(AbstractDonationAmount):
     page = ParentalKey(CampaignPage, on_delete=models.CASCADE, related_name="donation_amounts")
 
 
+# The parts of a provider's public test account (PaymentProvider.test_login), in the reader's words.
+TEST_LOGIN_LABELS = {
+    "id": gettext_lazy("ID"),
+    "password": gettext_lazy("password"),
+    "mpin": gettext_lazy("MPIN"),
+    "otp": gettext_lazy("OTP"),
+}
+
+
+def test_accounts(providers):
+    """Each provider's public test account, as (name, [(label, value), …]), for the notice that
+    a pay page takes no real money."""
+    return [
+        (
+            provider.name,
+            [(TEST_LOGIN_LABELS.get(key, key), value) for key, value in login.items()],
+        )
+        for provider in providers
+        if (login := provider.test_login)
+    ]
+
+
 DEFAULT_PAYMENT_NOTICE = (
     "<p>No payment is taken on this website yet. Send this form and we'll contact you about how "
     "to pay. If you choose monthly, we'll help you set up a regular payment.</p>"
@@ -214,7 +243,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     """The page every Donate button leads to: suggested amounts and a pledge form.
 
     Each pledge it takes is saved as a `Pledge`, listed under Pledges in the admin. The form
-    then redirects to its own thank-you page, so reloading that page can't send it again.
+    then redirects to the pledge's pay page when a payment provider here can take it, or to the
+    thank-you page, so reloading either can't send the form again.
     """
 
     introduction = models.TextField(blank=True)
@@ -244,6 +274,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     max_count_per_parent = 1
 
     landing_page_template = "campaigns/donate_page_landing.html"
+    pay_page_template = "campaigns/donate_page_pay.html"
+    redirect_template = "campaigns/donate_page_redirect.html"
     preview_modes = [("", "Donate page"), ("thank-you", "Thank-you page")]
 
     def get_appeals(self):
@@ -272,11 +304,12 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         if request.method == "POST":
             form = self.get_form(request.POST, site_settings=site_settings)
             if form.is_valid():
-                form.save()
-                # 303 See Other: the browser fetches the thank-you page with GET, so reloading
-                # it doesn't send the form again.
-                thank_you = self.get_url(request) + self.reverse_subpage("thank_you")
-                return HttpResponseRedirect(thank_you, status=303)
+                pledge = form.save()
+                # 303 See Other: the browser fetches the next page with GET, so reloading it
+                # doesn't send the form again.
+                if providers_for(pledge.currency, Decimal(pledge.amount)):
+                    return self.redirect_to(request, "pay", pledge.reference)
+                return self.redirect_to(request, "thank_you")
         else:
             form = self.get_form(site_settings=site_settings, link=request.GET)
         return self.render(request, context_overrides={"form": form})
@@ -284,6 +317,108 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     @path("thank-you/", name="thank_you")
     def thank_you(self, request):
         return self.render(request, template=self.landing_page_template)
+
+    @path("pay/<uuid:reference>/", name="pay")
+    def pay(self, request, reference):
+        """A pledge's pay page: the ways to pay it, or what became of paying it. Its address is
+        the pledge's own reference, so only the person who sent it has it."""
+        pledge = get_object_or_404(
+            Pledge.objects.select_related("appeal"), reference=reference, page=self
+        )
+        payments = list(pledge.payments.all())  # newest first
+        paid = next((p for p in payments if p.status == PaymentStatus.PAID), None)
+        latest = payments[0] if payments else None
+        site_settings = SiteSettings.for_request(request)
+        providers = [] if paid else providers_for(pledge.currency, Decimal(pledge.amount))
+        return self.render(
+            request,
+            template=self.pay_page_template,
+            context_overrides={
+                "pledge": pledge,
+                "paid": paid,
+                # Codes and names, not the classes, which templates would try to call.
+                "providers": [(provider.code, provider.name) for provider in providers],
+                "unfinished": latest if latest and latest.status == PaymentStatus.WAITING else None,
+                "test_accounts": [] if settings.LIVE_PAYMENTS else test_accounts(providers),
+                "site_settings": site_settings,
+                "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
+            },
+        )
+
+    @path("pay/<uuid:reference>/<slug:method>/", name="start_payment")
+    def start_payment(self, request, reference, method):
+        """Start paying a pledge with a provider, and send the payer there."""
+        if request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
+        pledge = get_object_or_404(
+            Pledge.objects.select_related("appeal"), reference=reference, page=self
+        )
+        if pledge.payment_status == PaymentStatus.PAID:
+            return self.redirect_to(request, "pay", pledge.reference)
+        provider = provider_for(method)
+        if provider is None or type(provider) not in providers_for(
+            pledge.currency, Decimal(pledge.amount)
+        ):
+            raise Http404("No such payment provider here.")
+
+        payment = pledge.start_payment(method, live=provider.live)
+        return_path = self.get_url(request) + self.reverse_subpage(
+            "payment_return", args=[payment.reference]
+        )
+        site_settings = SiteSettings.for_request(request)
+        appeal = pledge.appeal.title if pledge.appeal else gettext("Wherever it's needed most")
+        try:
+            started = provider.start(
+                PaymentRequest(
+                    reference=str(payment.reference),
+                    amount=Decimal(payment.amount),
+                    currency=payment.currency,
+                    return_url=request.build_absolute_uri(return_path),
+                    website_url=request.build_absolute_uri("/"),
+                    description=gettext("A gift to %(charity)s: %(appeal)s")
+                    % {"charity": site_settings.name, "appeal": appeal},
+                )
+            )
+        except PaymentError as error:
+            logger.warning("%s couldn't start payment %s: %s", provider.name, payment, error)
+            payment.record(PaymentStatus.FAILED)
+            return self.redirect_to(request, "pay", pledge.reference)
+
+        if started.provider_id:
+            Payment.objects.filter(pk=payment.pk).update(provider_id=started.provider_id)
+        if started.redirect.method == "GET":
+            return HttpResponseRedirect(started.redirect.url, status=303)
+        return self.render(
+            request,
+            template=self.redirect_template,
+            context_overrides={"provider": provider, "redirect": started.redirect},
+        )
+
+    @path("payment/<uuid:reference>/", name="payment_return")
+    def payment_return(self, request, reference):
+        """Where a provider sends the payer back, paid or not. Only the provider, asked here,
+        says which: what the browser brings back is never read."""
+        payment = get_object_or_404(
+            Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
+        )
+        provider = provider_for(payment.method)
+        # A provider no longer set up, or set up for the other mode (test or live), can't be
+        # asked: its keys are for another system.
+        if payment.status != PaymentStatus.PAID and provider and provider.live == payment.live:
+            try:
+                outcome = provider.check(
+                    str(payment.reference), Decimal(payment.amount), payment.provider_id
+                )
+            except (PaymentError, ValueError) as error:
+                logger.warning("%s couldn't check payment %s: %s", provider.name, payment, error)
+            else:
+                payment.record(outcome.status, outcome.provider_reference)
+        return self.redirect_to(request, "pay", payment.pledge.reference)
+
+    def redirect_to(self, request, name, *args):
+        """303 to one of this page's routes."""
+        url = self.get_url(request) + self.reverse_subpage(name, args=args)
+        return HttpResponseRedirect(url, status=303)
 
     def serve_preview(self, request, mode_name):
         if mode_name == "thank-you":

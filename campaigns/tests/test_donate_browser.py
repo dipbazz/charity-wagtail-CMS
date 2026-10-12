@@ -10,7 +10,9 @@ import pytest
 from playwright.sync_api import expect
 
 from campaigns.models import Pledge
+from charity.tests.test_demo_layout_browser import layout_problems
 from conftest import SITE
+from nepal_payments import Redirect
 
 pytestmark = [pytest.mark.browser, pytest.mark.django_db]
 
@@ -207,3 +209,35 @@ class TestMessageCountInNepali:
         message.fill("x" * 999)
         message.press_sequentially("x")
         expect(status).to_have_text("तपाईं 1000 अक्षरको सीमामा पुग्नुभयो।")
+
+
+class TestPayPage:
+    """The pay page after a pledge (#93), with FakePay (conftest.py) as the provider."""
+
+    @pytest.fixture
+    def pay_page(self, donate_page, fake_provider):
+        pledge = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        return f"{donate_page.url}pay/{pledge.reference}/"
+
+    def test_fits_every_screen_with_room_to_tap(self, site_page, pay_page):
+        assert layout_problems(site_page, pay_page) == []
+
+    def test_a_form_a_provider_asks_for_is_sent_at_once(self, site_page, pay_page, fake_provider):
+        fake_provider.redirect = Redirect(
+            "https://pay.example.com/form/", method="POST", fields={"amount": "2500", "sig": "a+b"}
+        )
+        sent = []
+
+        def provider(route, request):
+            sent.append(request.post_data)
+            route.fulfill(status=200, content_type="text/html", body="<h1>Fake Pay</h1>")
+
+        site_page.route("https://pay.example.com/**", provider)
+        site_page.goto(SITE + pay_page)
+
+        site_page.get_by_role("button", name="Pay with Fake Pay").click()
+
+        site_page.wait_for_url("https://pay.example.com/form/")
+        assert sent == ["amount=2500&sig=a%2Bb"]
