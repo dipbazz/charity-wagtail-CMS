@@ -1,8 +1,9 @@
 # Charity Wagtail CMS
 
-A content-managed website for **Brightwell Water Trust**, a fictional water charity, built with
-Django 6.1 and Wagtail 8.0. Editors run fundraising appeals, news, forms and site-wide messages
-from the Wagtail admin. Every feature was built test-first with pytest.
+A website and content management system for small charities in Nepal and the UK, built with
+Django 6.1 and Wagtail 8.0. Supporters read appeals and news, pledge a gift and volunteer, in
+Nepali or English; the charity's team runs it all from the Wagtail admin. The demo charity,
+**Brightwell Water Trust**, is fictional. Every feature was built test-first with pytest.
 
 **Live site:** <https://16-192-118-94.sslip.io>, running the demo content on AWS EC2.
 
@@ -31,10 +32,12 @@ each step and walks through a first change.
 
 ## What it does
 
-Pages built from StreamField blocks, fundraising appeals with targets and progress bars, news
-with tags, categories and an RSS feed, editor-built forms, partners and testimonials, site-wide
-settings and an emergency banner, a consent flag on every photo, search, SEO, a read-only API,
-and a moderation workflow. [The site](docs/site/index.md) describes each part, and
+Pages in Nepali and English with a language switch, built from StreamField blocks; fundraising
+appeals with targets and progress bars; a Donate page whose pledge form the team reads and
+exports in the admin; news with tags, categories and an RSS feed; editor-built forms; partners
+and testimonials; each charity's name, logo, colours and font style, previewed before saving; an
+emergency banner; a consent flag on every photo; search, SEO, a read-only API and a moderation
+workflow. [The site](docs/site/index.md) describes each part, and
 [the overview](docs/site/overview.md) lists the Wagtail features behind them.
 
 ## Notes

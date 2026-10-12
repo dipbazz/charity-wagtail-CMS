@@ -74,8 +74,8 @@ Root
 │  ├─ Donate page  /donate/         (one per home page; no children)
 │  ├─ Appeals  /appeals/            (one per home page)
 │  │   └─ Appeal  /appeals/flood-relief/
-│  ├─ News  /news/                  (one per home page)
-│  │   └─ Story  /news/<slug>/
+│  ├─ Stories  /stories/            (the news page; one per home page)
+│  │   └─ Story  /stories/<slug>/
 │  └─ Form page  /volunteer/        (no children)
 └─ Home page  /ne/  (the Nepali tree, with the same rules)
 ```

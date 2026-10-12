@@ -9,7 +9,7 @@ From a fresh clone to the site running on your computer with demo content, then 
 - git
 
 There's no JavaScript build step and no database server to install: the site uses SQLite, one
-CSS file and one JavaScript file.
+CSS file and two small scripts.
 
 ## Run the site
 
@@ -33,12 +33,11 @@ uv run python manage.py runserver
 the console, and [django-debug-toolbar](https://django-debug-toolbar.readthedocs.io/) on every
 page, showing the SQL queries, templates and timings behind it.
 
-`seed_demo` builds the demo site: the homepage, About and Donate pages, four appeals, three news
-stories, a volunteer form, partners, a testimonial, the site settings and the announcement
-banner. It also copies the `SITE_URL` setting (`http://localhost:8000` in development) into
+`seed_demo` builds the demo charity, in English with some pages in Nepali
+([Demo content](../contributing/demo-content.md) lists what it holds). It also copies the `SITE_URL` setting (`http://localhost:8000` in development) into
 Wagtail's Site record, which every full URL is built from: the API, the news feed, the sitemap
 and canonical tags. On a database created before that, run
-`uv run python manage.py update_site_url` once. See [Demo content](../contributing/demo-content.md).
+`uv run python manage.py update_site_url` once.
 
 ### See the site Nepali-first
 
@@ -91,8 +90,8 @@ uv run ruff check . && uv run ruff format --check .
 ## Make a first change
 
 A small change that touches a model, a template and a test, the way every change here is made.
-Say the charity wants a short "registered in England and Wales" line under its charity number
-in the footer.
+Say UK charities want a short "registered in England and Wales" line under their charity number
+in the footer: a field every charity can fill in, or leave blank.
 
 1. **Find where it lives.** Site-wide organisation details are in `SiteSettings`
    (`core/models.py`), and the footer template is `charity/templates/includes/footer.html`.
@@ -100,7 +99,8 @@ in the footer.
 2. **Write a failing test first.** Settings tests live in `core/tests/test_settings.py`. Add one
    that saves a value in the new field and checks the homepage shows it. Run
    `uv run pytest core/tests/test_settings.py` and watch it fail.
-3. **Add the field** to `SiteSettings` and its `panels`, then make a migration:
+3. **Add the field** to `SiteSettings` and its `organisation_panels` (Site settings has two tabs,
+   Organisation and Brand, each with its own list of panels), then make a migration:
    `uv run python manage.py makemigrations core`.
 4. **Show it** in `footer.html`, reading `settings.core.SiteSettings`.
 5. **Run the test again**, then ruff (CI runs the whole suite when you push).

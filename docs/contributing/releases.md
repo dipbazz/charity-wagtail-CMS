@@ -171,7 +171,7 @@ the bug's issue.
 
 3. **Prepare the release in a second folder,** so your local database, which already has the next
    version's migrations, isn't touched (`db.sqlite3` and `media/` belong to the folder). Copy
-   `.env` or `charity/settings/local.py` across if you use them.
+   `.env.local` across if you use one.
 
    ```bash
    git worktree add -b chore/release-0.4.1 ../charity-patch patch/0.4.x

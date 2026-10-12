@@ -186,7 +186,8 @@ history.
   Iterations stayed as time boxes: two weeks at first, then one week from 6 October 2026, until
   they were dropped on 10 October ([below](#release-each-version-when-its-done)).
 - **New work goes into the next milestone,** apart from fixes for bugs that stop people using the
-  live site.
+  live site. Since 10 October 2026, work started straight away (such as a fix found while testing)
+  joins the version being built ([below](#release-each-version-when-its-done)).
 
 **Consequences**
 
