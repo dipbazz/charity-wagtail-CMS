@@ -51,7 +51,7 @@ class PledgeViewSet(ModelViewSet):
         "display_amount",
         Column("frequency", label="How often", accessor="get_frequency_display"),
         "appeal",
-        Column("payment_status", label="Payment", accessor="get_payment_status_display"),
+        Column("payment_status", label="Payment", accessor="payment_display"),
     ]
     list_filter = [
         "frequency",

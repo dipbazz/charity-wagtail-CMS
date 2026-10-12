@@ -144,13 +144,15 @@ taken; a migration removed it wherever it hadn't been changed.
 ## Pledges in the admin
 
 **Pledges** in the admin menu lists every pledge: when it was sent, the name, amount, how often,
-the appeal and its **payment** (waiting, paid or failed). The team can filter (by how often,
-appeal, payment, each consent and date), search by name or email, open one to read it, and export
-the list to CSV or Excel. The export adds when each pledge was paid and **paid with** what: the
-provider and its transaction ID, to match against the provider's statements, marked "(test)" when
-it ran in a provider's test system and no money moved. Anything a supporter typed that a
-spreadsheet would run as a formula (it starts with `=`) is exported as text, with a `'` in front
-in a CSV file ([Security](../contributing/security.md#exports-show-what-visitors-typed-as-text)).
+the appeal and its **payment** (waiting, paid or failed; **Paid (test)** when a provider's test
+system took it, which anyone can do with the test account, so no money moved). The team can
+filter (by how often, appeal, payment, each consent and date), search by name or email, open one
+to read it, and export the list to CSV or Excel. The export adds when each pledge was paid and
+**paid with** what: the provider and its transaction ID, to match against the provider's
+statements, marked "(test)" when it ran in a provider's test system and no money moved. Anything a
+supporter typed that a spreadsheet would run as a formula (it starts with `=`) is exported as
+text, with a `'` in front in a CSV file
+([Security](../contributing/security.md#exports-show-what-visitors-typed-as-text)).
 
 Nobody adds or edits a pledge (they come from supporters), and only a superuser can delete one:
 it holds personal details, and a pledge deleted by accident loses the record of a donation.

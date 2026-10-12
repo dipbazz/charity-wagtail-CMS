@@ -551,6 +551,17 @@ class Pledge(models.Model):
     def display_amount(self):
         return format_money(self.amount, self.currency)
 
+    @admin.display(description="Payment")
+    def payment_display(self):
+        """Waiting, paid or failed, with "(test)" after paid when only a provider's test system
+        took it: anyone can pay there with the test account the pay page shows, so it must never
+        pass for money received. Reads payments as fetched, so a list can prefetch them."""
+        shown = self.get_payment_status_display()
+        if self.payment_status != PaymentStatus.PAID:
+            return shown
+        paid = next((p for p in self.payments.all() if p.status == PaymentStatus.PAID), None)
+        return f"{shown} (test)" if paid and not paid.live else shown
+
     @admin.display(description="Paid with")
     def paid_with(self):
         """The provider and its reference for the payment, e.g. "eSewa 000AWEO", marked "(test)"

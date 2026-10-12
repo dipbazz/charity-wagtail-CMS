@@ -158,6 +158,31 @@ class TestTheTeam:
         assert "Waiting" in row["Sita Sharma"]
         assert "Paid" in row["Ram Thapa"]
 
+    # Regression: ISSUE-005 — a payment in a provider's test system, which anyone can make with the
+    # test account the pay page shows, was listed as plain "Paid". Found by /qa on 2026-10-12.
+    def test_a_payment_in_a_test_system_is_listed_as_one(
+        self, client, request, member, sent_pledge
+    ):
+        sent_pledge.start_payment("esewa", live=False).record(Status.PAID, "000AWEO")
+        Pledge.objects.create(
+            page=sent_pledge.page,
+            amount=1500,
+            currency="NPR",
+            name="Ram Thapa",
+            email="r@example.com",
+        ).start_payment("khalti", live=True).record(Status.PAID, "GFq9PFS7")
+        client.force_login(request.getfixturevalue(member))
+
+        page = BeautifulSoup(client.get(reverse("pledges:index")).content, "html.parser")
+
+        row = {
+            name: page.find(string=re.compile(name)).find_parent("tr").get_text(" ", strip=True)
+            for name in ("Sita Sharma", "Ram Thapa")
+        }
+        assert "Paid (test)" in row["Sita Sharma"]
+        assert "Paid" in row["Ram Thapa"]
+        assert "(test)" not in row["Ram Thapa"]
+
     def test_can_filter_to_paid_pledges(self, client, request, member, sent_pledge):
         Pledge.objects.create(
             page=sent_pledge.page,
