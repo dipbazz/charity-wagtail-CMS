@@ -209,12 +209,15 @@ class PledgeForm(forms.ModelForm):
 
     def pledge_sent_before(self):
         """The pledge already saved from this copy of the form, if it's being sent again and
-        hasn't been paid: a paid pledge records money received, so it's never changed."""
+        nobody has started paying it: an attempt to pay is for the pledge as it was, and a paid
+        pledge records money received, so neither is ever changed."""
         try:
             sent = uuid.UUID(self.data.get(self.add_prefix("submission_id"), ""))
         except ValueError:
             return None
-        unpaid = Pledge.objects.exclude(payment_status=PaymentStatus.PAID)
+        unpaid = Pledge.objects.filter(payments__isnull=True).exclude(
+            payment_status=PaymentStatus.PAID
+        )
         return unpaid.filter(submission_id=sent).first()
 
     def initial_from_link(self, link):
@@ -261,13 +264,13 @@ class PledgeForm(forms.ModelForm):
 
     def clean_submission_id(self):
         """This copy's ID, or a new one if it's missing or unreadable (a page opened before IDs
-        existed): never a reason to turn a pledge away. A new one too if this copy's pledge has
-        been paid, so sending it again starts a new pledge."""
+        existed): never a reason to turn a pledge away. A new one too if this copy's pledge can't
+        be changed (pledge_sent_before), so sending it again starts a new pledge."""
         try:
             sent = uuid.UUID(self.cleaned_data["submission_id"])
         except ValueError:
             return uuid.uuid4()
-        if Pledge.objects.filter(submission_id=sent, payment_status=PaymentStatus.PAID).exists():
+        if self.instance.pk is None and Pledge.objects.filter(submission_id=sent).exists():
             return uuid.uuid4()
         return sent
 

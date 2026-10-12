@@ -86,8 +86,9 @@ JavaScript. If something is wrong, a summary at the top lists each problem as a 
 sending it again, even after going back and changing something, updates that pledge instead of
 adding another. Because going back can reload the form with a new ID while the browser refills
 what was typed, the Donate page's own script (`donate.js`) remembers the ID it sent and puts it
-back. **A paid pledge is never changed this way:** it records money received, so sending its copy
-again starts a new pledge.
+back. **A pledge someone has started paying is never changed this way:** each attempt to pay is
+for the pledge as it was, and a paid pledge records money received, so sending its copy again
+starts a new pledge.
 
 ## Paying a pledge
 

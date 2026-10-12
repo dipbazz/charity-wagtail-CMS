@@ -424,6 +424,28 @@ class TestPledging:
         assert paid.amount == 2500
         assert Pledge.objects.exclude(pk=paid.pk).get().amount == 10000
 
+    # Regression: ISSUE-001 — sending the form again after starting to pay changed the pledge, so
+    # paying its Rs 2,500 attempt marked Rs 10,000 as received. Found by /qa on 2026-10-12.
+    @pytest.mark.parametrize("failed", [False, True], ids=["waiting", "failed"])
+    def test_sending_the_copy_of_a_pledge_being_paid_adds_a_new_pledge(
+        self, client, donate_page, failed
+    ):
+        """An attempt to pay is for the pledge as it was when the attempt started, and a failed
+        one can still turn out paid, so once paying has started the pledge never changes."""
+        copy = self.form_copy(client, donate_page)
+        pledge(client, donate_page, submission_id=copy)
+        being_paid = stored(donate_page)
+        attempt = being_paid.start_payment("esewa", live=False)
+        if failed:
+            attempt.record(Status.FAILED)
+
+        response = pledge(client, donate_page, submission_id=copy, amount="10000")
+
+        assert response.status_code == 303
+        being_paid.refresh_from_db()
+        assert being_paid.amount == 2500
+        assert Pledge.objects.exclude(pk=being_paid.pk).get().amount == 10000
+
     def test_each_newly_opened_copy_is_a_new_pledge(self, client, donate_page):
         for _ in range(2):
             pledge(client, donate_page, submission_id=self.form_copy(client, donate_page))
