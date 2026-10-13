@@ -237,10 +237,29 @@ class TestTheTeam:
         assert Pledge.objects.filter(pk=sent_pledge.pk).exists()
 
 
-def test_a_superuser_can_delete_a_pledge(admin_client, sent_pledge):
+@pytest.mark.parametrize("paid", [None, "test"], ids=["unpaid", "paid in a test system"])
+def test_a_superuser_can_delete_a_pledge(admin_client, sent_pledge, paid):
+    if paid:
+        sent_pledge.start_payment("esewa", live=False).record(Status.PAID, "000AWEO")
+
     admin_client.post(reverse("pledges:delete", args=[sent_pledge.pk]))
 
     assert not Pledge.objects.filter(pk=sent_pledge.pk).exists()
+
+
+@pytest.mark.parametrize("method", ["get", "post"])
+def test_a_pledge_paid_with_real_money_cant_be_deleted(admin_client, sent_pledge, method):
+    """Its payment is the site's only record of the money: provider, transaction ID and time."""
+    sent_pledge.start_payment("khalti", live=True).record(Status.PAID, "GFq9PFS7")
+
+    response = getattr(admin_client, method)(
+        reverse("pledges:delete", args=[sent_pledge.pk]), follow=True
+    )
+
+    assert response.redirect_chain[-1][0] == reverse("pledges:inspect", args=[sent_pledge.pk])
+    text = BeautifulSoup(response.content, "html.parser").get_text()
+    assert "paid with real money, so it can't be deleted" in text
+    assert Pledge.objects.filter(pk=sent_pledge.pk).exists()
 
 
 def test_permission_migration_gives_view_only_and_creates_no_duplicates(

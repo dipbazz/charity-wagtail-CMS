@@ -1,5 +1,7 @@
+from django.contrib import messages
+from django.shortcuts import redirect
 from wagtail.admin.ui.tables import Column
-from wagtail.admin.views.generic import IndexView
+from wagtail.admin.views.generic import DeleteView, IndexView
 from wagtail.admin.viewsets.model import ModelViewSet
 
 from campaigns.models import Pledge
@@ -12,12 +14,36 @@ class PledgeIndexView(VisitorTextExportMixin, IndexView):
         return super().get_base_queryset().prefetch_related("payments")
 
 
+class PledgeDeleteView(DeleteView):
+    """Refuses a pledge paid with real money: its payment is the site's only record of the gift
+    (provider, transaction ID and time). Unpaid pledges and ones paid in a provider's test system
+    can still be deleted, to clear out testing. Wagtail checks permission before get() and post().
+    """
+
+    def get(self, request, *args, **kwargs):
+        return self.refuse() or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.refuse() or super().post(request, *args, **kwargs)
+
+    def refuse(self):
+        if not self.object.received_money():
+            return None
+        messages.error(
+            self.request,
+            "This pledge was paid with real money, so it can't be deleted: its payment is the "
+            "site's only record of the gift.",
+        )
+        return redirect("pledges:inspect", self.object.pk)
+
+
 class PledgeViewSet(ModelViewSet):
     """Pledges from the Donate page: listed, filtered, read and exported.
 
     Pledges come from the site, so the team never adds or edits them, and only a superuser can
     delete one (0006_pledge_permissions gives the groups view permission only): a deleted
-    pledge loses the record of a donation.
+    pledge loses the record of a donation. Not even a superuser can delete one paid with real
+    money (PledgeDeleteView).
     """
 
     model = Pledge
@@ -28,6 +54,7 @@ class PledgeViewSet(ModelViewSet):
     inspect_view_enabled = True
     copy_view_enabled = False
     index_view_class = PledgeIndexView
+    delete_view_class = PledgeDeleteView
 
     # Wagtail needs these for its add and edit views, which only a superuser can open.
     form_fields = [

@@ -572,6 +572,10 @@ class Pledge(models.Model):
         made = f"{paid.get_method_display()} {paid.provider_reference}".strip()
         return made if paid.live else f"{made} (test)"
 
+    def received_money(self):
+        """Whether a payment of it moved real money, not just a provider's test system."""
+        return self.payments.filter(status=PaymentStatus.PAID, live=True).exists()
+
     def start_payment(self, method, live):
         """A new attempt to pay this pledge, with the provider whose code is `method`. After a
         failed attempt, the pledge is waiting for payment again."""

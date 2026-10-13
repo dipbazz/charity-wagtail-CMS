@@ -155,7 +155,10 @@ text, with a `'` in front in a CSV file
 ([Security](../contributing/security.md#exports-show-what-visitors-typed-as-text)).
 
 Nobody adds or edits a pledge (they come from supporters), and only a superuser can delete one:
-it holds personal details, and a pledge deleted by accident loses the record of a donation.
+it holds personal details, and a pledge deleted by accident loses the record of a donation. Not
+even a superuser can delete a pledge paid with real money, since its payment is the site's only
+record of the gift (provider, transaction ID and time); one paid only in a provider's test system
+can be deleted, to clear out testing.
 
 ## Money
 
