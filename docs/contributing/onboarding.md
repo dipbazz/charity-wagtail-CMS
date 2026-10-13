@@ -68,6 +68,8 @@ for each charity still sending content:
 
 ## Changing the script
 
-Test a change to `form-script.gs` against fake Apps Script services before anyone pastes it into a
-Sheet, and once by hand on a copy of a tracker. Apps Script can't create upload questions, and a
+`charity/tests/test_form_script.py` runs `form-script.gs` in Node against fake Apps Script
+services (`form_script_fakes.js`). When a real service refuses something the fakes allowed, teach
+the fakes that rule first, so the test fails the way the Sheet did, then fix the script. Try a
+change once by hand on a copy of a tracker before anyone pastes it into a charity's Sheet. Apps Script can't create upload questions, and a
 Sheets table refuses some formatting, so the script skips those steps rather than failing.

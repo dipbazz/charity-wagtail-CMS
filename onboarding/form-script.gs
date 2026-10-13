@@ -328,8 +328,15 @@ function buildForm_(ss, report) {
   Object.keys(pageIds).forEach(s => { if (sections.indexOf(s) < 0) delete pageIds[s]; });
   props.setProperty('PAGE_IDS', JSON.stringify(pageIds));
 
-  // Remove questions whose rows were deleted or taken out of the form. Uploads
-  // can't be recreated by a script, so those are only reported.
+  menu.setChoices(pages.map((page, i) => menu.createChoice(sections[i], page)));
+  // A page break's setting decides where the page before it goes: submit after each part.
+  pages.forEach((page, i) => {
+    page.setGoToPage(i === 0 ? FormApp.PageNavigationType.CONTINUE : FormApp.PageNavigationType.SUBMIT);
+  });
+
+  // Remove questions whose rows were deleted or taken out of the form, and parts the pack no
+  // longer has (only now that the menu no longer goes to them: Forms won't delete a page a
+  // choice goes to). Uploads can't be recreated by a script, so those are only reported.
   const strayUploads = [];
   form.getItems().forEach(item => {
     if (keep[item.getId()]) return;
@@ -345,12 +352,6 @@ function buildForm_(ss, report) {
   order.forEach((id, index) => {
     const item = form.getItemById(id);
     if (item.getIndex() !== index) form.moveItem(item, index);
-  });
-
-  menu.setChoices(pages.map((page, i) => menu.createChoice(sections[i], page)));
-  // A page break's setting decides where the page before it goes: submit after each part.
-  pages.forEach((page, i) => {
-    page.setGoToPage(i === 0 ? FormApp.PageNavigationType.CONTINUE : FormApp.PageNavigationType.SUBMIT);
   });
 
   ensureTrigger_(form);
