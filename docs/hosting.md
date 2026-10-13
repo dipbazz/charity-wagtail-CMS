@@ -151,9 +151,35 @@ back, asks the provider while the payer waits, for up to 10 seconds (`TIMEOUT` i
 `nepal_payments/http.py`). Each of the site's two web workers (`WEB_CONCURRENCY`) answers one
 visitor at a time, so if eSewa or Khalti stops answering and two payers come back within those
 seconds, every visitor to the site waits until one of them is done. Nothing is lost: the payment
-stays waiting, and the payer can check it again from the pay page. With a
-charity's few payments a day this is rare enough to leave as it is; a third worker would take
-another 100–150 MB.
+stays waiting, and the payer can check it again from the pay page. With a charity's few payments
+a day this is rare enough to leave as it is; a third worker would take another 100–150 MB.
+
+### Turn on real money
+
+For each charity, once, when it's ready to take real payments. Until the last step its site keeps
+using the test systems, so nothing here can take money early.
+
+1. **The charity has a merchant account** with each provider it will offer, and its live keys:
+   eSewa's product code and secret key from its merchant agreement, Khalti's live secret key from
+   admin.khalti.com. Offer only the providers it has an account with.
+2. **Try each provider in test mode on the live site,** with its test keys set (the table above
+   says where they come from): pay a pledge with the provider's test account
+   ([Paying a pledge](site/appeals-and-giving.md#paying-a-pledge)) and check that **Pledges**
+   lists it as **Paid (test)**.
+3. **In one edit of `deploy/aws/.env`,** replace each provider's test keys with its live keys and
+   set `DJANGO_LIVE_PAYMENTS=true`. Never one without the other: test keys don't work on the live
+   systems, nor live keys on the test ones, so every payment would fail.
+4. **Apply it:** `sudo docker compose up -d` in `deploy/aws/` (the `web` container is recreated
+   with the new `.env`), then `sudo docker compose logs --tail 100 web`. A provider with only some
+   of its keys stops the site starting, with `campaigns.E001` in the log.
+5. **Make one small real payment** with each provider (Khalti takes Rs 10 or more), and check that
+   **Pledges** lists it as **Paid**, without "(test)", and that its transaction ID matches the
+   provider's merchant portal. The pledge can't be deleted afterwards (it's the record of real
+   money); refund it from the provider's portal if the charity wants the money back.
+
+**To go back to test mode,** set `DJANGO_LIVE_PAYMENTS=false`, put the test keys back, and run step
+4 again. Payments started in live mode aren't checked against the test systems, so any still
+waiting must be looked up in the provider's merchant portal.
 
 ## Email
 
