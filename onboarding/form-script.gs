@@ -458,7 +458,8 @@ function itemById_(form, id) {
 
 /**
  * The form this Sheet built. A Sheet copied from another charity's tracker may carry that
- * tracker's settings, so a form recorded by a different Sheet is never reused.
+ * tracker's settings, so a form recorded by a different Sheet is never reused. A tracker made
+ * before SHEET_ID was recorded keeps its form only if the form sends its answers to this Sheet.
  */
 function openForm_() {
   const props = PropertiesService.getDocumentProperties();
@@ -470,7 +471,10 @@ function openForm_() {
   try {
     if (DriveApp.getFileById(id).isTrashed()) return null; // a trashed form still opens; start a new one
     const form = FormApp.openById(id);
-    if (!builtBy) props.setProperty('SHEET_ID', sheetId); // trackers made before SHEET_ID was recorded
+    if (!builtBy) {
+      if (form.getDestinationId() !== sheetId) return null; // throws when it has no destination
+      props.setProperty('SHEET_ID', sheetId);
+    }
     return form;
   } catch (e) {
     return null;

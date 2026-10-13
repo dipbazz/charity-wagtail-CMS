@@ -80,6 +80,18 @@ test('never edits the form of the tracker it was copied from', () => {
   assert.strictEqual(w.store.SHEET_ID, 'sheet1');
 });
 
+// Every charity's form is in the same Google account, so a copied tracker can open the other
+// charity's form; without SHEET_ID, only the form's answer destination says whose it is.
+test('never adopts the form of an older tracker it was copied from', () => {
+  const w = makeWorld({ props: OLD_PROPS, formItems: OLD_ITEMS, formDestination: 'other-sheet', rows: [], header: HEADER, setup: menuGoesToOldPart });
+  w.ctx.updateFromPack();
+  assert.notStrictEqual(w.store.FORM_ID, 'form1', 'a new form is made');
+  const other = w.forms.form1;
+  assert.strictEqual(other.title, 'Other charity website content', 'the other charity\'s form is untouched');
+  assert.strictEqual(other.destination, 'other-sheet', 'its answers still go to its own tracker');
+  assert.strictEqual(w.store.SHEET_ID, 'sheet1');
+});
+
 test('creates the guide on a first run', () => {
   const w = makeWorld({ rows: [], header: HEADER });
   w.files.doc1.trashed = true;

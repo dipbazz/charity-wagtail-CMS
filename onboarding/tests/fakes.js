@@ -32,7 +32,8 @@ function parseCsv(text) {
 const chain = (base = {}) => new Proxy(base, { get: (t, k) => (k in t ? t[k] : k === 'build' ? () => ({}) : () => chain()) });
 const iter = list => { let i = 0; return { hasNext: () => i < list.length, next: () => list[i++] }; };
 
-function makeWorld({ sheetId = 'sheet1', props = {}, formItems = [], rows, header, setup = () => {} }) {
+// formDestination: the Sheet the existing form (props.FORM_ID) sends its answers to.
+function makeWorld({ sheetId = 'sheet1', props = {}, formItems = [], formDestination = sheetId, rows, header, setup = () => {} }) {
   let nextId = 1000;
   const files = {};
   const folder = {
@@ -133,6 +134,7 @@ function makeWorld({ sheetId = 'sheet1', props = {}, formItems = [], rows, heade
   }
   if (props.FORM_ID) {
     const f = makeForm(props.FORM_ID, 'Other charity website content');
+    f.destination = formDestination;
     formItems.forEach(([iid, type, title]) => f.items.push(f.makeItem(iid, type, title)));
     addFile(props.FORM_ID, 'form', 'form');
     setup(f);
