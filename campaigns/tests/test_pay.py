@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from django.urls import reverse
 from wagtail.models import Locale
 
-from campaigns.models import Payment, PaymentStatus, Pledge
+from campaigns.models import CampaignIndexPage, Payment, PaymentStatus, Pledge
 from core.models import SiteSettings, SiteSettingsText
 from nepal_payments import Outcome, ProviderUnavailable, Redirect, Status, http
 
@@ -306,7 +306,10 @@ class TestComingBack:
         start(client, donate_page, pledge)
         return Payment.objects.get()
 
-    def test_a_paid_payment_says_thank_you(self, client, donate_page, pledge, payment):
+    def test_a_paid_payment_says_thank_you(self, client, donate_page, pledge, settings):
+        settings.LIVE_PAYMENTS = True
+        payment = pledge.start_payment("fakepay", live=True)
+
         response = client.get(return_url(donate_page, payment))
 
         assert response.status_code == 303
@@ -315,9 +318,55 @@ class TestComingBack:
         assert pledge.payment_status == PaymentStatus.PAID
         assert pledge.paid_at is not None
         page = client.get(pay_url(donate_page, pledge))
-        assert "Rs 2,500 has reached us" in text(page)
+        assert soup(page).find(class_="lead").get_text() == "Your gift of Rs 2,500 has reached us."
         assert "FAKE-123" in text(page)
+        assert "test" not in text(page).lower()
         assert pay_buttons(page) == []
+
+    def test_a_test_payment_says_first_that_no_money_was_taken(
+        self, client, donate_page, pledge, payment
+    ):
+        """Not "has reached us": it hasn't."""
+        client.get(return_url(donate_page, payment))
+
+        page = client.get(pay_url(donate_page, pledge))
+
+        lead = soup(page).find(class_="lead").get_text()
+        assert lead == "Test payment completed. No money was taken."
+        assert "reached us" not in text(page)
+
+    def test_a_monthly_gift_thanks_for_this_month(
+        self, client, donate_page, fake_provider, settings
+    ):
+        """Only this month's gift is paid: nothing is set up for next month."""
+        settings.LIVE_PAYMENTS = True
+        send_pledge(client, donate_page, frequency="monthly")
+        pledge = Pledge.objects.get()
+        client.get(return_url(donate_page, pledge.start_payment("fakepay", live=True)))
+
+        page = client.get(pay_url(donate_page, pledge))
+
+        assert soup(page).find(class_="lead").get_text() == (
+            "This month's gift of Rs 2,500 has reached us. We'll be in touch about next month."
+        )
+
+    def test_thanks_lead_to_the_appeals(self, client, donate_page, pledge, payment):
+        client.get(return_url(donate_page, payment))
+
+        page = soup(client.get(pay_url(donate_page, pledge)))
+
+        assert page.find("a", string="See all our appeals")["href"] == "/appeals/"
+
+    def test_thanks_lead_home_on_a_site_with_no_appeals_page(
+        self, client, donate_page, pledge, payment
+    ):
+        """Not a dead end."""
+        CampaignIndexPage.objects.get().unpublish()
+        client.get(return_url(donate_page, payment))
+
+        page = soup(client.get(pay_url(donate_page, pledge)))
+
+        assert page.find("a", string="Back to the home page")["href"] == "/"
 
     def test_asks_the_provider_with_our_own_reference_and_amount(
         self, client, donate_page, payment, fake_provider

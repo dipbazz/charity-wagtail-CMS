@@ -114,7 +114,10 @@ comes back (`/donate/payment/<reference>/`), the site asks the provider about th
 own reference and amount. What the browser brings back is never read, because anyone could
 change it. Then the pay page shows one of three things:
 
-- **Paid:** thanks ("Your gift of Rs 2,500 has reached us") with the provider's reference.
+- **Paid:** thanks ("Your gift of Rs 2,500 has reached us") with the provider's reference. A
+  monthly gift says "This month's gift … has reached us. We'll be in touch about next month.",
+  and a test payment says first "Test payment completed. No money was taken." It leads to the
+  appeals page, or to the home page on a site without one.
 - **Failed or cancelled:** no money was taken, and the buttons again. When the provider couldn't
   even start the payment, the page says so instead: "We couldn't reach Khalti just now. Try
   eSewa, or try again in a few minutes."
