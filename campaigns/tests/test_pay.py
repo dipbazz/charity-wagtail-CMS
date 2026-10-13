@@ -266,8 +266,22 @@ class TestStartingAPayment:
         assert response["Location"] == pay_url(donate_page, pledge)
         assert Payment.objects.get().status == PaymentStatus.FAILED
         page = client.get(pay_url(donate_page, pledge))
-        assert "didn't go through" in text(page)
+        assert "We couldn't reach Fake Pay just now. Try again in a few minutes." in text(page)
+        assert "didn't go through" not in text(page)
         assert "Pay with Fake Pay" in pay_buttons(page)
+
+    def test_a_provider_that_cant_be_reached_suggests_the_others(
+        self, client, donate_page, pledge, fake_provider, settings
+    ):
+        settings.PAYMENT_KEYS = {**settings.PAYMENT_KEYS, "KHALTI_SECRET_KEY": "test-key"}
+        fake_provider.failure = ProviderUnavailable("Fake Pay is down.")
+
+        page = client.get(start(client, donate_page, pledge)["Location"])
+
+        assert (
+            "We couldn't reach Fake Pay just now. Try Khalti, or try again in a few minutes."
+            in (text(page))
+        )
 
 
 class TestComingBack:

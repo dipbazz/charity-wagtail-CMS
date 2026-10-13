@@ -111,7 +111,9 @@ own reference and amount. What the browser brings back is never read, because an
 change it. Then the pay page shows one of three things:
 
 - **Paid:** thanks ("Your gift of Rs 2,500 has reached us") with the provider's reference.
-- **Failed or cancelled:** no money was taken, and the buttons again.
+- **Failed or cancelled:** no money was taken, and the buttons again. When the provider couldn't
+  even start the payment, the page says so instead: "We couldn't reach Khalti just now. Try
+  eSewa, or try again in a few minutes."
 - **Not confirmed yet** (the provider is still deciding, or couldn't be reached): a large button
   to check before paying again, so nobody pays twice. The pay buttons are folded away under "I
   didn't pay: choose a way to pay". Just after a check, the page says once what it found ("We

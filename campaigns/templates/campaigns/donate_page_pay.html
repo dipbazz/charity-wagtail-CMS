@@ -46,7 +46,11 @@
 
             {% if pledge.payment_status == "failed" %}
                 <div class="payment-message is-problem" role="alert">
-                    <p>{% translate "Your payment didn't go through, and no money was taken. You can try again, or pay another way." %}</p>
+                    {% if result == "not-started" %}
+                        <p>{% blocktranslate with provider=latest.get_method_display %}We couldn't reach {{ provider }} just now.{% endblocktranslate %} {% if others %}{% blocktranslate %}Try {{ others }}, or try again in a few minutes.{% endblocktranslate %}{% else %}{% translate "Try again in a few minutes." %}{% endif %}</p>
+                    {% else %}
+                        <p>{% translate "Your payment didn't go through, and no money was taken. You can try again, or pay another way." %}</p>
+                    {% endif %}
                 </div>
             {% elif unfinished %}
                 <div class="payment-message">

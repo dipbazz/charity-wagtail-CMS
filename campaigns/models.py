@@ -217,7 +217,7 @@ PAYMENT_MESSAGE = "payment"
 
 def tell_pay_page(request, result):
     """Leave the pay page a one-off result: "checked" (the provider hasn't confirmed the payment
-    yet) or "unreachable"."""
+    yet), "unreachable" (it couldn't be asked) or "not-started" (it couldn't start one)."""
     messages.info(request, result, extra_tags=PAYMENT_MESSAGE)
 
 
@@ -355,8 +355,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "paid": paid,
                 # Codes and names, not the classes, which templates would try to call.
                 "providers": [(provider.code, provider.name) for provider in providers],
+                "latest": latest,
                 "unfinished": latest if latest and latest.status == PaymentStatus.WAITING else None,
                 "result": pay_page_result(request),
+                # The others to try when the latest attempt's provider couldn't start it.
+                "others": either([p.name for p in providers if latest and p.code != latest.method]),
                 "site_settings": site_settings,
                 "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
             },
@@ -399,6 +402,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         except PaymentError as error:
             logger.warning("%s couldn't start payment %s: %s", provider.name, payment, error)
             payment.record(PaymentStatus.FAILED)
+            tell_pay_page(request, "not-started")
             return self.redirect_to(request, "pay", pledge.reference)
 
         if started.provider_id:

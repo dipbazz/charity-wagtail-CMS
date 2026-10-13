@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-13 08:23+0100\n"
+"POT-Creation-Date: 2026-10-13 08:26+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -213,16 +213,23 @@ msgstr "अपिल"
 msgid "You'll pay this month's gift now."
 msgstr "यस महिनाको दान अहिले तिर्नुहुनेछ।"
 
+#, python-format
+msgid "We couldn't reach %(provider)s just now."
+msgstr "हामी भर्खरै %(provider)s सम्म पुग्न सकेनौं।"
+
+#, python-format
+msgid "Try %(others)s, or try again in a few minutes."
+msgstr "%(others)s बाट प्रयास गर्नुहोस्, वा केही मिनेटपछि फेरि प्रयास गर्नुहोस्।"
+
+msgid "Try again in a few minutes."
+msgstr "केही मिनेटपछि फेरि प्रयास गर्नुहोस्।"
+
 msgid "Your payment didn't go through, and no money was taken. You can try again, or pay another way."
 msgstr "तपाईंको भुक्तानी पूरा भएन, र कुनै पैसा लिइएन। फेरि प्रयास गर्न, वा अर्को तरिकाले तिर्न सक्नुहुन्छ।"
 
 #, python-format
 msgid "We asked %(provider)s just now, and it hasn't confirmed your payment yet."
 msgstr "हामीले भर्खरै %(provider)s सँग सोध्यौं, तर उसले तपाईंको भुक्तानी अझै पुष्टि गरेको छैन।"
-
-#, python-format
-msgid "We couldn't reach %(provider)s just now."
-msgstr "हामी भर्खरै %(provider)s सम्म पुग्न सकेनौं।"
 
 #, python-format
 msgid "Did you finish paying with %(provider)s? Check before paying again, so you don't pay twice."
