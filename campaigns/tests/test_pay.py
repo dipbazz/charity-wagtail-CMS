@@ -328,6 +328,32 @@ class TestComingBack:
         assert response["Location"] == pay_url(donate_page, pledge)
         assert Payment.objects.get().status == PaymentStatus.WAITING
 
+    @pytest.mark.parametrize("case", ["provider gone", "other mode", "khalti with no pidx"])
+    def test_a_payment_that_cant_be_checked_is_left_waiting(
+        self, client, donate_page, pledge, fake_provider, settings, monkeypatch, case
+    ):
+        """No provider is asked when it's no longer set up, or set up for the other system (test
+        or live), whose keys can't look up this payment; and a provider that can't look it up
+        without its own ID (Khalti's pidx, missing when starting failed) is no error."""
+        asked = []
+        monkeypatch.setattr(http, "request_json", lambda url, **kwargs: asked.append(url))
+        if case == "khalti with no pidx":
+            settings.PAYMENT_KEYS = {**settings.PAYMENT_KEYS, "KHALTI_SECRET_KEY": "test-key"}
+            payment = pledge.start_payment("khalti", live=False)
+        else:
+            payment = pledge.start_payment("fakepay", live=False)
+        if case == "provider gone":
+            settings.PAYMENT_KEYS = {}
+        if case == "other mode":
+            settings.LIVE_PAYMENTS = True
+
+        response = client.get(return_url(donate_page, payment))
+
+        assert response["Location"] == pay_url(donate_page, pledge)
+        assert Payment.objects.get().status == PaymentStatus.WAITING
+        assert fake_provider.checked == []
+        assert asked == []
+
     def test_a_payment_still_waiting_offers_a_check_before_paying_again(
         self, client, donate_page, pledge, payment
     ):
