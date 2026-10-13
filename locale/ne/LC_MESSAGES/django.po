@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-12 07:39+0100\n"
+"POT-Creation-Date: 2026-10-13 08:11+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -241,6 +241,9 @@ msgstr "परीक्षण मोड:"
 
 msgid "no real money is taken. To try paying, sign in with the test account each provider gives:"
 msgstr "वास्तविक पैसा लिइँदैन। भुक्तानी गरेर हेर्न, प्रत्येक सेवाले दिएको परीक्षण खाताबाट साइन इन गर्नुहोस्:"
+
+msgid "I didn't pay: choose a way to pay"
+msgstr "मैले भुक्तानी गरेको छैन: भुक्तानी गर्ने तरिका छान्नुहोस्"
 
 msgid "Pay online"
 msgstr "अनलाइनबाट भुक्तानी गर्नुहोस्"

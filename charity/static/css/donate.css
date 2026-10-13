@@ -170,6 +170,24 @@
     margin-top: 2rem;
 }
 
+/* "I didn't pay": the pay buttons, folded while an attempt may already be paid. Its summary is a
+   44px tap target, in link colour so it reads as something to open. */
+.pay-again {
+    margin-block: 1.5rem;
+}
+
+.pay-again summary {
+    min-height: 2.75rem;
+    padding-block: 0.625rem;
+    color: var(--colour-primary);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pay-again[open] section {
+    margin-top: 0.5rem;
+}
+
 /* A button for each provider: full width on a phone, side by side where 14rem ones fit, with no
    breakpoint. */
 .payment-options {

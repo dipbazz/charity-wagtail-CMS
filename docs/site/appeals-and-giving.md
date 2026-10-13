@@ -114,9 +114,10 @@ change it. Then the pay page shows one of three things:
 
 - **Paid:** thanks ("Your gift of Rs 2,500 has reached us") with the provider's reference.
 - **Failed or cancelled:** no money was taken, and the buttons again.
-- **Not confirmed yet** (the provider is still deciding, or couldn't be reached): a link to check
-  before paying again, so nobody pays twice. A payment whose supporter never came back stays
-  *waiting* until the scheduled check in #198.
+- **Not confirmed yet** (the provider is still deciding, or couldn't be reached): a large button
+  to check before paying again, so nobody pays twice. The pay buttons are folded away under "I
+  didn't pay: choose a way to pay". A payment whose supporter never came back stays *waiting*
+  until the scheduled check in #198.
 
 Each attempt is a `Payment`: the provider, the amount, our reference (sent to the provider), the
 provider's own IDs, and whether it ran in the provider's test system. A pledge's **payment status**

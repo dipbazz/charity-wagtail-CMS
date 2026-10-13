@@ -51,7 +51,7 @@
             {% elif unfinished %}
                 <div class="payment-message">
                     <p>{% blocktranslate with provider=unfinished.get_method_display %}Did you finish paying with {{ provider }}? Check before paying again, so you don't pay twice.{% endblocktranslate %}</p>
-                    <p><a class="button button-secondary" href="{% routablepageurl page 'payment_return' unfinished.reference %}">{% blocktranslate with provider=unfinished.get_method_display %}Check my {{ provider }} payment{% endblocktranslate %}</a></p>
+                    <p><a class="button button-large" href="{% routablepageurl page 'payment_return' unfinished.reference %}">{% blocktranslate with provider=unfinished.get_method_display %}Check my {{ provider }} payment{% endblocktranslate %}</a></p>
                 </div>
             {% endif %}
 
@@ -67,6 +67,8 @@
             {% endif %}
 
             {% if providers %}
+                {# While an attempt may already be paid, checking it leads and paying again is folded away, so nobody pays twice by mistake. #}
+                {% if unfinished %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
                 <section aria-labelledby="pay-online">
                     <h2 id="pay-online">{% translate "Pay online" %}</h2>
                     <p>{% translate "You'll pay on their own secure page, then come back here." %}</p>
@@ -79,6 +81,7 @@
                         {% endfor %}
                     </div>
                 </section>
+                {% if unfinished %}</details>{% endif %}
             {% endif %}
 
             <section class="pay-in-person" aria-labelledby="pay-in-person">

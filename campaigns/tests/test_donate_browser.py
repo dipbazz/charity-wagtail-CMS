@@ -224,6 +224,11 @@ class TestPayPage:
     def test_fits_every_screen_with_room_to_tap(self, site_page, pay_page):
         assert layout_problems(site_page, pay_page) == []
 
+    def test_fits_every_screen_while_an_attempt_may_be_paid(self, site_page, pay_page):
+        Pledge.objects.get().start_payment("fakepay", live=False)
+
+        assert layout_problems(site_page, pay_page) == []
+
     def test_a_form_a_provider_asks_for_is_sent_at_once(self, site_page, pay_page, fake_provider):
         fake_provider.redirect = Redirect(
             "https://pay.example.com/form/", method="POST", fields={"amount": "2500", "sig": "a+b"}

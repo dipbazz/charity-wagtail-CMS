@@ -362,6 +362,26 @@ class TestComingBack:
         check = page.find("a", href=return_url(donate_page, payment))
         assert check.get_text(strip=True) == "Check my Fake Pay payment"
 
+    def test_while_one_may_be_paid_paying_again_is_folded_away(
+        self, client, donate_page, pledge, payment
+    ):
+        """Checking leads, so nobody pays twice; someone who didn't pay opens the pay buttons."""
+        page = soup(client.get(pay_url(donate_page, pledge)))
+
+        check = page.find("a", href=return_url(donate_page, payment))
+        folded = page.find("details")
+        assert "button-large" in check["class"]
+        assert folded.find("summary").get_text(strip=True) == "I didn't pay: choose a way to pay"
+        assert not folded.has_attr("open")
+        assert folded.find("button", string="Pay with Fake Pay")
+        assert check in folded.find_all_previous("a")
+
+    def test_with_nothing_to_check_the_pay_buttons_are_open(self, client, donate_page, pledge):
+        page = soup(client.get(pay_url(donate_page, pledge)))
+
+        assert page.find("details") is None
+        assert page.find("button", string="Pay with Fake Pay")
+
     def test_once_paid_the_provider_isnt_asked_again(
         self, client, donate_page, payment, fake_provider
     ):
