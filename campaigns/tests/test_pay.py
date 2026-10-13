@@ -122,16 +122,13 @@ class TestPayPage:
         assert form["action"] == f"{pay_url(donate_page, pledge)}fakepay/"
         assert form.find("input", attrs={"name": "csrfmiddlewaretoken"})
 
-    def test_says_it_takes_no_real_money_in_test_mode(self, client, donate_page, pledge):
+    def test_never_shows_a_test_account(self, client, donate_page, pledge):
+        """It pushed the pay buttons down, and handed anyone a way to make test payments: the
+        team finds the test accounts in the docs instead."""
         page = text(client.get(pay_url(donate_page, pledge)))
 
-        assert "Test mode" in page
-        assert "9800000001" in page  # FakePay's test account
-
-    def test_says_nothing_of_test_mode_when_live(self, client, donate_page, pledge, settings):
-        settings.LIVE_PAYMENTS = True
-
-        assert "Test mode" not in text(client.get(pay_url(donate_page, pledge)))
+        assert "Test mode" not in page
+        assert "9800000001" not in page  # FakePay's test account
 
     def test_is_kept_out_of_search_engines(self, client, donate_page, pledge):
         robots = soup(client.get(pay_url(donate_page, pledge))).find(

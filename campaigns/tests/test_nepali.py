@@ -235,5 +235,5 @@ class TestPayingInNepali:
         assert "तपाईंको दान भुक्तानी गर्नुहोस्" in text
         assert "Fake Pay बाट तिर्नुहोस्" in text
         assert "आफैं आएर भुक्तानी गर्नुहोस्" in text
-        assert "परीक्षण मोड:" in text
+        assert "परीक्षण मोड" not in text  # the test accounts are in the docs, not here
         assert "जहाँ सबैभन्दा बढी आवश्यक छ" in text

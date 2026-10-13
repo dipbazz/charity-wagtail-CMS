@@ -101,8 +101,6 @@ engines. It shows the gift (amount, how often, appeal; never the giver's name or
   supporter pays on the provider's own page and is sent back here.
 - **Pay in person:** the office address and phone from Site settings, "tell us your name when you
   pay"; without them, a promise to be in touch. "I'll pay later" goes to the thank-you page.
-- **In test mode,** a notice that no real money is taken, with each provider's public test
-  account.
 
 A monthly pledge pays this month's gift. Later months aren't collected online: eSewa and Khalti
 take one-off payments only (monthly reminders are #90).
@@ -129,7 +127,19 @@ stays unpaid until someone looks.
 **Which providers are offered** is each installation's own setting: a provider is offered once all
 its keys are set ([Running the live site](../hosting.md#paying-pledges-online)), and only for the
 currencies it takes, so a UK charity's pledges in pounds get neither eSewa nor Khalti. Payments use
-the providers' test systems, where no money moves, until real money is switched on. The providers
+the providers' test systems, where no money moves, until real money is switched on.
+
+**Trying a payment before going live:** in a test system, sign in on the provider's page with its
+public test account. The pay page doesn't show these: it pushed the pay buttons down, and
+supporters don't need them.
+
+| Provider | Test account |
+|---|---|
+| eSewa | eSewa ID `9711111111`, password `Nepal@123`, OTP `123456` |
+| Khalti | Khalti ID `9800000000`, MPIN `1111`, OTP `987654` |
+
+They're each provider's `test_login` in `nepal_payments/providers/`, from the provider's own
+developer docs. The providers
 are in `nepal_payments/`, a package that knows nothing of this site; adding one is adding a file
 ([Extending the site](../contributing/extending.md#add-a-payment-provider)).
 
@@ -146,7 +156,7 @@ taken; a migration removed it wherever it hadn't been changed.
 
 **Pledges** in the admin menu lists every pledge: when it was sent, the name, amount, how often,
 the appeal and its **payment** (waiting, paid or failed; **Paid (test)** when a provider's test
-system took it, which anyone can do with the test account, so no money moved). The team can
+system took it, which anyone can do with a public test account, so no money moved). The team can
 filter (by how often, appeal, payment, each consent and date), search by name or email, open one
 to read it, and export the list to CSV or Excel. The export adds when each pledge was paid and
 **paid with** what: the provider and its transaction ID, to match against the provider's

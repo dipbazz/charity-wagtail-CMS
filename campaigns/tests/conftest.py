@@ -33,7 +33,6 @@ class FakePay(PaymentProvider):
     name = "Fake Pay"
     keys = ("SECRET_KEY",)
     min_amount = Decimal(10)
-    test_login = {"id": "9800000001", "otp": "123456"}
 
     @classmethod
     def reset(cls):

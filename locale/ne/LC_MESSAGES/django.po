@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-13 08:11+0100\n"
+"POT-Creation-Date: 2026-10-13 08:16+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -108,18 +108,6 @@ msgstr "खुला अपिलहरू"
 
 msgid "Past appeals"
 msgstr "विगतका अपिलहरू"
-
-msgid "ID"
-msgstr "आईडी"
-
-msgid "password"
-msgstr "पासवर्ड"
-
-msgid "MPIN"
-msgstr "MPIN"
-
-msgid "OTP"
-msgstr "OTP"
 
 #, python-format
 msgid "%(names)s or %(last)s"
@@ -235,12 +223,6 @@ msgstr "के तपाईंले %(provider)s बाट भुक्ता�
 #, python-format
 msgid "Check my %(provider)s payment"
 msgstr "मेरो %(provider)s भुक्तानी जाँच्नुहोस्"
-
-msgid "Test mode:"
-msgstr "परीक्षण मोड:"
-
-msgid "no real money is taken. To try paying, sign in with the test account each provider gives:"
-msgstr "वास्तविक पैसा लिइँदैन। भुक्तानी गरेर हेर्न, प्रत्येक सेवाले दिएको परीक्षण खाताबाट साइन इन गर्नुहोस्:"
 
 msgid "I didn't pay: choose a way to pay"
 msgstr "मैले भुक्तानी गरेको छैन: भुक्तानी गर्ने तरिका छान्नुहोस्"

@@ -4,7 +4,6 @@ import re
 import uuid
 from decimal import Decimal
 
-from django.conf import settings
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -211,28 +210,6 @@ class DonationAmount(AbstractDonationAmount):
     page = ParentalKey(CampaignPage, on_delete=models.CASCADE, related_name="donation_amounts")
 
 
-# The parts of a provider's public test account (PaymentProvider.test_login), in the reader's words.
-TEST_LOGIN_LABELS = {
-    "id": gettext_lazy("ID"),
-    "password": gettext_lazy("password"),
-    "mpin": gettext_lazy("MPIN"),
-    "otp": gettext_lazy("OTP"),
-}
-
-
-def test_accounts(providers):
-    """Each provider's public test account, as (name, [(label, value), …]), for the notice that
-    a pay page takes no real money."""
-    return [
-        (
-            provider.name,
-            [(TEST_LOGIN_LABELS.get(key, key), value) for key, value in login.items()],
-        )
-        for provider in providers
-        if (login := provider.test_login)
-    ]
-
-
 def either(names):
     """The names as a choice, in the reader's language: "eSewa or Khalti", "eSewa, Khalti or
     IME Pay"."""
@@ -354,7 +331,6 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 # Codes and names, not the classes, which templates would try to call.
                 "providers": [(provider.code, provider.name) for provider in providers],
                 "unfinished": latest if latest and latest.status == PaymentStatus.WAITING else None,
-                "test_accounts": [] if settings.LIVE_PAYMENTS else test_accounts(providers),
                 "site_settings": site_settings,
                 "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
             },
@@ -554,7 +530,7 @@ class Pledge(models.Model):
     @admin.display(description="Payment")
     def payment_display(self):
         """Waiting, paid or failed, with "(test)" after paid when only a provider's test system
-        took it: anyone can pay there with the test account the pay page shows, so it must never
+        took it: anyone can pay there with the provider's public test account, so it must never
         pass for money received. Reads payments as fetched, so a list can prefetch them."""
         shown = self.get_payment_status_display()
         if self.payment_status != PaymentStatus.PAID:

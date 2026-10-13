@@ -17,14 +17,12 @@
 }
 
 .payment-notice > :first-child,
-.payment-message > :first-child,
-.test-mode > :first-child {
+.payment-message > :first-child {
     margin-top: 0;
 }
 
 .payment-notice > :last-child,
-.payment-message > :last-child,
-.test-mode > :last-child {
+.payment-message > :last-child {
     margin-bottom: 0;
 }
 
@@ -154,16 +152,6 @@
     color: var(--colour-primary-dark);
     font-size: 1.25rem;
     font-weight: 700;
-}
-
-/* Test mode stands out, so nobody thinks a test payment took their money. */
-.test-mode {
-    margin-block: 1.5rem;
-    padding: 1rem 1.25rem;
-    border: 2px dashed var(--colour-warning-text);
-    border-radius: var(--radius);
-    background: var(--colour-warning-surface);
-    color: var(--colour-warning-text);
 }
 
 .pay-page section {

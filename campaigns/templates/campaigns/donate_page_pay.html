@@ -55,17 +55,6 @@
                 </div>
             {% endif %}
 
-            {% if test_accounts %}
-                <div class="test-mode">
-                    <p><strong>{% translate "Test mode:" %}</strong> {% translate "no real money is taken. To try paying, sign in with the test account each provider gives:" %}</p>
-                    <ul>
-                        {% for provider, details in test_accounts %}
-                            <li>{{ provider }}: {% for label, value in details %}{{ label }} <span lang="en">{{ value }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            {% endif %}
-
             {% if providers %}
                 {# While an attempt may already be paid, checking it leads and paying again is folded away, so nobody pays twice by mistake. #}
                 {% if unfinished %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
