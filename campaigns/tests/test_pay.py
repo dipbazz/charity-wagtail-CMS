@@ -165,6 +165,45 @@ class TestPayPage:
         assert client.get(f"{donate_page.url}pay/{uuid.uuid4()}/").status_code == 404
 
 
+class TestWhatScreenReadersHearFirst:
+    """Each state has its own page title, and its message comes straight after the heading,
+    ready for donate.js to move focus to it, so it's the first thing read."""
+
+    STATES = {
+        "ready": "Pay your gift",
+        "check first": "Check your payment",
+        "failed": "Try paying again",
+        "paid": "Thank you",
+    }
+
+    @pytest.fixture
+    def page_in(self, client, donate_page, pledge):
+        def page_in(state):
+            if state == "check first":
+                pledge.start_payment("fakepay", live=False)
+            elif state == "failed":
+                pledge.start_payment("fakepay", live=False).record(Status.FAILED)
+            elif state == "paid":
+                pledge.start_payment("fakepay", live=False).record(Status.PAID, "FAKE-1")
+            return soup(client.get(pay_url(donate_page, pledge)))
+
+        return page_in
+
+    @pytest.mark.parametrize("state", STATES)
+    def test_each_state_has_its_own_title(self, page_in, state):
+        assert page_in(state).title.get_text(" ", strip=True).startswith(self.STATES[state])
+
+    @pytest.mark.parametrize("state", ["check first", "failed", "paid"])
+    def test_the_message_comes_first_and_takes_focus(self, page_in, state):
+        message = page_in(state).find("h1").find_next_sibling()
+
+        assert message.has_attr("data-focus-on-load")
+        assert message["tabindex"] == "-1"
+
+    def test_with_nothing_to_say_nothing_takes_focus(self, page_in):
+        assert page_in("ready").find(attrs={"data-focus-on-load": True}) is None
+
+
 class TestPayInPerson:
     def test_gives_the_charitys_address_and_phone(self, client, site, donate_page, pledge):
         site_settings = SiteSettings.for_site(site)
@@ -248,6 +287,10 @@ class TestStartingAPayment:
         sent = {field["name"]: field["value"] for field in form.find_all("input")}
         assert sent == {"amount": "2500", "sig": "x"}  # and never our CSRF token
         assert form.find("button").get_text(strip=True) == "Continue to Fake Pay"
+        status = soup(response).find(attrs={"role": "status"}, string=re.compile("Taking"))
+        assert status.get_text(strip=True) == (
+            "Taking you to Fake Pay. If nothing happens, press the button."
+        )
 
     def test_once_paid_the_providers_form_isnt_sent_again(
         self, client, donate_page, pledge, fake_provider

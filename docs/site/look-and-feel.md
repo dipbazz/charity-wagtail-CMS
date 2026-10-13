@@ -313,6 +313,13 @@ A requirement, not a polish step. Every page has:
 - alt text on every image, taken from the image's description in the admin;
 - text that passes WCAG AA contrast, whatever [brand colours](#brand-colours) are chosen.
 
+A page that changes with what happened says so first. The pay page has a title for each state
+("Pay your gift", "Check your payment", "Try paying again", "Thank you"), and its message
+("didn't go through", "check first", the thanks) comes straight after the heading with
+`tabindex="-1"` and `data-focus-on-load`, so `donate.js` focuses it and a screen reader reads it
+before the rest. The page that sends eSewa's form says where it's taking the payer in a
+`role="status"` line.
+
 ## Images in templates
 
 Photos are served as AVIF, WebP and JPEG at several widths. [Images](images.md) has the rules for

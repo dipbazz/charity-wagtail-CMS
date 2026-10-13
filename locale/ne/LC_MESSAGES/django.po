@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-13 08:46+0100\n"
+"POT-Creation-Date: 2026-10-13 08:51+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -186,6 +186,12 @@ msgstr "हामीले तपाईंको प्रतिबद्धत�
 msgid "See all our appeals"
 msgstr "हाम्रा सबै अपिलहरू हेर्नुहोस्"
 
+msgid "Try paying again"
+msgstr "फेरि भुक्तानी गरेर हेर्नुहोस्"
+
+msgid "Check your payment"
+msgstr "आफ्नो भुक्तानी जाँच्नुहोस्"
+
 msgid "Pay your gift"
 msgstr "तपाईंको दान भुक्तानी गर्नुहोस्"
 
@@ -218,19 +224,6 @@ msgstr "हामीले तपाईंबाट %(provider)s मार्फ
 msgid "Our team will be in touch."
 msgstr "हाम्रो टोलीले तपाईंलाई सम्पर्क गर्नेछ।"
 
-msgid "Your gift"
-msgstr "तपाईंको दान"
-
-#, python-format
-msgid "%(amount)s a month"
-msgstr "मासिक %(amount)s"
-
-msgid "Appeal"
-msgstr "अपिल"
-
-msgid "You'll pay this month's gift now."
-msgstr "यस महिनाको दान अहिले तिर्नुहुनेछ।"
-
 #, python-format
 msgid "We couldn't reach %(provider)s just now."
 msgstr "हामी भर्खरै %(provider)s सम्म पुग्न सकेनौं।"
@@ -262,6 +255,19 @@ msgstr "तपाईंको खाताबाट पैसा गइसके
 #, python-format
 msgid "Check my %(provider)s payment"
 msgstr "मेरो %(provider)s भुक्तानी जाँच्नुहोस्"
+
+msgid "Your gift"
+msgstr "तपाईंको दान"
+
+#, python-format
+msgid "%(amount)s a month"
+msgstr "मासिक %(amount)s"
+
+msgid "Appeal"
+msgstr "अपिल"
+
+msgid "You'll pay this month's gift now."
+msgstr "यस महिनाको दान अहिले तिर्नुहुनेछ।"
 
 msgid "I didn't pay: choose a way to pay"
 msgstr "मैले भुक्तानी गरेको छैन: भुक्तानी गर्ने तरिका छान्नुहोस्"
@@ -297,8 +303,9 @@ msgstr "म पछि तिर्छु"
 msgid "Taking you to %(provider)s"
 msgstr "तपाईंलाई %(provider)s मा लगिंदै छ"
 
-msgid "If nothing happens, press the button."
-msgstr "केही भएन भने, बटन थिच्नुहोस्।"
+#, python-format
+msgid "Taking you to %(provider)s. If nothing happens, press the button."
+msgstr "तपाईंलाई %(provider)s मा लगिंदै छ। केही भएन भने, बटन थिच्नुहोस्।"
 
 #, python-format
 msgid "Continue to %(provider)s"

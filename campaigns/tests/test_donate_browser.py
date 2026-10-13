@@ -229,6 +229,13 @@ class TestPayPage:
 
         assert layout_problems(site_page, pay_page) == []
 
+    def test_what_happened_is_focused_so_its_read_first(self, site_page, pay_page):
+        Pledge.objects.get().start_payment("fakepay", live=False)
+
+        site_page.goto(SITE + pay_page)
+
+        expect(site_page.locator(".payment-message")).to_be_focused()
+
     def test_a_pay_button_says_its_busy_and_a_second_tap_does_nothing(
         self, site_page, pay_page, fake_provider
     ):

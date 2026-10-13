@@ -21,7 +21,7 @@
             {% for name, value in fields.items %}
                 <input type="hidden" name="{{ name }}" value="{{ value }}">
             {% endfor %}
-            <p>{% translate "If nothing happens, press the button." %}</p>
+            <p role="status">{% blocktranslate with provider=provider_name %}Taking you to {{ provider }}. If nothing happens, press the button.{% endblocktranslate %}</p>
             <div class="payment-options">
                 <button class="button button-large" type="submit" data-busy-text="{% blocktranslate with provider=provider_name %}Opening {{ provider }}…{% endblocktranslate %}">{% blocktranslate with provider=provider_name %}Continue to {{ provider }}{% endblocktranslate %}</button>
             </div>
