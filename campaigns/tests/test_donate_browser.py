@@ -285,3 +285,25 @@ class TestPayPage:
 
         site_page.wait_for_url("https://pay.example.com/form/")
         assert sent == ["amount=2500&sig=a%2Bb"]
+
+    def test_back_from_a_provider_asks_nothing_about_resending(
+        self, site_page, pay_page, fake_provider
+    ):
+        """Back from eSewa's page, after pressing "Continue to eSewa" (no JavaScript, or before it
+        ran), reloads the page that sent its form, so that page must come from a GET: a page a
+        POST answered would ask to "confirm form resubmission"."""
+        fake_provider.redirect = Redirect("https://pay.example.com/form/", method="POST")
+        site_page.route("**/donate.js", lambda route: route.abort())
+        site_page.route(
+            "https://pay.example.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body="Fake Pay"),
+        )
+        site_page.goto(SITE + pay_page)
+        site_page.get_by_role("button", name="Pay with Fake Pay").click()
+        site_page.get_by_role("button", name="Continue to Fake Pay").click()
+        site_page.wait_for_url("https://pay.example.com/form/")
+
+        response = site_page.go_back()
+
+        assert response.request.method == "GET"
+        expect(site_page.get_by_role("button", name="Continue to Fake Pay")).to_be_visible()

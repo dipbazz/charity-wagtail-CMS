@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% blocktranslate with provider=provider.name %}Taking you to {{ provider }}{% endblocktranslate %}{% endblock %}
+{% block title %}{% blocktranslate with provider=provider_name %}Taking you to {{ provider }}{% endblocktranslate %}{% endblock %}
 
 {% block body_class %}template-donatepage pay-page{% endblock %}
 
@@ -15,15 +15,15 @@
 
 {% block content %}
     <div class="container narrow">
-        <h1>{% blocktranslate with provider=provider.name %}Taking you to {{ provider }}{% endblocktranslate %}</h1>
+        <h1>{% blocktranslate with provider=provider_name %}Taking you to {{ provider }}{% endblocktranslate %}</h1>
         {# The form the provider asked for, signed by the server. It's sent to the provider, not to this site, so it carries no CSRF token. donate.js sends it at once. #}
-        <form class="provider-form" method="post" action="{{ redirect.url }}" data-auto-submit>
-            {% for name, value in redirect.fields.items %}
+        <form class="provider-form" method="post" action="{{ form_url }}" data-auto-submit>
+            {% for name, value in fields.items %}
                 <input type="hidden" name="{{ name }}" value="{{ value }}">
             {% endfor %}
             <p>{% translate "If nothing happens, press the button." %}</p>
             <div class="payment-options">
-                <button class="button button-large" type="submit" data-busy-text="{% blocktranslate with provider=provider.name %}Opening {{ provider }}…{% endblocktranslate %}">{% blocktranslate with provider=provider.name %}Continue to {{ provider }}{% endblocktranslate %}</button>
+                <button class="button button-large" type="submit" data-busy-text="{% blocktranslate with provider=provider_name %}Opening {{ provider }}…{% endblocktranslate %}">{% blocktranslate with provider=provider_name %}Continue to {{ provider }}{% endblocktranslate %}</button>
             </div>
             <p class="visually-hidden" role="status" data-busy-status></p>
         </form>

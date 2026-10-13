@@ -98,7 +98,11 @@ own random reference, so only the person who sent the pledge has it, and it's ke
 engines. It shows the gift (amount, how often, appeal; never the giver's name or details), then:
 
 - **Pay online:** a button for each provider set up here, in their order (eSewa, then Khalti). The
-  supporter pays on the provider's own page and is sent back here.
+  supporter pays on the provider's own page and is sent back here. Khalti's page is a link;
+  eSewa's takes a signed form, which the site keeps on the payment and sends from its own page
+  (`/donate/payment/<reference>/go/`), reached by a redirect after the button's POST. Back from
+  eSewa then reloads a page fetched with GET, never "confirm form resubmission", and once the
+  payment is no longer waiting that page goes to the pay page instead of sending the form again.
 - **Pay in person:** the office address and phone from Site settings, "tell us your name when you
   pay"; without them, a promise to be in touch. "I'll pay later" goes to the thank-you page.
 

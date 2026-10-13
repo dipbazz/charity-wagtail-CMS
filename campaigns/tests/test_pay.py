@@ -229,6 +229,11 @@ class TestStartingAPayment:
 
         response = start(client, donate_page, pledge)
 
+        # Post/Redirect/Get: Back from the provider reloads a page, never resends a form.
+        payment = Payment.objects.get()
+        assert response.status_code == 303
+        assert response["Location"] == f"{return_url(donate_page, payment)}go/"
+        response = client.get(response["Location"])
         assert response.status_code == 200
         form = soup(response).find("form", attrs={"data-auto-submit": True})
         assert form["action"] == "https://pay.example.com/form/"
@@ -236,6 +241,17 @@ class TestStartingAPayment:
         sent = {field["name"]: field["value"] for field in form.find_all("input")}
         assert sent == {"amount": "2500", "sig": "x"}  # and never our CSRF token
         assert form.find("button").get_text(strip=True) == "Continue to Fake Pay"
+
+    def test_once_paid_the_providers_form_isnt_sent_again(
+        self, client, donate_page, pledge, fake_provider
+    ):
+        fake_provider.redirect = Redirect("https://pay.example.com/form/", method="POST")
+        go = start(client, donate_page, pledge)["Location"]
+        Payment.objects.get().record(Status.PAID, "FAKE-1")
+
+        response = client.get(go)
+
+        assert response["Location"] == pay_url(donate_page, pledge)
 
     def test_only_by_sending_the_form(self, client, donate_page, pledge):
         response = client.get(f"{pay_url(donate_page, pledge)}fakepay/")
@@ -484,9 +500,8 @@ class TestEsewaEndToEnd:
         send_pledge(client, donate_page)
         pledge = Pledge.objects.get()
 
-        form = soup(start(client, donate_page, pledge, "esewa")).find(
-            "form", attrs={"data-auto-submit": True}
-        )
+        go = start(client, donate_page, pledge, "esewa")["Location"]
+        form = soup(client.get(go)).find("form", attrs={"data-auto-submit": True})
         payment = Payment.objects.get()
         assert form["action"] == "https://rc-epay.esewa.com.np/api/epay/main/v2/form"
         assert form.find("input", attrs={"name": "transaction_uuid"})["value"] == str(

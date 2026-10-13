@@ -407,14 +407,36 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             tell_pay_page(request, "not-started")
             return self.redirect_to(request, "pay", pledge.reference)
 
-        if started.provider_id:
-            Payment.objects.filter(pk=payment.pk).update(provider_id=started.provider_id)
-        if started.redirect.method == "GET":
-            return HttpResponseRedirect(started.redirect.url, status=303)
+        redirect = started.redirect
+        if redirect.method == "GET":
+            if started.provider_id:
+                Payment.objects.filter(pk=payment.pk).update(provider_id=started.provider_id)
+            return HttpResponseRedirect(redirect.url, status=303)
+        # A form to post to the provider: kept, and sent from a page fetched with GET, so Back
+        # from the provider reloads that page rather than asking to resend this one.
+        Payment.objects.filter(pk=payment.pk).update(
+            provider_id=started.provider_id,
+            provider_form={"url": redirect.url, "fields": redirect.fields},
+        )
+        return self.redirect_to(request, "go_to_provider", payment.reference)
+
+    @path("payment/<uuid:reference>/go/", name="go_to_provider")
+    def go_to_provider(self, request, reference):
+        """The page that sends a payment's form to its provider (eSewa). Once the payment isn't
+        waiting any more, the pay page instead: the form would pay again."""
+        payment = get_object_or_404(
+            Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
+        )
+        if payment.status != PaymentStatus.WAITING or not payment.provider_form:
+            return self.redirect_to(request, "pay", payment.pledge.reference)
         return self.render(
             request,
             template=self.redirect_template,
-            context_overrides={"provider": provider, "redirect": started.redirect},
+            context_overrides={
+                "provider_name": payment.get_method_display(),
+                "form_url": payment.provider_form["url"],
+                "fields": payment.provider_form["fields"],
+            },
         )
 
     @path("payment/<uuid:reference>/", name="payment_return")
@@ -614,6 +636,9 @@ class Payment(models.Model):
     provider_id = models.CharField(
         max_length=100, blank=True, help_text="The provider's ID for the attempt (Khalti's pidx)."
     )
+    # The signed form a provider that takes one (eSewa) is sent, as {"url", "fields"}: the page
+    # that sends it is fetched afterwards, with GET.
+    provider_form = models.JSONField(default=dict, blank=True, editable=False)
     provider_reference = models.CharField(
         "provider's reference",
         max_length=100,
