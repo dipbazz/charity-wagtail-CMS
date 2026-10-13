@@ -4,11 +4,13 @@ The flow is tested with FakePay (conftest.py), so it holds for any provider; eSe
 get one journey end to end at the bottom, with their servers stood in for.
 """
 
+import re
 import uuid
 from decimal import Decimal
 
 import pytest
 from bs4 import BeautifulSoup
+from django.urls import reverse
 from wagtail.models import Locale
 
 from campaigns.models import Payment, PaymentStatus, Pledge
@@ -324,6 +326,58 @@ class TestComingBack:
 
         assert response["Location"] == pay_url(donate_page, pledge)
         assert Payment.objects.get().status == PaymentStatus.WAITING
+
+    @pytest.mark.parametrize(
+        "outcome, found",
+        [
+            (Outcome(Status.WAITING), "We asked Fake Pay just now, and it hasn't confirmed"),
+            (ProviderUnavailable("Fake Pay is down."), "We couldn't reach Fake Pay just now."),
+        ],
+        ids=["still waiting", "unreachable"],
+    )
+    def test_says_what_checking_found_once(
+        self, client, site, donate_page, pledge, payment, fake_provider, outcome, found
+    ):
+        """Otherwise checking looks like nothing happened, and the payer may pay again."""
+        site_settings = SiteSettings.for_site(site)
+        site_settings.phone = "+977 1-4567890"
+        site_settings.save()
+        if isinstance(outcome, Outcome):
+            fake_provider.outcome = outcome
+        else:
+            fake_provider.failure = outcome
+
+        page = client.get(return_url(donate_page, payment), follow=True)
+
+        assert found in text(page)
+        assert "If money has left your account, don't pay again" in text(page)
+        message = soup(page).find(string=re.compile("don't pay again")).find_parent("div")
+        assert message.find("a", href="tel:+97714567890")
+        assert found not in text(client.get(pay_url(donate_page, pledge)))
+
+    def test_says_nothing_of_a_check_before_one(self, client, donate_page, pledge, payment):
+        page = text(client.get(pay_url(donate_page, pledge)))
+
+        assert "Did you finish paying with Fake Pay?" in page
+        assert "don't pay again" not in page
+
+    def test_a_message_for_the_admin_isnt_shown_or_lost(
+        self, admin_client, donate_page, pledge, payment, fake_provider
+    ):
+        """Messages are one-off and shared with the admin: the pay page takes only its own."""
+        fake_provider.outcome = Outcome(Status.WAITING)
+        paid = Pledge.objects.create(page=donate_page, amount=500, currency="NPR", name="Ram")
+        paid.start_payment("khalti", live=True).record(Status.PAID, "GFq9PFS7")
+        admin_client.post(reverse("pledges:delete", args=[paid.pk]))  # refused, with a message
+
+        page = text(admin_client.get(return_url(donate_page, payment), follow=True))
+        admin = BeautifulSoup(
+            admin_client.get(reverse("pledges:index")).content, "html.parser"
+        ).get_text()
+
+        assert "We asked Fake Pay just now" in page
+        assert "can't be deleted" not in page
+        assert "can't be deleted" in admin
 
     @pytest.mark.parametrize("case", ["provider gone", "other mode", "khalti with no pidx"])
     def test_a_payment_that_cant_be_checked_is_left_waiting(

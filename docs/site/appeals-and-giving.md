@@ -114,8 +114,10 @@ change it. Then the pay page shows one of three things:
 - **Failed or cancelled:** no money was taken, and the buttons again.
 - **Not confirmed yet** (the provider is still deciding, or couldn't be reached): a large button
   to check before paying again, so nobody pays twice. The pay buttons are folded away under "I
-  didn't pay: choose a way to pay". A payment whose supporter never came back stays *waiting*
-  until the scheduled check in #198.
+  didn't pay: choose a way to pay". Just after a check, the page says once what it found ("We
+  asked Khalti just now, and it hasn't confirmed your payment yet", or "We couldn't reach Khalti
+  just now"), with "If money has left your account, don't pay again" and the charity's phone. A
+  payment whose supporter never came back stays *waiting* until the scheduled check in #198.
 
 Each attempt is a `Payment`: the provider, the amount, our reference (sent to the provider), the
 provider's own IDs, and whether it ran in the provider's test system. A pledge's **payment status**

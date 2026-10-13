@@ -193,7 +193,8 @@
 }
 
 /* A link on a line of its own (the phone number, "I'll pay later") is a 44px tap target. */
-.pay-in-person p > a:only-child {
+.pay-in-person p > a:only-child,
+.payment-message p > a:only-child:not(.button) {
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;

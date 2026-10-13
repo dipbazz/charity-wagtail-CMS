@@ -4,7 +4,7 @@ import re
 import uuid
 from decimal import Decimal
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator
@@ -210,6 +210,31 @@ class DonationAmount(AbstractDonationAmount):
     page = ParentalKey(CampaignPage, on_delete=models.CASCADE, related_name="donation_amounts")
 
 
+# What asking a provider just now found, for the pay page to say once: a message with this tag.
+# Messages are shared with the admin, so the pay page takes only its own.
+PAYMENT_MESSAGE = "payment"
+
+
+def tell_pay_page(request, result):
+    """Leave the pay page a one-off result: "checked" (the provider hasn't confirmed the payment
+    yet) or "unreachable"."""
+    messages.info(request, result, extra_tags=PAYMENT_MESSAGE)
+
+
+def pay_page_result(request):
+    """The result tell_pay_page() left, if any. Any other message is kept for the page it's for."""
+    result = None
+    others = []
+    for message in messages.get_messages(request):
+        if PAYMENT_MESSAGE in (message.extra_tags or "").split():
+            result = message.message
+        else:
+            others.append(message)
+    for message in others:
+        messages.add_message(request, message.level, message.message, message.extra_tags)
+    return result
+
+
 def either(names):
     """The names as a choice, in the reader's language: "eSewa or Khalti", "eSewa, Khalti or
     IME Pay"."""
@@ -331,6 +356,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 # Codes and names, not the classes, which templates would try to call.
                 "providers": [(provider.code, provider.name) for provider in providers],
                 "unfinished": latest if latest and latest.status == PaymentStatus.WAITING else None,
+                "result": pay_page_result(request),
                 "site_settings": site_settings,
                 "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
             },
@@ -402,8 +428,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 )
             except (PaymentError, ValueError) as error:
                 logger.warning("%s couldn't check payment %s: %s", provider.name, payment, error)
+                tell_pay_page(request, "unreachable")
             else:
                 payment.record(outcome.status, outcome.provider_reference)
+                if outcome.status == PaymentStatus.WAITING:
+                    tell_pay_page(request, "checked")
         return self.redirect_to(request, "pay", payment.pledge.reference)
 
     def redirect_to(self, request, name, *args):

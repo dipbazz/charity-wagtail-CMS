@@ -50,7 +50,17 @@
                 </div>
             {% elif unfinished %}
                 <div class="payment-message">
-                    <p>{% blocktranslate with provider=unfinished.get_method_display %}Did you finish paying with {{ provider }}? Check before paying again, so you don't pay twice.{% endblocktranslate %}</p>
+                    {% if result == "checked" %}
+                        <p>{% blocktranslate with provider=unfinished.get_method_display %}We asked {{ provider }} just now, and it hasn't confirmed your payment yet.{% endblocktranslate %}</p>
+                    {% elif result == "unreachable" %}
+                        <p>{% blocktranslate with provider=unfinished.get_method_display %}We couldn't reach {{ provider }} just now.{% endblocktranslate %}</p>
+                    {% else %}
+                        <p>{% blocktranslate with provider=unfinished.get_method_display %}Did you finish paying with {{ provider }}? Check before paying again, so you don't pay twice.{% endblocktranslate %}</p>
+                    {% endif %}
+                    {% if result %}
+                        <p>{% if site_settings.phone %}{% translate "If money has left your account, don't pay again. Call us and we'll look into it:" %}{% else %}{% translate "If money has left your account, don't pay again." %}{% endif %}</p>
+                        {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
+                    {% endif %}
                     <p><a class="button button-large" href="{% routablepageurl page 'payment_return' unfinished.reference %}">{% blocktranslate with provider=unfinished.get_method_display %}Check my {{ provider }} payment{% endblocktranslate %}</a></p>
                 </div>
             {% endif %}
