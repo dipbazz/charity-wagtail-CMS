@@ -1,0 +1,95 @@
+ID,Step,Section,Question,Help,Answer type,Options,In form,Owner,Notes
+HP01,1 Go live,Home page / गृहपृष्ठ,Your mission in one sentence (up to 20 words) / एक वाक्यमा तपाईंको उद्देश्य (२० शब्दसम्म),"Shown in large letters at the top of the home page, next to the Donate button. Say what you do and for whom. Not sure? Send a few ideas and we will help you choose.
+गृहपृष्ठको सबैभन्दा माथि, दान बटनसँगै ठूलो अक्षरमा देखिन्छ। तपाईं के गर्नुहुन्छ र कसका लागि, भन्नुहोस्। निश्चित हुनुहुन्न भने केही विचार पठाउनुहोस्, हामी छान्न सहयोग गर्छौं।",long,,Yes,Charity,ne+en
+HP02,1 Go live,Home page / गृहपृष्ठ,Banner photo / ब्यानर फोटो,"One wide photo (phone held sideways) that shows your work, with the important part in the middle.
+तपाईंको काम देखाउने एउटा चौडा फोटो (फोन तेर्सो पारेर खिचेको), मुख्य भाग बीचमा।",upload,1,Yes,Charity,Consent if people visible
+HP03,1 Go live,Home page / गृहपृष्ठ,"Banner photo: who took it, and did everyone in it agree to be shown? / ब्यानर फोटो: कसले खिचेको, र फोटोमा भएका सबै देखाउन सहमत छन्?",,long,,Yes,Charity,Photo credit + consent
+AB01,1 Go live,About us / हाम्रो बारेमा,Who we are (1–3 short paragraphs) / हामी को हौं (१–३ छोटा अनुच्छेद),"Who you are, where you work, and who you help.
+तपाईं को हुनुहुन्छ, कहाँ काम गर्नुहुन्छ र कसलाई सहयोग गर्नुहुन्छ।",long,,Yes,Charity,ne+en
+AB02,1 Go live,About us / हाम्रो बारेमा,Our story (1–3 short paragraphs) / हाम्रो कथा (१–३ छोटा अनुच्छेद),"When and why you started, and what has changed since.
+कहिले र किन सुरु गर्नुभयो, र त्यसयता के परिवर्तन भयो।",long,,Yes,Charity,ne+en
+AB03,1 Go live,About us / हाम्रो बारेमा,Our vision (1–2 sentences) / हाम्रो दृष्टि (१–२ वाक्य),"The future you are working towards.
+तपाईं जुन भविष्यका लागि काम गर्दै हुनुहुन्छ।",long,,Yes,Charity,ne+en
+AB04,1 Go live,About us / हाम्रो बारेमा,Number 1 / तथ्याङ्क १,"The number, a short label, since when it counts, and where it comes from. Example: 120 · children in school · since 2070 BS · yearly report.
+सङ्ख्या, छोटो विवरण, कहिलेदेखि गनिएको र कहाँबाट लिइएको। उदाहरण: १२० · विद्यालयमा बालबालिका · २०७० सालदेखि · वार्षिक प्रतिवेदन।",short,,Yes,Charity,Impact statistics
+AB05,1 Go live,About us / हाम्रो बारेमा,Number 2 / तथ्याङ्क २,,short,,Yes,Charity,Impact statistics
+AB06,1 Go live,About us / हाम्रो बारेमा,Number 3 / तथ्याङ्क ३,,short,,Yes,Charity,Impact statistics
+AB07,1 Go live,About us / हाम्रो बारेमा,Number 4 / तथ्याङ्क ४,,short,,Yes,Charity,Impact statistics
+AB08,1 Go live,About us / हाम्रो बारेमा,Who checks the numbers? (name or role) / तथ्याङ्क कसले जाँच्नुहुन्छ? (नाम वा पद),,short,,Yes,Charity,
+AB09,1 Go live,About us / हाम्रो बारेमा,Who runs your organisation: committee members and staff / संस्था कसले चलाउँछ: समिति सदस्य र कर्मचारी,"The name and role of each person, only for people who agree to be shown.
+हरेक व्यक्तिको नाम र पद, देखाउन सहमत हुनेहरूको मात्र।",long,,Yes,Charity,Board and staff (standard)
+AB10,1 Go live,About us / हाम्रो बारेमा,Annual reports and audited accounts / वार्षिक प्रतिवेदन र लेखापरीक्षण प्रतिवेदन,"The last 1–3 years, if you have them. Shown under About us → Reports and accounts.
+भएमा पछिल्लो १–३ वर्षका। 'हाम्रो बारेमा' → 'प्रतिवेदन र हिसाब' मा देखिन्छ।",upload,5; PDF or photos,Yes,Charity,Reports and accounts (standard)
+AB11,1 Go live,About us / हाम्रो बारेमा,"Photos of your centre, classes or activities (1–3, optional) / केन्द्र, कक्षा वा गतिविधिका फोटो (१–३, ऐच्छिक)",,upload,3,Yes,Charity,
+AB12,1 Go live,About us / हाम्रो बारेमा,"About us photos: who took them, and did everyone in them agree to be shown? / 'हाम्रो बारेमा' का फोटो: कसले खिचेका, र फोटोमा भएका सबै देखाउन सहमत छन्?",,long,,Yes,Charity,Photo credit + consent
+AB13,1 Go live,About us / हाम्रो बारेमा,"A quote from a parent, teacher or volunteer (optional) / अभिभावक, शिक्षक वा स्वयंसेवकको भनाइ (ऐच्छिक)","1–3 sentences, with their name or role. Only if they agree to be shown.
+१–३ वाक्य, उहाँको नाम वा भूमिकासहित। उहाँ सहमत हुनुभए मात्र।",long,,Yes,Charity,Testimonial; needs consent
+CO01,1 Go live,Contact / सम्पर्क,"Your address, as it should appear in Nepali and English / ठेगाना, नेपाली र अंग्रेजीमा जसरी देखाउने",,long,,Yes,Charity,Footer + Contact
+CO02,1 Go live,Contact / सम्पर्क,Link to your office on Google Maps / गुगल नक्सामा तपाईंको कार्यालयको लिंक,"Open Google Maps, find your office, press Share and copy the link.
+गुगल नक्सा खोल्नुहोस्, कार्यालय खोज्नुहोस्, Share थिच्नुहोस् र लिंक कपी गर्नुहोस्।",short,,Yes,Charity,
+CO03,1 Go live,Contact / सम्पर्क,Phone number to show / देखाउने फोन नम्बर,"Leave empty to show no phone number.
+फोन नम्बर नदेखाउने भए खाली छोड्नुहोस्।",short,,Yes,Charity,
+CO04,1 Go live,Contact / सम्पर्क,Email address to show until the {domain} email is ready / {domain} इमेल तयार नहुन्जेल देखाउने इमेल,"Leave empty to show no email address for now.
+अहिलेलाई इमेल नदेखाउने भए खाली छोड्नुहोस्।",short,,Yes,Charity,
+CO05,1 Go live,Contact / सम्पर्क,Your Facebook page / तपाईंको फेसबुक पेज,,short,,Yes,Charity,
+CO06,1 Go live,Contact / सम्पर्क,Links to your other social media / अरू सामाजिक सञ्जालका लिंक,"Instagram, YouTube, TikTok or others, if you use them.
+Instagram, YouTube, TikTok वा अरू, प्रयोग गर्नुहुन्छ भने।",long,,Yes,Charity,
+RG01,1 Go live,Registration / दर्ता,District Administration Office registration number and district / जिल्ला प्रशासन कार्यालयको दर्ता नम्बर र जिल्ला,"Shown in the footer of every page, as on every charity's website.
+हरेक संस्थाको वेबसाइटमा जस्तै, हरेक पृष्ठको फुटरमा देखिन्छ।",short,,Yes,Charity,Registration line (standard)
+RG02,1 Go live,Registration / दर्ता,Social Welfare Council affiliation number / समाज कल्याण परिषद्को आबद्धता नम्बर,,short,,Yes,Charity,Registration line (standard)
+RG03,1 Go live,Registration / दर्ता,PAN / स्थायी लेखा नम्बर (प्यान),,short,,Yes,Charity,Registration line (standard)
+PR01,1 Go live,Decisions / निर्णयहरू,Who at your organisation looks after supporters' details? (role) / संस्थामा समर्थकहरूको विवरण कसले हेर्नुहुन्छ? (पद),"For the privacy notice, which we write for you.
+गोपनीयता सूचनाका लागि, जुन हामी तपाईंका लागि लेख्छौं।",short,,Yes,Charity,Privacy notice
+PR02,1 Go live,Decisions / निर्णयहरू,How long will you keep them? / कति समयसम्म राख्नुहुन्छ?,,short,,Yes,Charity,Privacy notice
+PR03,1 Go live,Decisions / निर्णयहरू,Who can a supporter contact to have their details deleted? / विवरण मेटाउन समर्थकले कसलाई सम्पर्क गर्ने?,,short,,Yes,Charity,Privacy notice
+WS01,1 Go live,Decisions / निर्णयहरू,"Who writes the English, and who checks it? / अंग्रेजी कसले लेख्ने, र कसले जाँच्ने?","At first, English can be just the home page and About us.
+सुरुमा, अंग्रेजी गृहपृष्ठ र 'हाम्रो बारेमा' मात्र भए पनि हुन्छ।",short,,Yes,Charity,
+WS02,1 Go live,Decisions / निर्णयहरू,"Dates: show them in BS, AD, or both? / मिति: वि.सं., ई.सं., वा दुवै?",,choice,BS / वि.सं. | AD / ई.सं. | Both / दुवै,Yes,Charity,
+WS03,1 Go live,Decisions / निर्णयहरू,Consent for photos and stories / फोटो र कथाका लागि सहमति,,choice,We already collect written consent / हामी लिखित सहमति लिन्छौं | Please send us a consent form / सहमति फारम पठाइदिनुहोस् | Not sure / थाहा छैन,Yes,Charity,
+WS04,1 Go live,Decisions / निर्णयहरू,"Who is the one person who sends us content and says ""yes, publish this""? (name or role) / सामग्री पठाउने र ""प्रकाशन गर्नुहोस्"" भन्ने एक जना को? (नाम वा पद)",,short,,Yes,Charity,
+WS05,1 Go live,Decisions / निर्णयहरू,Who would like to learn to add stories to the website themselves? (names or roles) / वेबसाइटमा आफैं कथा थप्न कसले सिक्न चाहनुहुन्छ? (नाम वा पद),,short,,Yes,Charity,
+GI01,1 Go live,Get involved / सहभागी हुनुहोस्,Which ways can people help you? / मानिसहरूले तपाईंलाई कसरी सहयोग गर्न सक्छन्?,"We show only the ones you choose.
+तपाईंले छानेका मात्र देखाउँछौं।",checkboxes,Volunteering / स्वयंसेवा | Raising money for you / तपाईंका लागि रकम जुटाउने | Partnering (organisations) / साझेदारी (संस्थाहरू) | Giving goods or time / सामान वा समय दिने | Other,Yes,Charity,
+GI02,1 Go live,Get involved / सहभागी हुनुहोस्,What should we ask volunteers? / स्वयंसेवकलाई के सोध्ने?,"For example name, phone, when they are free, how they can help.
+जस्तै नाम, फोन, कहिले फुर्सद हुन्छ, कसरी सहयोग गर्न सक्छन्।",long,,Yes,Charity,
+GI03,1 Go live,Get involved / सहभागी हुनुहोस्,Organisations that support you regularly and agree to show their logo / नियमित सहयोग गर्ने र लोगो देखाउन सहमत संस्थाहरू,"Their names; send their logos as files.
+उनीहरूको नाम; लोगो फाइलका रूपमा पठाउनुहोस्।",long,,Yes,Charity,Partners
+LF01,1 Go live,Logo and colours / लोगो र रङ,Your logo / तपाईंको लोगो,,upload,1,Yes,Charity,
+LF02,1 Go live,Logo and colours / लोगो र रङ,Website colours / वेबसाइटका रङ,,choice,Match our logo / हाम्रो लोगोसँग मिलाउने | Our own colours (write below) / आफ्नै रङ (तल लेख्नुहोस्) | You choose / तपाईं नै छान्नुहोस्,Yes,Charity,Brand settings
+LF03,1 Go live,Logo and colours / लोगो र रङ,Your colours / तपाईंका रङ,,short,,Yes,Charity,Brand settings
+LF04,1 Go live,Logo and colours / लोगो र रङ,The strip at the top and bottom of every page: light or dark? / हरेक पृष्ठको माथि र तलको पट्टी: हल्का वा गाढा?,,choice,Light / हल्का | Dark / गाढा | You choose / तपाईं नै छान्नुहोस्,Yes,Charity,Brand settings
+ST01,2 Stories,Stories / कथाहरू,Story title (up to 10 words) / कथाको शीर्षक (१० शब्दसम्म),,short,,Yes,Charity,One story per submission
+ST02,2 Stories,Stories / कथाहरू,Short summary (1–2 sentences) / छोटो सारांश (१–२ वाक्य),,long,,Yes,Charity,
+ST03,2 Stories,Stories / कथाहरू,The story (about 300–800 words) / कथा (करिब ३००–८०० शब्द),,long,,Yes,Charity,
+ST04,2 Stories,Stories / कथाहरू,Date it happened / घटना भएको मिति,,short,,Yes,Charity,
+ST05,2 Stories,Stories / कथाहरू,Photos for this story (1–3) / यस कथाका फोटो (१–३),,upload,3,Yes,Charity,
+ST06,2 Stories,Stories / कथाहरू,"Story photos: who took them, and did everyone in them agree to be shown? / कथाका फोटो: कसले खिचेका, र फोटोमा भएका सबै देखाउन सहमत छन्?",,long,,Yes,Charity,Photo credit + consent
+ST07,2 Stories,Stories / कथाहरू,Consent for this story / यस कथाका लागि सहमति,,choice,Everyone in it agreed in writing / सबैले लिखित सहमति दिनुभएको छ | Not yet / अझै छैन,Yes,Charity,
+AP01,3 Online giving,Appeals / सहयोग अपिल,What the appeal is for / अपिल केका लागि,,short,,Yes,Charity,One appeal per submission
+AP02,3 Online giving,Appeals / सहयोग अपिल,Why it matters (2–3 paragraphs) / किन आवश्यक छ (२–३ अनुच्छेद),,long,,Yes,Charity,
+AP03,3 Online giving,Appeals / सहयोग अपिल,"Summary, shown on the home page (up to 2 sentences) / गृहपृष्ठमा देखिने सारांश (२ वाक्यसम्म)",,long,,Yes,Charity,
+AP04,3 Online giving,Appeals / सहयोग अपिल,Photo for this appeal / यस अपिलको फोटो,,upload,1,Yes,Charity,
+AP05,3 Online giving,Appeals / सहयोग अपिल,"Appeal photo: who took it, and did everyone in it agree to be shown? / अपिलको फोटो: कसले खिचेको, र फोटोमा भएका सबै देखाउन सहमत छन्?",,long,,Yes,Charity,Photo credit + consent
+AP06,3 Online giving,Appeals / सहयोग अपिल,"Target amount, if you have one / लक्ष्य रकम (भए)",,short,,Yes,Charity,
+AP07,3 Online giving,Appeals / सहयोग अपिल,"End date, or ""ongoing"" / अन्तिम मिति, वा ""निरन्तर""",,short,,Yes,Charity,
+AP08,3 Online giving,Appeals / सहयोग अपिल,"Up to 4 suggested amounts, each with what it pays for / ४ वटासम्म सुझाव रकम, प्रत्येकले के खर्च पुर्‍याउँछ","Example: Rs 500: books for one child for a year.
+उदाहरण: रु ५००: एक बालबालिकाका लागि एक वर्षका किताब।",long,,Yes,Charity,
+DO01,1 Go live,Donate / दान दिनुहोस्,Which ways can people give to you? / मानिसहरूले तपाईंलाई कसरी दान दिन सक्छन्?,,checkboxes,eSewa | Khalti | QR code / QR कोड | Bank transfer / बैंक ट्रान्सफर | In person at our office / कार्यालयमा आएर | Other,Yes,Charity,Donate page (standard)
+DO02,1 Go live,Donate / दान दिनुहोस्,Bank details to show / देखाउने बैंक खाताको विवरण,"Account name, bank, branch and account number. Only an account in your organisation's name.
+खाताको नाम, बैंक, शाखा र खाता नम्बर। संस्थाको नाममा भएको खाता मात्र।",long,,Yes,Charity,
+DO03,1 Go live,Donate / दान दिनुहोस्,Your QR code for donations / दानका लागि तपाईंको QR कोड,,upload,1,Yes,Charity,
+DO04,1 Go live,Donate / दान दिनुहोस्,Where the money goes / रकम कहाँ जान्छ,"For example ""Rs 85 of every Rs 100 reaches the children"". Only if your audited accounts show it.
+जस्तै ""हरेक रु १०० मध्ये रु ८५ बालबालिकासम्म पुग्छ""। लेखापरीक्षण प्रतिवेदनले देखाउँछ भने मात्र।",long,,Yes,Charity,Home + Donate (standard)
+DO05,1 Go live,Donate / दान दिनुहोस्,Is your organisation approved by the Inland Revenue Department for tax-exempt donations? / दानमा कर छुटका लागि संस्था आन्तरिक राजस्व विभागबाट स्वीकृत छ?,"If yes, the Donate page tells donors they can deduct their gift from their taxable income.
+छ भने, दाताले दान रकम करयोग्य आयबाट घटाउन पाउँछन् भनी दान पृष्ठले बताउँछ।",choice,Yes / छ | No / छैन | Not sure / थाहा छैन,Yes,Charity,Tax relief line
+DO06,3 Online giving,Donate / दान दिनुहोस्,Does your organisation have an eSewa merchant account? / संस्थाको eSewa मर्चेन्ट खाता छ?,,choice,Yes / छ | No / छैन | Not sure / थाहा छैन,Yes,Charity,
+DO07,3 Online giving,Donate / दान दिनुहोस्,Does your organisation have a Khalti merchant account? / संस्थाको Khalti मर्चेन्ट खाता छ?,,choice,Yes / छ | No / छैन | Not sure / थाहा छैन,Yes,Charity,
+PB01,1 Go live,Before we publish / प्रकाशन गर्नुअघि,Please tick what you have checked / जाँच गरेका कुरामा चिनो लगाउनुहोस्,,checkboxes,Mission and banner photo / उद्देश्य र ब्यानर फोटो | About us words / 'हाम्रो बारेमा' का शब्द | Numbers / तथ्याङ्क | Contact details and social links / सम्पर्क विवरण र सामाजिक सञ्जाल | Registration details / दर्ता विवरण | Privacy notice and accessibility statement / गोपनीयता सूचना र पहुँच विवरण | Everyone in the photos agreed / फोटोमा भएका सबै सहमत | The preview on our phone / हाम्रो फोनमा पूर्वावलोकन,Yes,Charity,
+PB02,1 Go live,Before we publish / प्रकाशन गर्नुअघि,Can we publish the website? / वेबसाइट प्रकाशन गरौं?,,choice,"Yes, publish / हो, प्रकाशन गर्नुहोस् | Not yet (write below) / अझै होइन (तल लेख्नुहोस्)",Yes,Charity,
+PB03,1 Go live,Before we publish / प्रकाशन गर्नुअघि,What should change before we publish? / प्रकाशन गर्नुअघि के परिवर्तन गर्ने?,,long,,Yes,Charity,
+US01,1 Go live,Our side,{domain} approved and connected,,short,,No,Us,DNS on Cloudflare
+US02,1 Go live,Our side,Privacy notice written and approved,,short,,No,Us,
+US03,1 Go live,Our side,Accessibility statement written and approved,,short,,No,Us,
+US04,1 Go live,Our side,Brand settings set and contrast checked,,short,,No,Us,
+US05,3 Online giving,Our side,Email at {domain} set up,,short,,No,Us,Talk about cost first
+US06,3 Online giving,Our side,eSewa and Khalti live keys installed,,short,,No,Us,docs/hosting.md checklist
