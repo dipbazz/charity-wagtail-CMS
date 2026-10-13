@@ -14,13 +14,16 @@ uv run pytest --cov              # with coverage
 uv run pytest -m "not browser"   # without the browser tests (quicker)
 uv run ruff check . && uv run ruff format --check .
 uv run python manage.py makemigrations --check --dry-run
+node --test onboarding/tests/form-script.test.js   # the onboarding form script (JavaScript)
 ```
 
 pytest uses `charity.settings.test` (set in `pyproject.toml`).
 
 ## Where tests live
 
-Each app has a `tests/` package. A module's own logic is tested in its own test file
+Each app has a `tests/` package. The one exception is the onboarding form script, which runs in
+Google Sheets: its tests are JavaScript, in `onboarding/tests/`
+([Changing the script](onboarding.md#changing-the-script)). A module's own logic is tested in its own test file
 (`core/tests/test_mail.py` tests `core/mail.py`); code that uses it tests that use in its own
 files.
 

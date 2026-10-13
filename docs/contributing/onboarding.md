@@ -13,6 +13,7 @@ old copy, and we never send a guide or form as a file.
 | `guide.md` | The guide the charity reads: the plan, how its site is arranged (the [charity site standard](../site/standard.md)), and what to send |
 | `questions.csv` | One row per question in the form, in the order the form asks them; rows with `In form` set to `No` are our own steps, tracked but not asked |
 | `form-script.gs` | The Apps Script bound to each charity's tracker Sheet: it updates the tracker and guide from the pack and builds the form |
+| `tests/` | Tests for `form-script.gs` (never uploaded; see [Changing the script](#changing-the-script)) |
 
 The guide and questions use placeholders, filled in for each charity when they are uploaded:
 `{name_ne}`, `{name_en}`, `{domain}`, `{version}` (the release the pack comes from) and `{demo_url}`
@@ -68,6 +69,11 @@ for each charity still sending content:
 
 ## Changing the script
 
-Test a change to `form-script.gs` against fake Apps Script services before anyone pastes it into a
-Sheet, and once by hand on a copy of a tracker. Apps Script can't create upload questions, and a
+`form-script.gs` runs inside Google Sheets, so its tests are JavaScript, run by Node:
+`onboarding/tests/form-script.test.js` runs the script against fake Apps Script services
+(`onboarding/tests/fakes.js`), in its own CI step. Run them with
+`node --test onboarding/tests/form-script.test.js`. When a real service refuses something the
+fakes allowed, teach the fakes that rule first, so the test fails the way the Sheet did, then fix
+the script. Try a change once by hand on a copy of a tracker before anyone pastes it into a
+charity's Sheet. Apps Script can't create upload questions, and a
 Sheets table refuses some formatting, so the script skips those steps rather than failing.
