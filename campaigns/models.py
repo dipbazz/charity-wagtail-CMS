@@ -357,6 +357,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "received": received,
                 # Codes and names, not the classes, which templates would try to call.
                 "providers": [(provider.code, provider.name) for provider in providers],
+                "pay_with": either([provider.name for provider in providers]),
                 "latest": latest,
                 "unfinished": latest if latest and latest.status == PaymentStatus.WAITING else None,
                 "result": pay_page_result(request),

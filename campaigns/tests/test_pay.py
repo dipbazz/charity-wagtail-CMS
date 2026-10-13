@@ -124,6 +124,13 @@ class TestPayPage:
         assert form["action"] == f"{pay_url(donate_page, pledge)}fakepay/"
         assert form.find("input", attrs={"name": "csrfmiddlewaretoken"})
 
+    def test_names_whose_page_the_payer_will_pay_on(self, client, donate_page, pledge, settings):
+        settings.PAYMENT_KEYS = {**settings.PAYMENT_KEYS, "KHALTI_SECRET_KEY": "test-key"}
+
+        page = text(client.get(pay_url(donate_page, pledge)))
+
+        assert "You'll pay on the secure page of Khalti or Fake Pay, then come back here." in page
+
     def test_never_shows_a_test_account(self, client, donate_page, pledge):
         """It pushed the pay buttons down, and handed anyone a way to make test payments: the
         team finds the test accounts in the docs instead."""

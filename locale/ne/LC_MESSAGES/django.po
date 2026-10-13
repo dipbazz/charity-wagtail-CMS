@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-13 08:43+0100\n"
+"POT-Creation-Date: 2026-10-13 08:46+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -269,8 +269,9 @@ msgstr "मैले भुक्तानी गरेको छैन: भु�
 msgid "Pay online"
 msgstr "अनलाइनबाट भुक्तानी गर्नुहोस्"
 
-msgid "You'll pay on their own secure page, then come back here."
-msgstr "तपाईं उनीहरूकै सुरक्षित पृष्ठमा भुक्तानी गर्नुहुनेछ, अनि यहाँ फिर्ता आउनुहुनेछ।"
+#, python-format
+msgid "You'll pay on the secure page of %(pay_with)s, then come back here."
+msgstr "तपाईं %(pay_with)s को सुरक्षित पृष्ठमा भुक्तानी गर्नुहुनेछ, अनि यहाँ फिर्ता आउनुहुनेछ।"
 
 #, python-format
 msgid "Opening %(provider)s…"

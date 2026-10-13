@@ -78,7 +78,7 @@
                 {% if unfinished %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
                 <section aria-labelledby="pay-online">
                     <h2 id="pay-online">{% translate "Pay online" %}</h2>
-                    <p>{% translate "You'll pay on their own secure page, then come back here." %}</p>
+                    <p>{% blocktranslate %}You'll pay on the secure page of {{ pay_with }}, then come back here.{% endblocktranslate %}</p>
                     <div class="payment-options">
                         {% for code, name in providers %}
                             <form method="post" action="{% routablepageurl page 'start_payment' pledge.reference code %}">
