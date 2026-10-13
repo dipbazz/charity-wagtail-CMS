@@ -65,10 +65,12 @@
                         {% for code, name in providers %}
                             <form method="post" action="{% routablepageurl page 'start_payment' pledge.reference code %}">
                                 {% csrf_token %}
-                                <button class="button button-large" type="submit">{% blocktranslate with provider=name %}Pay with {{ provider }}{% endblocktranslate %}</button>
+                                <button class="button button-large" type="submit" data-busy-text="{% blocktranslate with provider=name %}Opening {{ provider }}…{% endblocktranslate %}">{% blocktranslate with provider=name %}Pay with {{ provider }}{% endblocktranslate %}</button>
                             </form>
                         {% endfor %}
                     </div>
+                    {# Says which provider is opening, for screen readers, while donate.js holds the buttons. #}
+                    <p class="visually-hidden" role="status" data-busy-status></p>
                 </section>
                 {% if unfinished %}</details>{% endif %}
             {% endif %}
@@ -86,4 +88,8 @@
             </section>
         {% endif %}
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/donate.js' %}"></script>
 {% endblock %}

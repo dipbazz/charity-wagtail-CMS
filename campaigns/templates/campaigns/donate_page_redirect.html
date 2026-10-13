@@ -22,7 +22,10 @@
                 <input type="hidden" name="{{ name }}" value="{{ value }}">
             {% endfor %}
             <p>{% translate "If nothing happens, press the button." %}</p>
-            <button class="button button-large" type="submit">{% blocktranslate with provider=provider.name %}Continue to {{ provider }}{% endblocktranslate %}</button>
+            <div class="payment-options">
+                <button class="button button-large" type="submit" data-busy-text="{% blocktranslate with provider=provider.name %}Opening {{ provider }}…{% endblocktranslate %}">{% blocktranslate with provider=provider.name %}Continue to {{ provider }}{% endblocktranslate %}</button>
+            </div>
+            <p class="visually-hidden" role="status" data-busy-status></p>
         </form>
     </div>
 {% endblock %}

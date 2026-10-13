@@ -229,6 +229,45 @@ class TestPayPage:
 
         assert layout_problems(site_page, pay_page) == []
 
+    def test_a_pay_button_says_its_busy_and_a_second_tap_does_nothing(
+        self, site_page, pay_page, fake_provider
+    ):
+        """On a slow connection the provider's page can take seconds: the buttons say so, and
+        tapping again doesn't start a second payment. Back from the provider (a page restored
+        from the browser's cache) gives working buttons again."""
+        site_page.route(
+            "https://pay.example.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body="Fake Pay"),
+        )
+        site_page.goto(SITE + pay_page)
+
+        busy, restored = site_page.evaluate(
+            """() => {
+                const read = () => ({
+                    labels: [...document.querySelectorAll(".payment-options button")].map(
+                        (button) => [button.textContent.trim(), button.disabled],
+                    ),
+                    busy: document.querySelector(".payment-options").ariaBusy,
+                    status: document.querySelector("[data-busy-status]").textContent.trim(),
+                });
+                const button = document.querySelector(".payment-options button");
+                button.click();
+                button.click();
+                const busy = read();
+                window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+                return [busy, read()];
+            }"""
+        )
+
+        assert busy == {
+            "labels": [["Opening Fake Pay…", True]],
+            "busy": "true",
+            "status": "Opening Fake Pay…",
+        }
+        assert restored == {"labels": [["Pay with Fake Pay", False]], "busy": None, "status": ""}
+        site_page.wait_for_url("https://pay.example.com/fakepay/")
+        assert Pledge.objects.get().payments.count() == 1
+
     def test_a_form_a_provider_asks_for_is_sent_at_once(self, site_page, pay_page, fake_provider):
         fake_provider.redirect = Redirect(
             "https://pay.example.com/form/", method="POST", fields={"amount": "2500", "sig": "a+b"}

@@ -295,6 +295,10 @@ Every page works without JavaScript:
 - **A form for a payment provider sends itself** (`donate.js`, `form[data-auto-submit]`), except
   when the page is reached with Back, so the payer can leave it. Without JavaScript it has a
   button.
+- **A pay button says it's busy** (`donate.js`, `button[data-busy-text]`): once pressed it reads
+  "Opening eSewa…", every pay button stops taking taps so a second tap can't start a second
+  payment, and a hidden status line tells screen readers. Back from the provider gives working
+  buttons again.
 
 ## Accessibility
 
