@@ -17,7 +17,10 @@ stops it coming back. Never offer a template, CSS, code or branch for one charit
 the standards (WCAG 2.2 AA, web conventions, the charity site standard in
 `docs/site/standard.md`, the law) before modern styling, and add modern styling only through the
 design tokens and shared components. Each charity has its own installation on a shared server;
-never build several charities into one (`docs/decisions.md`).
+never build several charities into one (`docs/decisions.md`). A change to what a charity must
+send or decide updates the onboarding pack in `onboarding/` in the same PR
+(`docs/contributing/onboarding.md`); a charity only ever gets links to its guide and form,
+never a file.
 
 ## Versions and changelog
 

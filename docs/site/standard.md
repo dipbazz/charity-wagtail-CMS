@@ -98,6 +98,9 @@ links to Reports and accounts.
 - **Changing the standard means changing this page,** in a pull request of its own, and every
   charity's site gets the change at the next release. A request from one charity becomes a change
   for every charity, or waits ([Principles](../contributing/index.md#principles)).
+- **What we ask a new charity for follows this page:** the onboarding pack's guide and questions
+  describe the same menu, and a test fails when a menu section here has no guide section or
+  question there ([Onboarding a charity](../contributing/onboarding.md)).
 
 ## What's built so far
 

@@ -52,6 +52,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | What mistakes must I not repeat? | [Security](contributing/security.md) |
 | How do I add a page type, a snippet or setting, or a block? | [Extending the site](contributing/extending.md) |
 | What's in the demo data? Photo credits? | [Demo content](contributing/demo-content.md) |
+| What do we ask a new charity for? How do its guide and form stay current? | [Onboarding a charity](contributing/onboarding.md) |
 | Issues, epics, the board, versions, the changelog, releasing? | [Issues, versions and releases](contributing/releases.md) |
 | How do I write or build these docs? | [Writing docs](contributing/writing-docs.md) |
 | Why SQLite, one server, `.live().public()`, pinned actions, permission migrations, Playwright? | [Decisions](decisions.md) |
