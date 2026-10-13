@@ -30,6 +30,10 @@ jobs:
           uv run ruff check .
           uv run ruff format --check .
 
+      # The onboarding form script runs in Google Sheets, so it's tested in Node, not pytest.
+      - name: Test the onboarding form script
+        run: node --test onboarding/tests/form-script.test.js
+
       - name: Check for missing migrations
         run: uv run python manage.py makemigrations --check --dry-run
         env:
