@@ -28,6 +28,10 @@
             {% if appeals_page %}
                 <p><a class="button" href="{% pageurl appeals_page %}">{% translate "See all our appeals" %}</a></p>
             {% endif %}
+        {% elif received %}
+            {# Paid, but for what the pledge said before it was changed: a person sorts out the difference. #}
+            <h1>{% translate "Thank you" %}</h1>
+            <p class="lead">{% if received.provider_reference %}{% blocktranslate with amount=received.display_amount provider=received.get_method_display reference=received.provider_reference %}We received {{ amount }} from you by {{ provider }} (reference {{ reference }}).{% endblocktranslate %}{% else %}{% blocktranslate with amount=received.display_amount provider=received.get_method_display %}We received {{ amount }} from you by {{ provider }}.{% endblocktranslate %}{% endif %} {% translate "Our team will be in touch." %}</p>
         {% else %}
             <h1>{% translate "Pay your gift" %}</h1>
             <dl class="gift-summary">

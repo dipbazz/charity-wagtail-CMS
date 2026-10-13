@@ -340,19 +340,21 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             Pledge.objects.select_related("appeal"), reference=reference, page=self
         )
         payments = list(pledge.payments.all())  # newest first
-        paid = None
-        # The pledge says whether it's paid: an attempt for another amount doesn't pay it.
-        if pledge.payment_status == PaymentStatus.PAID:
-            paid = next((p for p in payments if p.status == PaymentStatus.PAID), None)
+        received = next((p for p in payments if p.status == PaymentStatus.PAID), None)
+        # The pledge says whether it's paid: an attempt for another amount (the pledge changed
+        # after it started) doesn't pay it, but the money was still received, and isn't asked for
+        # again.
+        paid = received if pledge.payment_status == PaymentStatus.PAID else None
         latest = payments[0] if payments else None
         site_settings = SiteSettings.for_request(request)
-        providers = [] if paid else providers_for(pledge.currency, Decimal(pledge.amount))
+        providers = [] if received else providers_for(pledge.currency, Decimal(pledge.amount))
         return self.render(
             request,
             template=self.pay_page_template,
             context_overrides={
                 "pledge": pledge,
                 "paid": paid,
+                "received": received,
                 # Codes and names, not the classes, which templates would try to call.
                 "providers": [(provider.code, provider.name) for provider in providers],
                 "latest": latest,
@@ -628,8 +630,11 @@ class Payment(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        amount = format_money(self.amount, self.currency)
+        amount = self.display_amount()
         return f"{self.get_method_display()} {amount}: {self.get_status_display().lower()}"
+
+    def display_amount(self):
+        return format_money(self.amount, self.currency)
 
     def record(self, status, provider_reference=""):
         """Save what the provider says about this payment, and what that means for its pledge.

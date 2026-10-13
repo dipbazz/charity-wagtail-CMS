@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-13 08:26+0100\n"
+"POT-Creation-Date: 2026-10-13 08:30+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -199,6 +199,17 @@ msgstr "%(provider)s सन्दर्भ नम्बर: %(reference)s"
 
 msgid "This was a test payment, so no money was taken."
 msgstr "यो परीक्षण भुक्तानी थियो, त्यसैले कुनै पैसा लिइएन।"
+
+#, python-format
+msgid "We received %(amount)s from you by %(provider)s (reference %(reference)s)."
+msgstr "हामीले तपाईंबाट %(provider)s मार्फत %(amount)s पायौं (सन्दर्भ %(reference)s)।"
+
+#, python-format
+msgid "We received %(amount)s from you by %(provider)s."
+msgstr "हामीले तपाईंबाट %(provider)s मार्फत %(amount)s पायौं।"
+
+msgid "Our team will be in touch."
+msgstr "हाम्रो टोलीले तपाईंलाई सम्पर्क गर्नेछ।"
 
 msgid "Your gift"
 msgstr "तपाईंको दान"

@@ -465,9 +465,14 @@ class TestComingBack:
 
         client.get(return_url(donate_page, payment))
 
-        page = text(client.get(pay_url(donate_page, pledge)))
+        response = client.get(pay_url(donate_page, pledge))
+        page = text(response)
         assert "has reached us" not in page
-        assert "Pay your gift" in page
+        # What was received, and no way to pay again: a person sorts out the difference.
+        assert "We received Rs 2,500 from you by Fake Pay (reference FAKE-123)." in page
+        assert "Our team will be in touch." in page
+        assert pay_buttons(response) == []
+        assert soup(response).find(id="pay-in-person") is None
 
     def test_an_unknown_payment_isnt_found(self, client, donate_page, fake_provider):
         assert client.get(f"{donate_page.url}payment/{uuid.uuid4()}/").status_code == 404

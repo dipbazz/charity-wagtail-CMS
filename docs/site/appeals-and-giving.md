@@ -126,7 +126,8 @@ provider's own IDs, and whether it ran in the provider's test system. A pledge's
 (waiting, paid or failed) and the time it was paid follow from its payments, and only
 `Payment.record()` changes them. Paid never goes back. A payment pays its pledge only if it was for
 the pledge's amount and currency: a pledge changed after an attempt started (in the admin, say)
-stays unpaid until someone looks.
+stays unpaid until someone looks. Its pay page then says what was received ("We received Rs 2,500
+from you by Khalti (reference …). Our team will be in touch.") and offers no way to pay again.
 
 **Which providers are offered** is each installation's own setting: a provider is offered once all
 its keys are set ([Running the live site](../hosting.md#paying-pledges-online)), and only for the
