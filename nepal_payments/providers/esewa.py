@@ -20,6 +20,7 @@ from nepal_payments.base import (
     Redirect,
     Started,
     Status,
+    UnreadableAnswer,
 )
 
 logger = logging.getLogger(__name__)
@@ -34,14 +35,20 @@ STATUS_URL = {
     True: "https://epay.esewa.com.np/api/epay/transaction/status/",
 }
 STATUSES = {
-    "COMPLETE": Status.PAID,
-    "PENDING": Status.WAITING,
-    "AMBIGUOUS": Status.WAITING,
+    "COMPLETE": (Status.PAID, "eSewa says it's paid."),
+    "PENDING": (Status.WAITING, "eSewa hasn't finished the payment yet."),
+    "AMBIGUOUS": (Status.WAITING, "eSewa has the payment on hold and hasn't decided yet."),
     # Some of the money was kept, so it's neither paid in full nor failed: a person must look.
-    "PARTIAL_REFUND": Status.WAITING,
-    "NOT_FOUND": Status.FAILED,  # never paid, or eSewa's session expired
-    "CANCELED": Status.FAILED,
-    "FULL_REFUND": Status.FAILED,
+    "PARTIAL_REFUND": (
+        Status.WAITING,
+        "eSewa refunded part of it. Check what was kept in eSewa's merchant portal.",
+    ),
+    "NOT_FOUND": (
+        Status.FAILED,
+        "eSewa has no payment for it: the payer didn't pay, or eSewa's session ran out.",
+    ),
+    "CANCELED": (Status.FAILED, "The payer cancelled at eSewa. Nothing was taken."),
+    "FULL_REFUND": (Status.FAILED, "eSewa refunded it in full."),
 }
 SIGNED_FIELDS = ("total_amount", "transaction_uuid", "product_code")
 
@@ -56,6 +63,7 @@ class ESewa(PaymentProvider):
     test_keys = {"PRODUCT_CODE": "EPAYTEST", "SECRET_KEY": "8gBm/:&EnhH.1/q"}
     test_login = {"id": "9711111111", "password": "Nepal@123", "otp": "123456"}
     order = 10
+    statuses = STATUSES
 
     @staticmethod
     def sign(message, secret_key):
@@ -95,17 +103,18 @@ class ESewa(PaymentProvider):
         )
         status, answer = http.request_json(f"{STATUS_URL[self.live]}?{query}")
         if status != 200 or not isinstance(answer, dict):
-            raise ProviderUnavailable(f"eSewa's status check answered {status}: {answer!r}")
+            raise UnreadableAnswer(f"eSewa's status check answered {status}: {answer!r}")
         if "error_message" in answer:
             raise ProviderUnavailable(f"eSewa's status check: {answer['error_message']}")
         echoed = (answer.get("transaction_uuid"), answer.get("product_code"))
         if echoed != (reference, product_code) or read_amount(answer.get("total_amount")) != amount:
             logger.warning("eSewa answered about another payment than %s: %r", reference, answer)
-            raise ProviderUnavailable("eSewa's answer was about another payment.")
+            raise UnreadableAnswer("eSewa's answer was about another payment.")
         if answer.get("status") not in STATUSES:
             logger.warning("eSewa gave payment %s an unknown status: %r", reference, answer)
-            raise ProviderUnavailable(f"eSewa's status {answer.get('status')!r} isn't known.")
-        return Outcome(STATUSES[answer["status"]], provider_reference=answer.get("ref_id") or "")
+            raise UnreadableAnswer(f"eSewa's status {answer.get('status')!r} isn't known.")
+        word = answer["status"]
+        return Outcome(STATUSES[word][0], provider_reference=answer.get("ref_id") or "", word=word)
 
 
 def amount_text(amount):

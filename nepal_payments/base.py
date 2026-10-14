@@ -29,6 +29,12 @@ class ProviderUnavailable(PaymentError):
     is known about the payment: leave it as it was, and ask again later."""
 
 
+class UnreadableAnswer(ProviderUnavailable):
+    """The provider answered, but not with anything that can be read: not JSON, a status it isn't
+    known to use, or an answer about another payment. Handled as ProviderUnavailable, but told
+    apart from a provider that couldn't be reached at all."""
+
+
 class ProviderRefused(PaymentError):
     """The provider turned the request down, e.g. a wrong key or an amount below its minimum.
     Asking again won't help."""
@@ -72,6 +78,8 @@ class Outcome:
     status: Status
     # The provider's transaction ID once paid, to find the payment in its statements.
     provider_reference: str = ""
+    # The provider's own word for the status, one of its `statuses`, to match its records.
+    word: str = ""
 
 
 class PaymentProvider(ABC):
@@ -95,6 +103,10 @@ class PaymentProvider(ABC):
     # publishes it: {"id": …, "password": …, "mpin": …, "otp": …}.
     test_login: ClassVar[dict[str, str]] = {}
     order: ClassVar[int] = 100  # where it suggests it's listed among providers, lowest first
+    # Every word the provider answers `check()` with: what it means, and a sentence for the people
+    # who follow payments up, e.g. {"CANCELED": (Status.FAILED, "The payer cancelled at eSewa.")}.
+    # A word not in here is an answer that can't be read.
+    statuses: ClassVar[dict[str, tuple[Status, str]]] = {}
 
     def __init__(self, *, live=False, **keys):
         """`live=True` takes real money; otherwise the provider's test system is used."""
@@ -109,6 +121,12 @@ class PaymentProvider(ABC):
 
     def __repr__(self):
         return f"<{type(self).__name__} {'live' if self.live else 'test'}>"
+
+    @classmethod
+    def describe(cls, word):
+        """The sentence for one of the provider's words; "" for a word it isn't known to use."""
+        known = cls.statuses.get(word)
+        return known[1] if known else ""
 
     @classmethod
     def accepts(cls, currency, amount):
@@ -132,5 +150,6 @@ class PaymentProvider(ABC):
         the provider's ID from `start()`. Never decided from what the payer's browser brings
         back, which anyone could change.
 
-        Raises ProviderUnavailable when the provider can't be reached or read.
+        Raises ProviderUnavailable when the provider can't be reached, or UnreadableAnswer (a
+        kind of it) when what it answered can't be read.
         """

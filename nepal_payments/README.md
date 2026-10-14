@@ -57,10 +57,18 @@ if outcome.status is Status.PAID:
 ```
 
 `check()` answers `Status.PAID`, `Status.WAITING` (not finished, or the gateway hasn't decided)
-or `Status.FAILED` (cancelled, expired or refunded). When the gateway can't be reached it raises
-`ProviderUnavailable`: nothing is known, so leave the payment as it was and ask again later.
-`start()` raises `ProviderUnavailable`, or `ProviderRefused` when the gateway turns the request
-down (a wrong key, an amount below its minimum).
+or `Status.FAILED` (cancelled, expired or refunded), with the gateway's own word for it
+(`outcome.word`, such as `CANCELED`). Each provider's `statuses` lists every word it answers with,
+what it means and a sentence for the people who follow payments up:
+`ESewa.describe("CANCELED")` is "The payer cancelled at eSewa. Nothing was taken."
+
+When the gateway can't be reached it raises `ProviderUnavailable`: nothing is known, so leave the
+payment as it was and ask again later. When it answers with something that can't be read (not
+JSON, a word it isn't known to use, an answer about another payment) it raises `UnreadableAnswer`,
+a kind of `ProviderUnavailable`, so the two can be told apart. `start()` raises either, or
+`ProviderRefused` when the gateway turns the request down (a wrong key, an amount below its
+minimum). An error's message can quote the gateway's answer: log it, but don't store it or show
+it to anyone.
 
 Every provider can say which payments it takes, so a page can offer only those that apply:
 `Khalti.accepts("NPR", Decimal(5))` is `False` (Khalti's minimum is Rs 10).
@@ -78,20 +86,26 @@ Every provider can say which payments it takes, so a page can offer only those t
        keys = ("MERCHANT_CODE", "API_USER", "API_PASSWORD")
        test_login = {}  # an account on its test system anyone may use, if it publishes one
        order = 30  # where it's suggested in a list of providers
+       statuses = {  # every word its check answers with: what it means, and a sentence
+           "SUCCESS": (Status.PAID, "IME Pay says it's paid."),
+           "CANCELLED": (Status.FAILED, "The payer cancelled at IME Pay. Nothing was taken."),
+       }
 
        def start(self, request): ...  # return Started(Redirect(...), provider_id=...)
        def check(self, reference, amount, provider_id=""): ...  # return Outcome(...)
    ```
 
-   Reach the gateway only through `http.request_json` (import the module, `from nepal_payments
-   import http`, and call `http.request_json`), so tests can stand in for it. Use
-   `self.config[...]` for the keys and `self.live` to choose between its test and live
-   addresses.
+   `check()` returns `Outcome(status, provider_reference=…, word=…)` with the gateway's own word,
+   and raises `UnreadableAnswer` for a word not in `statuses`. Reach the gateway only through
+   `http.request_json` (import the module, `from nepal_payments import http`, and call
+   `http.request_json`), so tests can stand in for it. Use `self.config[...]` for the keys and
+   `self.live` to choose between its test and live addresses.
 2. **Run the tests.** `tests/test_contract.py` checks every provider it finds, yours included:
    - it describes itself;
    - it needs its keys;
    - it sends the payer only to an `https` page;
-   - it never says *paid* for an answer it can't read;
+   - it gives every word in `statuses` a meaning and a sentence;
+   - it never says *paid* for an answer it can't read, and raises `UnreadableAnswer` for one;
    - it raises `ProviderUnavailable` when the gateway can't be reached;
    - its test mode never touches the live system.
 3. **Write `tests/test_<code>.py`** for the gateway's own API: the request it sends, and each

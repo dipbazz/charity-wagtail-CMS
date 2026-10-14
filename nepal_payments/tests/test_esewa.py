@@ -12,6 +12,7 @@ from nepal_payments import (
     PaymentRequest,
     ProviderUnavailable,
     Status,
+    UnreadableAnswer,
     get_provider,
 )
 from nepal_payments.providers.esewa import ESewa
@@ -145,6 +146,7 @@ class TestCheck:
 
         assert outcome.status is Status.PAID
         assert outcome.provider_reference == "000AWEO"
+        assert outcome.word == "COMPLETE"
 
     @pytest.mark.parametrize(
         ("answer", "status"),
@@ -160,7 +162,10 @@ class TestCheck:
     def test_every_other_status_is_not_paid(self, provider_server, answer, status):
         provider_server.answer(200, status_answer(answer))
 
-        assert esewa().check(REFERENCE, Decimal(2500)).status is status
+        outcome = esewa().check(REFERENCE, Decimal(2500))
+
+        assert outcome.status is status
+        assert outcome.word == answer
 
     @pytest.mark.parametrize("total", [2500, "2500.0", "2,500.0"])
     def test_reads_the_amount_however_esewa_writes_it(self, provider_server, total):
@@ -180,7 +185,7 @@ class TestCheck:
     def test_an_answer_about_another_payment_tells_us_nothing(self, provider_server, changes):
         provider_server.answer(200, status_answer(**changes))
 
-        with pytest.raises(ProviderUnavailable):
+        with pytest.raises(UnreadableAnswer):
             esewa().check(REFERENCE, Decimal(2500))
 
     # Regression: ISSUE-007 — an amount of "sNaN" raised decimal.InvalidOperation when compared,
@@ -189,12 +194,14 @@ class TestCheck:
     def test_an_amount_that_isnt_one_tells_us_nothing(self, provider_server, total):
         provider_server.answer(200, status_answer(total_amount=total))
 
-        with pytest.raises(ProviderUnavailable):
+        with pytest.raises(UnreadableAnswer):
             esewa().check(REFERENCE, Decimal(2500))
 
     def test_esewa_saying_its_unavailable_tells_us_nothing(self, provider_server):
         unavailable = {"code": 0, "error_message": "Service is currently unavailable"}
         provider_server.answer(200, unavailable)
 
-        with pytest.raises(ProviderUnavailable, match="Service is currently unavailable"):
+        with pytest.raises(ProviderUnavailable, match="Service is currently unavailable") as raised:
             esewa().check(REFERENCE, Decimal(2500))
+
+        assert not isinstance(raised.value, UnreadableAnswer)

@@ -11,8 +11,8 @@ import pytest
 from nepal_payments import (
     PaymentRequest,
     ProviderRefused,
-    ProviderUnavailable,
     Status,
+    UnreadableAnswer,
     get_provider,
 )
 from nepal_payments.providers.khalti import Khalti
@@ -140,7 +140,7 @@ class TestStart:
     def test_sends_the_payer_nowhere_but_khaltis_own_page(self, provider_server, live, payment_url):
         provider_server.answer(200, started_answer(payment_url=payment_url))
 
-        with pytest.raises(ProviderUnavailable, match="payment page"):
+        with pytest.raises(UnreadableAnswer, match="payment page"):
             khalti(live).start(request())
 
     def test_a_refused_payment_says_why(self, provider_server):
@@ -165,7 +165,7 @@ class TestStart:
     def test_an_answer_without_a_payment_page_tells_us_nothing(self, provider_server, answer):
         provider_server.answer(200, answer)
 
-        with pytest.raises(ProviderUnavailable):
+        with pytest.raises(UnreadableAnswer):
             khalti().start(request())
 
 
@@ -195,6 +195,7 @@ class TestCheck:
 
         assert outcome.status is Status.PAID
         assert outcome.provider_reference == "GFq9PFS7b2iYvL8Lir9oXe"
+        assert outcome.word == "Completed"
 
     @pytest.mark.parametrize(
         ("http_status", "answer", "status"),
@@ -210,12 +211,19 @@ class TestCheck:
     def test_every_other_status_is_not_paid(self, provider_server, http_status, answer, status):
         provider_server.answer(http_status, lookup_answer(answer))
 
-        assert khalti().check(REFERENCE, Decimal(2500), provider_id=PIDX).status is status
+        outcome = khalti().check(REFERENCE, Decimal(2500), provider_id=PIDX)
+
+        assert outcome.status is status
+        assert outcome.word == answer
 
     def test_a_refunded_payment_isnt_paid(self, provider_server):
+        """Nor described as completed: its sentence would say it's paid."""
         provider_server.answer(200, lookup_answer("Completed", refunded=True))
 
-        assert khalti().check(REFERENCE, Decimal(2500), provider_id=PIDX).status is Status.FAILED
+        outcome = khalti().check(REFERENCE, Decimal(2500), provider_id=PIDX)
+
+        assert outcome.status is Status.FAILED
+        assert outcome.word == "Refunded"
 
     @pytest.mark.parametrize(
         "changes",
@@ -224,13 +232,13 @@ class TestCheck:
     def test_an_answer_about_another_payment_tells_us_nothing(self, provider_server, changes):
         provider_server.answer(200, lookup_answer(**changes))
 
-        with pytest.raises(ProviderUnavailable):
+        with pytest.raises(UnreadableAnswer):
             khalti().check(REFERENCE, Decimal(2500), provider_id=PIDX)
 
     def test_a_payment_khalti_doesnt_know_tells_us_nothing(self, provider_server):
         provider_server.answer(404, {"detail": "Not found.", "error_key": "validation_error"})
 
-        with pytest.raises(ProviderUnavailable):
+        with pytest.raises(UnreadableAnswer):
             khalti().check(REFERENCE, Decimal(2500), provider_id=PIDX)
 
     def test_a_wrong_key_is_refused(self, provider_server):
