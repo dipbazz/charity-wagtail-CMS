@@ -5,14 +5,20 @@ from decimal import Decimal
 import pytest
 from django.core import checks
 
-from campaigns.models import Payment, PaymentStatus, Pledge
+from campaigns.models import Payment, PaymentStatus, PaymentStep, Pledge, StepKind
 from campaigns.payments import (
     check_payment_keys,
     method_choices,
     provider_for,
     providers_for,
 )
-from nepal_payments import Status
+from nepal_payments import (
+    Outcome,
+    ProviderRefused,
+    ProviderUnavailable,
+    Status,
+    UnreadableAnswer,
+)
 from nepal_payments.providers.esewa import ESewa
 from nepal_payments.providers.khalti import Khalti
 
@@ -223,3 +229,101 @@ class TestPayment:
 
     def test_statuses_are_the_payment_packages(self):
         assert [status.value for status in Status] == PaymentStatus.values
+
+
+def steps(payment):
+    return [(step.kind, step.word, step.by) for step in payment.steps.all()]
+
+
+class TestAskingTheProvider:
+    """Payment.ask(), the one way the site asks a provider about a payment: from the payer's
+    return, the team's check and a scheduled check alike. Each ask is a step in its history."""
+
+    @pytest.fixture
+    def payment(self, pledge, fake_provider):
+        return pledge.start_payment("fakepay", live=False)
+
+    def test_records_the_answer_with_the_providers_word(self, payment, fake_provider):
+        fake_provider.outcome = Outcome(Status.FAILED, word="CANCELLED")
+
+        outcome = payment.ask()
+
+        assert outcome.status is Status.FAILED
+        assert Payment.objects.get(pk=payment.pk).status == PaymentStatus.FAILED
+        assert steps(payment) == [(StepKind.ASKED, "CANCELLED", None)]
+
+    def test_asks_with_our_own_reference_and_amount(self, payment, fake_provider):
+        payment.ask()
+
+        assert fake_provider.checked == [(str(payment.reference), Decimal(2500), "")]
+
+    def test_every_ask_is_a_step_even_with_the_same_answer(self, payment, fake_provider):
+        """So the history shows each time someone asked, though nothing changed."""
+        fake_provider.outcome = Outcome(Status.WAITING, word="PENDING")
+
+        payment.ask()
+        payment.ask()
+
+        assert steps(payment) == [(StepKind.ASKED, "PENDING", None)] * 2
+
+    def test_records_who_asked(self, payment, django_user_model):
+        sita = django_user_model.objects.create_user(username="sita")
+
+        payment.ask(by=sita)
+
+        assert steps(payment) == [(StepKind.ASKED, "DONE", sita)]
+
+    def test_never_stores_a_word_the_provider_isnt_known_to_use(self, payment, fake_provider):
+        """Only a provider's known words are stored: anything else could be the payer's own
+        details."""
+        fake_provider.outcome = Outcome(Status.WAITING, word="Paid by 9841234567")
+
+        payment.ask()
+
+        assert steps(payment) == [(StepKind.ASKED, "", None)]
+
+    @pytest.mark.parametrize(
+        ("error", "kind"),
+        [
+            (ProviderUnavailable("Timed out asking for 9841234567"), StepKind.UNREACHABLE),
+            (UnreadableAnswer("Answered {'mobile': '9841234567'}"), StepKind.UNREADABLE),
+            (ProviderRefused("Refused 9841234567's payment"), StepKind.REFUSED),
+            (ValueError("Needs 9841234567's pidx"), StepKind.NOT_ASKED),
+        ],
+        ids=["unreachable", "unreadable", "refused", "can't ask"],
+    )
+    def test_an_error_is_a_step_without_its_text(self, payment, fake_provider, error, kind):
+        """An error's text can quote the provider's reply, which can hold the payer's details:
+        it goes to the log, never into the history."""
+        fake_provider.failure = error
+
+        assert payment.ask() is None
+
+        assert steps(payment) == [(kind, "", None)]
+        assert "9841234567" not in str(list(PaymentStep.objects.values()))
+        assert Payment.objects.get(pk=payment.pk).status == PaymentStatus.WAITING
+
+    @pytest.mark.parametrize("case", ["provider gone", "other mode"])
+    def test_a_provider_that_cant_be_asked_isnt(self, payment, fake_provider, settings, case):
+        """One no longer set up, or set up for the other system (test or live), whose keys can't
+        look up this payment."""
+        if case == "provider gone":
+            settings.PAYMENT_KEYS = {}
+        else:
+            settings.LIVE_PAYMENTS = True
+
+        assert payment.ask() is None
+
+        assert fake_provider.checked == []
+        assert steps(payment) == [(StepKind.NOT_ASKED, "", None)]
+
+    def test_steps_are_kept_in_the_order_they_happened(self, payment):
+        payment.add_step(StepKind.SENT)
+        payment.add_step(StepKind.CAME_BACK)
+        payment.ask()
+
+        assert [kind for kind, _, _ in steps(payment)] == [
+            StepKind.SENT,
+            StepKind.CAME_BACK,
+            StepKind.ASKED,
+        ]

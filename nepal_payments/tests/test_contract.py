@@ -6,7 +6,14 @@ from decimal import Decimal
 
 import pytest
 
-from nepal_payments import PaymentError, PaymentRequest, ProviderUnavailable, Status, all_providers
+from nepal_payments import (
+    PaymentError,
+    PaymentRequest,
+    ProviderUnavailable,
+    Status,
+    UnreadableAnswer,
+    all_providers,
+)
 
 each_provider = pytest.mark.parametrize(
     "provider", list(all_providers().values()), ids=lambda provider: provider.code
@@ -49,6 +56,18 @@ def test_describes_itself(provider):
 
 
 @each_provider
+def test_explains_each_of_its_statuses(provider):
+    """Every word it may answer with means paid, waiting or failed, and has a sentence for the
+    people who follow payments up, who won't know the provider's own words."""
+    assert provider.statuses
+    for word, (status, sentence) in provider.statuses.items():
+        assert word.strip() and isinstance(status, Status)
+        assert sentence == sentence.strip() and sentence.endswith(".")
+        assert provider.describe(word) == sentence
+    assert provider.describe("NO_SUCH_WORD") == ""
+
+
+@each_provider
 def test_needs_its_keys(provider):
     with pytest.raises(ValueError, match=provider.keys[0]):
         provider()
@@ -79,12 +98,24 @@ def test_never_says_paid_for_an_answer_it_cant_read(provider, provider_server, s
 
 
 @each_provider
+@pytest.mark.parametrize("body", [body for status, body in UNREADABLE if status == 200])
+def test_says_so_when_it_cant_read_an_answer(provider, provider_server, body):
+    """Apart from not reaching the provider at all, so the team can tell the two apart."""
+    provider_server.answer(200, body)
+
+    with pytest.raises(UnreadableAnswer):
+        set_up(provider).check(REQUEST.reference, REQUEST.amount, provider_id="abc123")
+
+
+@each_provider
 def test_says_so_when_it_cant_reach_the_provider(provider, provider_server):
     """So the caller leaves the payment as it was, rather than marking it failed."""
     provider_server.fail()
 
-    with pytest.raises(ProviderUnavailable):
+    with pytest.raises(ProviderUnavailable) as raised:
         set_up(provider).check(REQUEST.reference, REQUEST.amount, provider_id="abc123")
+
+    assert not isinstance(raised.value, UnreadableAnswer)
 
 
 @each_provider

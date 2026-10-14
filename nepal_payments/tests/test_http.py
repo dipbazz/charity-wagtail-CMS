@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from nepal_payments import ProviderUnavailable, http
+from nepal_payments import ProviderUnavailable, UnreadableAnswer, http
 
 
 class Answers(BaseHTTPRequestHandler):
@@ -74,16 +74,25 @@ def test_passes_on_the_json_of_a_success_or_a_refusal(server, status):
     assert http.request_json(f"{server}/{status}/json") == (status, {"status": "Completed"})
 
 
-@pytest.mark.parametrize("path", ["/500/json", "/503/json", "/200/text"])
-def test_an_error_or_an_answer_that_isnt_json_means_unavailable(server, path):
-    with pytest.raises(ProviderUnavailable):
+@pytest.mark.parametrize("path", ["/500/json", "/503/json"])
+def test_a_server_error_means_unavailable(server, path):
+    with pytest.raises(ProviderUnavailable) as raised:
         http.request_json(server + path)
+
+    assert not isinstance(raised.value, UnreadableAnswer)
+
+
+def test_an_answer_that_isnt_json_cant_be_read(server):
+    """Reached, but saying nothing that can be read: the team is told so, apart from a
+    provider that couldn't be reached."""
+    with pytest.raises(UnreadableAnswer):
+        http.request_json(f"{server}/200/text")
 
 
 # Regression: ISSUE-006 — JSON nested too deep to read raised RecursionError, which isn't a
 # ValueError, so a payer coming back got a server error. Found by /qa on 2026-10-12.
-def test_json_too_deep_to_read_means_unavailable(server):
-    with pytest.raises(ProviderUnavailable):
+def test_json_too_deep_to_read_cant_be_read(server):
+    with pytest.raises(UnreadableAnswer):
         http.request_json(f"{server}/200/deep")
 
 

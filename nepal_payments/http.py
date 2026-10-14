@@ -9,7 +9,7 @@ import json
 import urllib.error
 import urllib.request
 
-from nepal_payments.base import ProviderUnavailable
+from nepal_payments.base import ProviderUnavailable, UnreadableAnswer
 
 # Seconds to wait for a provider. A payer is waiting too, so don't hang on a slow one.
 TIMEOUT = 10
@@ -31,8 +31,8 @@ opener = urllib.request.build_opener(NoRedirects)
 
 def request_json(url, *, method="GET", data=None, headers=None):
     """(status, JSON) from the provider, for a success or a refusal (4xx), which providers
-    explain in JSON. Raises ProviderUnavailable when it can't be reached, redirects, has a server
-    error (5xx) or answers with something that isn't JSON.
+    explain in JSON. Raises ProviderUnavailable when it can't be reached, redirects or has a
+    server error (5xx), and UnreadableAnswer when it answers with something that isn't JSON.
     """
     body = None if data is None else json.dumps(data).encode()
     request = urllib.request.Request(
@@ -61,4 +61,4 @@ def request_json(url, *, method="GET", data=None, headers=None):
         return status, json.loads(raw)
     # Nested deeper than Python recurses is RecursionError, not a ValueError.
     except (ValueError, RecursionError) as error:
-        raise ProviderUnavailable(f"{method} {url} answered {status}, not in JSON.") from error
+        raise UnreadableAnswer(f"{method} {url} answered {status}, not in JSON.") from error

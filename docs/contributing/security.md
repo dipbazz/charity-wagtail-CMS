@@ -60,6 +60,11 @@ anyone can type it; a test sends a forged return and checks that nothing changes
   sending its form again starts a new pledge rather than changing it, and a payment for another
   amount or currency (a pledge changed in the admin meanwhile) leaves the pledge unpaid. Otherwise
   paying Rs 10 could mark a Rs 1,00,000 pledge as received.
+- **A payment's history stores no reply.** A step is a kind from a fixed list, a time, the
+  person who did it, and the provider's word only if it's one of that provider's `statuses`. An
+  error's text can quote the provider's reply, which can hold the payer's ID or phone number, so it
+  goes only to the log. `Payment.ask()` is the one place the site asks a provider and records
+  what it said, so this rule lives in one place; tests check an error's text is never stored.
 - **Merchant keys live in the environment** (`DJANGO_PAYMENT_*`), never in git, the admin or the
   database. Providers keep them out of their `repr()` and logs.
 - **A provider's answer comes only from the provider.** `nepal_payments.http` never follows a
