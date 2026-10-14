@@ -303,6 +303,32 @@ class TestStartingAPayment:
 
         assert response["Location"] == pay_url(donate_page, pledge)
 
+    def test_once_paid_another_way_the_providers_form_isnt_sent_again(
+        self, client, donate_page, pledge, fake_provider
+    ):
+        """Back through history to a form not sent yet, after paying with another provider,
+        would take the money twice."""
+        fake_provider.redirect = Redirect("https://pay.example.com/form/", method="POST")
+        go = start(client, donate_page, pledge)["Location"]
+        pledge.start_payment("fakepay", live=False).record(Status.PAID, "FAKE-2")
+
+        response = client.get(go)
+
+        assert response.status_code == 303
+        assert response["Location"] == pay_url(donate_page, pledge)
+
+    def test_money_received_for_an_older_amount_isnt_asked_for_again(
+        self, client, donate_page, pledge
+    ):
+        payment = pledge.start_payment("fakepay", live=False)
+        Pledge.objects.filter(pk=pledge.pk).update(amount=5000)  # changed since, in the admin
+        payment.record(Status.PAID, "FAKE-1")
+
+        response = start(client, donate_page, pledge)
+
+        assert response["Location"] == pay_url(donate_page, pledge)
+        assert Payment.objects.count() == 1
+
     def test_only_by_sending_the_form(self, client, donate_page, pledge):
         response = client.get(f"{pay_url(donate_page, pledge)}fakepay/")
 

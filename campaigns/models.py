@@ -378,7 +378,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         pledge = get_object_or_404(
             Pledge.objects.select_related("appeal"), reference=reference, page=self
         )
-        if pledge.payment_status == PaymentStatus.PAID:
+        if pledge.has_paid_payment():
             return self.redirect_to(request, "pay", pledge.reference)
         provider = provider_for(method)
         if provider is None or type(provider) not in providers_for(
@@ -426,11 +426,16 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     @path("payment/<uuid:reference>/go/", name="go_to_provider")
     def go_to_provider(self, request, reference):
         """The page that sends a payment's form to its provider (eSewa). Once the payment isn't
-        waiting any more, the pay page instead: the form would pay again."""
+        waiting any more, or another has paid the pledge, the pay page instead: the form would
+        pay again."""
         payment = get_object_or_404(
             Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
         )
-        if payment.status != PaymentStatus.WAITING or not payment.provider_form:
+        if (
+            payment.status != PaymentStatus.WAITING
+            or not payment.provider_form
+            or payment.pledge.has_paid_payment()
+        ):
             return self.redirect_to(request, "pay", payment.pledge.reference)
         return self.render(
             request,
@@ -612,6 +617,11 @@ class Pledge(models.Model):
         """The attempt that paid it, if any, even one for an amount it no longer asks for (the
         money was still received). Reads payments as fetched, so a list can prefetch them."""
         return next((p for p in self.payments.all() if p.status == PaymentStatus.PAID), None)
+
+    def has_paid_payment(self):
+        """Whether any attempt has paid it, live or test, at any amount: it's never asked for
+        again, even when the pledge isn't marked paid because it was changed since."""
+        return self.payments.filter(status=PaymentStatus.PAID).exists()
 
     def received_money(self):
         """Whether a payment of it moved real money, not just a provider's test system."""
