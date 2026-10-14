@@ -49,6 +49,22 @@ remove the `#` from that line. The file is gitignored and only development reads
 `/` is then the Nepali home page, and pages that exist only in English are under `/en/`. Put the
 `#` back to go back (a variable set in your shell wins over the file). The tests ignore it.
 
+### Try paying a pledge
+
+Development pays in the providers' test systems, where no money moves
+([Paying a pledge](../site/appeals-and-giving.md#paying-a-pledge)):
+
+- **eSewa works straight away,** on the test keys eSewa publishes. Send a pledge on `/donate/`,
+  choose **Pay with eSewa**, and sign in on eSewa's page with eSewa ID `9711111111`, password
+  `Nepal@123` and token `123456`.
+- **Khalti needs your own test key.** Sign up as a merchant at
+  [test-admin.khalti.com](https://test-admin.khalti.com) (its sign-in code is `987654`), then put the
+  test secret key in `.env.local` as `DJANGO_PAYMENT_KHALTI_SECRET_KEY`. Pay with Khalti ID
+  `9800000000`, MPIN `1111` and code `987654`.
+
+The pay page lists these accounts while the site is in test mode. The tests never call either
+provider.
+
 ### Run it as the live site runs it
 
 `runserver` is for changing code. To see the site as it's served live (production settings,

@@ -3,13 +3,23 @@
 
 {% block body_class %}template-donatepage form-page{% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/donate.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="container narrow">
         <h1>{{ page.title }}</h1>
         {% if page.introduction %}<p class="lead">{{ page.introduction }}</p>{% endif %}
 
         <div class="payment-notice">
-            {{ page.payment_notice|richtext }}
+            {# How paying works on this site, true whichever providers it has; then anything the charity adds. #}
+            {% if pay_with %}
+                <p>{% blocktranslate %}After you send this form, you can pay with {{ pay_with }}, or in person.{% endblocktranslate %} {% translate "If you choose monthly, you'll pay the first month now." %}</p>
+            {% else %}
+                <p>{% translate "No payment is taken on this website yet. Send this form and we'll contact you about how to pay. If you choose monthly, we'll help you set up a regular payment." %}</p>
+            {% endif %}
+            {% if page.payment_notice %}{{ page.payment_notice|richtext }}{% endif %}
         </div>
 
         {% if form.errors %}
@@ -80,7 +90,7 @@
             </fieldset>
 
             {% include "includes/privacy_link.html" %}
-            <button class="button button-large" type="submit">{% translate "Send my pledge" %}</button>
+            <button class="button button-large" type="submit">{% if pay_with %}{% translate "Continue to payment" %}{% else %}{% translate "Send my pledge" %}{% endif %}</button>
         </form>
 
         {% include "includes/streamfield.html" with stream=page.body %}

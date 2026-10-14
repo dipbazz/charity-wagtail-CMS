@@ -48,17 +48,57 @@ Server secrets live in `deploy/aws/.env`, which is gitignored and dockerignored.
 `charity/tests/test_deploy.py` checks both. Without the `.dockerignore` entry, the Dockerfile's
 `COPY . .` would bake the secret key into the image.
 
+## A payment is paid only when its provider says so
+
+Whether a pledge is paid comes only from the provider's own API, asked by the server with the
+site's own reference and amount (`check()` in `nepal_payments`). What the supporter's browser brings
+back to the return address (eSewa's `?data=`, Khalti's `?status=Completed`) is never read, because
+anyone can type it; a test sends a forged return and checks that nothing changes. Only
+`Payment.record()` changes a status, and paid never goes back.
+
+- **A pledge is paid only by a payment of its own amount.** Once someone starts paying a pledge,
+  sending its form again starts a new pledge rather than changing it, and a payment for another
+  amount or currency (a pledge changed in the admin meanwhile) leaves the pledge unpaid. Otherwise
+  paying Rs 10 could mark a Rs 1,00,000 pledge as received.
+- **Merchant keys live in the environment** (`DJANGO_PAYMENT_*`), never in git, the admin or the
+  database. Providers keep them out of their `repr()` and logs.
+- **A provider's answer comes only from the provider.** `nepal_payments.http` never follows a
+  redirect: it would carry the merchant's key, and the say on whether a payment is paid, to
+  whatever address the redirect names (CVE-2018-18074 was this flaw in `requests`).
+- **The payer is sent only to the provider's own page.** A Khalti answer naming any other address
+  is refused, and the contract test (`nepal_payments/tests/test_contract.py`) fails any provider
+  that sends a payer anywhere but `https`.
+- **A form posted to a provider carries no CSRF token** of ours, so it can't leak to them.
+- **Test mode can't pass for real money:** the Pledges list and its export mark a test payment
+  "(test)", the pay page says "Online payments are in test mode here: no money will be taken."
+  before anyone pays, and a test payment's thank-you says no money was taken. Anyone can pay in a
+  test system with the provider's public test account, so the pay page doesn't show it: the docs
+  do.
+- **Providers get no personal details** from the site: the amount, our reference and what the gift
+  is for.
+
 ## Production refuses to start half-configured
 
 Production settings raise at startup without `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS` or
 `DJANGO_SITE_URL`, rather than run with a missing secret or reject every request with a bare
 400. CI runs `check --deploy --fail-level WARNING` against them, and again inside the Docker
-image. See [Running the live site](../hosting.md#environment-variables).
+image. A payment provider with only some of its keys fails Django's checks, which `migrate` runs
+as the container starts, so it stops the site too. See
+[Running the live site](../hosting.md#environment-variables).
 
 ## Permissions are tested as an editor
 
 Test what editors can do as `editor`, not as a superuser, or a missing permission goes unnoticed.
 See [Editors and permissions](../site/editors-and-permissions.md#testing-permissions).
+
+## Exports show what visitors typed as text
+
+A spreadsheet runs a cell that starts with `=` as a formula (in a CSV file, `+`, `-` and `@` too),
+so a pledge "from" `=HYPERLINK(…)` could send other donors' details away when the team opens the
+export (CWE-1236). Wagtail writes text as it is, so every export of what visitors typed (Pledges,
+form submissions) goes through `core.exports.VisitorTextExportMixin`: an Excel file keeps such text
+in a text cell, shown as typed, and a CSV file puts `'` in front of it. A new export of visitors'
+text puts the mixin first among its view's bases.
 
 ## Supporters' personal data stays with the team
 

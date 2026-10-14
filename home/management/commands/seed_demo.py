@@ -245,8 +245,9 @@ class Command(BaseCommand):
             slug="donate",
             introduction="Every gift helps a community get safe water that lasts.",
             payment_notice=(
-                "<p>Brightwell is a demo charity, so no payment is taken and nobody will contact "
-                "you about this pledge. To help people affected by the flood in Nepal, give to "
+                "<p>Brightwell is a demo charity: paying online uses the payment providers' test "
+                "systems, so no real money is taken, and nobody will contact you about this "
+                "pledge. To help people affected by the flood in Nepal, give to "
                 f'the <a href="{RELIEF_FUND_URL}">Prime Minister\'s Disaster Relief Fund</a>.</p>'
             ),
             thank_you_text=(
@@ -612,8 +613,9 @@ class Command(BaseCommand):
             title="दान गर्नुहोस्",
             introduction="प्रत्येक सहयोगले समुदायलाई दिगो र सुरक्षित पानी प्राप्त गर्न मद्दत गर्छ।",
             payment_notice=(
-                "<p>ब्राइटवेल एक डेमो च्यारिटी हो, त्यसैले कुनै भुक्तानी लिइने छैन र यो "
-                "प्रतिज्ञाको बारेमा कसैले पनि तपाईंलाई सम्पर्क गर्ने छैन। नेपालमा बाढीबाट "
+                "<p>ब्राइटवेल एक डेमो च्यारिटी हो: अनलाइन भुक्तानी गर्दा भुक्तानी सेवाहरूको "
+                "परीक्षण प्रणाली प्रयोग हुन्छ, त्यसैले वास्तविक पैसा लिइँदैन, र यो प्रतिज्ञाको "
+                "बारेमा कसैले पनि तपाईंलाई सम्पर्क गर्ने छैन। नेपालमा बाढीबाट "
                 "प्रभावित मानिसहरूलाई मद्दत गर्न "
                 f'<a href="{RELIEF_FUND_URL}">प्रधानमन्त्री दैवी प्रकोप उद्धार कोष</a>मा '
                 "दान गर्नुहोस्।</p>"

@@ -22,10 +22,12 @@ points to the one page that answers it, so there's no need to read everything or
 ## In one paragraph
 
 A Wagtail 8 / Django 6.1 site that small charities in Nepal and the UK get free, demoed with a
-fictional water charity. Supporters read appeals and news, pledge (no payment is taken yet) and
-volunteer, in Nepali or English; the team edits in the Wagtail admin, editors drafting and
+fictional water charity. Supporters read appeals and news, pledge and pay (eSewa or Khalti, in
+the providers' test systems until a charity goes live, or in person) and volunteer, in Nepali or
+English; the team edits in the Wagtail admin, editors drafting and
 moderators publishing. SQLite, no JavaScript build step. Feature apps (`home`, `campaigns`, `news`,
-`contact`, `search`) depend on `core`, which never imports them. Production runs the Docker image on
+`contact`, `search`) depend on `core`, which never imports them; the payment providers are
+`nepal_payments`, which imports nothing from the site. Production runs the Docker image on
 one EC2 server behind Caddy, configured by `DJANGO_*` environment variables; each charity gets its
 own installation there, built to one standard structure. Built test-first with
 pytest, styled mobile first, and budgeted for queries and page weight in CI.
@@ -39,7 +41,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | What must every charity's site have: header, menu, footer, pages? What may a charity change? | [The charity site standard](site/standard.md) |
 | How do several charities share the platform? | [Decisions: one installation per charity](decisions.md#one-installation-per-charity-on-a-shared-server) |
 | What does the home page, a standard page, a block, news, search, a form, the footer or the API do? Which URLs exist? | [Pages and content](site/pages-and-content.md) |
-| Appeals, the Donate page, the pledge form, pledges in the admin, money, consent, the privacy notice? | [Appeals and giving](site/appeals-and-giving.md) |
+| Appeals, the Donate page, the pledge form, paying a pledge, pledges in the admin, money, consent, the privacy notice? | [Appeals and giving](site/appeals-and-giving.md) |
 | Nepali and English: addresses, translating pages, snippets and settings text, the switch, `hreflang`, Nepali text? | [Languages](site/languages.md) |
 | How are photos stored, protected and served? What's `with_card_images`? | [Images](site/images.md) |
 | Colours, a charity's brand colours and previewing them, fonts, header, breakpoints, JavaScript, accessibility? How do I style something? | [Look and feel](site/look-and-feel.md) and the `mobile-first` skill |
@@ -50,7 +52,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | How do I write tests? Fixtures? What does CI run? What must I check by hand? | [Testing and QA](contributing/testing.md) |
 | Why did CI fail on query counts or page weight? | [Performance](contributing/performance.md) |
 | What mistakes must I not repeat? | [Security](contributing/security.md) |
-| How do I add a page type, a snippet or setting, or a block? | [Extending the site](contributing/extending.md) |
+| How do I add a page type, a snippet or setting, a block, or a payment provider? | [Extending the site](contributing/extending.md) |
 | What's in the demo data? Photo credits? | [Demo content](contributing/demo-content.md) |
 | What do we ask a new charity for? How do its guide and form stay current? | [Onboarding a charity](contributing/onboarding.md) |
 | Issues, epics, the board, versions, the changelog, releasing? | [Issues, versions and releases](contributing/releases.md) |
@@ -71,6 +73,10 @@ Each is explained on the linked page; they're here because breaking one has caus
 - Snippets visitors see are listed with `in_reading_language`, and text a setting shows visitors
   goes in its rows for each language ([Languages](site/languages.md#snippets-and-settings-text)).
 - Never serve `MEDIA_ROOT/documents/` directly ([Security](contributing/security.md)).
+- A payment is paid only when its provider says so, asked by the server; never from what the
+  browser brings back ([Security](contributing/security.md#a-payment-is-paid-only-when-its-provider-says-so)).
+- `nepal_payments` imports nothing from Django or the site, so it can be published
+  ([Decisions](decisions.md#payment-providers-are-a-drop-in-package)).
 - A new snippet or setting needs a permissions data migration that uses `get_or_create`
   ([Extending the site](contributing/extending.md#add-a-snippet-or-setting)).
 - Test permissions as `editor`, not `admin_client`

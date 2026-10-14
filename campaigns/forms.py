@@ -7,7 +7,7 @@ from django.core.validators import MaxLengthValidator
 from django.db import IntegrityError, transaction
 from django.utils.translation import gettext, gettext_lazy
 
-from campaigns.models import Frequency, Pledge
+from campaigns.models import Frequency, PaymentStatus, Pledge
 from core.money import CURRENCIES, format_money
 from core.phone import normalise_mobile, phone_country_choices
 
@@ -208,12 +208,17 @@ class PledgeForm(forms.ModelForm):
             self.instance = self.pledge_sent_before() or self.instance
 
     def pledge_sent_before(self):
-        """The pledge already saved from this copy of the form, if it's being sent again."""
+        """The pledge already saved from this copy of the form, if it's being sent again and
+        nobody has started paying it: an attempt to pay is for the pledge as it was, and a paid
+        pledge records money received, so neither is ever changed."""
         try:
             sent = uuid.UUID(self.data.get(self.add_prefix("submission_id"), ""))
         except ValueError:
             return None
-        return Pledge.objects.filter(submission_id=sent).first()
+        unpaid = Pledge.objects.filter(payments__isnull=True).exclude(
+            payment_status=PaymentStatus.PAID
+        )
+        return unpaid.filter(submission_id=sent).first()
 
     def initial_from_link(self, link):
         """Preselect the amount and appeal named in the link, ignoring any that aren't offered."""
@@ -259,11 +264,15 @@ class PledgeForm(forms.ModelForm):
 
     def clean_submission_id(self):
         """This copy's ID, or a new one if it's missing or unreadable (a page opened before IDs
-        existed): never a reason to turn a pledge away."""
+        existed): never a reason to turn a pledge away. A new one too if this copy's pledge can't
+        be changed (pledge_sent_before), so sending it again starts a new pledge."""
         try:
-            return uuid.UUID(self.cleaned_data["submission_id"])
+            sent = uuid.UUID(self.cleaned_data["submission_id"])
         except ValueError:
             return uuid.uuid4()
+        if self.instance.pk is None and Pledge.objects.filter(submission_id=sent).exists():
+            return uuid.uuid4()
+        return sent
 
     def save(self, commit=True):
         pledge = super().save(commit=False)

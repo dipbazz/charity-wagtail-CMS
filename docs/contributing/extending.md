@@ -1,7 +1,7 @@
 # Extending the site
 
-The three bigger changes that come up most: a new page type, a new snippet or setting, and a new
-content block. Each is done test-first ([Testing](testing.md)) and in the app it belongs to
+The bigger changes that come up most: a new page type, a new snippet or setting, a new content
+block, and a new payment provider. Each is done test-first ([Testing](testing.md)) and in the app it belongs to
 ([the dependency rule](../site/overview.md#apps-and-what-they-own)).
 
 ## Add a page type
@@ -91,3 +91,24 @@ every page type at once.
    lists pages filters `.live().public()` and by language. Images use `{% picture %}` with `sizes`
    matching the layout ([Images](../site/images.md)), and the template is styled mobile first.
 4. **Document it** in the block table in [Pages and content](../site/pages-and-content.md#content-blocks).
+
+## Add a payment provider
+
+A new way to pay online, such as IME Pay, Fonepay or connectIPS. Providers live in
+`nepal_payments/`, a package that imports nothing from Django or this site, so it can be published
+for any Python project (#196); `nepal_payments/README.md` has the whole contract. Adding one is a
+file:
+
+1. **Create `nepal_payments/providers/<code>.py`** with one `PaymentProvider` subclass: its `code`
+   (permanent, lowercase letters and digits), `name`, `currencies`, `min_amount`, `keys` and
+   `order`, then `start()` (where to send the payer) and `check()` (ask the provider what became
+   of a payment). Reach the provider only through `nepal_payments.http.request_json`.
+2. **Run the tests.** `nepal_payments/tests/test_contract.py` checks every provider it finds,
+   yours included. Then write `nepal_payments/tests/test_<code>.py` for the provider's own API,
+   with the `provider_server` fixture answering in its place.
+3. **List its keys** in [Running the live site](../hosting.md#paying-pledges-online), and add a
+   row to the README's table of providers and a changelog entry.
+
+Nothing else changes: the pay page, the admin and the settings work from the registry, and a
+payment's `method` choices are a function, so there's no migration. A charity turns the provider
+on by setting its `DJANGO_PAYMENT_<CODE>_<KEY>` variables.

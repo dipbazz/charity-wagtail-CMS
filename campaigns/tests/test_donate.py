@@ -1,5 +1,8 @@
+import importlib
+
 import pytest
 from bs4 import BeautifulSoup
+from django.apps import apps
 from django.urls import reverse
 from wagtail.test.utils.form_data import inline_formset, nested_form_data, rich_text, streamfield
 
@@ -8,6 +11,7 @@ from campaigns.models import CampaignPage, DonatePage, Frequency, Pledge
 from campaigns.tests.factories import CampaignPageFactory, DonatePageFactory
 from core.models import SiteSettings
 from home.models import StandardPage
+from nepal_payments import Status
 
 pytestmark = pytest.mark.django_db
 
@@ -35,6 +39,12 @@ def stored(page):
 
 def soup(response):
     return BeautifulSoup(response.content, "html.parser")
+
+
+def stylesheets(response):
+    """The file names of the stylesheets a page links to, in order."""
+    links = soup(response).find_all("link", rel="stylesheet")
+    return [link["href"].rsplit("/", 1)[-1] for link in links]
 
 
 def is_checked(response, name, value):
@@ -93,6 +103,14 @@ class TestDonatePage:
 
         assert html.index("</form>") < html.index("Where every Rs 100 goes")
 
+    def test_loads_its_own_stylesheet_after_the_main_one(self, client, donate_page):
+        assert stylesheets(client.get(donate_page.url)) == ["charity.css", "donate.css"]
+
+    def test_other_pages_dont_download_its_stylesheet(self, client, donate_page, appeals):
+        """Its styles are only for the Donate page and its pay pages (#142 splits the rest)."""
+        for page in (donate_page.get_parent(), appeals, appeals.get_children().first()):
+            assert "donate.css" not in stylesheets(client.get(page.url))
+
     def test_links_to_the_privacy_notice_before_the_send_button(
         self, client, donate_page, privacy_notice
     ):
@@ -128,6 +146,97 @@ class TestDonatePage:
         assert appeal_options(nepali_donate_page) == ["बाढी राहत"]
         assert donate_page.get_appeals_page().pk == appeals.pk
         assert nepali_donate_page.get_appeals_page().pk == nepali_appeals.pk
+
+
+class TestHowPayingWorks:
+    """The page says how paying works on this site, in the reader's language, before any notice
+    the charity adds: online with the providers set up here (#93), or not online at all."""
+
+    def notice(self, client, donate_page):
+        return soup(client.get(donate_page.url)).find(class_="payment-notice")
+
+    def button(self, client, donate_page):
+        return soup(client.get(donate_page.url)).find("button", type="submit").get_text(strip=True)
+
+    def test_with_no_provider_set_up_says_no_payment_is_taken_online(
+        self, client, donate_page, settings
+    ):
+        settings.PAYMENT_KEYS = {}
+
+        assert (
+            self.notice(client, donate_page)
+            .p.get_text(strip=True)
+            .startswith("No payment is taken on this website yet.")
+        )
+        assert self.button(client, donate_page) == "Send my pledge"
+
+    def test_names_the_providers_set_up_here(self, client, donate_page, settings):
+        settings.PAYMENT_KEYS = {"KHALTI_SECRET_KEY": "k"}
+
+        sentence = self.notice(client, donate_page).p.get_text(" ", strip=True)
+
+        assert sentence.startswith(
+            "After you send this form, you can pay with Khalti, or in person."
+        )
+        assert "If you choose monthly, you'll pay the first month now." in sentence
+        assert self.button(client, donate_page) == "Continue to payment"
+
+    def test_names_every_provider_set_up_here(self, client, donate_page, settings):
+        settings.PAYMENT_KEYS = {
+            "ESEWA_PRODUCT_CODE": "EPAYTEST",
+            "ESEWA_SECRET_KEY": "s",
+            "KHALTI_SECRET_KEY": "k",
+        }
+
+        assert "pay with eSewa or Khalti, or in person" in self.notice(client, donate_page).text
+
+    def test_a_site_in_pounds_takes_no_rupee_payments_online(
+        self, client, site, donate_page, settings
+    ):
+        settings.PAYMENT_KEYS = {"KHALTI_SECRET_KEY": "k"}
+        site_settings = SiteSettings.for_site(site)
+        site_settings.currency = "GBP"
+        site_settings.save()
+
+        assert "No payment is taken" in self.notice(client, donate_page).text
+        assert self.button(client, donate_page) == "Send my pledge"
+
+    def test_the_charitys_own_notice_follows(self, client, donate_page):
+        notice = self.notice(client, donate_page)
+
+        assert notice.find_all("p")[-1].get_text(strip=True) == (
+            "No payment is taken online yet. We'll be in touch about how to pay."
+        )
+
+    def test_a_page_without_a_notice_of_its_own_has_just_the_sentence(self, client, donate_page):
+        donate_page.payment_notice = ""
+        donate_page.save_revision().publish()
+
+        assert len(self.notice(client, donate_page).find_all("p")) == 1
+
+    def test_a_new_donate_page_has_no_notice_of_its_own(self):
+        assert DonatePage().payment_notice == ""
+
+
+def test_pages_still_saying_the_old_default_lose_it(donate_page):
+    """Before #93 every Donate page said "No payment is taken on this website yet" by default,
+    which isn't true once a provider is set up. The site's own sentence says it now, so the
+    default goes, from the page and from its revisions, so publishing again can't bring it back.
+    A charity's own notice stays."""
+    migration = importlib.import_module("campaigns.migrations.0010_payment_notice")
+    donate_page.payment_notice = migration.OLD_DEFAULT
+    donate_page.save_revision().publish()
+    own = DonatePageFactory(
+        parent=donate_page.get_parent(), slug="donate-2", payment_notice="<p>Ours.</p>"
+    )
+
+    migration.clear_the_old_default(apps, schema_editor=None)
+
+    donate_page.refresh_from_db()
+    assert donate_page.payment_notice == ""
+    assert donate_page.get_latest_revision_as_object().payment_notice == ""
+    own.refresh_from_db()
+    assert own.payment_notice == "<p>Ours.</p>"
 
 
 class TestPledgeModelAndForm:
@@ -300,6 +409,43 @@ class TestPledging:
         assert Pledge.objects.count() == 1
         assert stored(donate_page).amount == 10000
 
+    def test_sending_a_paid_pledges_copy_again_adds_a_new_pledge(self, client, donate_page):
+        """A paid pledge records money received, so going back after paying and sending the form
+        again, even with another amount, starts a new pledge instead of changing it."""
+        copy = self.form_copy(client, donate_page)
+        pledge(client, donate_page, submission_id=copy)
+        paid = stored(donate_page)
+        paid.start_payment("esewa", live=False).record(Status.PAID, "000AWEO")
+
+        response = pledge(client, donate_page, submission_id=copy, amount="10000")
+
+        assert response.status_code == 303
+        paid.refresh_from_db()
+        assert paid.amount == 2500
+        assert Pledge.objects.exclude(pk=paid.pk).get().amount == 10000
+
+    # Regression: ISSUE-001 — sending the form again after starting to pay changed the pledge, so
+    # paying its Rs 2,500 attempt marked Rs 10,000 as received. Found by /qa on 2026-10-12.
+    @pytest.mark.parametrize("failed", [False, True], ids=["waiting", "failed"])
+    def test_sending_the_copy_of_a_pledge_being_paid_adds_a_new_pledge(
+        self, client, donate_page, failed
+    ):
+        """An attempt to pay is for the pledge as it was when the attempt started, and a failed
+        one can still turn out paid, so once paying has started the pledge never changes."""
+        copy = self.form_copy(client, donate_page)
+        pledge(client, donate_page, submission_id=copy)
+        being_paid = stored(donate_page)
+        attempt = being_paid.start_payment("esewa", live=False)
+        if failed:
+            attempt.record(Status.FAILED)
+
+        response = pledge(client, donate_page, submission_id=copy, amount="10000")
+
+        assert response.status_code == 303
+        being_paid.refresh_from_db()
+        assert being_paid.amount == 2500
+        assert Pledge.objects.exclude(pk=being_paid.pk).get().amount == 10000
+
     def test_each_newly_opened_copy_is_a_new_pledge(self, client, donate_page):
         for _ in range(2):
             pledge(client, donate_page, submission_id=self.form_copy(client, donate_page))
@@ -321,7 +467,7 @@ class TestPledging:
 
 
 class TestOwnAmountField:
-    """Only "Other amount" reveals "Your own amount"; charity.css hides it otherwise."""
+    """Only "Other amount" reveals "Your own amount"; donate.css hides it otherwise."""
 
     def own_amount(self, response):
         return (
@@ -443,7 +589,7 @@ class TestOptionalLabels:
 
 
 class TestMobileNumber:
-    """Asked for only with a monthly gift, for the monthly reminder; charity.css hides it
+    """Asked for only with a monthly gift, for the monthly reminder; donate.css hides it
     until Monthly is chosen."""
 
     def phone_field(self, response):

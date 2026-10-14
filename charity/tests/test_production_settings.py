@@ -1,5 +1,6 @@
 import logging
 import logging.config
+import os
 import runpy
 
 import pytest
@@ -251,3 +252,46 @@ def test_every_app_in_this_project_has_its_warnings_logged(monkeypatch):
 
     assert own_apps
     assert own_apps <= settings["LOGGING"]["loggers"].keys()
+
+
+@pytest.fixture
+def no_payment_variables(monkeypatch):
+    """So a developer's own payment keys can't change what these tests see."""
+    for name in list(os.environ):
+        if name.startswith("DJANGO_PAYMENT_") or name == "DJANGO_LIVE_PAYMENTS":
+            monkeypatch.delenv(name)
+
+
+def test_takes_no_payments_until_a_providers_keys_are_set(monkeypatch, no_payment_variables):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+
+    settings = load_settings()
+
+    assert settings["PAYMENT_KEYS"] == {}
+    assert settings["LIVE_PAYMENTS"] is False
+
+
+def test_reads_payment_keys_from_the_environment(monkeypatch, no_payment_variables):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.setenv("DJANGO_PAYMENT_KHALTI_SECRET_KEY", "live-secret-key")
+
+    assert load_settings()["PAYMENT_KEYS"] == {"KHALTI_SECRET_KEY": "live-secret-key"}
+
+
+@pytest.mark.parametrize(
+    ("value", "live"), [("true", True), ("True", True), ("false", False), ("1", False), ("", False)]
+)
+def test_takes_real_money_only_when_told_to_in_so_many_words(
+    monkeypatch, no_payment_variables, value, live
+):
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.setenv("DJANGO_LIVE_PAYMENTS", value)
+
+    assert load_settings()["LIVE_PAYMENTS"] is live
+
+
+def test_the_payment_providers_warnings_are_logged(monkeypatch):
+    """nepal_payments isn't an app, so the test above doesn't cover it."""
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+
+    assert "nepal_payments" in load_settings()["LOGGING"]["loggers"]

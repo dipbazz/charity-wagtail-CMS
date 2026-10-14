@@ -63,6 +63,8 @@ and `wsgi.py` fall back to the development settings.
 | `DJANGO_EMAIL_HOST`, `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_USE_TLS` | SMTP server for form notifications and moderation emails; port 587 and TLS by default |
 | `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD` | SMTP credentials |
 | `DJANGO_DEFAULT_FROM_EMAIL` | Sender address for workflow and error emails |
+| `DJANGO_PAYMENT_<PROVIDER>_<KEY>` | A payment provider's merchant keys, such as `DJANGO_PAYMENT_KHALTI_SECRET_KEY` ([Paying pledges online](#paying-pledges-online)). A provider is offered once all its keys are set; an empty value is a key not set |
+| `DJANGO_LIVE_PAYMENTS` | `true` takes real money. Anything else, or nothing, uses the providers' test systems |
 | `WEB_CONCURRENCY` | gunicorn's number of workers (each takes roughly 100–150 MB) |
 
 The AWS setup builds these from a shorter `deploy/aws/.env`:
@@ -76,6 +78,7 @@ The AWS setup builds these from a shorter `deploy/aws/.env`:
 | `DJANGO_LANGUAGE_CODE` | The language the site opens in: `ne` (the default) or `en` |
 | `DJANGO_SECURE_HSTS_SECONDS` | Raise to a year (31536000) once HTTPS has worked for a while |
 | `WEB_CONCURRENCY` | Default 2 |
+| `DJANGO_PAYMENT_<PROVIDER>_<KEY>`, `DJANGO_LIVE_PAYMENTS` | As above. The `web` service reads the whole `.env` (`env_file` in `compose.yaml`), so a new provider's keys need no change to `compose.yaml` |
 
 Other production behaviour:
 
@@ -119,6 +122,66 @@ emailed.
 
 Read them on the server with `sudo docker compose logs --tail 200 web` in `deploy/aws/`. A new app
 needs its name added to the loggers in `charity/settings/production.py`.
+
+## Paying pledges online
+
+Each charity's installation offers the payment providers it has merchant accounts for
+([Paying a pledge](site/appeals-and-giving.md#paying-a-pledge)). A provider is offered once all
+its keys are set, as `DJANGO_PAYMENT_<PROVIDER>_<KEY>`. With only some of them set, Django's
+checks stop the site starting (`migrate` runs them as the container starts), so a provider half set
+up can't go unnoticed; a key that matches no provider, such as a misspelling, is a warning.
+
+| Provider | Keys | Where the charity gets them |
+|---|---|---|
+| eSewa | `DJANGO_PAYMENT_ESEWA_PRODUCT_CODE`, `DJANGO_PAYMENT_ESEWA_SECRET_KEY` | A merchant agreement with eSewa. Its test system's keys are published (`EPAYTEST`), and development uses them unless others are set |
+| Khalti | `DJANGO_PAYMENT_KHALTI_SECRET_KEY` | admin.khalti.com for live payments; test-admin.khalti.com for its test system |
+
+A provider added later lists its keys here.
+
+**Test or live:** payments use each provider's test system, where no money moves, until
+`DJANGO_LIVE_PAYMENTS=true`, and the pay page says so while they do. Set it only together with the
+charity's live merchant keys: test keys don't work on the live systems, nor live keys on the test
+ones. Payments made in a test system are marked "(test)" in the admin's export, and aren't checked
+with the live system later.
+
+The keys are secrets: they go in the server's `.env` only, never in git, a chat or the admin.
+
+**A slow provider:** starting a Khalti payment, and checking any payment when the payer comes
+back, asks the provider while the payer waits. The site gives up after 10 seconds without a word
+from the provider (`TIMEOUT` in `nepal_payments/http.py`). That's a limit on each wait, not on the
+whole answer: a provider that answers very slowly, a little at a time, can take longer, and
+looking up its address has no limit of its own. Each of the site's two web workers
+(`WEB_CONCURRENCY`) answers one visitor at a time, so if eSewa or Khalti stops answering and two
+payers come back within those seconds, every visitor to the site waits until one of them is done. Nothing is lost: the payment
+stays waiting, and the payer can check it again from the pay page. With a charity's few payments
+a day this is rare enough to leave as it is; a third worker would take another 100–150 MB.
+
+### Turn on real money
+
+For each charity, once, when it's ready to take real payments. Until the last step its site keeps
+using the test systems, so nothing here can take money early.
+
+1. **The charity has a merchant account** with each provider it will offer, and its live keys:
+   eSewa's product code and secret key from its merchant agreement, Khalti's live secret key from
+   admin.khalti.com. Offer only the providers it has an account with.
+2. **Try each provider in test mode on the live site,** with its test keys set (the table above
+   says where they come from): pay a pledge with the provider's test account
+   ([Paying a pledge](site/appeals-and-giving.md#paying-a-pledge)) and check that **Pledges**
+   lists it as **Paid (test)**.
+3. **In one edit of `deploy/aws/.env`,** replace each provider's test keys with its live keys and
+   set `DJANGO_LIVE_PAYMENTS=true`. Never one without the other: test keys don't work on the live
+   systems, nor live keys on the test ones, so every payment would fail.
+4. **Apply it:** `sudo docker compose up -d` in `deploy/aws/` (the `web` container is recreated
+   with the new `.env`), then `sudo docker compose logs --tail 100 web`. A provider with only some
+   of its keys stops the site starting, with `campaigns.E001` in the log.
+5. **Make one small real payment** with each provider (Khalti takes Rs 10 or more), and check that
+   **Pledges** lists it as **Paid**, without "(test)", and that its transaction ID matches the
+   provider's merchant portal. The pledge can't be deleted afterwards (it's the record of real
+   money); refund it from the provider's portal if the charity wants the money back.
+
+**To go back to test mode,** set `DJANGO_LIVE_PAYMENTS=false`, put the test keys back, and run step
+4 again. Payments started in live mode aren't checked against the test systems, so any still
+waiting must be looked up in the provider's merchant portal.
 
 ## Email
 

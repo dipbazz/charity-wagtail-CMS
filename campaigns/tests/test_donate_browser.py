@@ -10,7 +10,9 @@ import pytest
 from playwright.sync_api import expect
 
 from campaigns.models import Pledge
+from charity.tests.test_demo_layout_browser import layout_problems
 from conftest import SITE
+from nepal_payments import Redirect
 
 pytestmark = [pytest.mark.browser, pytest.mark.django_db]
 
@@ -207,3 +209,108 @@ class TestMessageCountInNepali:
         message.fill("x" * 999)
         message.press_sequentially("x")
         expect(status).to_have_text("तपाईं 1000 अक्षरको सीमामा पुग्नुभयो।")
+
+
+class TestPayPage:
+    """The pay page after a pledge (#93), with FakePay (conftest.py) as the provider."""
+
+    @pytest.fixture
+    def pay_page(self, donate_page, fake_provider):
+        pledge = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        return f"{donate_page.url}pay/{pledge.reference}/"
+
+    def test_fits_every_screen_with_room_to_tap(self, site_page, pay_page):
+        assert layout_problems(site_page, pay_page) == []
+
+    def test_fits_every_screen_while_an_attempt_may_be_paid(self, site_page, pay_page):
+        Pledge.objects.get().start_payment("fakepay", live=False)
+
+        assert layout_problems(site_page, pay_page) == []
+
+    def test_what_happened_is_focused_so_its_read_first(self, site_page, pay_page):
+        Pledge.objects.get().start_payment("fakepay", live=False)
+
+        site_page.goto(SITE + pay_page)
+
+        expect(site_page.locator(".payment-message")).to_be_focused()
+
+    def test_a_pay_button_says_its_busy_and_a_second_tap_does_nothing(
+        self, site_page, pay_page, fake_provider
+    ):
+        """On a slow connection the provider's page can take seconds: the buttons say so, and
+        tapping again doesn't start a second payment. Back from the provider (a page restored
+        from the browser's cache) gives working buttons again."""
+        site_page.route(
+            "https://pay.example.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body="Fake Pay"),
+        )
+        site_page.goto(SITE + pay_page)
+
+        busy, restored = site_page.evaluate(
+            """() => {
+                const read = () => ({
+                    labels: [...document.querySelectorAll(".payment-options button")].map(
+                        (button) => [button.textContent.trim(), button.disabled],
+                    ),
+                    busy: document.querySelector(".payment-options").ariaBusy,
+                    status: document.querySelector("[data-busy-status]").textContent.trim(),
+                });
+                const button = document.querySelector(".payment-options button");
+                button.click();
+                button.click();
+                const busy = read();
+                window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+                return [busy, read()];
+            }"""
+        )
+
+        assert busy == {
+            "labels": [["Opening Fake Pay…", True]],
+            "busy": "true",
+            "status": "Opening Fake Pay…",
+        }
+        assert restored == {"labels": [["Pay with Fake Pay", False]], "busy": None, "status": ""}
+        site_page.wait_for_url("https://pay.example.com/fakepay/")
+        assert Pledge.objects.get().payments.count() == 1
+
+    def test_a_form_a_provider_asks_for_is_sent_at_once(self, site_page, pay_page, fake_provider):
+        fake_provider.redirect = Redirect(
+            "https://pay.example.com/form/", method="POST", fields={"amount": "2500", "sig": "a+b"}
+        )
+        sent = []
+
+        def provider(route, request):
+            sent.append(request.post_data)
+            route.fulfill(status=200, content_type="text/html", body="<h1>Fake Pay</h1>")
+
+        site_page.route("https://pay.example.com/**", provider)
+        site_page.goto(SITE + pay_page)
+
+        site_page.get_by_role("button", name="Pay with Fake Pay").click()
+
+        site_page.wait_for_url("https://pay.example.com/form/")
+        assert sent == ["amount=2500&sig=a%2Bb"]
+
+    def test_back_from_a_provider_asks_nothing_about_resending(
+        self, site_page, pay_page, fake_provider
+    ):
+        """Back from eSewa's page, after pressing "Continue to eSewa" (no JavaScript, or before it
+        ran), reloads the page that sent its form, so that page must come from a GET: a page a
+        POST answered would ask to "confirm form resubmission"."""
+        fake_provider.redirect = Redirect("https://pay.example.com/form/", method="POST")
+        site_page.route("**/donate.js", lambda route: route.abort())
+        site_page.route(
+            "https://pay.example.com/**",
+            lambda route: route.fulfill(status=200, content_type="text/html", body="Fake Pay"),
+        )
+        site_page.goto(SITE + pay_page)
+        site_page.get_by_role("button", name="Pay with Fake Pay").click()
+        site_page.get_by_role("button", name="Continue to Fake Pay").click()
+        site_page.wait_for_url("https://pay.example.com/form/")
+
+        response = site_page.go_back()
+
+        assert response.request.method == "GET"
+        expect(site_page.get_by_role("button", name="Continue to Fake Pay")).to_be_visible()

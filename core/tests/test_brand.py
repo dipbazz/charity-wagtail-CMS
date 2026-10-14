@@ -30,6 +30,7 @@ from core.brand import (
     validate_accent_colour,
     validate_main_colour,
 )
+from core.tests.test_stylesheet import MAIN as STYLESHEET
 from core.tests.test_stylesheet import rules
 
 # A main and an accent colour a charity might choose: crimson and blue.
@@ -44,8 +45,8 @@ GRID = [
 
 
 def root():
-    """The stylesheet's tokens, such as {"--colour-primary": "#0b5563"}."""
-    (body,) = [body for selector, body in rules() if selector == ":root"]
+    """charity.css's tokens, such as {"--colour-primary": "#0b5563"}."""
+    (body,) = [body for selector, body in rules(STYLESHEET) if selector == ":root"]
     return {name: value.strip() for name, value in re.findall(r"(--[\w-]+)\s*:([^;]+);", body)}
 
 

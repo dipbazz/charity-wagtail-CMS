@@ -1,8 +1,15 @@
 # Look and feel
 
-How the site looks and why, and the rules every page, block and component follows. Code: one
-stylesheet (`charity/static/css/charity.css`), `charity/static/js/charity.js` on every page,
-`charity/static/js/donate.js` on the Donate page, and Django templates. No build step.
+How the site looks and why, and the rules every page, block and component follows. Code:
+`charity/static/css/charity.css` and `charity/static/js/charity.js` on every page,
+`charity/static/css/donate.css` and `charity/static/js/donate.js` on the Donate page and its pay
+pages only, and Django templates. No build step.
+
+**Styles one kind of page uses go in a stylesheet of their own,** linked by that page's templates
+through `{% block extra_css %}` in `base.html`, so other pages don't download them. `donate.css`
+is the first; #142 splits the rest the same way. A page's stylesheet only uses the tokens
+`charity.css` defines in `:root`, and never defines its own. `core/tests/test_stylesheet.py` checks
+every file in `charity/static/css/` by the rules below.
 
 ## Mobile first
 
@@ -285,6 +292,13 @@ Every page works without JavaScript:
   stops typing at the limit.
 - **Scripts for one page go in their own file** (like `donate.js`), so other pages stay within
   their weight budgets.
+- **A form for a payment provider sends itself** (`donate.js`, `form[data-auto-submit]`), except
+  when the page is reached with Back, so the payer can leave it. Without JavaScript it has a
+  button.
+- **A pay button says it's busy** (`donate.js`, `button[data-busy-text]`): once pressed it reads
+  "Opening eSewa…", every pay button stops taking taps so a second tap can't start a second
+  payment, and a hidden status line tells screen readers. Back from the provider gives working
+  buttons again.
 
 ## Accessibility
 
@@ -298,6 +312,13 @@ A requirement, not a polish step. Every page has:
 - tap targets of at least 44px (2.75rem), checked by CI on every kind of page;
 - alt text on every image, taken from the image's description in the admin;
 - text that passes WCAG AA contrast, whatever [brand colours](#brand-colours) are chosen.
+
+A page that changes with what happened says so first. The pay page has a title for each state
+("Pay your gift", "Check your payment", "Try paying again", "Thank you"), and its message
+("didn't go through", "check first", the thanks) comes straight after the heading with
+`tabindex="-1"` and `data-focus-on-load`, so `donate.js` focuses it and a screen reader reads it
+before the rest. The page that sends eSewa's form says where it's taking the payer in a
+`role="status"` line.
 
 ## Images in templates
 

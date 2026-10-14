@@ -1,14 +1,20 @@
 import datetime
+import logging
+import re
+import uuid
 from decimal import Decimal
 
-from django.contrib import admin
+from django.conf import settings
+from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
-from django.http import HttpResponseRedirect
-from django.utils.translation import gettext_lazy
+from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.utils.translation import gettext, gettext_lazy
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
     FieldPanel,
@@ -26,10 +32,14 @@ from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
 from wagtail.search import index
 
+from campaigns.payments import method_choices, provider_for, providers_for
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
 from core.models import SiteSettings, SocialMetaMixin
 from core.money import CURRENCY_CHOICES, format_money
+from nepal_payments import PaymentError, PaymentRequest
+
+logger = logging.getLogger(__name__)
 
 
 class CampaignIndexPage(Page):
@@ -201,23 +211,58 @@ class DonationAmount(AbstractDonationAmount):
     page = ParentalKey(CampaignPage, on_delete=models.CASCADE, related_name="donation_amounts")
 
 
-DEFAULT_PAYMENT_NOTICE = (
-    "<p>No payment is taken on this website yet. Send this form and we'll contact you about how "
-    "to pay. If you choose monthly, we'll help you set up a regular payment.</p>"
-)
+# How long a waiting attempt is offered again rather than starting another: well within the
+# hour a Khalti payment link lasts.
+REUSE_ATTEMPT_FOR = datetime.timedelta(minutes=10)
+
+# What asking a provider just now found, for the pay page to say once: a message with this tag.
+# Messages are shared with the admin, so the pay page takes only its own.
+PAYMENT_MESSAGE = "payment"
+
+
+def tell_pay_page(request, result):
+    """Leave the pay page a one-off result: "checked" (the provider hasn't confirmed the payment
+    yet), "unreachable" (it couldn't be asked) or "not-started" (it couldn't start one)."""
+    messages.info(request, result, extra_tags=PAYMENT_MESSAGE)
+
+
+def pay_page_result(request):
+    """The result tell_pay_page() left, if any. Any other message is kept for the page it's for."""
+    result = None
+    others = []
+    for message in messages.get_messages(request):
+        if PAYMENT_MESSAGE in (message.extra_tags or "").split():
+            result = message.message
+        else:
+            others.append(message)
+    for message in others:
+        messages.add_message(request, message.level, message.message, message.extra_tags)
+    return result
+
+
+def either(names):
+    """The names as a choice, in the reader's language: "eSewa or Khalti", "eSewa, Khalti or
+    IME Pay"."""
+    if len(names) < 2:
+        return "".join(names)
+    return gettext("%(names)s or %(last)s") % {"names": ", ".join(names[:-1]), "last": names[-1]}
 
 
 class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     """The page every Donate button leads to: suggested amounts and a pledge form.
 
     Each pledge it takes is saved as a `Pledge`, listed under Pledges in the admin. The form
-    then redirects to its own thank-you page, so reloading that page can't send it again.
+    then redirects to the pledge's pay page when a payment provider here can take it, or to the
+    thank-you page, so reloading either can't send the form again.
     """
 
     introduction = models.TextField(blank=True)
+    # The page itself says how paying works on this site (online with the providers set up here,
+    # or not online at all), so this is only for what a charity wants to add.
     payment_notice = RichTextField(
-        default=DEFAULT_PAYMENT_NOTICE,
-        help_text="Shown above the form: say plainly how payment works and what happens next.",
+        blank=True,
+        help_text="Anything to add about paying, such as bank details for a transfer. Shown above "
+        "the form, after the page's own sentence on how to pay.",
     )
     body = StreamField(
         BaseStreamBlock(),
@@ -241,6 +286,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     max_count_per_parent = 1
 
     landing_page_template = "campaigns/donate_page_landing.html"
+    pay_page_template = "campaigns/donate_page_pay.html"
+    redirect_template = "campaigns/donate_page_redirect.html"
     preview_modes = [("", "Donate page"), ("thank-you", "Thank-you page")]
 
     def get_appeals(self):
@@ -269,18 +316,193 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         if request.method == "POST":
             form = self.get_form(request.POST, site_settings=site_settings)
             if form.is_valid():
-                form.save()
-                # 303 See Other: the browser fetches the thank-you page with GET, so reloading
-                # it doesn't send the form again.
-                thank_you = self.get_url(request) + self.reverse_subpage("thank_you")
-                return HttpResponseRedirect(thank_you, status=303)
+                pledge = form.save()
+                # 303 See Other: the browser fetches the next page with GET, so reloading it
+                # doesn't send the form again.
+                if providers_for(pledge.currency, Decimal(pledge.amount)):
+                    return self.redirect_to(request, "pay", pledge.reference)
+                return self.redirect_to(request, "thank_you")
         else:
             form = self.get_form(site_settings=site_settings, link=request.GET)
-        return self.render(request, context_overrides={"form": form})
+        providers = providers_for(site_settings.currency)
+        return self.render(
+            request,
+            context_overrides={
+                "form": form,
+                "pay_with": either([provider.name for provider in providers]),
+            },
+        )
 
     @path("thank-you/", name="thank_you")
     def thank_you(self, request):
         return self.render(request, template=self.landing_page_template)
+
+    @path("pay/<uuid:reference>/", name="pay")
+    def pay(self, request, reference):
+        """A pledge's pay page: the ways to pay it, or what became of paying it. Its address is
+        the pledge's own reference, so only the person who sent it has it."""
+        pledge = get_object_or_404(
+            Pledge.objects.select_related("appeal").prefetch_related("payments"),
+            reference=reference,
+            page=self,
+        )
+        payments = list(pledge.payments.all())  # newest first
+        received = pledge.paid_payment()
+        # The pledge says whether it's paid: an attempt for another amount (the pledge changed
+        # after it started) doesn't pay it, but the money was still received, and isn't asked for
+        # again.
+        paid = received if pledge.payment_status == PaymentStatus.PAID else None
+        latest = payments[0] if payments else None
+        site_settings = SiteSettings.for_request(request)
+        providers = [] if received else providers_for(pledge.currency, Decimal(pledge.amount))
+        return self.render(
+            request,
+            template=self.pay_page_template,
+            context_overrides={
+                "pledge": pledge,
+                "paid": paid,
+                "received": received,
+                # Codes and names, not the classes, which templates would try to call.
+                "providers": [(provider.code, provider.name) for provider in providers],
+                "pay_with": either([provider.name for provider in providers]),
+                # Before a charity goes live its real supporters can still get here.
+                "test_mode": not settings.LIVE_PAYMENTS,
+                "latest": latest,
+                "unfinished": latest if latest and latest.status == PaymentStatus.WAITING else None,
+                "result": pay_page_result(request),
+                # The others to try when the latest attempt's provider couldn't start it.
+                "others": either([p.name for p in providers if latest and p.code != latest.method]),
+                "site_settings": site_settings,
+                "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
+            },
+        )
+
+    @path("pay/<uuid:reference>/<slug:method>/", name="start_payment")
+    def start_payment(self, request, reference, method):
+        """Start paying a pledge with a provider, and send the payer there."""
+        if request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
+        pledge = get_object_or_404(
+            Pledge.objects.select_related("appeal"), reference=reference, page=self
+        )
+        if pledge.has_paid_payment():
+            return self.redirect_to(request, "pay", pledge.reference)
+        provider = provider_for(method)
+        if provider is None or type(provider) not in providers_for(
+            pledge.currency, Decimal(pledge.amount)
+        ):
+            raise Http404("No such payment provider here.")
+        # A second tap, a second tab or a resent form goes back to the attempt just started, so
+        # there aren't two that could both be paid (two at the same instant can still race).
+        waiting = pledge.payments.filter(
+            method=method,
+            status=PaymentStatus.WAITING,
+            amount=pledge.amount,
+            currency=pledge.currency,
+            live=provider.live,
+            created_at__gte=timezone.now() - REUSE_ATTEMPT_FOR,
+        ).first()
+        if waiting and waiting.provider_form:
+            return self.redirect_to(request, "go_to_provider", waiting.reference)
+
+        payment = pledge.start_payment(method, live=provider.live)
+        return_path = self.get_url(request) + self.reverse_subpage(
+            "payment_return", args=[payment.reference]
+        )
+        site_settings = SiteSettings.for_request(request)
+        appeal = pledge.appeal.title if pledge.appeal else gettext("Wherever it's needed most")
+        try:
+            started = provider.start(
+                PaymentRequest(
+                    reference=str(payment.reference),
+                    amount=Decimal(payment.amount),
+                    currency=payment.currency,
+                    return_url=request.build_absolute_uri(return_path),
+                    website_url=request.build_absolute_uri("/"),
+                    description=gettext("A gift to %(charity)s: %(appeal)s")
+                    % {"charity": site_settings.name, "appeal": appeal},
+                )
+            )
+        except PaymentError as error:
+            logger.warning("%s couldn't start payment %s: %s", provider.name, payment, error)
+            payment.record(PaymentStatus.FAILED)
+            tell_pay_page(request, "not-started")
+            return self.redirect_to(request, "pay", pledge.reference)
+
+        redirect = started.redirect
+        # Kept, so a second tap goes back to the same page at the provider.
+        Payment.objects.filter(pk=payment.pk).update(
+            provider_id=started.provider_id,
+            provider_form={
+                "url": redirect.url,
+                "method": redirect.method,
+                "fields": redirect.fields,
+            },
+        )
+        if redirect.method == "GET":
+            return HttpResponseRedirect(redirect.url, status=303)
+        # A form to post to the provider: sent from a page fetched with GET, so Back from the
+        # provider reloads that page rather than asking to resend this one.
+        return self.redirect_to(request, "go_to_provider", payment.reference)
+
+    @path("payment/<uuid:reference>/go/", name="go_to_provider")
+    def go_to_provider(self, request, reference):
+        """The way back to a payment's page at its provider: the form that sends it there
+        (eSewa), or a redirect to its link (Khalti). Once the payment isn't waiting any more, or
+        another has paid the pledge, the pay page instead: it would pay again."""
+        payment = get_object_or_404(
+            Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
+        )
+        if (
+            payment.status != PaymentStatus.WAITING
+            or not payment.provider_form
+            or payment.pledge.has_paid_payment()
+        ):
+            return self.redirect_to(request, "pay", payment.pledge.reference)
+        # A form kept before links were kept too has no "method": it's posted.
+        if payment.provider_form.get("method") == "GET":
+            return HttpResponseRedirect(payment.provider_form["url"], status=303)
+        return self.render(
+            request,
+            template=self.redirect_template,
+            context_overrides={
+                "provider_name": payment.get_method_display(),
+                "form_url": payment.provider_form["url"],
+                "fields": payment.provider_form["fields"],
+            },
+        )
+
+    @path("payment/<uuid:reference>/", name="payment_return")
+    def payment_return(self, request, reference):
+        """Where a provider sends the payer back, paid or not. Only the provider, asked here,
+        says which: what the browser brings back is never read."""
+        payment = get_object_or_404(
+            Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
+        )
+        provider = provider_for(payment.method)
+        # A provider no longer set up, or set up for the other mode (test or live), can't be
+        # asked: its keys are for another system.
+        if payment.status != PaymentStatus.PAID and provider and provider.live == payment.live:
+            try:
+                outcome = provider.check(
+                    str(payment.reference), Decimal(payment.amount), payment.provider_id
+                )
+            except (PaymentError, ValueError) as error:
+                logger.warning("%s couldn't check payment %s: %s", provider.name, payment, error)
+                tell_pay_page(request, "unreachable")
+            else:
+                failed_before = payment.status == PaymentStatus.FAILED
+                payment.record(outcome.status, outcome.provider_reference)
+                if outcome.status == PaymentStatus.WAITING or (
+                    failed_before and outcome.status == PaymentStatus.FAILED
+                ):
+                    tell_pay_page(request, "checked")
+        return self.redirect_to(request, "pay", payment.pledge.reference)
+
+    def redirect_to(self, request, name, *args):
+        """303 to one of this page's routes."""
+        url = self.get_url(request) + self.reverse_subpage(name, args=args)
+        return HttpResponseRedirect(url, status=303)
 
     def serve_preview(self, request, mode_name):
         if mode_name == "thank-you":
@@ -309,8 +531,26 @@ class Frequency(models.TextChoices):
     MONTHLY = "monthly", "Monthly"
 
 
+class PaymentStatus(models.TextChoices):
+    """Whether a pledge or a payment has been paid: the payment providers' statuses
+    (nepal_payments.Status), with the names the team reads in the admin."""
+
+    WAITING = "waiting", "Waiting"
+    PAID = "paid", "Paid"
+    FAILED = "failed", "Failed"
+
+
+# The statuses a payment may change from, to each status: paid never goes back, and a failed
+# attempt may still turn out paid (eSewa sends the payer back to one address, paid or not).
+CHANGES_FROM = {
+    PaymentStatus.PAID: [PaymentStatus.WAITING, PaymentStatus.FAILED],
+    PaymentStatus.FAILED: [PaymentStatus.WAITING],
+}
+
+
 class Pledge(models.Model):
-    """A supporter's promise to give, sent from the Donate page. No payment is taken yet."""
+    """A supporter's promise to give, sent from the Donate page, then paid online (a Payment)
+    or arranged with the team."""
 
     page = models.ForeignKey(
         DonatePage, null=True, on_delete=models.SET_NULL, related_name="pledges"
@@ -356,6 +596,14 @@ class Pledge(models.Model):
     # The one-time ID of the copy of the form it was sent from. Sending that copy again (after
     # going back from the thank-you page) updates this pledge instead of adding another.
     submission_id = models.UUIDField(null=True, unique=True, editable=False)
+    # Whether it's been paid online (#93): only Payment.record() changes these.
+    payment_status = models.CharField(
+        "payment", max_length=7, choices=PaymentStatus, default=PaymentStatus.WAITING
+    )
+    paid_at = models.DateTimeField("paid", null=True, blank=True)
+    # The address of its pay page. Not submission_id: whoever holds that can send the form again
+    # and change the pledge.
+    reference = models.UUIDField(null=True, unique=True, editable=False)
 
     class Meta:
         ordering = ["-created_at"]
@@ -363,6 +611,142 @@ class Pledge(models.Model):
     def __str__(self):
         return f"{self.name}: {self.display_amount()} {self.get_frequency_display().lower()}"
 
+    def save(self, *args, **kwargs):
+        if self.reference is None:
+            self.reference = uuid.uuid4()
+        super().save(*args, **kwargs)
+
     @admin.display(description="Amount")
     def display_amount(self):
         return format_money(self.amount, self.currency)
+
+    @admin.display(description="Payment")
+    def payment_display(self):
+        """Waiting, paid or failed, with "(test)" after paid when only a provider's test system
+        took it: anyone can pay there with the provider's public test account, so it must never
+        pass for money received. Reads payments as fetched, so a list can prefetch them."""
+        shown = self.get_payment_status_display()
+        if self.payment_status != PaymentStatus.PAID:
+            return shown
+        paid = self.paid_payment()
+        return f"{shown} (test)" if paid and not paid.live else shown
+
+    @admin.display(description="Paid with")
+    def paid_with(self):
+        """The provider and its reference for the payment, e.g. "eSewa 000AWEO", marked "(test)"
+        when no money moved. Reads payments as fetched, so a list can prefetch them."""
+        paid = self.paid_payment()
+        if paid is None:
+            return ""
+        made = f"{paid.get_method_display()} {paid.provider_reference}".strip()
+        return made if paid.live else f"{made} (test)"
+
+    def paid_payment(self):
+        """The attempt that paid it, if any, even one for an amount it no longer asks for (the
+        money was still received). Reads payments as fetched, so a list can prefetch them."""
+        return next((p for p in self.payments.all() if p.status == PaymentStatus.PAID), None)
+
+    def has_paid_payment(self):
+        """Whether any attempt has paid it, live or test, at any amount: it's never asked for
+        again, even when the pledge isn't marked paid because it was changed since."""
+        return self.payments.filter(status=PaymentStatus.PAID).exists()
+
+    def received_money(self):
+        """Whether a payment of it moved real money, not just a provider's test system."""
+        return self.payments.filter(status=PaymentStatus.PAID, live=True).exists()
+
+    def start_payment(self, method, live):
+        """A new attempt to pay this pledge, with the provider whose code is `method`. After a
+        failed attempt, the pledge is waiting for payment again."""
+        with transaction.atomic():
+            Pledge.objects.filter(pk=self.pk, payment_status=PaymentStatus.FAILED).update(
+                payment_status=PaymentStatus.WAITING
+            )
+            return self.payments.create(
+                method=method, amount=self.amount, currency=self.currency, live=live
+            )
+
+
+class Payment(models.Model):
+    """One attempt to pay a pledge online, with one provider (nepal_payments). Its status changes
+    only through record(), from what the provider says when asked."""
+
+    pledge = models.ForeignKey(Pledge, on_delete=models.CASCADE, related_name="payments")
+    method = models.CharField("paid with", max_length=20, choices=method_choices)
+    amount = models.PositiveIntegerField(help_text="A whole amount in the payment's currency.")
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES)
+    status = models.CharField(max_length=7, choices=PaymentStatus, default=PaymentStatus.WAITING)
+    # Ours, sent to the provider (eSewa's transaction_uuid, Khalti's purchase_order_id), and the
+    # address the payer comes back to.
+    reference = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    provider_id = models.CharField(
+        max_length=100, blank=True, help_text="The provider's ID for the attempt (Khalti's pidx)."
+    )
+    # Where the provider takes the payer, as {"url", "method", "fields"}: a signed form to post
+    # (eSewa), sent from a page fetched afterwards with GET, or a link (Khalti). Kept so a second
+    # tap goes back there.
+    provider_form = models.JSONField(default=dict, blank=True, editable=False)
+    provider_reference = models.CharField(
+        "provider's reference",
+        max_length=100,
+        blank=True,
+        help_text="The provider's transaction ID, to find the payment in its statements.",
+    )
+    live = models.BooleanField(
+        default=False, help_text="Unticked: made in the provider's test system, so no money moved."
+    )
+    created_at = models.DateTimeField("started", auto_now_add=True)
+    updated_at = models.DateTimeField("updated", auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        amount = self.display_amount()
+        return f"{self.get_method_display()} {amount}: {self.get_status_display().lower()}"
+
+    def display_amount(self):
+        return format_money(self.amount, self.currency)
+
+    def reached_provider(self):
+        """Whether the provider started it, so the payer may have paid even after it's said to
+        have failed (eSewa can say "not found" before "complete"). One that never started can't
+        have taken money."""
+        return bool(self.provider_id or self.provider_form)
+
+    def record(self, status, provider_reference=""):
+        """Save what the provider says about this payment, and what that means for its pledge.
+        Returns whether anything changed.
+
+        A conditional update rather than a read then a save: the payer's return and a later
+        check can arrive at once, and SQLite can't lock a row.
+        """
+        status = PaymentStatus(status)
+        now = timezone.now()
+        changes = {"status": status, "updated_at": now}
+        if provider_reference:
+            changes["provider_reference"] = provider_reference
+        with transaction.atomic():
+            unpaid = Pledge.objects.filter(pk=self.pledge_id).exclude(
+                payment_status=PaymentStatus.PAID
+            )
+            changed = Payment.objects.filter(
+                pk=self.pk, status__in=CHANGES_FROM.get(status, [])
+            ).update(**changes)
+            if not changed:
+                return False
+            if status == PaymentStatus.PAID:
+                # Only for what the pledge says now: one changed since this attempt started
+                # (which the admin no longer allows) stays unpaid until a person looks.
+                unpaid.filter(amount=self.amount, currency=self.currency).update(
+                    payment_status=PaymentStatus.PAID, paid_at=now
+                )
+            else:
+                # Not while another attempt may still pay it: the pay page would say this one
+                # failed and hide the check for that one.
+                unpaid.exclude(
+                    payments__status__in=[PaymentStatus.WAITING, PaymentStatus.PAID]
+                ).update(payment_status=PaymentStatus.FAILED)
+        for name, value in changes.items():
+            setattr(self, name, value)
+        return True

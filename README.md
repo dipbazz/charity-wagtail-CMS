@@ -1,8 +1,8 @@
 # Charity Wagtail CMS
 
 A website and content management system for small charities in Nepal and the UK, built with
-Django 6.1 and Wagtail 8.0. Supporters read appeals and news, pledge a gift and volunteer, in
-Nepali or English; the charity's team runs it all from the Wagtail admin. The demo charity,
+Django 6.1 and Wagtail 8.0. Supporters read appeals and news, pledge a gift and pay it (eSewa or
+Khalti, or in person) and volunteer, in Nepali or English; the charity's team runs it all from the Wagtail admin. The demo charity,
 **Brightwell Water Trust**, is fictional. Every feature was built test-first with pytest.
 
 **Live site:** <https://16-192-118-94.sslip.io>, running the demo content on AWS EC2.
@@ -33,7 +33,8 @@ each step and walks through a first change.
 ## What it does
 
 Pages in Nepali and English with a language switch, built from StreamField blocks; fundraising
-appeals with targets and progress bars; a Donate page whose pledge form the team reads and
+appeals with targets and progress bars; a Donate page whose pledges supporters pay online with
+eSewa or Khalti (payment providers are one file each, in `nepal_payments/`) and the team reads and
 exports in the admin; news with tags, categories and an RSS feed; editor-built forms; partners
 and testimonials; each charity's name, logo, colours and font style, previewed before saving; an
 emergency banner; a consent flag on every photo; search, SEO, a read-only API and a moderation

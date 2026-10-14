@@ -50,7 +50,8 @@ Two traps with versions this new:
 | `charity` | The project: settings, URLs, the API, the base templates, the stylesheet and scripts |
 | `core` | Everything shared: content blocks, the image model, site settings and the banner, partners and testimonials, languages, money and phone formatting, the mail backend, the sitemap, template tags, and the `update_site_url` and `backup_site` commands |
 | `home` | The home page, standard pages and the demo content (`seed_demo`) |
-| `campaigns` | Appeals, the Donate page, pledges and the admin's fundraising panel |
+| `campaigns` | Appeals, the Donate page, pledges and paying them, and the admin's fundraising panel |
+| `nepal_payments` | The payment providers (eSewa, Khalti), one file each. Not a Django app: it imports nothing from Django or this site, so it can be published for any Python project (#196); `campaigns/payments.py` connects it to the site ([Paying a pledge](appeals-and-giving.md#paying-a-pledge)) |
 | `news` | News stories, categories, tag and category pages and the RSS feed |
 | `contact` | Forms editors build themselves, such as volunteer sign-up |
 | `search` | Site search |
@@ -91,7 +92,7 @@ Each part uses what Wagtail already provides before adding code of its own:
 |---|---|
 | Page bodies | `StreamField` with `StructBlock`s, custom validation and block templates |
 | Appeals | Page models, `InlinePanel` with `Orderable` (suggested amounts), `TabbedInterface`, a custom `PageQuerySet` (`.active()`, `.closed()`), preview modes |
-| Donate page and pledges | `RoutablePageMixin` (the thank-you route), a `ModelForm`, a `ModelViewSet` (listing, filters, inspect, export) |
+| Donate page and pledges | `RoutablePageMixin` (the thank-you, pay and payment-return routes), a `ModelForm`, a `ModelViewSet` (listing, filters, inspect, export) |
 | News | `RoutablePageMixin` (tag, category and feed routes), `ClusterTaggableManager`, `ParentalManyToManyField`, Django's syndication feed |
 | Forms | `wagtail.contrib.forms` (`AbstractEmailForm`) |
 | Partners and testimonials | Snippets with `SnippetViewSet(Group)`; `TranslatableMixin`, `DraftStateMixin`, `RevisionMixin`, `LockableMixin`, `PreviewableMixin` |
@@ -108,7 +109,7 @@ Each part uses what Wagtail already provides before adding code of its own:
 | Module | Used by | What it changes |
 |---|---|---|
 | `charity.settings.base` | the others | Apps, middleware, templates, Wagtail settings, SQLite in the project folder |
-| `charity.settings.dev` | `manage.py` and `wsgi.py` by default | Debug on, any host, emails printed to the console, django-debug-toolbar, uploads served by Django. Reads this computer's own settings from a gitignored `.env.local` (copy `.env.local.example`), such as `DJANGO_LANGUAGE_CODE=ne` |
+| `charity.settings.dev` | `manage.py` and `wsgi.py` by default | Debug on, any host, emails printed to the console, django-debug-toolbar, uploads served by Django. Reads this computer's own settings from a gitignored `.env.local` (copy `.env.local.example`), such as `DJANGO_LANGUAGE_CODE=ne`. Pays in eSewa's test system with its published keys |
 | `charity.settings.test` | pytest | Fast password hashing, uploads kept in memory, emails kept in memory, English as the main language |
 | `charity.settings.production` | the Docker image | Everything from `DJANGO_*` environment variables; refuses to start without the required ones ([Running the live site](../hosting.md#environment-variables)) |
 
@@ -117,4 +118,5 @@ Each part uses what Wagtail already provides before adding code of its own:
 App code logs with `logging.getLogger(__name__)`. Production sends warnings and errors from
 Wagtail and this project's apps to the container's output, so **a new app needs its name added to
 the loggers in `charity/settings/production.py`**; `charity/tests/test_production_settings.py`
-fails until it is ([Running the live site](../hosting.md#errors-and-logs)).
+fails until it is ([Running the live site](../hosting.md#errors-and-logs)). `nepal_payments`, which
+isn't an app, has a logger there too.
