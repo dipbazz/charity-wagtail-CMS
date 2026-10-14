@@ -104,6 +104,10 @@ engines. It shows the gift (amount, how often, appeal; never the giver's name or
   eSewa then reloads a page fetched with GET, never "confirm form resubmission". Once the
   payment is no longer waiting, or any attempt has paid the pledge (say with Khalti, after
   backing out of eSewa), that page goes to the pay page instead of sending the form again.
+  Pressing the same provider's button again within 10 minutes (a second tap, a second tab, or no
+  JavaScript to hold the button) goes back to the attempt just started, its form or its link,
+  rather than starting another that could also be paid. After that, or with another provider, a
+  new attempt starts.
 - **Pay in person:** the office address and phone from Site settings, "tell us your name when you
   pay"; without them, a promise to be in touch. "I'll pay later" goes to the thank-you page.
 

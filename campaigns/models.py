@@ -211,6 +211,10 @@ class DonationAmount(AbstractDonationAmount):
     page = ParentalKey(CampaignPage, on_delete=models.CASCADE, related_name="donation_amounts")
 
 
+# How long a waiting attempt is offered again rather than starting another: well within the
+# hour a Khalti payment link lasts.
+REUSE_ATTEMPT_FOR = datetime.timedelta(minutes=10)
+
 # What asking a provider just now found, for the pay page to say once: a message with this tag.
 # Messages are shared with the admin, so the pay page takes only its own.
 PAYMENT_MESSAGE = "payment"
@@ -388,6 +392,18 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             pledge.currency, Decimal(pledge.amount)
         ):
             raise Http404("No such payment provider here.")
+        # A second tap, a second tab or a resent form goes back to the attempt just started, so
+        # there aren't two that could both be paid (two at the same instant can still race).
+        waiting = pledge.payments.filter(
+            method=method,
+            status=PaymentStatus.WAITING,
+            amount=pledge.amount,
+            currency=pledge.currency,
+            live=provider.live,
+            created_at__gte=timezone.now() - REUSE_ATTEMPT_FOR,
+        ).first()
+        if waiting and waiting.provider_form:
+            return self.redirect_to(request, "go_to_provider", waiting.reference)
 
         payment = pledge.start_payment(method, live=provider.live)
         return_path = self.get_url(request) + self.reverse_subpage(
@@ -414,23 +430,26 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             return self.redirect_to(request, "pay", pledge.reference)
 
         redirect = started.redirect
-        if redirect.method == "GET":
-            if started.provider_id:
-                Payment.objects.filter(pk=payment.pk).update(provider_id=started.provider_id)
-            return HttpResponseRedirect(redirect.url, status=303)
-        # A form to post to the provider: kept, and sent from a page fetched with GET, so Back
-        # from the provider reloads that page rather than asking to resend this one.
+        # Kept, so a second tap goes back to the same page at the provider.
         Payment.objects.filter(pk=payment.pk).update(
             provider_id=started.provider_id,
-            provider_form={"url": redirect.url, "fields": redirect.fields},
+            provider_form={
+                "url": redirect.url,
+                "method": redirect.method,
+                "fields": redirect.fields,
+            },
         )
+        if redirect.method == "GET":
+            return HttpResponseRedirect(redirect.url, status=303)
+        # A form to post to the provider: sent from a page fetched with GET, so Back from the
+        # provider reloads that page rather than asking to resend this one.
         return self.redirect_to(request, "go_to_provider", payment.reference)
 
     @path("payment/<uuid:reference>/go/", name="go_to_provider")
     def go_to_provider(self, request, reference):
-        """The page that sends a payment's form to its provider (eSewa). Once the payment isn't
-        waiting any more, or another has paid the pledge, the pay page instead: the form would
-        pay again."""
+        """The way back to a payment's page at its provider: the form that sends it there
+        (eSewa), or a redirect to its link (Khalti). Once the payment isn't waiting any more, or
+        another has paid the pledge, the pay page instead: it would pay again."""
         payment = get_object_or_404(
             Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
         )
@@ -440,6 +459,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             or payment.pledge.has_paid_payment()
         ):
             return self.redirect_to(request, "pay", payment.pledge.reference)
+        # A form kept before links were kept too has no "method": it's posted.
+        if payment.provider_form.get("method") == "GET":
+            return HttpResponseRedirect(payment.provider_form["url"], status=303)
         return self.render(
             request,
             template=self.redirect_template,
@@ -660,8 +682,9 @@ class Payment(models.Model):
     provider_id = models.CharField(
         max_length=100, blank=True, help_text="The provider's ID for the attempt (Khalti's pidx)."
     )
-    # The signed form a provider that takes one (eSewa) is sent, as {"url", "fields"}: the page
-    # that sends it is fetched afterwards, with GET.
+    # Where the provider takes the payer, as {"url", "method", "fields"}: a signed form to post
+    # (eSewa), sent from a page fetched afterwards with GET, or a link (Khalti). Kept so a second
+    # tap goes back there.
     provider_form = models.JSONField(default=dict, blank=True, editable=False)
     provider_reference = models.CharField(
         "provider's reference",

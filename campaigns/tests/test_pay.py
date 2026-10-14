@@ -4,6 +4,7 @@ The flow is tested with FakePay (conftest.py), so it holds for any provider; eSe
 get one journey end to end at the bottom, with their servers stood in for.
 """
 
+import datetime
 import re
 import uuid
 from decimal import Decimal
@@ -11,6 +12,7 @@ from decimal import Decimal
 import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
+from django.utils import timezone
 from wagtail.models import Locale
 
 from campaigns.models import CampaignIndexPage, Payment, PaymentStatus, Pledge
@@ -341,6 +343,63 @@ class TestStartingAPayment:
 
         assert response["Location"] == pay_url(donate_page, pledge)
         assert Payment.objects.count() == 1
+
+    def test_a_second_tap_goes_back_to_the_same_attempt(
+        self, client, donate_page, pledge, fake_provider
+    ):
+        """Two tabs, no JavaScript to hold the button, or a resent form: two attempts could both
+        be paid."""
+        start(client, donate_page, pledge)
+
+        response = start(client, donate_page, pledge)
+
+        payment = Payment.objects.get()
+        assert len(fake_provider.started) == 1
+        assert response["Location"] == f"{return_url(donate_page, payment)}go/"
+        response = client.get(response["Location"])
+        assert response.status_code == 303
+        assert response["Location"] == "https://pay.example.com/fakepay/"
+
+    def test_a_second_tap_sends_the_same_form_again(
+        self, client, donate_page, pledge, fake_provider
+    ):
+        fake_provider.redirect = Redirect(
+            "https://pay.example.com/form/", method="POST", fields={"sig": "x"}
+        )
+        first = start(client, donate_page, pledge)["Location"]
+
+        second = start(client, donate_page, pledge)["Location"]
+
+        assert second == first
+        assert len(fake_provider.started) == 1
+
+    def test_after_ten_minutes_a_new_attempt_starts(
+        self, client, donate_page, pledge, fake_provider
+    ):
+        """By then the provider's page may have expired."""
+        start(client, donate_page, pledge)
+        Payment.objects.update(created_at=timezone.now() - datetime.timedelta(minutes=11))
+
+        start(client, donate_page, pledge)
+
+        assert Payment.objects.count() == 2
+        assert len(fake_provider.started) == 2
+
+    @pytest.mark.parametrize(
+        "other", [{"method": "khalti"}, {"live": True}], ids=["another provider", "live"]
+    )
+    def test_an_attempt_another_way_isnt_reused(
+        self, client, donate_page, pledge, fake_provider, other
+    ):
+        waiting = pledge.start_payment(**{"method": "fakepay", "live": False, **other})
+        Payment.objects.filter(pk=waiting.pk).update(
+            provider_form={"url": "https://pay.example.com/old/", "method": "GET", "fields": {}}
+        )
+
+        start(client, donate_page, pledge)
+
+        assert Payment.objects.count() == 2
+        assert len(fake_provider.started) == 1
 
     def test_only_by_sending_the_form(self, client, donate_page, pledge):
         response = client.get(f"{pay_url(donate_page, pledge)}fakepay/")
