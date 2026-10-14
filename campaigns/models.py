@@ -337,10 +337,12 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         """A pledge's pay page: the ways to pay it, or what became of paying it. Its address is
         the pledge's own reference, so only the person who sent it has it."""
         pledge = get_object_or_404(
-            Pledge.objects.select_related("appeal"), reference=reference, page=self
+            Pledge.objects.select_related("appeal").prefetch_related("payments"),
+            reference=reference,
+            page=self,
         )
         payments = list(pledge.payments.all())  # newest first
-        received = next((p for p in payments if p.status == PaymentStatus.PAID), None)
+        received = pledge.paid_payment()
         # The pledge says whether it's paid: an attempt for another amount (the pledge changed
         # after it started) doesn't pay it, but the money was still received, and isn't asked for
         # again.
@@ -593,18 +595,23 @@ class Pledge(models.Model):
         shown = self.get_payment_status_display()
         if self.payment_status != PaymentStatus.PAID:
             return shown
-        paid = next((p for p in self.payments.all() if p.status == PaymentStatus.PAID), None)
+        paid = self.paid_payment()
         return f"{shown} (test)" if paid and not paid.live else shown
 
     @admin.display(description="Paid with")
     def paid_with(self):
         """The provider and its reference for the payment, e.g. "eSewa 000AWEO", marked "(test)"
         when no money moved. Reads payments as fetched, so a list can prefetch them."""
-        paid = next((p for p in self.payments.all() if p.status == PaymentStatus.PAID), None)
+        paid = self.paid_payment()
         if paid is None:
             return ""
         made = f"{paid.get_method_display()} {paid.provider_reference}".strip()
         return made if paid.live else f"{made} (test)"
+
+    def paid_payment(self):
+        """The attempt that paid it, if any, even one for an amount it no longer asks for (the
+        money was still received). Reads payments as fetched, so a list can prefetch them."""
+        return next((p for p in self.payments.all() if p.status == PaymentStatus.PAID), None)
 
     def received_money(self):
         """Whether a payment of it moved real money, not just a provider's test system."""
