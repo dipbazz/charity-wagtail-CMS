@@ -37,7 +37,7 @@ from core.blocks import BaseStreamBlock
 from core.images import with_card_images
 from core.models import SiteSettings, SocialMetaMixin
 from core.money import CURRENCY_CHOICES, format_money
-from nepal_payments import PaymentError, PaymentRequest
+from nepal_payments import PaymentError, PaymentRequest, ProviderRefused, UnreadableAnswer
 
 logger = logging.getLogger(__name__)
 
@@ -425,6 +425,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             )
         except PaymentError as error:
             logger.warning("%s couldn't start payment %s: %s", provider.name, payment, error)
+            payment.add_step(step_for_error(error))
             payment.record(PaymentStatus.FAILED)
             tell_pay_page(request, "not-started")
             return self.redirect_to(request, "pay", pledge.reference)
@@ -439,6 +440,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "fields": redirect.fields,
             },
         )
+        payment.add_step(StepKind.SENT)
         if redirect.method == "GET":
             return HttpResponseRedirect(redirect.url, status=303)
         # A form to post to the provider: sent from a page fetched with GET, so Back from the
@@ -479,24 +481,18 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         payment = get_object_or_404(
             Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
         )
-        provider = provider_for(payment.method)
-        # A provider no longer set up, or set up for the other mode (test or live), can't be
-        # asked: its keys are for another system.
-        if payment.status != PaymentStatus.PAID and provider and provider.live == payment.live:
-            try:
-                outcome = provider.check(
-                    str(payment.reference), Decimal(payment.amount), payment.provider_id
-                )
-            except (PaymentError, ValueError) as error:
-                logger.warning("%s couldn't check payment %s: %s", provider.name, payment, error)
-                tell_pay_page(request, "unreachable")
-            else:
-                failed_before = payment.status == PaymentStatus.FAILED
-                payment.record(outcome.status, outcome.provider_reference)
-                if outcome.status == PaymentStatus.WAITING or (
-                    failed_before and outcome.status == PaymentStatus.FAILED
-                ):
-                    tell_pay_page(request, "checked")
+        if payment.status != PaymentStatus.PAID:
+            payment.add_step(StepKind.CAME_BACK)
+            failed_before = payment.status == PaymentStatus.FAILED
+            outcome = payment.ask()
+            if outcome is None:
+                # Not when it couldn't be asked at all: there's nothing to try again.
+                if payment.provider():
+                    tell_pay_page(request, "unreachable")
+            elif outcome.status == PaymentStatus.WAITING or (
+                failed_before and outcome.status == PaymentStatus.FAILED
+            ):
+                tell_pay_page(request, "checked")
         return self.redirect_to(request, "pay", payment.pledge.reference)
 
     def redirect_to(self, request, name, *args):
@@ -714,6 +710,40 @@ class Payment(models.Model):
         have taken money."""
         return bool(self.provider_id or self.provider_form)
 
+    def provider(self):
+        """Its provider, ready to ask about it; None when the provider isn't set up here any
+        more, or is set up for the other system (test or live), whose keys can't look it up."""
+        provider = provider_for(self.method)
+        return provider if provider and provider.live == self.live else None
+
+    def ask(self, by=None):
+        """Ask the provider what became of this payment, record what it says, and add a step for
+        every outcome: the answer, or why there wasn't one. The return page, the team's check and
+        a scheduled check all ask here. `by` is the person who asked, if one did.
+
+        Returns the provider's Outcome, or None when it couldn't be asked or didn't answer.
+        Only known values are stored: an error's text, which can quote the provider's reply,
+        goes to the log, and the provider's word only if it's one of its `statuses`.
+        """
+        provider = self.provider()
+        if provider is None:
+            self.add_step(StepKind.NOT_ASKED, by=by)
+            return None
+        try:
+            outcome = provider.check(str(self.reference), Decimal(self.amount), self.provider_id)
+        except (PaymentError, ValueError) as error:
+            logger.warning("%s couldn't check payment %s: %s", provider.name, self, error)
+            self.add_step(step_for_error(error), by=by)
+            return None
+        word = outcome.word if outcome.word in provider.statuses else ""
+        self.add_step(StepKind.ASKED, word=word, by=by)
+        self.record(outcome.status, outcome.provider_reference)
+        return outcome
+
+    def add_step(self, kind, word="", by=None):
+        """Add a step to its history. Pass only known values, never a provider's reply."""
+        return self.steps.create(kind=kind, word=word, by=by)
+
     def record(self, status, provider_reference=""):
         """Save what the provider says about this payment, and what that means for its pledge.
         Returns whether anything changed.
@@ -750,3 +780,53 @@ class Payment(models.Model):
         for name, value in changes.items():
             setattr(self, name, value)
         return True
+
+
+class StepKind(models.TextChoices):
+    """What happened to a payment. A fixed list, so nothing a provider sends is stored as text."""
+
+    SENT = "sent", "Sent to the provider"
+    CAME_BACK = "came-back", "Came back to the site"
+    ASKED = "asked", "The provider answered"
+    UNREACHABLE = "unreachable", "Couldn't reach the provider"
+    UNREADABLE = "unreadable", "Answer not understood"
+    REFUSED = "refused", "The provider refused"
+    NOT_ASKED = "not-asked", "Couldn't ask the provider"
+
+
+def step_for_error(error):
+    """The step for an error starting or checking a payment."""
+    if isinstance(error, UnreadableAnswer):
+        return StepKind.UNREADABLE
+    if isinstance(error, ProviderRefused):
+        return StepKind.REFUSED
+    if isinstance(error, PaymentError):
+        return StepKind.UNREACHABLE
+    return StepKind.NOT_ASKED  # it couldn't be asked, such as Khalti's with no pidx
+
+
+class PaymentStep(models.Model):
+    """One thing that happened to a payment, so the team can follow it up without the
+    provider's portal. Only known values: a provider's reply or error text can hold the payer's
+    details, so it's never stored."""
+
+    payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name="steps")
+    kind = models.CharField(max_length=12, choices=StepKind)
+    # The provider's own word for its answer (eSewa's "CANCELED"), only one in its `statuses`.
+    word = models.CharField("provider's word", max_length=50, blank=True)
+    # The person who did it, such as a team member asking the provider; blank for the payer or
+    # the site.
+    by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    at = models.DateTimeField("when", default=timezone.now)
+
+    class Meta:
+        ordering = ["at", "pk"]
+
+    def __str__(self):
+        return f"{self.get_kind_display()} {self.word}".strip()

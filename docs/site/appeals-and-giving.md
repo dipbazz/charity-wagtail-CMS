@@ -147,6 +147,16 @@ the pledge's amount and currency: a pledge changed after an attempt started stay
 someone looks. (The admin no longer lets that happen: see Pledges below. This is a safety net.) Its pay page then says what was received ("We received Rs 2,500
 from you by Khalti (reference …). Our team will be in touch.") and offers no way to pay again.
 
+**Each payment keeps a history of what happened to it** (`PaymentStep`), so the team can answer
+"did my payment go through?" without the provider's portal: sent to the provider (or why it
+couldn't start), came back to the site, and each time the site asked the provider, with its
+answer or why there wasn't one (couldn't reach it, answer not understood, refused, couldn't ask).
+An answer keeps the provider's own word, such as eSewa's `CANCELED`; each provider's `statuses`
+give that word a sentence for the team ("The payer cancelled at eSewa. Nothing was taken.").
+Every check adds a step, even with the same answer. `Payment.ask()` is the one place the site asks
+a provider: the return page uses it, and so will the team's check and the scheduled one (#198).
+The admin shows the history from #96's second part.
+
 **Which providers are offered** is each installation's own setting: a provider is offered once all
 its keys are set ([Running the live site](../hosting.md#paying-pledges-online)), and only for the
 currencies it takes, so a UK charity's pledges in pounds get neither eSewa nor Khalti. Payments use

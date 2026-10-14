@@ -15,9 +15,17 @@ from django.urls import reverse
 from django.utils import timezone
 from wagtail.models import Locale
 
-from campaigns.models import CampaignIndexPage, Payment, PaymentStatus, Pledge
+from campaigns.models import CampaignIndexPage, Payment, PaymentStatus, Pledge, StepKind
 from core.models import SiteSettings, SiteSettingsText
-from nepal_payments import Outcome, ProviderUnavailable, Redirect, Status, http
+from nepal_payments import (
+    Outcome,
+    ProviderRefused,
+    ProviderUnavailable,
+    Redirect,
+    Status,
+    UnreadableAnswer,
+    http,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -64,6 +72,10 @@ def start(client, donate_page, pledge, method="fakepay"):
 
 def return_url(donate_page, payment):
     return f"{donate_page.url}payment/{payment.reference}/"
+
+
+def kinds(payment):
+    return [step.kind for step in payment.steps.all()]
 
 
 def pay_buttons(response):
@@ -447,6 +459,29 @@ class TestStartingAPayment:
             in (text(page))
         )
 
+    def test_records_that_the_payer_was_sent_to_the_provider(self, client, donate_page, pledge):
+        start(client, donate_page, pledge)
+
+        assert kinds(Payment.objects.get()) == [StepKind.SENT]
+
+    @pytest.mark.parametrize(
+        ("error", "kind"),
+        [
+            (ProviderUnavailable("Fake Pay is down."), StepKind.UNREACHABLE),
+            (UnreadableAnswer("Fake Pay answered nonsense."), StepKind.UNREADABLE),
+            (ProviderRefused("Fake Pay refused the key."), StepKind.REFUSED),
+        ],
+        ids=["unreachable", "unreadable", "refused"],
+    )
+    def test_records_why_it_couldnt_start(
+        self, client, donate_page, pledge, fake_provider, error, kind
+    ):
+        fake_provider.failure = error
+
+        start(client, donate_page, pledge)
+
+        assert kinds(Payment.objects.get()) == [kind]
+
 
 class TestComingBack:
     @pytest.fixture
@@ -515,6 +550,27 @@ class TestComingBack:
         page = soup(client.get(pay_url(donate_page, pledge)))
 
         assert page.find("a", string="Back to the home page")["href"] == "/"
+
+    def test_records_coming_back_and_what_the_provider_said(
+        self, client, donate_page, payment, fake_provider
+    ):
+        fake_provider.outcome = Outcome(Status.FAILED, word="CANCELLED")
+
+        client.get(return_url(donate_page, payment))
+
+        assert [(step.kind, step.word) for step in payment.steps.all()] == [
+            (StepKind.SENT, ""),
+            (StepKind.CAME_BACK, ""),
+            (StepKind.ASKED, "CANCELLED"),
+        ]
+
+    def test_coming_back_to_a_paid_payment_records_nothing_more(self, client, donate_page, payment):
+        """Nothing is asked once it's paid, and a reload isn't news."""
+        client.get(return_url(donate_page, payment))
+
+        client.get(return_url(donate_page, payment))
+
+        assert kinds(payment) == [StepKind.SENT, StepKind.CAME_BACK, StepKind.ASKED]
 
     def test_asks_the_provider_with_our_own_reference_and_amount(
         self, client, donate_page, payment, fake_provider

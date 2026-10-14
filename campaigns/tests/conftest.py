@@ -33,11 +33,16 @@ class FakePay(PaymentProvider):
     name = "Fake Pay"
     keys = ("SECRET_KEY",)
     min_amount = Decimal(10)
+    statuses = {
+        "DONE": (Status.PAID, "Fake Pay says it's paid."),
+        "PENDING": (Status.WAITING, "Fake Pay hasn't finished the payment yet."),
+        "CANCELLED": (Status.FAILED, "The payer cancelled at Fake Pay. Nothing was taken."),
+    }
 
     @classmethod
     def reset(cls):
         cls.redirect = Redirect("https://pay.example.com/fakepay/")
-        cls.outcome = Outcome(Status.PAID, "FAKE-123")
+        cls.outcome = Outcome(Status.PAID, "FAKE-123", word="DONE")
         cls.failure = None  # an error start() and check() raise instead
         cls.started = []  # the PaymentRequests start() was given
         cls.checked = []  # what check() was asked
