@@ -472,6 +472,21 @@ class TestComingBack:
         assert "didn't go through, and no money was taken" in text(page)
         assert "Pay with Fake Pay" in pay_buttons(page)
 
+    def test_an_older_attempt_failing_leaves_a_newer_one_to_check(
+        self, client, donate_page, pledge, fake_provider
+    ):
+        """Said to have failed, with no way to check the newer attempt, the payer pays again."""
+        older = pledge.start_payment("fakepay", live=False)
+        newer = pledge.start_payment("fakepay", live=False)
+        fake_provider.outcome = Outcome(Status.FAILED)
+
+        client.get(return_url(donate_page, older))
+
+        assert Pledge.objects.get().payment_status == PaymentStatus.WAITING
+        page = client.get(pay_url(donate_page, pledge))
+        assert "didn't go through" not in text(page)
+        assert soup(page).find("a", href=return_url(donate_page, newer))
+
     def test_a_provider_that_cant_be_reached_leaves_it_waiting(
         self, client, donate_page, pledge, payment, fake_provider
     ):

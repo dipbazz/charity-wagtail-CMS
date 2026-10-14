@@ -707,7 +707,11 @@ class Payment(models.Model):
                     payment_status=PaymentStatus.PAID, paid_at=now
                 )
             else:
-                unpaid.update(payment_status=PaymentStatus.FAILED)
+                # Not while another attempt may still pay it: the pay page would say this one
+                # failed and hide the check for that one.
+                unpaid.exclude(
+                    payments__status__in=[PaymentStatus.WAITING, PaymentStatus.PAID]
+                ).update(payment_status=PaymentStatus.FAILED)
         for name, value in changes.items():
             setattr(self, name, value)
         return True

@@ -132,7 +132,9 @@ change it. Then the pay page shows one of three things:
 Each attempt is a `Payment`: the provider, the amount, our reference (sent to the provider), the
 provider's own IDs, and whether it ran in the provider's test system. A pledge's **payment status**
 (waiting, paid or failed) and the time it was paid follow from its payments, and only
-`Payment.record()` changes them. Paid never goes back. A payment pays its pledge only if it was for
+`Payment.record()` changes them. Paid never goes back. A failed attempt marks the pledge failed
+only when none of its other attempts is waiting or paid, so the newer one can still be checked.
+A payment pays its pledge only if it was for
 the pledge's amount and currency: a pledge changed after an attempt started (in the admin, say)
 stays unpaid until someone looks. Its pay page then says what was received ("We received Rs 2,500
 from you by Khalti (reference …). Our team will be in touch.") and offers no way to pay again.
