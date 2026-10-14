@@ -147,10 +147,12 @@ with the live system later.
 The keys are secrets: they go in the server's `.env` only, never in git, a chat or the admin.
 
 **A slow provider:** starting a Khalti payment, and checking any payment when the payer comes
-back, asks the provider while the payer waits, for up to 10 seconds (`TIMEOUT` in
-`nepal_payments/http.py`). Each of the site's two web workers (`WEB_CONCURRENCY`) answers one
-visitor at a time, so if eSewa or Khalti stops answering and two payers come back within those
-seconds, every visitor to the site waits until one of them is done. Nothing is lost: the payment
+back, asks the provider while the payer waits. The site gives up after 10 seconds without a word
+from the provider (`TIMEOUT` in `nepal_payments/http.py`). That's a limit on each wait, not on the
+whole answer: a provider that answers very slowly, a little at a time, can take longer, and
+looking up its address has no limit of its own. Each of the site's two web workers
+(`WEB_CONCURRENCY`) answers one visitor at a time, so if eSewa or Khalti stops answering and two
+payers come back within those seconds, every visitor to the site waits until one of them is done. Nothing is lost: the payment
 stays waiting, and the payer can check it again from the pay page. With a charity's few payments
 a day this is rare enough to leave as it is; a third worker would take another 100–150 MB.
 
