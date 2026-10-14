@@ -143,8 +143,8 @@ provider's own IDs, and whether it ran in the provider's test system. A pledge's
 `Payment.record()` changes them. Paid never goes back. A failed attempt marks the pledge failed
 only when none of its other attempts is waiting or paid, so the newer one can still be checked.
 A payment pays its pledge only if it was for
-the pledge's amount and currency: a pledge changed after an attempt started (in the admin, say)
-stays unpaid until someone looks. Its pay page then says what was received ("We received Rs 2,500
+the pledge's amount and currency: a pledge changed after an attempt started stays unpaid until
+someone looks. (The admin no longer lets that happen: see Pledges below. This is a safety net.) Its pay page then says what was received ("We received Rs 2,500
 from you by Khalti (reference …). Our team will be in touch.") and offers no way to pay again.
 
 **Which providers are offered** is each installation's own setting: a provider is offered once all
@@ -195,7 +195,10 @@ Nobody adds or edits a pledge (they come from supporters), and only a superuser 
 it holds personal details, and a pledge deleted by accident loses the record of a donation. Not
 even a superuser can delete a pledge paid with real money, since its payment is the site's only
 record of the gift (provider, transaction ID and time); one paid only in a provider's test system
-can be deleted, to clear out testing.
+can be deleted, to clear out testing. A superuser can correct a pledge (a mistyped email, say),
+but once someone has started paying it its amount and currency can't be changed: the payment
+was for them, and a changed amount still marked paid would disagree with the provider's
+statement.
 
 ## Money
 

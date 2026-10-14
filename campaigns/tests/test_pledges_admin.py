@@ -262,6 +262,32 @@ def test_a_pledge_paid_with_real_money_cant_be_deleted(admin_client, sent_pledge
     assert Pledge.objects.filter(pk=sent_pledge.pk).exists()
 
 
+def edit(admin_client, pledge, **changes):
+    """A superuser saves the pledge's edit form, with these changes."""
+    fields = ["appeal", "amount", "currency", "frequency", "name", "email", "phone", "address"]
+    data = {name: getattr(pledge, name) for name in fields} | {"appeal": pledge.appeal_id}
+    response = admin_client.post(reverse("pledges:edit", args=[pledge.pk]), data | changes)
+    assert response.status_code == 302, response.context["form"].errors
+    pledge.refresh_from_db()
+
+
+def test_once_someone_starts_paying_a_pledge_its_amount_is_kept(admin_client, sent_pledge):
+    """A changed amount still marked paid would disagree with the provider's statement, and the
+    pay page would thank the supporter for an amount they didn't give."""
+    sent_pledge.start_payment("khalti", live=True).record(Status.PAID, "GFq9PFS7")
+
+    edit(admin_client, sent_pledge, amount=100, currency="GBP", email="sita.sharma@example.com")
+
+    assert (sent_pledge.amount, sent_pledge.currency) == (2500, "NPR")
+    assert sent_pledge.email == "sita.sharma@example.com"  # a typo can still be put right
+
+
+def test_a_pledge_nobody_has_started_paying_can_still_be_changed(admin_client, sent_pledge):
+    edit(admin_client, sent_pledge, amount=3000)
+
+    assert sent_pledge.amount == 3000
+
+
 def test_permission_migration_gives_view_only_and_creates_no_duplicates(
     django_user_model, editor, moderator
 ):

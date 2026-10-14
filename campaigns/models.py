@@ -736,8 +736,8 @@ class Payment(models.Model):
             if not changed:
                 return False
             if status == PaymentStatus.PAID:
-                # Only for what the pledge says now: one changed since this attempt started (in
-                # the admin, say) stays unpaid until a person looks.
+                # Only for what the pledge says now: one changed since this attempt started
+                # (which the admin no longer allows) stays unpaid until a person looks.
                 unpaid.filter(amount=self.amount, currency=self.currency).update(
                     payment_status=PaymentStatus.PAID, paid_at=now
                 )

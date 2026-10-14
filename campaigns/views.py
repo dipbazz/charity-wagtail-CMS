@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.shortcuts import redirect
 from wagtail.admin.ui.tables import Column
-from wagtail.admin.views.generic import DeleteView, IndexView
+from wagtail.admin.views.generic import DeleteView, EditView, IndexView
 from wagtail.admin.viewsets.model import ModelViewSet
 
 from campaigns.models import Pledge
@@ -12,6 +12,22 @@ class PledgeIndexView(VisitorTextExportMixin, IndexView):
     def get_base_queryset(self):
         # The export's "Paid with" reads each pledge's payments: fetched together, not one by one.
         return super().get_base_queryset().prefetch_related("payments")
+
+
+class PledgeEditView(EditView):
+    """Keeps the amount and currency once someone has started paying the pledge: the payment was
+    for them, so a changed one still marked paid would disagree with the provider's statement.
+    The rest (a mistyped email, say) can still be put right. A disabled field ignores what's
+    posted for it."""
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        if self.object.payments.exists():
+            for name in ("amount", "currency"):
+                field = form.fields[name]
+                field.disabled = True
+                field.help_text = "Can't be changed: someone has started paying this pledge."
+        return form
 
 
 class PledgeDeleteView(DeleteView):
@@ -43,7 +59,8 @@ class PledgeViewSet(ModelViewSet):
     Pledges come from the site, so the team never adds or edits them, and only a superuser can
     delete one (0006_pledge_permissions gives the groups view permission only): a deleted
     pledge loses the record of a donation. Not even a superuser can delete one paid with real
-    money (PledgeDeleteView).
+    money (PledgeDeleteView), or change the amount of one someone has started paying
+    (PledgeEditView).
     """
 
     model = Pledge
@@ -54,6 +71,7 @@ class PledgeViewSet(ModelViewSet):
     inspect_view_enabled = True
     copy_view_enabled = False
     index_view_class = PledgeIndexView
+    edit_view_class = PledgeEditView
     delete_view_class = PledgeDeleteView
 
     # Wagtail needs these for its add and edit views, which only a superuser can open.
