@@ -4,6 +4,7 @@ import re
 import uuid
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -360,6 +361,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 # Codes and names, not the classes, which templates would try to call.
                 "providers": [(provider.code, provider.name) for provider in providers],
                 "pay_with": either([provider.name for provider in providers]),
+                # Before a charity goes live its real supporters can still get here.
+                "test_mode": not settings.LIVE_PAYMENTS,
                 "latest": latest,
                 "unfinished": latest if latest and latest.status == PaymentStatus.WAITING else None,
                 "result": pay_page_result(request),

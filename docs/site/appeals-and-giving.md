@@ -146,10 +146,13 @@ from you by Khalti (reference …). Our team will be in touch.") and offers no w
 **Which providers are offered** is each installation's own setting: a provider is offered once all
 its keys are set ([Running the live site](../hosting.md#paying-pledges-online)), and only for the
 currencies it takes, so a UK charity's pledges in pounds get neither eSewa nor Khalti. Payments use
-the providers' test systems, where no money moves, until real money is switched on.
+the providers' test systems, where no money moves, until real money is switched on. Until then the
+pay page adds one sentence after "You'll pay on the secure page of …": "Online payments are in
+test mode here: no money will be taken.", so a real supporter who finds the site before it goes
+live isn't misled.
 
 **Trying a payment before going live:** in a test system, sign in on the provider's page with its
-public test account. The pay page doesn't show these: it pushed the pay buttons down, and
+public test account. The pay page doesn't show these: they pushed the pay buttons down, and
 supporters don't need them.
 
 | Provider | Test account |

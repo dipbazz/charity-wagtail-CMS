@@ -70,8 +70,10 @@ anyone can type it; a test sends a forged return and checks that nothing changes
   that sends a payer anywhere but `https`.
 - **A form posted to a provider carries no CSRF token** of ours, so it can't leak to them.
 - **Test mode can't pass for real money:** the Pledges list and its export mark a test payment
-  "(test)", and its thank-you says no money was taken. Anyone can pay in a test system with the
-  provider's public test account, so the pay page doesn't show it: the docs do.
+  "(test)", the pay page says "Online payments are in test mode here: no money will be taken."
+  before anyone pays, and a test payment's thank-you says no money was taken. Anyone can pay in a
+  test system with the provider's public test account, so the pay page doesn't show it: the docs
+  do.
 - **Providers get no personal details** from the site: the amount, our reference and what the gift
   is for.
 

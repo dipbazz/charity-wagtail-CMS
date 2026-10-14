@@ -136,8 +136,21 @@ class TestPayPage:
         team finds the test accounts in the docs instead."""
         page = text(client.get(pay_url(donate_page, pledge)))
 
-        assert "Test mode" not in page
         assert "9800000001" not in page  # FakePay's test account
+
+    def test_says_when_no_money_moves(self, client, donate_page, pledge):
+        """Before a charity goes live, a real supporter can reach this page: one sentence, so the
+        buttons stay where they are."""
+        section = soup(client.get(pay_url(donate_page, pledge))).find(id="pay-online").parent
+
+        assert "Online payments are in test mode here: no money will be taken." in " ".join(
+            section.get_text().split()
+        )
+
+    def test_says_nothing_of_test_mode_once_live(self, client, donate_page, pledge, settings):
+        settings.LIVE_PAYMENTS = True
+
+        assert "test mode" not in text(client.get(pay_url(donate_page, pledge)))
 
     def test_is_kept_out_of_search_engines(self, client, donate_page, pledge):
         robots = soup(client.get(pay_url(donate_page, pledge))).find(

@@ -1,11 +1,11 @@
 # Nepali text for the site's menus, buttons, forms and messages.
 # Same license as the project.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-14 02:19+0100\n"
+"POT-Creation-Date: 2026-10-14 02:21+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -286,6 +286,9 @@ msgstr "अनलाइनबाट भुक्तानी गर्नुह�
 #, python-format
 msgid "You'll pay on the secure page of %(pay_with)s, then come back here."
 msgstr "तपाईं %(pay_with)s को सुरक्षित पृष्ठमा भुक्तानी गर्नुहुनेछ, अनि यहाँ फिर्ता आउनुहुनेछ।"
+
+msgid "Online payments are in test mode here: no money will be taken."
+msgstr "यहाँ अनलाइन भुक्तानी परीक्षण मोडमा छ: कुनै पैसा लिइने छैन।"
 
 #, python-format
 msgid "Opening %(provider)s…"
