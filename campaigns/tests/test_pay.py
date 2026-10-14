@@ -469,8 +469,63 @@ class TestComingBack:
         client.get(return_url(donate_page, payment))
 
         page = client.get(pay_url(donate_page, pledge))
-        assert "didn't go through, and no money was taken" in text(page)
+        assert "Fake Pay says your payment didn't go through." in text(page)
         assert "Pay with Fake Pay" in pay_buttons(page)
+
+    def test_a_failed_payment_can_still_be_checked(
+        self, client, donate_page, pledge, payment, fake_provider
+    ):
+        """eSewa can say "not found" before it says "complete": "no money was taken" isn't
+        known, and paying again would pay twice."""
+        fake_provider.outcome = Outcome(Status.FAILED)
+        client.get(return_url(donate_page, payment))
+
+        page = client.get(pay_url(donate_page, pledge))
+
+        assert "no money was taken" not in text(page)
+        assert "If money has left your account, don't pay again." in text(page)
+        check = soup(page).find("a", href=return_url(donate_page, payment))
+        assert check.get_text(strip=True) == "Check my Fake Pay payment"
+
+    def test_checking_a_failed_payment_again_says_what_it_found(
+        self, client, donate_page, pledge, payment, fake_provider
+    ):
+        fake_provider.outcome = Outcome(Status.FAILED)
+        client.get(return_url(donate_page, payment))
+
+        page = client.get(return_url(donate_page, payment), follow=True)
+
+        assert (
+            "We asked Fake Pay again just now, and it still says your payment didn't go through."
+            in text(page)
+        )
+
+    def test_a_failed_payment_found_paid_later_says_thank_you(
+        self, client, donate_page, pledge, payment, fake_provider
+    ):
+        fake_provider.outcome = Outcome(Status.FAILED)
+        client.get(return_url(donate_page, payment))
+        fake_provider.outcome = Outcome(Status.PAID, "FAKE-123")
+
+        page = client.get(return_url(donate_page, payment), follow=True)
+
+        assert Pledge.objects.get().payment_status == PaymentStatus.PAID
+        assert soup(page).find(class_="lead").get_text() == (
+            "Test payment completed. No money was taken."
+        )
+
+    def test_a_payment_that_never_started_says_no_money_was_taken(
+        self, client, donate_page, pledge, fake_provider
+    ):
+        """The provider was never reached, so this one is known."""
+        fake_provider.failure = ProviderUnavailable("Fake Pay is down.")
+        start(client, donate_page, pledge)
+        client.get(pay_url(donate_page, pledge))  # the one-off "couldn't reach" message
+
+        page = client.get(pay_url(donate_page, pledge))
+
+        assert "didn't go through, and no money was taken" in text(page)
+        assert not soup(page).find("a", string=re.compile("Check my"))
 
     def test_an_older_attempt_failing_leaves_a_newer_one_to_check(
         self, client, donate_page, pledge, fake_provider

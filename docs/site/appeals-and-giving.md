@@ -119,9 +119,13 @@ change it. Then the pay page shows one of three things:
   monthly gift says "This month's gift … has reached us. We'll be in touch about next month.",
   and a test payment says first "Test payment completed. No money was taken." It leads to the
   appeals page, or to the home page on a site without one.
-- **Failed or cancelled:** no money was taken, and the buttons again. When the provider couldn't
-  even start the payment, the page says so instead: "We couldn't reach Khalti just now. Try
-  eSewa, or try again in a few minutes."
+- **Failed or cancelled:** "eSewa says your payment didn't go through.", with "If money has left
+  your account, don't pay again", the charity's phone, a **Check my eSewa payment** button and the
+  pay buttons again. It doesn't say no money was taken: eSewa can say "not found" before it says
+  "complete", and checking again records it as paid then (checking again with no change says
+  so once). Only when the provider couldn't even start the payment is no money known to be
+  taken: the page says "We couldn't reach Khalti just now. Try eSewa, or try again in a few
+  minutes.", and afterwards "Your payment didn't go through, and no money was taken."
 - **Not confirmed yet** (the provider is still deciding, or couldn't be reached): a large button
   to check before paying again, so nobody pays twice. The pay buttons are folded away under "I
   didn't pay: choose a way to pay". Just after a check, the page says once what it found ("We

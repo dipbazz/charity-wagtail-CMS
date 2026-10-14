@@ -466,8 +466,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 logger.warning("%s couldn't check payment %s: %s", provider.name, payment, error)
                 tell_pay_page(request, "unreachable")
             else:
+                failed_before = payment.status == PaymentStatus.FAILED
                 payment.record(outcome.status, outcome.provider_reference)
-                if outcome.status == PaymentStatus.WAITING:
+                if outcome.status == PaymentStatus.WAITING or (
+                    failed_before and outcome.status == PaymentStatus.FAILED
+                ):
                     tell_pay_page(request, "checked")
         return self.redirect_to(request, "pay", payment.pledge.reference)
 
@@ -678,6 +681,12 @@ class Payment(models.Model):
 
     def display_amount(self):
         return format_money(self.amount, self.currency)
+
+    def reached_provider(self):
+        """Whether the provider started it, so the payer may have paid even after it's said to
+        have failed (eSewa can say "not found" before "complete"). One that never started can't
+        have taken money."""
+        return bool(self.provider_id or self.provider_form)
 
     def record(self, status, provider_reference=""):
         """Save what the provider says about this payment, and what that means for its pledge.

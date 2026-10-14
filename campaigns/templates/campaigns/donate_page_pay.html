@@ -40,6 +40,12 @@
                 <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
                     {% if result == "not-started" %}
                         <p>{% blocktranslate with provider=latest.get_method_display %}We couldn't reach {{ provider }} just now.{% endblocktranslate %} {% if others %}{% blocktranslate %}Try {{ others }}, or try again in a few minutes.{% endblocktranslate %}{% else %}{% translate "Try again in a few minutes." %}{% endif %}</p>
+                    {% elif latest.reached_provider %}
+                        {# The provider may still find it paid (eSewa can say "not found" before "complete"), so "no money was taken" isn't known: checking comes before paying again. #}
+                        <p>{% if result == "checked" %}{% blocktranslate with provider=latest.get_method_display %}We asked {{ provider }} again just now, and it still says your payment didn't go through.{% endblocktranslate %}{% else %}{% blocktranslate with provider=latest.get_method_display %}{{ provider }} says your payment didn't go through.{% endblocktranslate %}{% endif %}</p>
+                        <p>{% if site_settings.phone %}{% translate "If money has left your account, don't pay again. Call us and we'll look into it:" %}{% else %}{% translate "If money has left your account, don't pay again." %}{% endif %}</p>
+                        {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
+                        <p><a class="button" href="{% routablepageurl page 'payment_return' latest.reference %}">{% blocktranslate with provider=latest.get_method_display %}Check my {{ provider }} payment{% endblocktranslate %}</a></p>
                     {% else %}
                         <p>{% translate "Your payment didn't go through, and no money was taken. You can try again, or pay another way." %}</p>
                     {% endif %}
