@@ -8,9 +8,9 @@ real money only when LIVE_PAYMENTS is on.
 from django.conf import settings
 from django.core import checks
 
+# The prefix the settings read keys with, so the checks' hints name the variables they read.
+from charity.settings.payments import PREFIX
 from nepal_payments import all_providers, get_provider
-
-PREFIX = "DJANGO_PAYMENT_"
 
 
 def setting_name(provider, key):
