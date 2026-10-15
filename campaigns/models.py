@@ -379,7 +379,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 pledge = form.save()
                 # 303 See Other: the browser fetches the next page with GET, so reloading it
                 # doesn't send the form again.
-                _, ways, _ = self.ways_for(request, pledge, site_settings)
+                _, ways, _ = self.ways_for(pledge, site_settings)
                 if len(ways) == 1:
                     return self.redirect_to(request, WAY_ROUTES[ways[0]], pledge.reference)
                 if ways:
@@ -389,7 +389,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             form = self.get_form(site_settings=site_settings, link=request.GET)
         # How paying works here, before an amount is chosen: any amount a provider takes.
         providers = providers_for(site_settings.currency)
-        qr_codes = self.qr_codes_for(request, site_settings.currency)
+        qr_codes = self.qr_codes_for(site_settings.currency)
         ways = ways_to_pay(providers, site_settings, qr_codes)
         return self.render(
             request,
@@ -419,18 +419,19 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     def thank_you(self, request):
         return self.render(request, template=self.landing_page_template)
 
-    def qr_codes_for(self, request, currency):
+    def qr_codes_for(self, currency, names=False):
         """The charity's QR codes, when they take this currency: they're offered for rupees only,
-        like the providers (the apps they're scanned with are Nepali)."""
+        like the providers (the apps they're scanned with are Nepali). Their names are read only
+        by the QR page, which asks for them."""
         if currency not in QR_CURRENCIES:
             return []
-        return QRCode.for_pay_page()
+        return QRCode.for_pay_page(names)
 
-    def ways_for(self, request, pledge, site_settings):
+    def ways_for(self, pledge, site_settings, names=False):
         """The providers that take the pledge, the ways to pay it and the QR codes offered,
         worked out once so they can't disagree."""
         providers = providers_for(pledge.currency, Decimal(pledge.amount))
-        qr_codes = self.qr_codes_for(request, pledge.currency)
+        qr_codes = self.qr_codes_for(pledge.currency, names)
         return providers, ways_to_pay(providers, site_settings, qr_codes), qr_codes
 
     def get_pledge(self, reference):
@@ -455,7 +456,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             return self.render_pay_page(request, pledge, state, [], [], [], site_settings)
         if state in STATE_WAYS:
             return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
-        providers, ways, qr_codes = self.ways_for(request, pledge, site_settings)
+        providers, ways, qr_codes = self.ways_for(pledge, site_settings)
         if not ways:
             return self.redirect_to(request, "thank_you")
         if len(ways) == 1:
@@ -481,14 +482,14 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             return HttpResponseNotAllowed(["POST"])
         pledge = self.get_pledge(reference)
         site_settings = SiteSettings.for_request(request)
-        qr_codes = self.qr_codes_for(request, pledge.currency)
+        qr_codes = self.qr_codes_for(pledge.currency, names=True)
         if not qr_codes or pledge.has_paid_payment():
             return self.redirect_to(request, "pay", reference)
         from campaigns.forms import QRPaidForm  # forms imports this module's Pledge
 
         form = QRPaidForm(request.POST, codes=qr_codes)
         if not form.is_valid():
-            providers, ways, _ = self.ways_for(request, pledge, site_settings)
+            providers, ways, _ = self.ways_for(pledge, site_settings)
             response = self.render_pay_page(
                 request,
                 pledge,
@@ -528,7 +529,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         site_settings = SiteSettings.for_request(request)
         if state in THANKED:
             return self.render_pay_page(request, pledge, state, [], [], [], site_settings, way)
-        providers, ways, qr_codes = self.ways_for(request, pledge, site_settings)
+        providers, ways, qr_codes = self.ways_for(pledge, site_settings, names=way == QR)
         if not (way == LATER or way in ways or STATE_WAYS.get(state) == way):
             return self.redirect_to(request, "pay", reference)
         return self.render_pay_page(
@@ -814,12 +815,13 @@ class QRCode(TextInEachLanguageMixin, ClusterableModel, Orderable):
         return self.name or self.account_name
 
     @classmethod
-    def for_pay_page(cls):
+    def for_pay_page(cls, names=True):
         """The codes supporters can pay to, in order, with their names in each language: one
-        query when there are none, two otherwise. The names are attached by hand: Prefetch
-        gives every code of a cluster the last one's."""
+        query when there are none, two otherwise. Without `names` (to know only whether there are
+        any, and how many), one query, and the codes can't be named. The names are attached by
+        hand: Prefetch gave every code of a cluster the last one's."""
         codes = list(cls.objects.all())
-        if codes:
+        if codes and names:
             by_code = {code.pk: {} for code in codes}
             for text in QRCodeName.objects.filter(code__in=codes).select_related("locale"):
                 by_code[text.code_id][text.locale.language_code] = text
