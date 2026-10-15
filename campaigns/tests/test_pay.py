@@ -772,11 +772,66 @@ class TestStartingAPayment:
             "https://pay.example.com/form/", method="POST", fields={"sig": "x"}
         )
         first = start(client, donate_page, pledge)["Location"]
+        client.get(first)
 
         second = start(client, donate_page, pledge)["Location"]
 
         assert second == first
         assert len(fake_provider.started) == 1
+
+    @pytest.fixture
+    def form_taken_once(self, fake_provider):
+        """A provider that takes each payment's form once, like eSewa."""
+        fake_provider.opens_once = True
+        fake_provider.redirect = Redirect(
+            "https://pay.example.com/form/", method="POST", fields={"sig": "x"}
+        )
+        return fake_provider
+
+    def test_a_double_tap_sends_a_form_taken_once_once(
+        self, client, donate_page, pledge, form_taken_once
+    ):
+        """Both taps arrive before the form is shown: the second goes to the same one."""
+        first = start(client, donate_page, pledge)["Location"]
+
+        second = start(client, donate_page, pledge)["Location"]
+
+        assert second == first
+        assert len(form_taken_once.started) == 1
+
+    # Regression: #213 — eSewa said "Duplicate transaction UUID." when the payer came Back from
+    # eSewa and pressed Pay with eSewa again within 10 minutes.
+    def test_once_a_form_taken_once_is_shown_a_tap_starts_a_new_attempt(
+        self, client, donate_page, pledge, form_taken_once
+    ):
+        client.get(start(client, donate_page, pledge)["Location"])
+
+        response = start(client, donate_page, pledge)
+
+        newer = Payment.objects.first()  # newest first
+        assert Payment.objects.count() == 2
+        assert len(form_taken_once.started) == 2
+        assert response["Location"] == f"{return_url(donate_page, newer)}go/"
+        assert client.get(response["Location"]).status_code == 200
+
+    def test_a_form_taken_once_isnt_shown_again(self, client, donate_page, pledge, form_taken_once):
+        """Back from the provider to "Taking you to …", whose button would send it again: the
+        pay page instead, where the payment can be checked."""
+        go = start(client, donate_page, pledge)["Location"]
+        client.get(go)
+
+        response = client.get(go)
+
+        assert response.status_code == 303
+        assert response["Location"] == online_url(donate_page, pledge)
+
+    def test_the_providers_form_isnt_kept_by_the_browser(
+        self, client, donate_page, pledge, form_taken_once
+    ):
+        """Back fetches it from the server, which decides whether it's sent again."""
+        response = client.get(start(client, donate_page, pledge)["Location"])
+
+        assert "no-store" in response["Cache-Control"]
 
     def test_after_ten_minutes_a_new_attempt_starts(
         self, client, donate_page, pledge, fake_provider
@@ -1256,6 +1311,20 @@ class TestEsewaEndToEnd:
         assert payment.status == PaymentStatus.PAID
         assert payment.provider_reference == "000AWEO"
         assert Pledge.objects.get().payment_status == PaymentStatus.PAID
+
+    def test_paying_again_sends_esewa_a_new_transaction(self, client, donate_page, settings):
+        """#213: Back from eSewa, then Pay with eSewa again, was refused as a "Duplicate
+        transaction UUID"."""
+        settings.PAYMENT_KEYS = {"ESEWA_PRODUCT_CODE": "EPAYTEST", "ESEWA_SECRET_KEY": "s3cret"}
+        send_pledge(client, donate_page)
+        pledge = Pledge.objects.get()
+
+        def sent_uuid():
+            go = client.get(start(client, donate_page, pledge, "esewa")["Location"])
+            form = soup(go).find("form", attrs={"data-sent-once": True})
+            return form.find("input", attrs={"name": "transaction_uuid"})["value"]
+
+        assert sent_uuid() != sent_uuid()
 
 
 class TestKhaltiEndToEnd:

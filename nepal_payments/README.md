@@ -86,6 +86,7 @@ Every provider can say which payments it takes, so a page can offer only those t
        keys = ("MERCHANT_CODE", "API_USER", "API_PASSWORD")
        test_login = {}  # an account on its test system anyone may use, if it publishes one
        order = 30  # where it's suggested in a list of providers
+       opens_once = False  # True if its page takes the payer only once (eSewa's form)
        statuses = {  # every word its check answers with: what it means, and a sentence
            "SUCCESS": (Status.PAID, "IME Pay says it's paid."),
            "CANCELLED": (Status.FAILED, "The payer cancelled at IME Pay. Nothing was taken."),

@@ -15,6 +15,7 @@ from django.db.models import Q
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.cache import add_never_cache_headers
 from django.utils.translation import gettext, gettext_lazy
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
@@ -524,7 +525,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             live=provider.live,
             created_at__gte=timezone.now() - REUSE_ATTEMPT_FOR,
         ).first()
-        if waiting and waiting.provider_form:
+        if waiting and waiting.page_at_provider():
             return self.redirect_to(request, "go_to_provider", waiting.reference)
 
         payment = pledge.start_payment(method, live=provider.live)
@@ -560,6 +561,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "url": redirect.url,
                 "method": redirect.method,
                 "fields": redirect.fields,
+                "once": provider.opens_once,
             },
         )
         payment.add_step(StepKind.SENT)
@@ -573,28 +575,36 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     def go_to_provider(self, request, reference):
         """The way back to a payment's page at its provider: the form that sends it there
         (eSewa), or a redirect to its link (Khalti). Once the payment isn't waiting any more, or
-        another has paid the pledge, the pay page instead: it would pay again."""
+        another has paid the pledge, the pay page instead: it would pay again. So too once a form
+        the provider takes only once has been shown: the provider would refuse it."""
         payment = get_object_or_404(
             Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
         )
+        form = payment.page_at_provider()
         if (
             payment.status != PaymentStatus.WAITING
-            or not payment.provider_form
+            or form is None
             or payment.pledge.has_paid_payment()
         ):
             return self.redirect_to(request, "pay_online", payment.pledge.reference)
         # A form kept before links were kept too has no "method": it's posted.
-        if payment.provider_form.get("method") == "GET":
-            return HttpResponseRedirect(payment.provider_form["url"], status=303)
-        return self.render(
+        if form.get("method") == "GET":
+            return HttpResponseRedirect(form["url"], status=303)
+        if form.get("once"):
+            Payment.objects.filter(pk=payment.pk).update(provider_form={**form, "shown": True})
+        response = self.render(
             request,
             template=self.redirect_template,
             context_overrides={
                 "provider_name": payment.get_method_display(),
-                "form_url": payment.provider_form["url"],
-                "fields": payment.provider_form["fields"],
+                "form_url": form["url"],
+                "fields": form["fields"],
+                "once": form.get("once"),
             },
         )
+        # Back from the provider fetches it again, so this decides whether it's sent again.
+        add_never_cache_headers(response)
+        return response
 
     @path("payment/<uuid:reference>/", name="payment_return")
     def payment_return(self, request, reference):
@@ -850,9 +860,10 @@ class Payment(models.Model):
     provider_id = models.CharField(
         max_length=100, blank=True, help_text="The provider's ID for the attempt (Khalti's pidx)."
     )
-    # Where the provider takes the payer, as {"url", "method", "fields"}: a signed form to post
-    # (eSewa), sent from a page fetched afterwards with GET, or a link (Khalti). Kept so a second
-    # tap goes back there.
+    # Where the provider takes the payer, as {"url", "method", "fields", "once"}: a signed form to
+    # post (eSewa), sent from a page fetched afterwards with GET, or a link (Khalti). Kept so a
+    # second tap goes back there, unless "once" (the provider's page takes the payer only once)
+    # and "shown" (the form has been sent).
     provider_form = models.JSONField(default=dict, blank=True, editable=False)
     provider_reference = models.CharField(
         "provider's reference",
@@ -875,6 +886,15 @@ class Payment(models.Model):
 
     def display_amount(self):
         return format_money(self.amount, self.currency)
+
+    def page_at_provider(self):
+        """Its kept form or link, to send the payer to its page at the provider; None once it
+        can't be used again: a form the provider takes only once, already shown, would be refused
+        as a duplicate (eSewa's "Duplicate transaction UUID")."""
+        form = self.provider_form
+        if not form or (form.get("once") and form.get("shown")):
+            return None
+        return form
 
     def reached_provider(self):
         """Whether the provider started it, so the payer may have paid even after it's said to

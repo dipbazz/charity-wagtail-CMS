@@ -103,6 +103,10 @@ class PaymentProvider(ABC):
     # publishes it: {"id": …, "password": …, "mpin": …, "otp": …}.
     test_login: ClassVar[dict[str, str]] = {}
     order: ClassVar[int] = 100  # where it suggests it's listed among providers, lowest first
+    # Whether the page `start()` sends the payer to takes them only once, such as a signed form
+    # the provider refuses to take twice (eSewa's). Paying again then needs a new payment; a link
+    # that stays open (Khalti's) can be followed again.
+    opens_once: ClassVar[bool] = False
     # Every word the provider answers `check()` with: what it means, and a sentence for the people
     # who follow payments up, e.g. {"CANCELED": (Status.FAILED, "The payer cancelled at eSewa.")}.
     # A word not in here is an answer that can't be read.

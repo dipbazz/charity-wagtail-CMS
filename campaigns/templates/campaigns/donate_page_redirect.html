@@ -16,8 +16,8 @@
 {% block content %}
     <div class="container narrow">
         <h1>{% blocktranslate with provider=provider_name %}Taking you to {{ provider }}{% endblocktranslate %}</h1>
-        {# The form the provider asked for, signed by the server. It's sent to the provider, not to this site, so it carries no CSRF token. donate.js sends it at once. #}
-        <form class="provider-form" method="post" action="{{ form_url }}" data-auto-submit>
+        {# The form the provider asked for, signed by the server. It's sent to the provider, not to this site, so it carries no CSRF token. donate.js sends it at once. A form the provider takes only once is marked, so donate.js never shows it again from the Back cache. #}
+        <form class="provider-form" method="post" action="{{ form_url }}" data-auto-submit{% if once %} data-sent-once{% endif %}>
             {% for name, value in fields.items %}
                 <input type="hidden" name="{{ name }}" value="{{ value }}">
             {% endfor %}

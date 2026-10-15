@@ -131,8 +131,11 @@ or a link kept to pay later never offers paying again.
   Pressing the same provider's button again within 10 minutes (a second tap, a second tab, or no
   JavaScript to hold the button) goes back to the attempt just started, its form or its link,
   rather than starting another that could also be paid. After that, or with another provider, a
-  new attempt starts. The buttons post to `…/online/<provider>/`, so no provider's code can clash
-  with a way's name.
+  new attempt starts. So too once eSewa's form has been shown: eSewa takes each form only once
+  and refuses it again as a "Duplicate transaction UUID" (#213), so its "Taking you to eSewa"
+  page, reached again with Back, goes to the pay page, where the payment can be checked. A
+  provider says this with `opens_once`. The buttons post to `…/online/<provider>/`, so no
+  provider's code can clash with a way's name.
 - **Pay in person:** what to do at the counter, as numbered steps: come to the office (the
   address from Site settings, with "Call us before you come" and the phone), pay in cash and give
   the pledge number, and ask for a receipt. The setting is off until a charity says on the
