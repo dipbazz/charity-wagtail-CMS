@@ -70,16 +70,41 @@ class TestCopyButtons:
         site_page.get_by_role("button", name="Copy amount").click()
 
         assert site_page.evaluate("window.copiedText") == "2500"
-        expect(site_page.locator("[data-copy-status=qr-copy]")).to_have_text("Amount copied")
+        expect(site_page.locator("[data-copy-status=amount]")).to_have_text("Amount copied")
         expect(site_page.get_by_role("button", name="Copy amount")).to_have_class(
             "copy-icon-button is-copied"
         )
         site_page.get_by_role("button", name="Copy remarks").click()
         assert site_page.evaluate("window.copiedText") == pledge.number
 
+    def test_say_copied_right_under_the_value_that_was_copied(self, site_page, donate_page):
+        site_page.add_init_script(FAKE_CLIPBOARD)
+        make_code("eSewa", account_name="BRIGHTWELL WATER", account_number="9801234567")
+        pledge = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        site_page.goto(f"{SITE}{donate_page.url}pay/{pledge.reference}/qr/")
+
+        # Each button, what it says, and the heading of the row after it.
+        for label, said, next_heading in [
+            ("Copy amount", "Amount copied", "Remarks"),
+            ("Copy account name", "Account name copied", "Account number"),
+        ]:
+            button = site_page.get_by_role("button", name=label)
+            button.click()
+            value = button.locator("xpath=ancestor::dd[1]")
+            line = value.locator("xpath=following-sibling::dd[1]")
+            expect(line).to_have_text(said)
+            value_box, line_box = value.bounding_box(), line.bounding_box()
+            after = site_page.locator("dt", has_text=next_heading).first.bounding_box()
+            assert line_box["y"] >= value_box["y"] + value_box["height"] - 1, label
+            assert line_box["y"] + line_box["height"] <= after["y"] + 1, label
+            # Only the latest message is shown: copying one clears the one before it.
+            assert site_page.locator(".qr-details dd.copy-status:not(:empty)").count() == 1
+
     def test_say_what_to_do_when_the_browser_has_no_clipboard(self, qr_page):
         qr_page.get_by_role("button", name="Copy amount").click()
 
-        expect(qr_page.locator("[data-copy-status=qr-copy]")).to_have_text(
+        expect(qr_page.locator("[data-copy-status=amount]")).to_have_text(
             "Press and hold the value to copy it."
         )

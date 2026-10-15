@@ -1,6 +1,6 @@
 {% load i18n %}
-{# An icon-only Copy button: it copies `value`, whatever the row shows. `label` is its spoken name and `copied` what the status line says. Hidden until charity.js can copy; without it the values stay selectable. #}
-<button type="button" class="copy-icon-button" data-copy="qr-copy" data-copy-value="{{ value }}" data-copied-status="{{ copied }}" data-copy-failed-status="{% translate 'Press and hold the value to copy it.' %}" aria-label="{{ label }}" hidden>
+{# An icon-only Copy button: it copies `value`, whatever the row shows. `key` (and `suffix`, for one of several) names its status line (the element with the same data-copy-status, right under the value), `label` is its spoken name and `copied` what that line says. Hidden until charity.js can copy; without it the values stay selectable. #}
+<button type="button" class="copy-icon-button" data-copy="{{ key }}{{ suffix }}" data-copy-value="{{ value }}" data-copied-status="{{ copied }}" data-copy-failed-status="{% translate 'Press and hold the value to copy it.' %}" aria-label="{{ label }}" hidden>
     <svg class="copy-icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
     <svg class="copy-tick" aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
 </button>

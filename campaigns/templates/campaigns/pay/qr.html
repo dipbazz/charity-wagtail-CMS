@@ -52,8 +52,9 @@
                         <span>{{ pledge.display_amount }}</span>
                         {% translate "Amount copied" as copied %}
                         {% translate "Copy amount" as label %}
-                        {% include "campaigns/pay/includes/copy_button.html" with value=pledge.amount %}
+                        {% include "campaigns/pay/includes/copy_button.html" with key="amount" value=pledge.amount %}
                     </dd>
+                    <dd class="copy-status" role="status" data-copy-status="amount"></dd>
                 </div>
                 <div>
                     <dt>{% translate "Remarks" %}</dt>
@@ -61,8 +62,9 @@
                         <span>{{ pledge.display_number }}</span>
                         {% translate "Remarks copied" as copied %}
                         {% translate "Copy remarks" as label %}
-                        {% include "campaigns/pay/includes/copy_button.html" with value=pledge.number %}
+                        {% include "campaigns/pay/includes/copy_button.html" with key="remarks" value=pledge.number %}
                     </dd>
+                    <dd class="copy-status" role="status" data-copy-status="remarks"></dd>
                     <dd class="qr-help">{% translate "Write this in Remarks (or Purpose), so we know the payment is yours." %}</dd>
                 </div>
             </dl>
@@ -95,8 +97,9 @@
                                     <span>{{ code.account_name }}</span>
                                     {% translate "Account name copied" as copied %}
                                     {% translate "Copy account name" as label %}
-                                    {% include "campaigns/pay/includes/copy_button.html" with value=code.account_name %}
+                                    {% include "campaigns/pay/includes/copy_button.html" with key="account-name-" suffix=code.pk value=code.account_name %}
                                 </dd>
+                                <dd class="copy-status" role="status" data-copy-status="account-name-{{ code.pk }}"></dd>
                             </div>
                             {% if code.account_number %}
                                 <div>
@@ -105,8 +108,9 @@
                                         <span>{{ code.account_number }}</span>
                                         {% translate "Account number copied" as copied %}
                                         {% translate "Copy account number" as label %}
-                                        {% include "campaigns/pay/includes/copy_button.html" with value=code.account_number %}
+                                        {% include "campaigns/pay/includes/copy_button.html" with key="account-number-" suffix=code.pk value=code.account_number %}
                                     </dd>
+                                    <dd class="copy-status" role="status" data-copy-status="account-number-{{ code.pk }}"></dd>
                                     <dd class="qr-help">{% translate "Can't scan? Pay to this number." %}</dd>
                                 </div>
                             {% endif %}
@@ -115,7 +119,6 @@
                     </section>
                 {% endfor %}
             </div>
-            <p class="copy-status" role="status" data-copy-status="qr-copy"></p>
 
             <h2>{% translate "I've paid" %}</h2>
             <p>

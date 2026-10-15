@@ -34,7 +34,14 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
                     other.classList.remove("is-copied");
                 });
                 button.classList.add("is-copied");
-                resetTimer = setTimeout(() => button.classList.remove("is-copied"), 2000);
+                // The message sits under the value copied, so say it only there.
+                document.querySelectorAll("[data-copy-status]").forEach((line) => {
+                    if (line !== status) line.textContent = "";
+                });
+                resetTimer = setTimeout(() => {
+                    button.classList.remove("is-copied");
+                    status.textContent = "";
+                }, 2000);
             }
             status.textContent = button.dataset.copiedStatus;
         } catch {

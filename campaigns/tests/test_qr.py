@@ -338,6 +338,26 @@ class TestTheQRPage:
         assert "Scan our QR code" in page.title.get_text()
 
 
+class TestCopiedMessages:
+    def test_each_copy_button_has_its_message_right_under_its_value(
+        self, client, donate_page, pledge, esewa_qr
+    ):
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        for button in page.select("button[data-copy-value]"):
+            row = button.find_parent("dd")
+            line = row.find_next_sibling("dd")
+            assert line.get("data-copy-status") == button["data-copy"], button["aria-label"]
+            assert line.get("role") == "status"
+
+    def test_no_message_is_left_below_the_page(self, client, donate_page, pledge, esewa_qr):
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        assert page.select("p[data-copy-status]") == []
+        keys = [button["data-copy"] for button in page.select("button[data-copy-value]")]
+        assert len(keys) == len(set(keys))
+
+
 class TestSayingIvePaid:
     def test_goes_to_the_page_that_says_thank_you(self, client, donate_page, pledge, esewa_qr):
         response = say_paid(client, donate_page, pledge, esewa_qr)
