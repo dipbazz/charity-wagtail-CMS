@@ -137,7 +137,7 @@
     margin-top: 2.5rem;
 }
 
-/* Pay page: the gift, then each way to pay, one under another on a phone. */
+/* Pay pages: the gift, then the ways to pay, one under another on a phone. */
 .gift-summary {
     margin-block: 1.5rem;
 }
@@ -188,12 +188,64 @@
     width: 100%;
 }
 
-.pay-in-person address {
+/* The ways to pay, and "Pay another way": a full-width row for each, drawn like the amount cards,
+   with the way's name, a muted line on how, and an arrow. The text wraps, so a longer Nepali
+   line fits at 320px with no breakpoint. */
+.pay-ways {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pay-way {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.1rem 0.75rem;
+    min-height: 2.75rem;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--colour-border);
+    border-radius: var(--radius);
+    color: var(--colour-text);
+    text-decoration: none;
+}
+
+.pay-way:hover {
+    border-color: var(--colour-primary);
+    background: var(--colour-surface);
+}
+
+.pay-way strong {
+    color: var(--colour-primary-dark);
+}
+
+.pay-way span {
+    grid-column: 1;
+    color: var(--colour-muted);
+    font-size: 0.9375rem;
+}
+
+.pay-way .pay-way-arrow {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    color: var(--colour-primary);
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* Paying in person: what to do at the counter, a step at a time. */
+.pay-steps li + li {
+    margin-top: 0.75rem;
+}
+
+.pay-steps address {
     font-style: normal;
 }
 
-/* A link on a line of its own (the phone number, "I'll pay later") is a 44px tap target. */
-.pay-in-person p > a:only-child,
+/* A phone number to call is a 44px tap target, as is a link on a line of its own. */
+.pay-steps a[href^="tel:"],
 .payment-message p > a:only-child:not(.button) {
     display: inline-flex;
     align-items: center;

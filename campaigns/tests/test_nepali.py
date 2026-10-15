@@ -241,3 +241,35 @@ class TestPayingInNepali:
         assert "यहाँ अनलाइन भुक्तानी परीक्षण मोडमा छ: कुनै पैसा लिइने छैन।" in text
         assert "9800000001" not in text  # the test accounts are in the docs, not here
         assert "जहाँ सबैभन्दा बढी आवश्यक छ" in text
+
+    def test_the_form_names_one_provider_in_nepali(self, client, nepali_donate_page, settings):
+        settings.PAYMENT_KEYS = {"KHALTI_SECRET_KEY": "k"}
+
+        text = visible_text(client.get(nepali_donate_page.url))
+
+        assert "यो फारम पठाएपछि तपाईं Khalti बाट भुक्तानी गर्न सक्नुहुन्छ।" in text
+
+    def test_the_choices_and_paying_in_person_are_in_nepali(
+        self, client, site, nepali_donate_page, fake_provider
+    ):
+        site_settings = SiteSettings.for_site(site)
+        site_settings.phone = "+977 1-4567890"
+        site_settings.save()
+        pledge = Pledge.objects.create(
+            page=nepali_donate_page, amount=2500, currency="NPR", name="सीता", email="s@example.com"
+        )
+        pay = f"{nepali_donate_page.url}pay/{pledge.reference}/"
+
+        choices = visible_text(client.get(pay))
+        in_person = visible_text(client.get(pay + "in-person/"))
+        later = visible_text(client.get(pay + "later/"))
+
+        assert "तपाईंको दान भुक्तानी गर्नुहोस्" in choices
+        assert "तपाईंको प्रतिबद्धता सुरक्षित भयो।" in choices
+        assert "तपाईं कसरी भुक्तानी गर्न चाहनुहुन्छ?" in choices
+        assert "प्रतिबद्धता नम्बर" in choices
+        assert "आफैं आएर भुक्तानी गर्नुहोस्" in in_person
+        assert "भुक्तानी कसरी गर्ने भनेर मिलाउन हामीलाई फोन गर्नुहोस्:" in in_person
+        assert "रसिद माग्नुहोस्।" in in_person
+        assert "अहिले भुक्तानी गर्न तयार हुनुहुन्न?" in later
+        assert "अर्को तरिकाले भुक्तानी गर्नुहोस्" in later
