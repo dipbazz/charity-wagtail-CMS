@@ -410,14 +410,15 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         pledge = self.get_pledge(reference)
         state = pledge.pay_page_state()
         site_settings = SiteSettings.for_request(request)
+        if state in THANKED:
+            return self.render_pay_page(request, pledge, state, [], [], site_settings)
+        if state in STATE_WAYS:
+            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
         providers, ways = self.ways_for(pledge, site_settings)
-        if state not in THANKED:
-            if state in STATE_WAYS:
-                return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
-            if not ways:
-                return self.redirect_to(request, "thank_you")
-            if len(ways) == 1:
-                return self.redirect_to(request, WAY_ROUTES[ways[0]], reference)
+        if not ways:
+            return self.redirect_to(request, "thank_you")
+        if len(ways) == 1:
+            return self.redirect_to(request, WAY_ROUTES[ways[0]], reference)
         return self.render_pay_page(request, pledge, state, providers, ways, site_settings)
 
     @path("pay/<uuid:reference>/online/", name="pay_online")
@@ -445,9 +446,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         if state in HELD and way != STATE_WAYS[state]:
             return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
         site_settings = SiteSettings.for_request(request)
+        if state in THANKED:
+            return self.render_pay_page(request, pledge, state, [], [], site_settings, way)
         providers, ways = self.ways_for(pledge, site_settings)
-        offered = way == LATER or way in ways or STATE_WAYS.get(state) == way
-        if state not in THANKED and not offered:
+        if not (way == LATER or way in ways or STATE_WAYS.get(state) == way):
             return self.redirect_to(request, "pay", reference)
         return self.render_pay_page(
             request, pledge, state, providers, ways, site_settings, way, result
@@ -456,8 +458,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     def render_pay_page(
         self, request, pledge, state, providers, ways, site_settings, way=None, result=None
     ):
-        """The choices (way None) or a way's page, or the thanks once paid. `result` is what
-        asking a provider found, for the online page."""
+        """The choices (way None) or a way's page, or the thanks once paid (with no providers or
+        ways: there's nothing left to pay). `result` is what asking a provider found, for the
+        online page."""
         # An attempt for another amount (the pledge changed after it started) doesn't pay it,
         # but the money was still received, and isn't asked for again.
         received = pledge.paid_payment() if state in THANKED else None
@@ -475,8 +478,6 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
             **WAY_NAMES,
         }
-        if received:
-            providers = []
         # Named on the choices, and on the online page.
         context["pay_with"] = either([provider.name for provider in providers])
         if way == ONLINE:

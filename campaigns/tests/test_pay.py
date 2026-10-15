@@ -234,6 +234,18 @@ class TestEveryPayPage:
         assert soup(response).h1.get_text() == "Thank you"
         assert soup(response).find(class_="pay-ways") is None
 
+    @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_once_paid_works_out_no_way_to_pay(self, client, donate_page, pledge, way, monkeypatch):
+        """Thanks are checked first: there's nothing left to pay with."""
+        pledge.start_payment("fakepay", live=False).record(Status.PAID, "FAKE-1")
+
+        def providers_for(*args):
+            raise AssertionError("worked out the providers for a paid pledge")
+
+        monkeypatch.setattr("campaigns.models.providers_for", providers_for)
+
+        assert client.get(pay_url(donate_page, pledge, way)).status_code == 200
+
 
 class TestChoosingAWay:
     """The pay page's own address: the ways to pay, or the way that owns what happened."""
