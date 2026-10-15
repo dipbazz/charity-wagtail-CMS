@@ -1,6 +1,7 @@
 import datetime
 import logging
 import re
+import secrets
 import uuid
 from decimal import Decimal
 
@@ -9,7 +10,7 @@ from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -269,7 +270,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         blank=True,
         help_text="Shown below the form, e.g. a table of where the money goes.",
     )
-    thank_you_text = RichTextField(blank=True, help_text="Shown after someone sends the form.")
+    thank_you_text = RichTextField(
+        blank=True,
+        help_text="Shown after someone sends the form when there's no way to pay on the site yet.",
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("introduction"),
@@ -541,6 +545,11 @@ CHANGES_FROM = {
 }
 
 
+def new_pledge_number():
+    """A random six-digit pledge number, 100000 to 999999."""
+    return str(100000 + secrets.randbelow(900000))
+
+
 class Pledge(models.Model):
     """A supporter's promise to give, sent from the Donate page, then paid online (a Payment)
     or arranged with the team."""
@@ -597,6 +606,10 @@ class Pledge(models.Model):
     # The address of its pay page. Not submission_id: whoever holds that can send the form again
     # and change the pledge.
     reference = models.UUIDField(null=True, unique=True, editable=False)
+    # Short enough to read out at the office or write in a payment's remarks, so the team finds
+    # the pledge without guessing between two people with the same name. Never a way in: the pay
+    # page is at the reference.
+    number = models.CharField("pledge number", max_length=6, unique=True, editable=False)
 
     class Meta:
         ordering = ["-created_at"]
@@ -607,7 +620,26 @@ class Pledge(models.Model):
     def save(self, *args, **kwargs):
         if self.reference is None:
             self.reference = uuid.uuid4()
-        super().save(*args, **kwargs)
+        if self.number:
+            return super().save(*args, **kwargs)
+        # Pick the number here, not in the form, so pledges made in the admin, in tests or in the
+        # demo get one too. A number already taken (one in 900,000 per pledge) is tried again;
+        # any other clash, such as the form's double click, is passed on.
+        for attempt in range(10):
+            self.number = new_pledge_number()
+            try:
+                with transaction.atomic():
+                    return super().save(*args, **kwargs)
+            except IntegrityError:
+                taken = Pledge.objects.filter(number=self.number).exists()
+                if not taken or attempt == 9:
+                    self.number = ""
+                    raise
+
+    @admin.display(description="Pledge number")
+    def display_number(self):
+        """In two groups of three, "482 913", easier to read out than "482913"."""
+        return f"{self.number[:3]} {self.number[3:]}"
 
     @admin.display(description="Amount")
     def display_amount(self):

@@ -67,6 +67,26 @@ class TestTheTeam:
             assert heading in headings
         assert "Your name" not in headings
 
+    @pytest.mark.parametrize("typed", ["482 913", "482913"])
+    def test_find_a_pledge_by_its_number(self, client, request, member, sent_pledge, typed):
+        """As the supporter reads it out, or as they wrote it in a payment's remarks."""
+        Pledge.objects.filter(pk=sent_pledge.pk).update(number="482913")
+        Pledge.objects.create(page=sent_pledge.page, amount=1500, currency="NPR", name="Ram")
+        client.force_login(request.getfixturevalue(member))
+
+        html = client.get(reverse("pledges:index"), {"q": typed}).content.decode()
+
+        assert "Sita Sharma" in html
+        assert "482 913" in html
+        assert "Ram" not in html
+
+    def test_names_and_emails_are_still_searched(self, client, request, member, sent_pledge):
+        client.force_login(request.getfixturevalue(member))
+
+        html = client.get(reverse("pledges:index"), {"q": "sita@example"}).content.decode()
+
+        assert "Sita Sharma" in html
+
     def test_can_filter_to_monthly_pledges(self, client, request, member, sent_pledge):
         Pledge.objects.create(
             page=sent_pledge.page, amount=1500, currency="NPR", name="Ram", email="ram@example.com"
