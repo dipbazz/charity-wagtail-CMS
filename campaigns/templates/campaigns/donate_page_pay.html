@@ -2,7 +2,7 @@
 {% load i18n static wagtailcore_tags wagtailroutablepage_tags %}
 
 {# Each state its own title, the first thing a screen reader says about the page. #}
-{% block title %}{% if received %}{% translate "Thank you" %}{% elif pledge.payment_status == "failed" %}{% translate "Try paying again" %}{% elif unfinished %}{% translate "Check your payment" %}{% else %}{% translate "Pay your gift" %}{% endif %}{% endblock %}
+{% block title %}{% if state == "paid" or state == "received" %}{% translate "Thank you" %}{% elif state == "failed" or state == "not-started" %}{% translate "Try paying again" %}{% elif state == "check-first" %}{% translate "Check your payment" %}{% else %}{% translate "Pay your gift" %}{% endif %}{% endblock %}
 
 {% block body_class %}template-donatepage pay-page{% endblock %}
 
@@ -17,30 +17,30 @@
 
 {% block content %}
     <div class="container narrow">
-        {% if paid %}
+        {% if state == "paid" %}
             <h1>{% translate "Thank you" %}</h1>
             {# The first line says what happened, so a test payment never reads as money received, nor a monthly gift as one set up for every month. #}
-            <p class="lead" tabindex="-1" data-focus-on-load>{% if not paid.live %}{% translate "Test payment completed. No money was taken." %}{% elif pledge.frequency == "monthly" %}{% blocktranslate with amount=pledge.display_amount %}This month's gift of {{ amount }} has reached us. We'll be in touch about next month.{% endblocktranslate %}{% else %}{% blocktranslate with amount=pledge.display_amount %}Your gift of {{ amount }} has reached us.{% endblocktranslate %}{% endif %}</p>
-            {% if paid.provider_reference %}
-                <p>{% blocktranslate with provider=paid.get_method_display reference=paid.provider_reference %}{{ provider }} reference: {{ reference }}{% endblocktranslate %}</p>
+            <p class="lead" tabindex="-1" data-focus-on-load>{% if not received.live %}{% translate "Test payment completed. No money was taken." %}{% elif pledge.frequency == "monthly" %}{% blocktranslate with amount=pledge.display_amount %}This month's gift of {{ amount }} has reached us. We'll be in touch about next month.{% endblocktranslate %}{% else %}{% blocktranslate with amount=pledge.display_amount %}Your gift of {{ amount }} has reached us.{% endblocktranslate %}{% endif %}</p>
+            {% if received.provider_reference %}
+                <p>{% blocktranslate with provider=received.get_method_display reference=received.provider_reference %}{{ provider }} reference: {{ reference }}{% endblocktranslate %}</p>
             {% endif %}
             {% if appeals_page %}
                 <p><a class="button" href="{% pageurl appeals_page %}">{% translate "See all our appeals" %}</a></p>
             {% else %}
                 <p><a class="button" href="{% pageurl page.get_parent %}">{% translate "Back to the home page" %}</a></p>
             {% endif %}
-        {% elif received %}
+        {% elif state == "received" %}
             {# Paid, but for what the pledge said before it was changed: a person sorts out the difference. #}
             <h1>{% translate "Thank you" %}</h1>
             <p class="lead" tabindex="-1" data-focus-on-load>{% if received.provider_reference %}{% blocktranslate with amount=received.display_amount provider=received.get_method_display reference=received.provider_reference %}We received {{ amount }} from you by {{ provider }} (reference {{ reference }}).{% endblocktranslate %}{% else %}{% blocktranslate with amount=received.display_amount provider=received.get_method_display %}We received {{ amount }} from you by {{ provider }}.{% endblocktranslate %}{% endif %} {% translate "Our team will be in touch." %}</p>
         {% else %}
             <h1>{% translate "Pay your gift" %}</h1>
             {# What became of paying, first: donate.js moves focus to it, so it's read before the rest. #}
-            {% if pledge.payment_status == "failed" %}
+            {% if state == "failed" or state == "not-started" %}
                 <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
                     {% if result == "not-started" %}
                         <p>{% blocktranslate with provider=latest.get_method_display %}We couldn't reach {{ provider }} just now.{% endblocktranslate %} {% if others %}{% blocktranslate %}Try {{ others }}, or try again in a few minutes.{% endblocktranslate %}{% else %}{% translate "Try again in a few minutes." %}{% endif %}</p>
-                    {% elif latest.reached_provider %}
+                    {% elif state == "failed" %}
                         {# The provider may still find it paid (eSewa can say "not found" before "complete"), so "no money was taken" isn't known: checking comes before paying again. #}
                         <p>{% if result == "checked" %}{% blocktranslate with provider=latest.get_method_display %}We asked {{ provider }} again just now, and it still says your payment didn't go through.{% endblocktranslate %}{% else %}{% blocktranslate with provider=latest.get_method_display %}{{ provider }} says your payment didn't go through.{% endblocktranslate %}{% endif %}</p>
                         <p>{% if site_settings.phone %}{% translate "If money has left your account, don't pay again. Call us and we'll look into it:" %}{% else %}{% translate "If money has left your account, don't pay again." %}{% endif %}</p>
@@ -50,20 +50,20 @@
                         <p>{% translate "Your payment didn't go through, and no money was taken. You can try again, or pay another way." %}</p>
                     {% endif %}
                 </div>
-            {% elif unfinished %}
+            {% elif state == "check-first" %}
                 <div class="payment-message" tabindex="-1" data-focus-on-load>
                     {% if result == "checked" %}
-                        <p>{% blocktranslate with provider=unfinished.get_method_display %}We asked {{ provider }} just now, and it hasn't confirmed your payment yet.{% endblocktranslate %}</p>
+                        <p>{% blocktranslate with provider=latest.get_method_display %}We asked {{ provider }} just now, and it hasn't confirmed your payment yet.{% endblocktranslate %}</p>
                     {% elif result == "unreachable" %}
-                        <p>{% blocktranslate with provider=unfinished.get_method_display %}We couldn't reach {{ provider }} just now.{% endblocktranslate %}</p>
+                        <p>{% blocktranslate with provider=latest.get_method_display %}We couldn't reach {{ provider }} just now.{% endblocktranslate %}</p>
                     {% else %}
-                        <p>{% blocktranslate with provider=unfinished.get_method_display %}Did you finish paying with {{ provider }}? Check before paying again, so you don't pay twice.{% endblocktranslate %}</p>
+                        <p>{% blocktranslate with provider=latest.get_method_display %}Did you finish paying with {{ provider }}? Check before paying again, so you don't pay twice.{% endblocktranslate %}</p>
                     {% endif %}
                     {% if result %}
                         <p>{% if site_settings.phone %}{% translate "If money has left your account, don't pay again. Call us and we'll look into it:" %}{% else %}{% translate "If money has left your account, don't pay again." %}{% endif %}</p>
                         {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
                     {% endif %}
-                    <p><a class="button button-large" href="{% routablepageurl page 'payment_return' unfinished.reference %}">{% blocktranslate with provider=unfinished.get_method_display %}Check my {{ provider }} payment{% endblocktranslate %}</a></p>
+                    <p><a class="button button-large" href="{% routablepageurl page 'payment_return' latest.reference %}">{% blocktranslate with provider=latest.get_method_display %}Check my {{ provider }} payment{% endblocktranslate %}</a></p>
                 </div>
             {% endif %}
 
@@ -83,7 +83,7 @@
 
             {% if providers %}
                 {# While an attempt may already be paid, checking it leads and paying again is folded away, so nobody pays twice by mistake. #}
-                {% if unfinished %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
+                {% if state == "check-first" %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
                 <section aria-labelledby="pay-online">
                     <h2 id="pay-online">{% translate "Pay online" %}</h2>
                     {# One sentence, not a box: the buttons stay where they are, and no test account is given away. #}
@@ -99,7 +99,7 @@
                     {# Says which provider is opening, for screen readers, while donate.js holds the buttons. #}
                     <p class="visually-hidden" role="status" data-busy-status></p>
                 </section>
-                {% if unfinished %}</details>{% endif %}
+                {% if state == "check-first" %}</details>{% endif %}
             {% endif %}
 
             <section class="pay-in-person" aria-labelledby="pay-in-person">

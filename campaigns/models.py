@@ -346,13 +346,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             reference=reference,
             page=self,
         )
-        payments = list(pledge.payments.all())  # newest first
-        received = pledge.paid_payment()
-        # The pledge says whether it's paid: an attempt for another amount (the pledge changed
-        # after it started) doesn't pay it, but the money was still received, and isn't asked for
-        # again.
-        paid = received if pledge.payment_status == PaymentStatus.PAID else None
-        latest = payments[0] if payments else None
+        state = pledge.pay_page_state()
+        latest = next(iter(pledge.payments.all()), None)  # newest first
+        # An attempt for another amount (the pledge changed after it started) doesn't pay it,
+        # but the money was still received, and isn't asked for again.
+        received = pledge.paid_payment() if state in ("paid", "received") else None
         site_settings = SiteSettings.for_request(request)
         providers = [] if received else providers_for(pledge.currency, Decimal(pledge.amount))
         return self.render(
@@ -360,7 +358,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             template=self.pay_page_template,
             context_overrides={
                 "pledge": pledge,
-                "paid": paid,
+                "state": state,
                 "received": received,
                 # Codes and names, not the classes, which templates would try to call.
                 "providers": [(provider.code, provider.name) for provider in providers],
@@ -368,7 +366,6 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 # Before a charity goes live its real supporters can still get here.
                 "test_mode": not settings.LIVE_PAYMENTS,
                 "latest": latest,
-                "unfinished": latest if latest and latest.status == PaymentStatus.WAITING else None,
                 "result": pay_page_result(request),
                 # The others to try when the latest attempt's provider couldn't start it.
                 "others": either([p.name for p in providers if latest and p.code != latest.method]),
@@ -641,6 +638,28 @@ class Pledge(models.Model):
         """The attempt that paid it, if any, even one for an amount it no longer asks for (the
         money was still received). Reads payments as fetched, so a list can prefetch them."""
         return next((p for p in self.payments.all() if p.status == PaymentStatus.PAID), None)
+
+    def pay_page_state(self):
+        """What its pay page shows, from what became of paying it:
+
+        - "paid": an attempt paid it.
+        - "received": an attempt paid what it said before it was changed; a person sorts it out.
+        - "failed": the latest attempt failed after reaching its provider, so it may still turn
+          out paid: checking comes before paying again.
+        - "not-started": the latest attempt failed before reaching its provider: no money taken.
+        - "check-first": the latest attempt is waiting, so it may already be paid.
+        - "ready": nothing started yet.
+
+        Reads payments as fetched, so the pay page can prefetch them.
+        """
+        if self.paid_payment():
+            return "paid" if self.payment_status == PaymentStatus.PAID else "received"
+        latest = next(iter(self.payments.all()), None)  # newest first
+        if self.payment_status == PaymentStatus.FAILED:
+            return "failed" if latest and latest.reached_provider() else "not-started"
+        if latest and latest.status == PaymentStatus.WAITING:
+            return "check-first"
+        return "ready"
 
     def has_paid_payment(self):
         """Whether any attempt has paid it, live or test, at any amount: it's never asked for
