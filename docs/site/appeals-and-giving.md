@@ -106,7 +106,8 @@ then reads only about the way they chose:
 | **Not ready to pay yet?** | `…/later/` | always (it isn't a way to pay, so it never counts as one) |
 
 `ways_to_pay()` (`campaigns/payments.py`) decides which ways are offered, for the pay page, the
-form's redirect and the sentence above the form, so they can't disagree. With only one way, the
+form's redirect and the sentence above the form, so they can't disagree. It's given the providers
+that take the pledge, the same list the pay buttons come from. With only one way, the
 form and the pay page go straight to its page, which then says "Your pledge is saved."; with
 none, the form goes to the thank-you page. A way that isn't offered goes back to the choices,
 unless it's dealing with the pledge: the online page still shows a payment that may have gone

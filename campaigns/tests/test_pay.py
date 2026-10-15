@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 from wagtail.models import Locale
 
+from campaigns import payments
 from campaigns.models import CampaignIndexPage, Payment, PaymentStatus, Pledge, StepKind
 from core.models import SiteSettings, SiteSettingsText
 from nepal_payments import (
@@ -198,6 +199,23 @@ class TestEveryPayPage:
 
         with django_assert_max_num_queries(16 if way == "in-person" else 14):
             client.get(pay_url(donate_page, pledge, way))
+
+    @pytest.mark.parametrize("way", [*EVERY_WAY, "the form"])
+    def test_works_out_the_providers_once(self, client, donate_page, pledge, way, monkeypatch):
+        """The ways offered and the pay buttons come from one list, so they can't disagree."""
+        calls = []
+        real = payments.providers_for
+
+        def providers_for(*args):
+            calls.append(args)
+            return real(*args)
+
+        monkeypatch.setattr("campaigns.models.providers_for", providers_for)
+        monkeypatch.setattr("campaigns.payments.providers_for", providers_for)
+
+        client.get(donate_page.url if way == "the form" else pay_url(donate_page, pledge, way))
+
+        assert len(calls) == 1
 
     @pytest.mark.parametrize("way", EVERY_WAY)
     def test_an_unknown_pledge_isnt_found(self, client, donate_page, way):

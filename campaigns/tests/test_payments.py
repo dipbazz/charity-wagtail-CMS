@@ -96,17 +96,17 @@ class TestWaysToPay:
     def test_online_when_a_provider_takes_the_pledge(self, settings):
         settings.PAYMENT_KEYS = KHALTI_KEYS
 
-        assert ways_to_pay("NPR", Decimal(2500), office()) == ["online"]
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), office()) == ["online"]
 
     def test_not_online_for_an_amount_no_provider_takes(self, settings):
         settings.PAYMENT_KEYS = KHALTI_KEYS
 
-        assert ways_to_pay("NPR", Decimal(5), office()) == []
+        assert ways_to_pay(providers_for("NPR", Decimal(5)), office()) == []
 
     def test_not_online_in_a_currency_no_provider_takes(self, settings):
         settings.PAYMENT_KEYS = KHALTI_KEYS
 
-        assert ways_to_pay("GBP", Decimal(25), office()) == []
+        assert ways_to_pay(providers_for("GBP", Decimal(25)), office()) == []
 
     @pytest.mark.parametrize(
         "where",
@@ -116,24 +116,24 @@ class TestWaysToPay:
     def test_in_person_with_an_office_address_or_phone(self, settings, where):
         settings.PAYMENT_KEYS = {}
 
-        assert ways_to_pay("NPR", Decimal(2500), office(**where)) == ["in-person"]
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), office(**where)) == ["in-person"]
 
     def test_not_in_person_at_an_office_that_takes_no_gifts(self, settings):
         """A charity can show its office in the footer without taking money there."""
         settings.PAYMENT_KEYS = {}
         where = office("Ward 4, Thamel", "+977 1-4567890", takes_gifts_in_person=False)
 
-        assert ways_to_pay("NPR", Decimal(2500), where) == []
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), where) == []
 
     def test_not_in_person_without_an_office_to_pay_at(self, settings):
         settings.PAYMENT_KEYS = {}
 
-        assert ways_to_pay("NPR", Decimal(2500), office()) == []
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), office()) == []
 
     def test_both_online_first(self, settings):
         settings.PAYMENT_KEYS = KHALTI_KEYS
 
-        assert ways_to_pay("NPR", Decimal(2500), office(phone="+977 1-4567890")) == [
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), office(phone="+977 1-4567890")) == [
             "online",
             "in-person",
         ]
@@ -142,7 +142,7 @@ class TestWaysToPay:
         """The Donate page says how paying works before anyone chooses an amount."""
         settings.PAYMENT_KEYS = KHALTI_KEYS
 
-        assert ways_to_pay("NPR", None, office()) == ["online"]
+        assert ways_to_pay(providers_for("NPR", None), office()) == ["online"]
 
 
 class TestPaymentKeysCheck:
