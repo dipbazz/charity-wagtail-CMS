@@ -1,0 +1,18 @@
+{% extends "campaigns/pay/base.html" %}
+{% load i18n %}
+
+{% block pay_title %}{% translate "Not ready to pay yet?" %}{% endblock %}
+
+{% block pay %}
+    <h1>{% translate "Not ready to pay yet?" %}</h1>
+    {% include "campaigns/pay/includes/summary.html" with saved=True %}
+    {# The link is the way back: whoever has it can pay. Without JavaScript the button stays hidden and the link can be selected. #}
+    <label for="pay-link">{% translate "Keep this link to come back and pay when you're ready:" %}</label>
+    <div class="copy-field">
+        <input id="pay-link" type="text" value="{{ pay_link }}" readonly>
+        <button type="button" class="button" data-copy="pay-link" data-copied="{% translate "Copied" %}" data-copied-status="{% translate "Link copied. Keep it somewhere you'll find it." %}" data-copy-failed-status="{% translate "Press Ctrl+C (or ⌘+C) to copy the selected link." %}" hidden>{% translate "Copy link" %}</button>
+    </div>
+    <p class="copy-status" role="status" data-copy-status="pay-link"></p>
+
+    {% include "campaigns/pay/includes/other_ways.html" %}
+{% endblock %}

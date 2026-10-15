@@ -42,6 +42,7 @@ class FakePay(PaymentProvider):
     @classmethod
     def reset(cls):
         cls.redirect = Redirect("https://pay.example.com/fakepay/")
+        cls.opens_once = False  # True: its page takes the payer once, like eSewa's form
         cls.outcome = Outcome(Status.PAID, "FAKE-123", word="DONE")
         cls.failure = None  # an error start() and check() raise instead
         cls.started = []  # the PaymentRequests start() was given

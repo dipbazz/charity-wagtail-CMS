@@ -63,6 +63,11 @@ def test_is_found_by_its_code():
     assert get_provider("khalti") is Khalti
 
 
+def test_its_payment_link_can_be_opened_again():
+    """Khalti's link stays open for a while, so a payer who leaves can go back to it."""
+    assert Khalti.opens_once is False
+
+
 def test_takes_rupees_from_rs_10():
     """Khalti refuses less than 1000 paisa."""
     assert Khalti.accepts("NPR", Decimal(10))

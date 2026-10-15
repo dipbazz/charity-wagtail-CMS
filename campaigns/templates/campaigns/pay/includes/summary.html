@@ -1,0 +1,17 @@
+{% load i18n %}
+{# The same on every pay page: whether the pledge is saved, then the gift and the number to give when paying. #}
+{% if saved %}<p>{% translate "Your pledge is saved." %}</p>{% endif %}
+<dl class="gift-summary">
+    <div>
+        <dt>{% translate "Your gift" %}</dt>
+        <dd>{% if pledge.frequency == "monthly" %}{% blocktranslate with amount=pledge.display_amount %}{{ amount }} a month{% endblocktranslate %}{% else %}{{ pledge.display_amount }}{% endif %}</dd>
+    </div>
+    <div>
+        <dt>{% translate "Appeal" %}</dt>
+        <dd>{% if pledge.appeal %}{{ pledge.appeal.title }}{% else %}{% translate "Wherever it's needed most" %}{% endif %}</dd>
+    </div>
+    <div>
+        <dt>{% translate "Pledge number" %}</dt>
+        <dd>{{ pledge.display_number }}</dd>
+    </div>
+</dl>

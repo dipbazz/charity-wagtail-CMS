@@ -219,7 +219,7 @@ class TestPayPage:
         pledge = Pledge.objects.create(
             page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
         )
-        return f"{donate_page.url}pay/{pledge.reference}/"
+        return f"{donate_page.url}pay/{pledge.reference}/online/"
 
     def test_fits_every_screen_with_room_to_tap(self, site_page, pay_page):
         assert layout_problems(site_page, pay_page) == []

@@ -1,9 +1,13 @@
 """Which payment providers this installation offers, and how a payment's status is recorded."""
 
+import re
+import uuid
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 from django.core import checks
+from django.db import IntegrityError
 
 from campaigns.models import Payment, PaymentStatus, PaymentStep, Pledge, StepKind
 from campaigns.payments import (
@@ -11,6 +15,7 @@ from campaigns.payments import (
     method_choices,
     provider_for,
     providers_for,
+    ways_to_pay,
 )
 from nepal_payments import (
     Outcome,
@@ -78,6 +83,68 @@ class TestProvidersOffered:
         assert {("esewa", "eSewa"), ("khalti", "Khalti")} <= set(method_choices())
 
 
+def office(address="", phone="", takes_gifts_in_person=True):
+    """What ways_to_pay() reads of Site settings."""
+    return SimpleNamespace(
+        address=address, phone=phone, takes_gifts_in_person=takes_gifts_in_person
+    )
+
+
+class TestWaysToPay:
+    """Only a way that works is offered. "Not ready to pay yet" isn't one: it's always there."""
+
+    def test_online_when_a_provider_takes_the_pledge(self, settings):
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), office()) == ["online"]
+
+    def test_not_online_for_an_amount_no_provider_takes(self, settings):
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay(providers_for("NPR", Decimal(5)), office()) == []
+
+    def test_not_online_in_a_currency_no_provider_takes(self, settings):
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay(providers_for("GBP", Decimal(25)), office()) == []
+
+    @pytest.mark.parametrize(
+        "where",
+        [{"address": "Ward 4, Thamel"}, {"phone": "+977 1-4567890"}],
+        ids=["address", "phone"],
+    )
+    def test_in_person_with_an_office_address_or_phone(self, settings, where):
+        settings.PAYMENT_KEYS = {}
+
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), office(**where)) == ["in-person"]
+
+    def test_not_in_person_at_an_office_that_takes_no_gifts(self, settings):
+        """A charity can show its office in the footer without taking money there."""
+        settings.PAYMENT_KEYS = {}
+        where = office("Ward 4, Thamel", "+977 1-4567890", takes_gifts_in_person=False)
+
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), where) == []
+
+    def test_not_in_person_without_an_office_to_pay_at(self, settings):
+        settings.PAYMENT_KEYS = {}
+
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), office()) == []
+
+    def test_both_online_first(self, settings):
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), office(phone="+977 1-4567890")) == [
+            "online",
+            "in-person",
+        ]
+
+    def test_any_amount_when_none_is_given(self, settings):
+        """The Donate page says how paying works before anyone chooses an amount."""
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay(providers_for("NPR", None), office()) == ["online"]
+
+
 class TestPaymentKeysCheck:
     """`migrate` runs these when the container starts, so a half set-up provider stops it."""
 
@@ -130,6 +197,63 @@ class TestPledgeReference:
     def test_starts_waiting_for_payment(self, pledge):
         assert pledge.payment_status == PaymentStatus.WAITING
         assert pledge.paid_at is None
+
+
+class TestPledgeNumber:
+    """The short number a supporter reads out or writes in a payment's remarks, and the team
+    searches for. Never a way in: the pay page stays at the reference."""
+
+    def test_each_pledge_gets_its_own_six_digit_number(self, pledge, donate_page):
+        other = Pledge.objects.create(
+            page=donate_page, amount=1500, currency="NPR", name="Ram", email="ram@example.com"
+        )
+
+        assert re.fullmatch(r"[1-9]\d{5}", pledge.number)
+        assert other.number != pledge.number
+
+    def test_keeps_its_number_when_saved_again(self, pledge):
+        number = pledge.number
+        pledge.save()
+
+        assert Pledge.objects.get(pk=pledge.pk).number == number
+
+    def test_is_shown_in_two_groups_of_three(self, pledge):
+        pledge.number = "482913"
+
+        assert pledge.display_number() == "482 913"
+
+    def test_a_number_already_taken_is_never_given_again(self, pledge, donate_page, monkeypatch):
+        numbers = iter([pledge.number, "482913"])
+        monkeypatch.setattr("campaigns.models.new_pledge_number", lambda: next(numbers))
+
+        other = Pledge.objects.create(page=donate_page, amount=1500, currency="NPR", name="Ram")
+
+        assert other.number == "482913"
+
+    def test_gives_up_after_ten_numbers_taken(self, pledge, donate_page, monkeypatch):
+        monkeypatch.setattr("campaigns.models.new_pledge_number", lambda: pledge.number)
+
+        with pytest.raises(IntegrityError):
+            Pledge.objects.create(page=donate_page, amount=1500, currency="NPR", name="Ram")
+
+    def test_any_other_clash_is_passed_on_without_trying_again(
+        self, pledge, donate_page, monkeypatch
+    ):
+        """The pledge form sends the same copy twice on a double click, and finds the first
+        pledge by its submission ID when saving the second clashes."""
+        tried = []
+        monkeypatch.setattr(
+            "campaigns.models.new_pledge_number", lambda: tried.append(1) or "482913"
+        )
+        pledge.submission_id = uuid.uuid4()
+        pledge.save()
+        twin = Pledge(page=donate_page, amount=2500, currency="NPR", name="Sita")
+        twin.submission_id = pledge.submission_id
+
+        with pytest.raises(IntegrityError):
+            twin.save()
+
+        assert len(tried) == 1
 
 
 class TestPayment:

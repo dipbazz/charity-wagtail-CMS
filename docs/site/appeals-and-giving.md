@@ -53,9 +53,11 @@ the pledge form, then a body for anything else, such as a table of where the mon
 - **The appeals offered** are the open, public appeals in the page's language, by title, after
   "Wherever it's needed most" (the default).
 - **After sending**, the pledge is saved and the browser is redirected (303) to the pledge's
-  [pay page](#paying-a-pledge) when a payment provider here takes its currency and amount, and
-  otherwise to `/donate/thank-you/`, which shows the page's thank-you text and a link to the
-  appeals. Reloading either saves nothing. Previews show the page and the thank-you page.
+  [pay page](#paying-a-pledge) when there's a way to pay it here (straight to that way's page when
+  there's only one), and otherwise to `/donate/thank-you/`, which shows the page's **thank-you
+  text** and a link to the appeals. So the thank-you text only shows on a site with no way to pay
+  yet, and its help text says so. Reloading any of them saves nothing. Previews show the page and
+  the thank-you page.
 
 ## The pledge form
 
@@ -77,7 +79,7 @@ order:
   emails about the charity's work, and showing their gift on the site. Each tick box sits inside
   its label, so the whole row can be tapped.
 - "How we use your details" (the privacy notice), then **Send my pledge**, or **Continue to
-  payment** when the pay page comes next.
+  payment** when there's a way to pay on the site.
 
 Fields revealed by a choice are shown and hidden with CSS alone, so the form works without
 JavaScript. If something is wrong, a summary at the top lists each problem as a link to its field.
@@ -92,10 +94,32 @@ starts a new pledge.
 
 ## Paying a pledge
 
-**The pay page** (`/donate/pay/<reference>/`) comes straight after the form when a payment
-provider set up on this site takes the pledge's currency and amount. Its address is the pledge's
-own random reference, so only the person who sent the pledge has it, and it's kept out of search
-engines. It shows the gift (amount, how often, appeal; never the giver's name or details), then:
+**The pay page** (`/donate/pay/<reference>/`) comes straight after the form, and asks "How would
+you like to pay?". Its address is the pledge's own random reference, so only the person who sent
+the pledge has it. Each way to pay has its own page under it, so the supporter chooses first and
+then reads only about the way they chose:
+
+| Way | Page | Offered when |
+|---|---|---|
+| **Pay online** | `…/online/` | a provider set up here takes the pledge's currency and amount |
+| **Pay in person** | `…/in-person/` | Site settings tick **We take gifts at our office** and give an office address or phone |
+| **Not ready to pay yet?** | `…/later/` | always (it isn't a way to pay, so it never counts as one) |
+
+`ways_to_pay()` (`campaigns/payments.py`) decides which ways are offered, for the pay page, the
+form's redirect and the sentence above the form, so they can't disagree. It's given the providers
+that take the pledge, the same list the pay buttons come from. With only one way, the
+form and the pay page go straight to its page, which then says "Your pledge is saved."; with
+none, the form goes to the thank-you page. A way that isn't offered goes back to the choices,
+unless it's dealing with the pledge: the online page still shows a payment that may have gone
+through after the provider's keys were removed, without buttons to pay again.
+
+Every page (the choices and each way's) shows the same summary first: the gift (amount, how
+often, appeal; never the giver's name or details) and the **pledge number** ("482 913"), then
+its own content. Each has its own title, is kept out of search engines, and ends with **Pay
+another way**: a row for each other way, then Not ready to pay yet (folded away while an online
+payment may be paid, below). The phone's Back button goes
+back to the choices. Once the pledge is paid, every address says thank you, so a page left open
+or a link kept to pay later never offers paying again.
 
 - **Pay online:** a button for each provider set up here, in their order (eSewa, then Khalti). The
   supporter pays on the provider's own page and is sent back here. Khalti's page is a link;
@@ -107,9 +131,22 @@ engines. It shows the gift (amount, how often, appeal; never the giver's name or
   Pressing the same provider's button again within 10 minutes (a second tap, a second tab, or no
   JavaScript to hold the button) goes back to the attempt just started, its form or its link,
   rather than starting another that could also be paid. After that, or with another provider, a
-  new attempt starts.
-- **Pay in person:** the office address and phone from Site settings, "tell us your name when you
-  pay"; without them, a promise to be in touch. "I'll pay later" goes to the thank-you page.
+  new attempt starts. So too once eSewa's form has been shown: eSewa takes each form only once
+  and refuses it again as a "Duplicate transaction UUID" (#213), so its "Taking you to eSewa"
+  page, reached again with Back, goes to the pay page, where the payment can be checked. A
+  provider says this with `opens_once`. The buttons post to `…/online/<provider>/`, so no
+  provider's code can clash with a way's name.
+- **Pay in person:** what to do at the counter, as numbered steps: come to the office (the
+  address from Site settings, with "Call us before you come" and the phone), pay in cash and give
+  the pledge number, and ask for a receipt. The setting is off until a charity says on the
+onboarding form (DO01) that it takes gifts at its office: many show their office in the footer
+but take no money there. With a phone but no address, the first step is "Call
+  us to arrange paying". It then says "This page won't change after you pay: your receipt is your
+  record" and "There's nothing more to do here", with a link to the appeals. It promises nothing
+  the site can't do: recording a cash payment in the admin is #209.
+- **Not ready to pay yet?:** the pay page's link, with a **Copy link** button (shown only with
+  JavaScript; without it the link can be selected), to come back and pay later. The monthly
+  reminder choice joins it in #199.
 
 A monthly pledge pays this month's gift. Later months aren't collected online: eSewa and Khalti
 take one-off payments only (monthly reminders are #90).
@@ -117,7 +154,8 @@ take one-off payments only (monthly reminders are #90).
 **Only the provider says whether a payment went through,** asked by the server. When the supporter
 comes back (`/donate/payment/<reference>/`), the site asks the provider about that payment by its
 own reference and amount. What the browser brings back is never read, because anyone could
-change it. Then the pay page shows one of three things:
+change it. Then the **online page** shows one of three things (the choices send a pledge in one of
+the last two straight there, where the check is):
 
 - **Paid:** thanks ("Your gift of Rs 2,500 has reached us") with the provider's reference. A
   monthly gift says "This month's gift … has reached us. We'll be in touch about next month.",
@@ -131,8 +169,9 @@ change it. Then the pay page shows one of three things:
   taken: the page says "We couldn't reach Khalti just now. Try eSewa, or try again in a few
   minutes.", and afterwards "Your payment didn't go through, and no money was taken."
 - **Not confirmed yet** (the provider is still deciding, or couldn't be reached): a large button
-  to check before paying again, so nobody pays twice. The pay buttons are folded away under "I
-  didn't pay: choose a way to pay". Just after a check, the page says once what it found ("We
+  to check before paying again, so nobody pays twice. The pay buttons and **Pay another way** are
+  folded away under "I didn't pay: choose a way to pay", and every other way's page (`in-person/`,
+  `later/`) goes to the online page. Just after a check, the page says once what it found ("We
   asked Khalti just now, and it hasn't confirmed your payment yet", or "We couldn't reach Khalti
   just now"), with "If money has left your account, don't pay again" and the charity's phone. A
   payment whose supporter never came back stays *waiting* until the scheduled check in #198.
@@ -181,10 +220,11 @@ are in `nepal_payments/`, a package that knows nothing of this site; adding one 
 
 ### How paying works, above the form
 
-The page writes this itself, in the reader's language, so it's true on every site:
-"After you send this form, you can pay with eSewa or Khalti, or in person.", naming the providers
-set up there, or, with none, that no payment is taken on the website yet and the charity will be
-in touch. The editors' **payment notice** follows it, for anything a charity wants to add, such as
+The page writes this itself, in the reader's language, from the same `ways_to_pay()` as the pay
+page, so it's true on every site: "After you send this form, you can pay with eSewa or Khalti, or
+in person.", naming the providers set up there, and "or in person" only when paying in person is
+offered; "you can pay in person." with no provider; or, with no way to pay, that no payment is
+taken on the website yet and the charity will be in touch. The editors' **payment notice** follows it, for anything a charity wants to add, such as
 bank details for a transfer. Until #93 every Donate page had a default notice saying no payment was
 taken; a migration removed it wherever it hadn't been changed.
 
@@ -194,7 +234,10 @@ taken; a migration removed it wherever it hadn't been changed.
 the appeal and its **payment** (waiting, paid or failed; **Paid (test)** when a provider's test
 system took it, which anyone can do with a public test account, so no money moved). The team can
 filter (by how often, appeal, payment, each consent and date), search by name or email, open one
-to read it, and export the list to CSV or Excel. The export adds when each pledge was paid and
+to read it, and export the list to CSV or Excel. Each pledge has a six-digit **pledge number**
+(shown "482 913"), picked at random when it's saved, which the supporter gives when paying in person
+and the team can search for with or without its space. It's never a way in: the pay page stays at
+the pledge's reference. The list and the export show it. The export adds when each pledge was paid and
 **paid with** what: the provider and its transaction ID, to match against the provider's
 statements, marked "(test)" when it ran in a provider's test system and no money moved. Anything a
 supporter typed that a spreadsheet would run as a formula (it starts with `=`) is exported as

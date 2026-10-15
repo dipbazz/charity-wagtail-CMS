@@ -65,6 +65,12 @@ def test_signs_the_way_esewas_example_does():
     assert ESewa.sign(message, "8gBm/:&EnhH.1/q") == "i94zsd3oXF6ZsSr/kGqT4sSzYQzjj1W/waxjWyRwaME="
 
 
+def test_its_form_can_be_sent_only_once():
+    """eSewa refuses a transaction_uuid it has seen ("Duplicate transaction UUID."), so paying
+    again needs a new payment."""
+    assert ESewa.opens_once is True
+
+
 class TestStart:
     def test_posts_a_signed_form_to_esewas_test_system(self):
         redirect = esewa().start(request()).redirect

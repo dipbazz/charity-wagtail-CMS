@@ -1,0 +1,66 @@
+{% extends "campaigns/pay/base.html" %}
+{% load i18n wagtailroutablepage_tags %}
+
+{# Each state its own title, the first thing a screen reader says about the page. #}
+{% block pay_title %}{% if state == "failed" or state == "not-started" %}{% translate "Try paying again" %}{% elif state == "check-first" %}{% translate "Check your payment" %}{% else %}{% translate "Pay online" %}{% endif %}{% endblock %}
+
+{% block pay %}
+    <h1>{% translate "Pay online" %}</h1>
+    {# What became of paying, first: donate.js moves focus to it, so it's read before the rest. #}
+    {% if state == "failed" or state == "not-started" %}
+        <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
+            {% if result == "not-started" %}
+                <p>{% blocktranslate with provider=latest.get_method_display %}We couldn't reach {{ provider }} just now.{% endblocktranslate %} {% if others %}{% blocktranslate %}Try {{ others }}, or try again in a few minutes.{% endblocktranslate %}{% else %}{% translate "Try again in a few minutes." %}{% endif %}</p>
+            {% elif state == "failed" %}
+                {# The provider may still find it paid (eSewa can say "not found" before "complete"), so "no money was taken" isn't known: checking comes before paying again. #}
+                <p>{% if result == "checked" %}{% blocktranslate with provider=latest.get_method_display %}We asked {{ provider }} again just now, and it still says your payment didn't go through.{% endblocktranslate %}{% else %}{% blocktranslate with provider=latest.get_method_display %}{{ provider }} says your payment didn't go through.{% endblocktranslate %}{% endif %}</p>
+                <p>{% if site_settings.phone %}{% translate "If money has left your account, don't pay again. Call us and we'll look into it:" %}{% else %}{% translate "If money has left your account, don't pay again." %}{% endif %}</p>
+                {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
+                <p><a class="button" href="{% routablepageurl page 'payment_return' latest.reference %}">{% blocktranslate with provider=latest.get_method_display %}Check my {{ provider }} payment{% endblocktranslate %}</a></p>
+            {% else %}
+                <p>{% translate "Your payment didn't go through, and no money was taken. You can try again, or pay another way." %}</p>
+            {% endif %}
+        </div>
+    {% elif state == "check-first" %}
+        <div class="payment-message" tabindex="-1" data-focus-on-load>
+            {% if result == "checked" %}
+                <p>{% blocktranslate with provider=latest.get_method_display %}We asked {{ provider }} just now, and it hasn't confirmed your payment yet.{% endblocktranslate %}</p>
+            {% elif result == "unreachable" %}
+                <p>{% blocktranslate with provider=latest.get_method_display %}We couldn't reach {{ provider }} just now.{% endblocktranslate %}</p>
+            {% else %}
+                <p>{% blocktranslate with provider=latest.get_method_display %}Did you finish paying with {{ provider }}? Check before paying again, so you don't pay twice.{% endblocktranslate %}</p>
+            {% endif %}
+            {% if result %}
+                <p>{% if site_settings.phone %}{% translate "If money has left your account, don't pay again. Call us and we'll look into it:" %}{% else %}{% translate "If money has left your account, don't pay again." %}{% endif %}</p>
+                {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
+            {% endif %}
+            <p><a class="button button-large" href="{% routablepageurl page 'payment_return' latest.reference %}">{% blocktranslate with provider=latest.get_method_display %}Check my {{ provider }} payment{% endblocktranslate %}</a></p>
+        </div>
+    {% endif %}
+
+    {% include "campaigns/pay/includes/summary.html" %}
+    {% if pledge.frequency == "monthly" %}
+        <p>{% translate "You'll pay this month's gift now." %}</p>
+    {% endif %}
+
+    {# While an attempt may already be paid, checking it leads and paying again, online or another way, is folded away, so nobody pays twice by mistake. #}
+    {% if state == "check-first" %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
+    {% if providers %}
+        <section aria-label="{% translate 'Pay online' %}">
+            {# One sentence, not a box: the buttons stay where they are, and no test account is given away. #}
+            <p>{% blocktranslate %}You'll pay on the secure page of {{ pay_with }}, then come back here.{% endblocktranslate %}{% if test_mode %} {% translate "Online payments are in test mode here: no money will be taken." %}{% endif %}</p>
+            <div class="payment-options">
+                {% for code, name in providers %}
+                    <form method="post" action="{% routablepageurl page 'start_payment' pledge.reference code %}">
+                        {% csrf_token %}
+                        <button class="button button-large" type="submit" data-busy-text="{% blocktranslate with provider=name %}Opening {{ provider }}…{% endblocktranslate %}">{% blocktranslate with provider=name %}Pay with {{ provider }}{% endblocktranslate %}</button>
+                    </form>
+                {% endfor %}
+            </div>
+            {# Says which provider is opening, for screen readers, while donate.js holds the buttons. #}
+            <p class="visually-hidden" role="status" data-busy-status></p>
+        </section>
+    {% endif %}
+    {% include "campaigns/pay/includes/other_ways.html" %}
+    {% if state == "check-first" %}</details>{% endif %}
+{% endblock %}

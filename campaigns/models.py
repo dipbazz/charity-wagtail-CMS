@@ -1,6 +1,7 @@
 import datetime
 import logging
 import re
+import secrets
 import uuid
 from decimal import Decimal
 
@@ -9,11 +10,12 @@ from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import MinValueValidator
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.cache import add_never_cache_headers
 from django.utils.translation import gettext, gettext_lazy
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import (
@@ -32,7 +34,14 @@ from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
 from wagtail.search import index
 
-from campaigns.payments import method_choices, provider_for, providers_for
+from campaigns.payments import (
+    IN_PERSON,
+    ONLINE,
+    method_choices,
+    provider_for,
+    providers_for,
+    ways_to_pay,
+)
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
 from core.models import SiteSettings, SocialMetaMixin
@@ -221,8 +230,9 @@ PAYMENT_MESSAGE = "payment"
 
 
 def tell_pay_page(request, result):
-    """Leave the pay page a one-off result: "checked" (the provider hasn't confirmed the payment
-    yet), "unreachable" (it couldn't be asked) or "not-started" (it couldn't start one)."""
+    """Leave the online pay page a one-off result: "checked" (the provider hasn't confirmed the
+    payment yet), "unreachable" (it couldn't be asked) or "not-started" (it couldn't start one).
+    Only that page reads it, so the payer must be sent straight there."""
     messages.info(request, result, extra_tags=PAYMENT_MESSAGE)
 
 
@@ -240,6 +250,29 @@ def pay_page_result(request):
     return result
 
 
+# Not ready to pay yet: offered with the ways to pay, on every pledge's pay page, but not a way
+# to pay, so it never counts towards them.
+LATER = "later"
+
+# Each way's page, by its route's name.
+WAY_ROUTES = {ONLINE: "pay_online", IN_PERSON: "pay_in_person", LATER: "pay_later"}
+
+# The ways' names, for templates to compare with rather than spell out.
+WAY_NAMES = {"ONLINE": ONLINE, "IN_PERSON": IN_PERSON, "LATER": LATER}
+
+# The way whose page shows what became of paying, for each pay page state it shows. The choices
+# send a pledge in one of these states there, and that page shows even once its way isn't
+# offered any more.
+STATE_WAYS = {"check-first": ONLINE, "failed": ONLINE}
+
+# The states in which every other way's page goes to that way's: an attempt may already have paid,
+# so nothing to pay with shows before checking it.
+HELD = ("check-first",)
+
+# The states in which every pay page address says thank you.
+THANKED = ("paid", "received")
+
+
 def either(names):
     """The names as a choice, in the reader's language: "eSewa or Khalti", "eSewa, Khalti or
     IME Pay"."""
@@ -252,8 +285,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     """The page every Donate button leads to: suggested amounts and a pledge form.
 
     Each pledge it takes is saved as a `Pledge`, listed under Pledges in the admin. The form
-    then redirects to the pledge's pay page when a payment provider here can take it, or to the
-    thank-you page, so reloading either can't send the form again.
+    then redirects to the pledge's pay page when there's a way to pay it here (straight to that
+    way's page when there's only one), or to the thank-you page, so reloading any of them can't
+    send the form again.
     """
 
     introduction = models.TextField(blank=True)
@@ -269,7 +303,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         blank=True,
         help_text="Shown below the form, e.g. a table of where the money goes.",
     )
-    thank_you_text = RichTextField(blank=True, help_text="Shown after someone sends the form.")
+    thank_you_text = RichTextField(
+        blank=True,
+        help_text="Shown after someone sends the form when there's no way to pay on the site yet.",
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("introduction"),
@@ -286,7 +323,13 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     max_count_per_parent = 1
 
     landing_page_template = "campaigns/donate_page_landing.html"
-    pay_page_template = "campaigns/donate_page_pay.html"
+    # The pay page's choices, and each way's page.
+    pay_templates = {
+        None: "campaigns/pay/choices.html",
+        ONLINE: "campaigns/pay/online.html",
+        IN_PERSON: "campaigns/pay/in_person.html",
+        LATER: "campaigns/pay/later.html",
+    }
     redirect_template = "campaigns/donate_page_redirect.html"
     preview_modes = [("", "Donate page"), ("thank-you", "Thank-you page")]
 
@@ -319,16 +362,23 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 pledge = form.save()
                 # 303 See Other: the browser fetches the next page with GET, so reloading it
                 # doesn't send the form again.
-                if providers_for(pledge.currency, Decimal(pledge.amount)):
+                _, ways = self.ways_for(pledge, site_settings)
+                if len(ways) == 1:
+                    return self.redirect_to(request, WAY_ROUTES[ways[0]], pledge.reference)
+                if ways:
                     return self.redirect_to(request, "pay", pledge.reference)
                 return self.redirect_to(request, "thank_you")
         else:
             form = self.get_form(site_settings=site_settings, link=request.GET)
+        # How paying works here, before an amount is chosen: any amount a provider takes.
         providers = providers_for(site_settings.currency)
+        ways = ways_to_pay(providers, site_settings)
         return self.render(
             request,
             context_overrides={
                 "form": form,
+                "ways": ways,
+                **WAY_NAMES,
                 "pay_with": either([provider.name for provider in providers]),
             },
         )
@@ -337,47 +387,120 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     def thank_you(self, request):
         return self.render(request, template=self.landing_page_template)
 
-    @path("pay/<uuid:reference>/", name="pay")
-    def pay(self, request, reference):
-        """A pledge's pay page: the ways to pay it, or what became of paying it. Its address is
-        the pledge's own reference, so only the person who sent it has it."""
-        pledge = get_object_or_404(
+    def ways_for(self, pledge, site_settings):
+        """The providers that take the pledge, and the ways to pay it, worked out once so they
+        can't disagree."""
+        providers = providers_for(pledge.currency, Decimal(pledge.amount))
+        return providers, ways_to_pay(providers, site_settings)
+
+    def get_pledge(self, reference):
+        return get_object_or_404(
             Pledge.objects.select_related("appeal").prefetch_related("payments"),
             reference=reference,
             page=self,
         )
-        payments = list(pledge.payments.all())  # newest first
-        received = pledge.paid_payment()
-        # The pledge says whether it's paid: an attempt for another amount (the pledge changed
-        # after it started) doesn't pay it, but the money was still received, and isn't asked for
-        # again.
-        paid = received if pledge.payment_status == PaymentStatus.PAID else None
-        latest = payments[0] if payments else None
+
+    @path("pay/<uuid:reference>/", name="pay")
+    def pay(self, request, reference):
+        """A pledge's pay page: the ways to pay it, each leading to its own page. Its address is
+        the pledge's own reference, so only the person who sent it has it.
+
+        A pledge one way is still dealing with goes to that way's page, and a pledge with only
+        one way to pay goes straight to it. Paid, it says thank you, like every pay address.
+        """
+        pledge = self.get_pledge(reference)
+        state = pledge.pay_page_state()
         site_settings = SiteSettings.for_request(request)
-        providers = [] if received else providers_for(pledge.currency, Decimal(pledge.amount))
-        return self.render(
-            request,
-            template=self.pay_page_template,
-            context_overrides={
-                "pledge": pledge,
-                "paid": paid,
-                "received": received,
+        if state in THANKED:
+            return self.render_pay_page(request, pledge, state, [], [], site_settings)
+        if state in STATE_WAYS:
+            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
+        providers, ways = self.ways_for(pledge, site_settings)
+        if not ways:
+            return self.redirect_to(request, "thank_you")
+        if len(ways) == 1:
+            return self.redirect_to(request, WAY_ROUTES[ways[0]], reference)
+        return self.render_pay_page(request, pledge, state, providers, ways, site_settings)
+
+    @path("pay/<uuid:reference>/online/", name="pay_online")
+    def pay_online(self, request, reference):
+        return self.way_page(request, reference, ONLINE)
+
+    @path("pay/<uuid:reference>/in-person/", name="pay_in_person")
+    def pay_in_person(self, request, reference):
+        return self.way_page(request, reference, IN_PERSON)
+
+    @path("pay/<uuid:reference>/later/", name="pay_later")
+    def pay_later(self, request, reference):
+        return self.way_page(request, reference, LATER)
+
+    def way_page(self, request, reference, way):
+        """One way's page. A way that isn't offered (any more) goes back to the choices, unless
+        it's the one dealing with the pledge: an online payment may have gone through after the
+        provider's keys were removed. While that payment may be paid, every other way's page goes
+        to its page, so nobody pays twice."""
+        # Taken before any redirect: left in the session, it would turn up in the admin, or here
+        # later as news that's no longer true.
+        result = pay_page_result(request) if way == ONLINE else None
+        pledge = self.get_pledge(reference)
+        state = pledge.pay_page_state()
+        if state in HELD and way != STATE_WAYS[state]:
+            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
+        site_settings = SiteSettings.for_request(request)
+        if state in THANKED:
+            return self.render_pay_page(request, pledge, state, [], [], site_settings, way)
+        providers, ways = self.ways_for(pledge, site_settings)
+        if not (way == LATER or way in ways or STATE_WAYS.get(state) == way):
+            return self.redirect_to(request, "pay", reference)
+        return self.render_pay_page(
+            request, pledge, state, providers, ways, site_settings, way, result
+        )
+
+    def render_pay_page(
+        self, request, pledge, state, providers, ways, site_settings, way=None, result=None
+    ):
+        """The choices (way None) or a way's page, or the thanks once paid (with no providers or
+        ways: there's nothing left to pay). `result` is what asking a provider found, for the
+        online page."""
+        # An attempt for another amount (the pledge changed after it started) doesn't pay it,
+        # but the money was still received, and isn't asked for again.
+        received = pledge.paid_payment() if state in THANKED else None
+        context = {
+            "pledge": pledge,
+            "state": state,
+            "received": received,
+            "way": way,
+            "ways": ways,
+            # The choices say it, and a way's page the form went straight to.
+            "saved": way is None or ways == [way],
+            # Every other way, at the bottom of a way's page, then Not ready to pay yet.
+            "other_ways": [other for other in [*ways, LATER] if other != way],
+            "site_settings": site_settings,
+            "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
+            **WAY_NAMES,
+        }
+        # Named on the choices, and on the online page.
+        context["pay_with"] = either([provider.name for provider in providers])
+        if way == ONLINE:
+            latest = next(iter(pledge.payments.all()), None)  # newest first
+            context |= {
                 # Codes and names, not the classes, which templates would try to call.
                 "providers": [(provider.code, provider.name) for provider in providers],
-                "pay_with": either([provider.name for provider in providers]),
                 # Before a charity goes live its real supporters can still get here.
                 "test_mode": not settings.LIVE_PAYMENTS,
                 "latest": latest,
-                "unfinished": latest if latest and latest.status == PaymentStatus.WAITING else None,
-                "result": pay_page_result(request),
+                "result": result,
                 # The others to try when the latest attempt's provider couldn't start it.
                 "others": either([p.name for p in providers if latest and p.code != latest.method]),
-                "site_settings": site_settings,
-                "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
-            },
-        )
+            }
+        if way == LATER:
+            context["pay_link"] = request.build_absolute_uri(
+                self.get_url(request) + self.reverse_subpage("pay", args=[pledge.reference])
+            )
+        return self.render(request, template=self.pay_templates[way], context_overrides=context)
 
-    @path("pay/<uuid:reference>/<slug:method>/", name="start_payment")
+    # Under online/, so no provider's code can clash with a way's name.
+    @path("pay/<uuid:reference>/online/<slug:method>/", name="start_payment")
     def start_payment(self, request, reference, method):
         """Start paying a pledge with a provider, and send the payer there."""
         if request.method != "POST":
@@ -386,7 +509,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             Pledge.objects.select_related("appeal"), reference=reference, page=self
         )
         if pledge.has_paid_payment():
-            return self.redirect_to(request, "pay", pledge.reference)
+            return self.redirect_to(request, "pay_online", pledge.reference)
         provider = provider_for(method)
         if provider is None or type(provider) not in providers_for(
             pledge.currency, Decimal(pledge.amount)
@@ -402,7 +525,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             live=provider.live,
             created_at__gte=timezone.now() - REUSE_ATTEMPT_FOR,
         ).first()
-        if waiting and waiting.provider_form:
+        if waiting and waiting.page_at_provider():
             return self.redirect_to(request, "go_to_provider", waiting.reference)
 
         payment = pledge.start_payment(method, live=provider.live)
@@ -428,7 +551,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             payment.add_step(step_for_error(error))
             payment.record(PaymentStatus.FAILED)
             tell_pay_page(request, "not-started")
-            return self.redirect_to(request, "pay", pledge.reference)
+            return self.redirect_to(request, "pay_online", pledge.reference)
 
         redirect = started.redirect
         # Kept, so a second tap goes back to the same page at the provider.
@@ -438,6 +561,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "url": redirect.url,
                 "method": redirect.method,
                 "fields": redirect.fields,
+                "once": provider.opens_once,
             },
         )
         payment.add_step(StepKind.SENT)
@@ -451,28 +575,36 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     def go_to_provider(self, request, reference):
         """The way back to a payment's page at its provider: the form that sends it there
         (eSewa), or a redirect to its link (Khalti). Once the payment isn't waiting any more, or
-        another has paid the pledge, the pay page instead: it would pay again."""
+        another has paid the pledge, the pay page instead: it would pay again. So too once a form
+        the provider takes only once has been shown: the provider would refuse it."""
         payment = get_object_or_404(
             Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
         )
+        form = payment.page_at_provider()
         if (
             payment.status != PaymentStatus.WAITING
-            or not payment.provider_form
+            or form is None
             or payment.pledge.has_paid_payment()
         ):
-            return self.redirect_to(request, "pay", payment.pledge.reference)
+            return self.redirect_to(request, "pay_online", payment.pledge.reference)
         # A form kept before links were kept too has no "method": it's posted.
-        if payment.provider_form.get("method") == "GET":
-            return HttpResponseRedirect(payment.provider_form["url"], status=303)
-        return self.render(
+        if form.get("method") == "GET":
+            return HttpResponseRedirect(form["url"], status=303)
+        if form.get("once"):
+            Payment.objects.filter(pk=payment.pk).update(provider_form={**form, "shown": True})
+        response = self.render(
             request,
             template=self.redirect_template,
             context_overrides={
                 "provider_name": payment.get_method_display(),
-                "form_url": payment.provider_form["url"],
-                "fields": payment.provider_form["fields"],
+                "form_url": form["url"],
+                "fields": form["fields"],
+                "once": form.get("once"),
             },
         )
+        # Back from the provider fetches it again, so this decides whether it's sent again.
+        add_never_cache_headers(response)
+        return response
 
     @path("payment/<uuid:reference>/", name="payment_return")
     def payment_return(self, request, reference):
@@ -493,7 +625,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 failed_before and outcome.status == PaymentStatus.FAILED
             ):
                 tell_pay_page(request, "checked")
-        return self.redirect_to(request, "pay", payment.pledge.reference)
+        return self.redirect_to(request, "pay_online", payment.pledge.reference)
 
     def redirect_to(self, request, name, *args):
         """303 to one of this page's routes."""
@@ -542,6 +674,11 @@ CHANGES_FROM = {
     PaymentStatus.PAID: [PaymentStatus.WAITING, PaymentStatus.FAILED],
     PaymentStatus.FAILED: [PaymentStatus.WAITING],
 }
+
+
+def new_pledge_number():
+    """A random six-digit pledge number, 100000 to 999999."""
+    return str(100000 + secrets.randbelow(900000))
 
 
 class Pledge(models.Model):
@@ -600,6 +737,10 @@ class Pledge(models.Model):
     # The address of its pay page. Not submission_id: whoever holds that can send the form again
     # and change the pledge.
     reference = models.UUIDField(null=True, unique=True, editable=False)
+    # Short enough to read out at the office or write in a payment's remarks, so the team finds
+    # the pledge without guessing between two people with the same name. Never a way in: the pay
+    # page is at the reference.
+    number = models.CharField("pledge number", max_length=6, unique=True, editable=False)
 
     class Meta:
         ordering = ["-created_at"]
@@ -610,7 +751,26 @@ class Pledge(models.Model):
     def save(self, *args, **kwargs):
         if self.reference is None:
             self.reference = uuid.uuid4()
-        super().save(*args, **kwargs)
+        if self.number:
+            return super().save(*args, **kwargs)
+        # Pick the number here, not in the form, so pledges made in the admin, in tests or in the
+        # demo get one too. A number already taken (one in 900,000 per pledge) is tried again;
+        # any other clash, such as the form's double click, is passed on.
+        for attempt in range(10):
+            self.number = new_pledge_number()
+            try:
+                with transaction.atomic():
+                    return super().save(*args, **kwargs)
+            except IntegrityError:
+                taken = Pledge.objects.filter(number=self.number).exists()
+                if not taken or attempt == 9:
+                    self.number = ""
+                    raise
+
+    @admin.display(description="Pledge number")
+    def display_number(self):
+        """In two groups of three, "482 913", easier to read out than "482913"."""
+        return f"{self.number[:3]} {self.number[3:]}"
 
     @admin.display(description="Amount")
     def display_amount(self):
@@ -641,6 +801,28 @@ class Pledge(models.Model):
         """The attempt that paid it, if any, even one for an amount it no longer asks for (the
         money was still received). Reads payments as fetched, so a list can prefetch them."""
         return next((p for p in self.payments.all() if p.status == PaymentStatus.PAID), None)
+
+    def pay_page_state(self):
+        """What its pay page shows, from what became of paying it:
+
+        - "paid": an attempt paid it.
+        - "received": an attempt paid what it said before it was changed; a person sorts it out.
+        - "failed": the latest attempt failed after reaching its provider, so it may still turn
+          out paid: checking comes before paying again.
+        - "not-started": the latest attempt failed before reaching its provider: no money taken.
+        - "check-first": the latest attempt is waiting, so it may already be paid.
+        - "ready": nothing started yet.
+
+        Reads payments as fetched, so the pay page can prefetch them.
+        """
+        if self.paid_payment():
+            return "paid" if self.payment_status == PaymentStatus.PAID else "received"
+        latest = next(iter(self.payments.all()), None)  # newest first
+        if self.payment_status == PaymentStatus.FAILED:
+            return "failed" if latest and latest.reached_provider() else "not-started"
+        if latest and latest.status == PaymentStatus.WAITING:
+            return "check-first"
+        return "ready"
 
     def has_paid_payment(self):
         """Whether any attempt has paid it, live or test, at any amount: it's never asked for
@@ -678,9 +860,10 @@ class Payment(models.Model):
     provider_id = models.CharField(
         max_length=100, blank=True, help_text="The provider's ID for the attempt (Khalti's pidx)."
     )
-    # Where the provider takes the payer, as {"url", "method", "fields"}: a signed form to post
-    # (eSewa), sent from a page fetched afterwards with GET, or a link (Khalti). Kept so a second
-    # tap goes back there.
+    # Where the provider takes the payer, as {"url", "method", "fields", "once"}: a signed form to
+    # post (eSewa), sent from a page fetched afterwards with GET, or a link (Khalti). Kept so a
+    # second tap goes back there, unless "once" (the provider's page takes the payer only once)
+    # and "shown" (the form has been sent).
     provider_form = models.JSONField(default=dict, blank=True, editable=False)
     provider_reference = models.CharField(
         "provider's reference",
@@ -703,6 +886,15 @@ class Payment(models.Model):
 
     def display_amount(self):
         return format_money(self.amount, self.currency)
+
+    def page_at_provider(self):
+        """Its kept form or link, to send the payer to its page at the provider; None once it
+        can't be used again: a form the provider takes only once, already shown, would be refused
+        as a duplicate (eSewa's "Duplicate transaction UUID")."""
+        form = self.provider_form
+        if not form or (form.get("once") and form.get("shown")):
+            return None
+        return form
 
     def reached_provider(self):
         """Whether the provider started it, so the payer may have paid even after it's said to

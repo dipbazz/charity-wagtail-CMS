@@ -1,0 +1,33 @@
+{% extends "campaigns/pay/base.html" %}
+{% load i18n wagtailcore_tags %}
+
+{% block pay_title %}{% translate "Pay in person" %}{% endblock %}
+
+{# Promises only what happens at the counter: the site can't see a cash payment, so this page never changes after it. #}
+{% block pay %}
+    <h1>{% translate "Pay in person" %}</h1>
+    {% include "campaigns/pay/includes/summary.html" %}
+    {% if pledge.frequency == "monthly" %}
+        <p>{% translate "You'll pay this month's gift now." %}</p>
+    {% endif %}
+    <ol class="pay-steps">
+        {% if site_settings.address %}
+            <li>
+                {% translate "Come to our office:" %}
+                <address>{{ site_settings.address|linebreaksbr }}</address>
+                {% if site_settings.phone %}{% translate "Call us before you come:" %} <a href="{{ phone_link }}">{{ site_settings.phone }}</a>{% endif %}
+            </li>
+        {% else %}
+            <li>{% translate "Call us to arrange paying:" %} <a href="{{ phone_link }}">{{ site_settings.phone }}</a></li>
+        {% endif %}
+        <li>{% blocktranslate with number=pledge.display_number %}Pay in cash and give your pledge number, {{ number }}.{% endblocktranslate %}</li>
+        <li>{% translate "Ask for a receipt." %}</li>
+    </ol>
+    <p>{% translate "This page won't change after you pay: your receipt is your record." %}</p>
+    <p>{% translate "There's nothing more to do here." %}</p>
+    {% with appeals=appeals_page %}{% if appeals %}
+        <p><a class="button" href="{% pageurl appeals %}">{% translate "See all our appeals" %}</a></p>
+    {% endif %}{% endwith %}
+
+    {% include "campaigns/pay/includes/other_ways.html" %}
+{% endblock %}

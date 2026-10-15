@@ -48,6 +48,24 @@ def provider_for(code):
     return provider(live=settings.LIVE_PAYMENTS, **keys_for(provider))
 
 
+# The ways to pay a pledge, each with its own page after the pay page's choices.
+ONLINE = "online"
+IN_PERSON = "in-person"
+
+
+def ways_to_pay(providers, site_settings):
+    """The ways a pledge can be paid here, in the order they're offered: online with any of
+    `providers` (from providers_for(), so the pay buttons come from the same list), and in person
+    when Site settings say the charity takes gifts at its office and give an address or phone to
+    find it. "Not ready to pay yet" isn't one: it's always offered."""
+    ways = []
+    if providers:
+        ways.append(ONLINE)
+    if site_settings.takes_gifts_in_person and (site_settings.address or site_settings.phone):
+        ways.append(IN_PERSON)
+    return ways
+
+
 def method_choices():
     """Every provider, for a payment's `method`. A function, so migrations name it rather than
     copy its list, and a new provider needs no migration."""

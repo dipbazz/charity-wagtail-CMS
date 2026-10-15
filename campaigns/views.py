@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import messages
 from django.shortcuts import redirect
 from wagtail.admin.ui.tables import Column
@@ -12,6 +14,16 @@ class PledgeIndexView(VisitorTextExportMixin, IndexView):
     def get_base_queryset(self):
         # The export's "Paid with" reads each pledge's payments: fetched together, not one by one.
         return super().get_base_queryset().prefetch_related("payments")
+
+    def search_queryset(self, queryset):
+        """Names and emails as typed, and a pledge number with or without its space ("482 913"
+        as it's shown and read out, "482913" as it's written in a payment's remarks)."""
+        found = super().search_queryset(queryset)
+        if self.is_searching:
+            digits = re.sub(r"\s", "", self.search_query)
+            if re.fullmatch(r"\d{6}", digits):
+                found = found | queryset.filter(number=digits)
+        return found
 
 
 class PledgeEditView(EditView):
@@ -92,6 +104,7 @@ class PledgeViewSet(ModelViewSet):
 
     list_display = [
         "created_at",
+        "display_number",
         "name",
         "display_amount",
         Column("frequency", label="How often", accessor="get_frequency_display"),
@@ -106,11 +119,12 @@ class PledgeViewSet(ModelViewSet):
         "show_on_website",
         "created_at",
     ]
-    search_fields = ["name", "email"]
+    search_fields = ["name", "email", "number"]
     search_backend_name = None  # plain database search; pledges aren't in the site search index
 
     list_export = [
         "created_at",
+        "number",
         "amount",
         "currency",
         "get_frequency_display",
@@ -129,6 +143,7 @@ class PledgeViewSet(ModelViewSet):
     ]
     export_headings = {
         "created_at": "Sent",
+        "number": "Pledge number",
         "get_frequency_display": "How often",
         "email_updates": "Email updates",
         "show_on_website": "Show on website",

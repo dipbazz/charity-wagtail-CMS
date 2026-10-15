@@ -73,4 +73,12 @@ if (providerForm) {
     if (navigation?.type !== "back_forward") {
         providerForm.submit();
     }
+    // Back from a provider that takes its form only once (eSewa), restored from the browser's
+    // cache: fetched again instead, so the server sends the payer to the pay page rather than
+    // offer a form the provider would refuse.
+    if (providerForm.hasAttribute("data-sent-once")) {
+        window.addEventListener("pageshow", (event) => {
+            if (event.persisted) window.location.reload();
+        });
+    }
 }

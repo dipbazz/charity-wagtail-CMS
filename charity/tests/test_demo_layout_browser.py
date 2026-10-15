@@ -10,6 +10,7 @@ import re
 
 import pytest
 
+from campaigns.models import DonatePage, Pledge
 from conftest import SITE
 from core.brand import FONT_STACKS, contrast
 from core.models import SiteSettings
@@ -35,7 +36,8 @@ PATHS = [
 
 # What a thumb taps. Text links inside a paragraph are exempt: they're as tall as the line.
 TAP_TARGETS = (
-    ".site-footer a, .tag-list a, .pagination a, .button, button, summary, select,"
+    ".site-footer a, .tag-list a, .pagination a, .pay-way, .pay-steps a, .button, button,"
+    " summary, select,"
     " input:not([type=checkbox]):not([type=radio]):not([type=hidden])"
 )
 
@@ -72,6 +74,31 @@ def test_page_fits_and_can_be_tapped_at_every_width(site_page, demo_site, path):
     problems = layout_problems(site_page, path)
 
     assert not problems, f"{path}\n" + "\n".join(problems)
+
+
+@pytest.fixture
+def pay_pages(demo_site, settings):
+    """Every address of a pledge's pay page (the choices and each way's), for a pledge on the
+    demo Donate page in each language. eSewa is set up with made-up keys: its pay button shows
+    without asking eSewa anything."""
+    settings.PAYMENT_KEYS = {"ESEWA_PRODUCT_CODE": "EPAYTEST", "ESEWA_SECRET_KEY": "made-up"}
+    paths = []
+    for donate_page in DonatePage.objects.live():
+        pledge = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        pay = f"{donate_page.url}pay/{pledge.reference}/"
+        paths += [pay + way for way in ("", "online/", "in-person/", "later/")]
+    return paths
+
+
+def test_each_pay_page_fits_and_can_be_tapped_at_every_width(site_page, pay_pages):
+    assert len(pay_pages) == 8  # in both languages
+    problems = []
+    for path in pay_pages:
+        problems += [f"{path} {item}" for item in layout_problems(site_page, path)]
+
+    assert not problems, "\n".join(problems)
 
 
 # Each text in the name bar and the footer, its colour, and the fill behind it: its own, or the
