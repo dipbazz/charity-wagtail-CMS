@@ -261,6 +261,10 @@ WAY_ROUTES = {ONLINE: "pay_online", IN_PERSON: "pay_in_person", LATER: "pay_late
 # offered any more.
 STATE_WAYS = {"check-first": ONLINE, "failed": ONLINE}
 
+# The states in which every other way's page goes to that way's: an attempt may already have paid,
+# so nothing to pay with shows before checking it.
+HELD = ("check-first",)
+
 # The states in which every pay page address says thank you.
 THANKED = ("paid", "received")
 
@@ -421,9 +425,12 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     def way_page(self, request, reference, way):
         """One way's page. A way that isn't offered (any more) goes back to the choices, unless
         it's the one dealing with the pledge: an online payment may have gone through after the
-        provider's keys were removed."""
+        provider's keys were removed. While that payment may be paid, every other way's page goes
+        to its page, so nobody pays twice."""
         pledge = self.get_pledge(reference)
         state = pledge.pay_page_state()
+        if state in HELD and way != STATE_WAYS[state]:
+            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
         site_settings = SiteSettings.for_request(request)
         ways = ways_to_pay(pledge.currency, Decimal(pledge.amount), site_settings)
         offered = way == LATER or way in ways or STATE_WAYS.get(state) == way

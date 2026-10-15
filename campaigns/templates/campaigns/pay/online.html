@@ -43,9 +43,9 @@
         <p>{% translate "You'll pay this month's gift now." %}</p>
     {% endif %}
 
+    {# While an attempt may already be paid, checking it leads and paying again, online or another way, is folded away, so nobody pays twice by mistake. #}
+    {% if state == "check-first" %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
     {% if providers %}
-        {# While an attempt may already be paid, checking it leads and paying again is folded away, so nobody pays twice by mistake. #}
-        {% if state == "check-first" %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
         <section aria-label="{% translate 'Pay online' %}">
             {# One sentence, not a box: the buttons stay where they are, and no test account is given away. #}
             <p>{% blocktranslate %}You'll pay on the secure page of {{ pay_with }}, then come back here.{% endblocktranslate %}{% if test_mode %} {% translate "Online payments are in test mode here: no money will be taken." %}{% endif %}</p>
@@ -60,8 +60,7 @@
             {# Says which provider is opening, for screen readers, while donate.js holds the buttons. #}
             <p class="visually-hidden" role="status" data-busy-status></p>
         </section>
-        {% if state == "check-first" %}</details>{% endif %}
     {% endif %}
-
     {% include "campaigns/pay/includes/other_ways.html" %}
+    {% if state == "check-first" %}</details>{% endif %}
 {% endblock %}

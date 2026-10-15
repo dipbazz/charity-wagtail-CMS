@@ -337,15 +337,38 @@ class TestPayAnotherWay:
         """The form came straight here, past the choices."""
         assert "Your pledge is saved." in text(client.get(online_url(donate_page, pledge)))
 
-    def test_stays_out_while_a_payment_may_be_paid(self, client, donate_page, pledge, office):
-        """Only paying online again folds away; paying another way is still a choice."""
+    def test_folds_away_while_a_payment_may_be_paid(self, client, donate_page, pledge, office):
+        """Paying another way would pay twice too: it waits behind "I didn't pay", with paying
+        online again."""
         pledge.start_payment("fakepay", live=False)
 
         page = soup(client.get(online_url(donate_page, pledge)))
 
-        section = page.find(id="pay-another-way").parent
-        assert section is not None
-        assert section.find_parent("details") is None
+        folded = page.find("details")
+        assert page.find(id="pay-another-way").find_parent("details") == folded
+        links = page.select(".pay-ways a")
+        assert links
+        assert all(link.find_parent("details") == folded for link in links)
+
+    def test_folds_away_with_no_provider_left(self, client, donate_page, pledge, office, settings):
+        """No pay buttons to fold, but the other ways still wait behind "I didn't pay"."""
+        pledge.start_payment("fakepay", live=False)
+        settings.PAYMENT_KEYS = {}
+
+        page = soup(client.get(online_url(donate_page, pledge)))
+
+        assert page.find(id="pay-another-way").find_parent("details") is not None
+
+    def test_stays_out_once_a_payment_failed(self, client, donate_page, pledge, office):
+        """The provider said it didn't go through: paying another way is right then."""
+        payment = pledge.start_payment("fakepay", live=False)
+        Payment.objects.filter(pk=payment.pk).update(provider_id="fake-id")
+        payment.refresh_from_db()
+        payment.record(Status.FAILED)
+
+        page = soup(client.get(online_url(donate_page, pledge)))
+
+        assert page.find(id="pay-another-way").find_parent("details") is None
 
 
 class TestAWayNotOffered:
@@ -380,6 +403,30 @@ class TestAWayNotOffered:
         assert pay_buttons(response) == []
         chooser = client.get(pay_url(donate_page, pledge))
         assert chooser["Location"] == online_url(donate_page, pledge)
+
+
+class TestWhileAPaymentMayBePaid:
+    """Nothing to pay with shows before checking, so nobody pays twice."""
+
+    @pytest.mark.parametrize("way", ["in-person", "later"])
+    def test_every_other_way_goes_to_paying_online(self, client, donate_page, pledge, office, way):
+        """Its page has the check. A pay page left open, or "Pay another way" tapped before
+        paying online, still has these links."""
+        pledge.start_payment("fakepay", live=False)
+
+        response = client.get(pay_url(donate_page, pledge, way))
+
+        assert response.status_code == 303
+        assert response["Location"] == online_url(donate_page, pledge)
+
+    def test_once_failed_every_way_is_open(self, client, donate_page, pledge, office):
+        """The provider said it didn't go through: paying another way is right then."""
+        payment = pledge.start_payment("fakepay", live=False)
+        Payment.objects.filter(pk=payment.pk).update(provider_id="fake-id")
+        payment.refresh_from_db()
+        payment.record(Status.FAILED)
+
+        assert client.get(pay_url(donate_page, pledge, "in-person")).status_code == 200
 
 
 class TestNotReadyYet:

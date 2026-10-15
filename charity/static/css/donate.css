@@ -158,8 +158,8 @@
     margin-top: 2rem;
 }
 
-/* "I didn't pay": the pay buttons, folded while an attempt may already be paid. Its summary is a
-   44px tap target, in link colour so it reads as something to open. */
+/* "I didn't pay": the pay buttons and the other ways, folded while an attempt may already be
+   paid. Its summary is a 44px tap target, in link colour so it reads as something to open. */
 .pay-again {
     margin-block: 1.5rem;
 }
@@ -172,7 +172,7 @@
     cursor: pointer;
 }
 
-.pay-again[open] section {
+.pay-again[open] > section:first-of-type {
     margin-top: 0.5rem;
 }
 

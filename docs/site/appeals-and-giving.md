@@ -115,7 +115,8 @@ through after the provider's keys were removed, without buttons to pay again.
 Every page (the choices and each way's) shows the same summary first: the gift (amount, how
 often, appeal; never the giver's name or details) and the **pledge number** ("482 913"), then
 its own content. Each has its own title, is kept out of search engines, and ends with **Pay
-another way**: a row for each other way, then Not ready to pay yet. The phone's Back button goes
+another way**: a row for each other way, then Not ready to pay yet (folded away while an online
+payment may be paid, below). The phone's Back button goes
 back to the choices. Once the pledge is paid, every address says thank you, so a page left open
 or a link kept to pay later never offers paying again.
 
@@ -164,8 +165,9 @@ the last two straight there, where the check is):
   taken: the page says "We couldn't reach Khalti just now. Try eSewa, or try again in a few
   minutes.", and afterwards "Your payment didn't go through, and no money was taken."
 - **Not confirmed yet** (the provider is still deciding, or couldn't be reached): a large button
-  to check before paying again, so nobody pays twice. The pay buttons are folded away under "I
-  didn't pay: choose a way to pay". Just after a check, the page says once what it found ("We
+  to check before paying again, so nobody pays twice. The pay buttons and **Pay another way** are
+  folded away under "I didn't pay: choose a way to pay", and every other way's page (`in-person/`,
+  `later/`) goes to the online page. Just after a check, the page says once what it found ("We
   asked Khalti just now, and it hasn't confirmed your payment yet", or "We couldn't reach Khalti
   just now"), with "If money has left your account, don't pay again" and the charity's phone. A
   payment whose supporter never came back stays *waiting* until the scheduled check in #198.
