@@ -12,7 +12,14 @@ from wagtail.images.rect import Rect
 from wagtail.models import Locale, Site
 
 from campaigns.forms import PledgeForm
-from campaigns.models import CampaignIndexPage, CampaignPage, DonatePage, DonatePageAmount
+from campaigns.models import (
+    CampaignIndexPage,
+    CampaignPage,
+    DonatePage,
+    DonatePageAmount,
+    QRCode,
+    QRCodeName,
+)
 from contact.models import FormField, FormPage
 from core.models import (
     AnnouncementBanner,
@@ -166,6 +173,31 @@ def make_charity_logo():
         description=f"{SITE_NAME} logo: a drop of water",
         file=ImageFile(buffer, name="brightwell-logo.png"),
     )
+
+
+def make_qr_card():
+    """Draw a fictional payment QR card: a bank-style card with a pattern in the middle that no
+    app can scan (it has none of a QR code's corner squares), so the demo never sends a gift
+    anywhere. Like a real card it is taller than wide, with a name above the code."""
+    size = 480
+    image = Image.new("RGB", (size, int(size * 1.35)), (255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((0, 0, size, 70), fill=(7, 59, 69))
+    draw.text(
+        (20, 24), "BRIGHTWELL SAMPLE PAY", fill=(255, 255, 255), font=ImageFont.load_default()
+    )
+    cell, grid = 12, 25
+    left, top = (size - cell * grid) // 2, 110
+    for row in range(grid):
+        for column in range(grid):
+            # A fixed pattern from the cell's position, never the three corner squares.
+            if (row * 7 + column * 13 + row * column) % 3 == 0:
+                x, y = left + column * cell, top + row * cell
+                draw.rectangle((x, y, x + cell - 1, y + cell - 1), fill=(0, 0, 0))
+    draw.text((20, top + cell * grid + 24), "SAMPLE: NOT A REAL QR CODE", fill=(120, 0, 0))
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return ImageFile(buffer, name="brightwell-sample-qr.png")
 
 
 def publish(parent, page):
@@ -573,6 +605,7 @@ class Command(BaseCommand):
 
         self.add_nepali_pages(home, donate, campaigns, flood, news, flood_story, testimonial)
         self.add_nepali_snippets(settings, banner, testimonial, [successes, updates])
+        self.add_qr_code()
 
         self.stdout.write(self.style.SUCCESS(f"Created demo content for {SITE_NAME}."))
         self.stdout.write(f"About page: {about.url}")
@@ -706,6 +739,17 @@ class Command(BaseCommand):
                     )
                 ],
             ),
+        )
+
+    def add_qr_code(self):
+        """One QR code to scan, a drawing that can't be scanned, with its name in both
+        languages, so the QR page can be seen and checked on the demo."""
+        code = QRCode.objects.create(
+            image=make_qr_card(), account_name="BRIGHTWELL WATER TRUST (SAMPLE)"
+        )
+        QRCodeName.objects.create(code=code, locale=Locale.get_default(), name="Sample Pay")
+        QRCodeName.objects.create(
+            code=code, locale=Locale.objects.get(language_code="ne"), name="नमुना पे"
         )
 
     def add_nepali_snippets(self, settings, banner, testimonial, categories):
