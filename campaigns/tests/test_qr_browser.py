@@ -87,7 +87,8 @@ class TestCopyButtons:
 
         # Each button, what it says, and the heading of the row after it.
         for label, said, next_heading in [
-            ("Copy amount", "Amount copied", "Remarks"),
+            ("Copy amount", "Amount copied", "Appeal"),
+            ("Copy remarks", "Remarks copied", "Account name"),
             ("Copy account name", "Account name copied", "Account number"),
         ]:
             button = site_page.get_by_role("button", name=label)

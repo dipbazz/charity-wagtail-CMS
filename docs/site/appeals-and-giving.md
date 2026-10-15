@@ -240,15 +240,28 @@ and one of at most 800px (shown, through `srcset`), without location data and re
 that isn't a JPEG, PNG or WebP of up to 5 MB; both files go when the code is replaced or removed.
 Wagtail's history for each code says who added, changed or removed it, and when.
 
-**The QR page** (`…/qr/`) is "Scan our QR code", in this order: how it's checked ("We check QR
-payments by hand: your gift shows as received once it reaches us"), the **amount** and the
-**Remarks**, which is the pledge number, each with an icon Copy button that copies the plain value
-("2500", "482913") and appears only with JavaScript; then, with two or more codes, "Which app will
-you pay with?" as radio cards (the first chosen) that show one code at a time with CSS `:has()`
-(without it every code shows, each under its name); the code as uploaded, **Save image** (with the
-iPhone help line), its account name and number, and "Check your app shows … before you pay"; then
-**I've paid** with the **transaction ID** from the app's receipt. Receipt screenshots come with
-#197's second part.
+**The QR page** (`…/qr/`) is "Scan our QR code". Under the heading is a row of the two steps (a
+`nav` of jump links, "Scan the QR code" and "Paid? Tell us"), then the gift summary, which here
+(and only here, `summary.html` with `copyable`) says "Your gift amount" and "Pledge number (use
+this as Remarks)", each with an icon Copy button that copies the plain value ("2500", "482913")
+and appears only with JavaScript. Then two sections divided by a line:
+
+- **Step 1: Pay with your app.** How it's checked ("We check QR payments by hand: your gift shows
+  as received once it reaches us"); with two or more codes, "Which app will you pay with?" as radio
+  cards (the first chosen) that show one code at a time with CSS `:has()` (without it every code
+  shows, each under its name); then the code as uploaded with **Save image**, a folded "Need help
+  saving or scanning the image?" (Android, iPhone and computer), "After you scan, your app should
+  show *the account name*", and a block headed "Can't scan the QR code? Pay to this account
+  instead" with the account name and number, each with a Copy button. From `48rem` the code sits
+  on the left and the rest on the right; the source order never changes. It ends with "Paid in
+  your app? Come back to this page and go to step 2."
+- **Step 2: Paid? Tell us here.** The **transaction ID** field with two numbered lines before it
+  (open the payment's receipt; copy the ID and paste it here), its error under the field (the
+  alert at the top says "Check the transaction ID below" and links to it), and **I've paid**,
+  which says "Sending…" while it's sent. Receipt screenshots come with #197's second part.
+
+Once they've said they paid, the row of steps ticks step 2 and stops being links, because the
+steps are folded away (see the states below). Not found ticks nothing.
 
 **"I've paid"** (`…/qr/paid/`) moves the pledge from waiting or failed to **To confirm** in one
 conditional update (`Pledge.claim_paid()`), and creates the payment only if that changed a row, so

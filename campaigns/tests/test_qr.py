@@ -291,7 +291,7 @@ class TestTheQRPage:
     ):
         page = soup(client.get(qr_url(donate_page, pledge)))
 
-        names = [h2.get_text(strip=True) for h2 in page.select(".qr-card h2")]
+        names = [h3.get_text(strip=True) for h3 in page.select(".qr-card h3")]
         assert names == ["eSewa", "Fonepay (bank)"]
         save = page.select_one(".qr-card a[download]")
         assert save["href"].endswith(".png")
@@ -325,17 +325,137 @@ class TestTheQRPage:
     def test_asks_the_supporter_to_check_the_account_name(
         self, client, donate_page, pledge, esewa_qr
     ):
-        assert "Check your app shows BRIGHTWELL WATER before you pay." in text(
+        assert "After you scan, your app should show BRIGHTWELL WATER." in text(
             client.get(qr_url(donate_page, pledge))
         )
 
     def test_says_it_isnt_checked_automatically(self, client, donate_page, pledge, esewa_qr):
         assert "We check QR payments by hand" in text(client.get(qr_url(donate_page, pledge)))
 
+    def test_the_summary_says_what_each_detail_is_for(self, client, donate_page, pledge, esewa_qr):
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        summary = page.select_one("dl.gift-summary")
+        labels = [dt.get_text(strip=True) for dt in summary.select("dt")]
+        assert labels == ["Your gift amount", "Appeal", "Pledge number (use this as Remarks)"]
+        # One summary: the amount and the remarks aren't given a second time further down.
+        assert page.find_all("dt", string="Amount") == []
+        assert page.find_all("dt", string="Remarks") == []
+
+    def test_other_pay_pages_keep_the_plain_summary(self, client, donate_page, pledge, esewa_qr):
+        page = soup(client.get(f"{donate_page.url}pay/{pledge.reference}/later/"))
+
+        assert [dt.get_text(strip=True) for dt in page.select("dl.gift-summary dt")] == [
+            "Your gift",
+            "Appeal",
+            "Pledge number",
+        ]
+        assert page.select("button[data-copy-value]") == []
+
+    def test_the_account_to_pay_instead_is_under_its_own_heading(
+        self, client, donate_page, pledge, esewa_qr
+    ):
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        fallback = page.select_one(".qr-card .qr-fallback")
+        assert fallback.h4.get_text(strip=True) == (
+            "Can't scan the QR code? Pay to this account instead"
+        )
+        assert [dt.get_text(strip=True) for dt in fallback.select("dt")] == [
+            "Account name",
+            "Account number",
+        ]
+        assert len(fallback.select("button[data-copy-value]")) == 2
+
+    def test_says_how_to_scan_on_a_phone_and_on_a_computer(
+        self, client, donate_page, pledge, esewa_qr
+    ):
+        response = client.get(qr_url(donate_page, pledge))
+        words = text(response)
+
+        # Folded under a title that says what's inside, so it doesn't push the account down.
+        how = soup(response).select_one(".qr-card details.qr-how")
+        assert how.summary.get_text(strip=True) == "Need help saving or scanning the image?"
+        assert not how.has_attr("open")
+        assert len(how.select("p.qr-help")) == 3
+        assert "On an Android phone? Save the image" in words
+        assert "On a computer? Scan the code on screen with your phone." in words
+        assert "On an iPhone, press and hold the QR code" in words
+
     def test_has_its_own_title(self, client, donate_page, pledge, esewa_qr):
         page = soup(client.get(qr_url(donate_page, pledge)))
 
         assert "Scan our QR code" in page.title.get_text()
+
+
+class TestTheTwoSteps:
+    def test_are_sections_the_row_of_steps_jumps_to(self, client, donate_page, pledge, esewa_qr):
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        nav = page.select_one("nav[aria-label=Steps]")
+        assert [a["href"] for a in nav.select("ol > li > a")] == ["#step-1", "#step-2"]
+        assert [a.get_text(strip=True).lstrip("12") for a in nav.select("a")] == [
+            "Scan the QR code",
+            "Paid? Tell us",
+        ]
+        headings = [h2.get_text(strip=True) for h2 in page.select("form.qr-pay section > h2")]
+        assert headings == ["Step 1: Pay with your app", "Step 2: Paid? Tell us here"]
+        for number in ("1", "2"):
+            section = page.select_one(f"form.qr-pay section#step-{number}")
+            assert section["aria-labelledby"] == f"step-{number}-title"
+            assert section.select_one(f"#step-{number}-title")
+
+    def test_step_1_ends_with_a_way_back_to_step_2(self, client, donate_page, pledge, esewa_qr):
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        step_1 = page.select_one("#step-1")
+        assert "Paid in your app? Come back to this page and" in step_1.get_text()
+        assert step_1.select("a[href='#step-2']")
+
+    def test_step_2_says_where_to_find_the_id_before_the_field(
+        self, client, donate_page, pledge, esewa_qr
+    ):
+        step_2 = soup(client.get(qr_url(donate_page, pledge))).select_one("#step-2")
+
+        field = step_2.select_one("input[name=transaction_id]")
+        steps = step_2.select("#transaction-id-help li")
+        assert len(steps) == 2
+        assert field.sourceline > steps[1].sourceline
+        assert "transaction-id-help" in field["aria-describedby"]
+        assert field.has_attr("required")
+
+    def test_ive_paid_says_it_is_sending(self, client, donate_page, pledge, esewa_qr):
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        button = page.select_one("form.qr-pay button[type=submit]")
+        assert button["data-busy-text"] == "Sending…"
+        assert page.select_one("form.qr-pay [data-busy-status][role=status]")
+
+    def test_the_second_is_ticked_once_they_have_paid_and_nothing_jumps_into_the_fold(
+        self, client, donate_page, pledge, esewa_qr
+    ):
+        say_paid(client, donate_page, pledge, esewa_qr)
+
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        assert page.select("nav[aria-label=Steps]") == []
+        steps = page.select("ol.pay-steps > li")
+        assert [li.select("a") for li in steps] == [[], []]
+        assert steps[0].select(".is-done") == []
+        assert steps[1].select_one(".is-done svg")
+        assert "(done)" in steps[1].get_text()
+
+    def test_nothing_is_ticked_when_the_team_couldnt_find_it(
+        self, client, donate_page, pledge, esewa_qr, django_user_model
+    ):
+        payment = pledge.claim_paid(esewa_qr, "TXN-8841")
+        payment.mark_not_found(django_user_model.objects.create_user(username="ram"))
+
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        assert len(page.select("ol.pay-steps > li")) == 2
+        assert page.select("ol.pay-steps .is-done") == []
+        assert "(done)" not in page.select_one("ol.pay-steps").get_text()
 
 
 class TestCopiedMessages:
@@ -401,6 +521,42 @@ class TestSayingIvePaid:
         assert "Enter the transaction ID from your receipt." in text(response)
         assert pledge.payments.count() == 0
         assert Pledge.objects.get(pk=pledge.pk).payment_status == PaymentStatus.WAITING
+
+    def test_the_error_is_under_the_field_and_the_alert_links_to_it(
+        self, client, donate_page, pledge, esewa_qr
+    ):
+        page = soup(say_paid(client, donate_page, pledge, esewa_qr, transaction_id="  "))
+
+        field = page.select_one("input[name=transaction_id]")
+        error = page.select_one("#id_transaction_id_error")
+        assert field["aria-invalid"] == "true"
+        assert "id_transaction_id_error" in field["aria-describedby"].split()
+        assert "Enter the transaction ID from your receipt." in error.get_text()
+        assert field.find_parent("div").select_one("#id_transaction_id_error")
+        alert = page.select_one("[role=alert]")
+        assert alert.select_one("a")["href"] == "#id_transaction_id"
+        assert "Check the transaction ID below." in alert.get_text()
+        assert "Enter the transaction ID" not in alert.get_text()
+
+    def test_the_field_has_no_error_before_anything_is_sent(
+        self, client, donate_page, pledge, esewa_qr
+    ):
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        field = page.select_one("input[name=transaction_id]")
+        assert not field.has_attr("aria-invalid")
+        assert page.select("#id_transaction_id_error") == []
+
+    def test_a_mistake_opens_the_fold_it_was_made_in(
+        self, client, donate_page, pledge, esewa_qr, django_user_model
+    ):
+        pledge.claim_paid(esewa_qr, "TXN-8841").mark_not_found(
+            django_user_model.objects.create_user(username="ram")
+        )
+
+        page = soup(say_paid(client, donate_page, pledge, esewa_qr, transaction_id=" "))
+
+        assert page.select_one("details.pay-again").has_attr("open")
 
     def test_only_names_a_code_on_the_page(self, client, donate_page, pledge, esewa_qr):
         response = client.post(

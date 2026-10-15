@@ -458,26 +458,17 @@ msgstr "QR भुक्तानी हामी आफैं जाँच्छ
 msgid "Tap the copy button to copy a detail, then paste it in your app."
 msgstr "विवरण प्रतिलिपि गर्न कपी बटन थिच्नुहोस्, त्यसपछि आफ्नो एपमा टाँस्नुहोस्।"
 
-msgid "Amount"
-msgstr "रकम"
-
 msgid "Amount copied"
 msgstr "रकम प्रतिलिपि गरियो"
 
 msgid "Copy amount"
 msgstr "रकम प्रतिलिपि गर्नुहोस्"
 
-msgid "Remarks"
-msgstr "टिप्पणी (Remarks)"
-
 msgid "Remarks copied"
 msgstr "टिप्पणी प्रतिलिपि गरियो"
 
 msgid "Copy remarks"
 msgstr "टिप्पणी प्रतिलिपि गर्नुहोस्"
-
-msgid "Write this in Remarks (or Purpose), so we know the payment is yours."
-msgstr "भुक्तानी तपाईंको हो भनी हामीले चिन्न सकौं भनेर यो टिप्पणी (Remarks) वा उद्देश्य (Purpose) मा लेख्नुहोस्।"
 
 msgid "Which app will you pay with?"
 msgstr "तपाईं कुन एपबाट भुक्तानी गर्नुहुन्छ?"
@@ -488,9 +479,6 @@ msgstr "%(charity)s लाई भुक्तानी गर्ने %(name)s 
 
 msgid "Save image"
 msgstr "तस्बिर सेभ गर्नुहोस्"
-
-msgid "On an iPhone, press and hold the QR code, then choose Save to Photos. Then open your app's scanner and choose the photo."
-msgstr "आईफोनमा QR कोड थिचिराख्नुहोस्, अनि ‘Save to Photos’ छान्नुहोस्। त्यसपछि आफ्नो एपको स्क्यानर खोलेर त्यो तस्बिर छान्नुहोस्।"
 
 msgid "Account name"
 msgstr "खाताको नाम"
@@ -510,18 +498,66 @@ msgstr "खाता नम्बर प्रतिलिपि गरियो
 msgid "Copy account number"
 msgstr "खाता नम्बर प्रतिलिपि गर्नुहोस्"
 
-msgid "Can't scan? Pay to this number."
-msgstr "स्क्यान गर्न सकिएन? यो नम्बरमा भुक्तानी गर्नुहोस्।"
-
 #, python-format
-msgid "Check your app shows %(name)s before you pay."
-msgstr "भुक्तानी गर्नुअघि तपाईंको एपमा %(name)s देखिएको छ भनी जाँच्नुहोस्।"
+msgid "After you scan, your app should show %(name)s."
+msgstr "स्क्यान गरेपछि तपाईंको एपमा %(name)s देखिनुपर्छ।"
+
+msgid "Steps"
+msgstr "चरणहरू"
+
+msgid "Scan the QR code"
+msgstr "QR कोड स्क्यान गर्नुहोस्"
+
+msgid "Paid? Tell us"
+msgstr "भुक्तानी गर्नुभयो? हामीलाई बताउनुहोस्"
+
+msgid "done"
+msgstr "सम्पन्न"
+
+msgid "Your gift amount"
+msgstr "तपाईंको दानको रकम"
+
+msgid "Pledge number (use this as Remarks)"
+msgstr "प्रतिबद्धता नम्बर (यसलाई टिप्पणी (Remarks) मा लेख्नुहोस्)"
+
+msgid "Check the transaction ID below."
+msgstr "तल लेनदेन आईडी जाँच्नुहोस्।"
+
+msgid "Step 1: Pay with your app"
+msgstr "चरण १: आफ्नो एपबाट भुक्तानी गर्नुहोस्"
+
+msgid "Need help saving or scanning the image?"
+msgstr "तस्बिर सेभ गर्न वा स्क्यान गर्न मद्दत चाहियो?"
+
+msgid "On an Android phone? Save the image, then in your app's scanner choose it from your photos."
+msgstr "एन्ड्रोइड फोनमा हुनुहुन्छ? तस्बिर सेभ गर्नुहोस्, अनि आफ्नो एपको स्क्यानरमा फोटोहरूबाट त्यो छान्नुहोस्।"
+
+msgid "On an iPhone, press and hold the QR code, then choose Save to Photos."
+msgstr "आईफोनमा QR कोड थिचिराख्नुहोस्, अनि ‘Save to Photos’ छान्नुहोस्।"
+
+msgid "On a computer? Scan the code on screen with your phone."
+msgstr "कम्प्युटरमा हुनुहुन्छ? स्क्रिनमा देखिएको कोड आफ्नो फोनले स्क्यान गर्नुहोस्।"
+
+msgid "Can't scan the QR code? Pay to this account instead"
+msgstr "QR कोड स्क्यान गर्न सकिएन? यही खातामा भुक्तानी गर्नुहोस्"
+
+msgid "Paid in your app? Come back to this page and <a href=\"#step-2\">go to step 2</a>."
+msgstr "आफ्नो एपमा भुक्तानी गर्नुभयो? यो पृष्ठमा फर्कनुहोस् र <a href=\"#step-2\">चरण २ मा जानुहोस्</a>।"
+
+msgid "Step 2: Paid? Tell us here"
+msgstr "चरण २: भुक्तानी गर्नुभयो? यहाँ हामीलाई बताउनुहोस्"
+
+msgid "In your app, open this payment's receipt."
+msgstr "आफ्नो एपमा यो भुक्तानीको रसिद खोल्नुहोस्।"
+
+msgid "Copy the transaction ID (it may say reference or code) and paste it here."
+msgstr "लेनदेन आईडी (यसमा रेफरेन्स वा कोड लेखिएको हुन सक्छ) प्रतिलिपि गरेर यहाँ टाँस्नुहोस्।"
+
+msgid "Sending…"
+msgstr "पठाउँदै…"
 
 msgid "I've paid"
 msgstr "मैले भुक्तानी गरें"
-
-msgid "Open the payment in your app's statement or history. The transaction ID (it may say reference or code) is on the receipt. Press and hold it to copy."
-msgstr "आफ्नो एपको स्टेटमेन्ट वा इतिहासमा त्यो भुक्तानी खोल्नुहोस्। लेनदेन आईडी (यसमा रेफरेन्स वा कोड लेखिएको हुन सक्छ) रसिदमा हुन्छ। प्रतिलिपि गर्न थिचिराख्नुहोस्।"
 
 msgid "Page not found"
 msgstr "पृष्ठ फेला परेन"

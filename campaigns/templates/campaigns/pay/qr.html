@@ -12,7 +12,7 @@
     {# What became of paying, or what is wrong with what was sent, first: donate.js moves focus to it. #}
     {% if paid_form.errors %}
         <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
-            {% for error in paid_form.transaction_id.errors %}<p>{{ error }}</p>{% endfor %}
+            {% if paid_form.transaction_id.errors %}<p><a href="#id_transaction_id">{% translate "Check the transaction ID below." %}</a></p>{% endif %}
             {% for error in paid_form.code.errors %}<p>{{ error }}</p>{% endfor %}
         </div>
     {% elif state == "to-confirm" %}
@@ -35,98 +35,112 @@
         </div>
     {% endif %}
 
-    {% include "campaigns/pay/includes/summary.html" %}
+    {# The two steps, ticked once they've told us they paid. While the QR code is folded away there's nothing to jump to, so they're plain text. #}
+    {% if state == "to-confirm" %}
+        {% include "campaigns/pay/includes/qr_steps.html" with done=True %}
+    {% elif state == "not-found" %}
+        {% include "campaigns/pay/includes/qr_steps.html" %}
+    {% else %}
+        {% include "campaigns/pay/includes/qr_steps.html" with linked=True %}
+    {% endif %}
 
-    {# While the team is checking, or couldn't find a payment, the QR code and "I've paid" are folded away so nobody pays twice by mistake. Paying another way stays open below. #}
+    {% include "campaigns/pay/includes/summary.html" with copyable=True %}
+    <p data-copy-hint hidden>{% translate "Tap the copy button to copy a detail, then paste it in your app." %}</p>
+
+    {# While the team is checking, or couldn't find a payment, the QR code and "I've paid" are folded away so nobody pays twice by mistake. Paying another way stays open below. It opens by itself when what was sent was wrong, so the error is seen. #}
     {% if qr_codes %}
-        {% if state == "to-confirm" or state == "not-found" %}<details class="pay-again"><summary>{% translate "I didn't pay: scan the QR code" %}</summary>{% endif %}
+        {% if state == "to-confirm" or state == "not-found" %}<details class="pay-again"{% if paid_form.errors %} open{% endif %}><summary>{% translate "I didn't pay: scan the QR code" %}</summary>{% endif %}
         <form class="qr-pay" method="post" action="{% routablepageurl page 'qr_paid' pledge.reference %}">
             {% csrf_token %}
-            <p>{% translate "We check QR payments by hand: your gift shows as received once it reaches us." %}</p>
-            {% if pledge.frequency == "monthly" %}<p>{% translate "You'll pay this month's gift now." %}</p>{% endif %}
-            <p data-copy-hint hidden>{% translate "Tap the copy button to copy a detail, then paste it in your app." %}</p>
-            <dl class="qr-details">
-                <div>
-                    <dt>{% translate "Amount" %}</dt>
-                    <dd>
-                        <span>{{ pledge.display_amount }}</span>
-                        {% translate "Amount copied" as copied %}
-                        {% translate "Copy amount" as label %}
-                        {% include "campaigns/pay/includes/copy_button.html" with key="amount" value=pledge.amount %}
-                    </dd>
-                    <dd class="copy-status" role="status" data-copy-status="amount"></dd>
-                </div>
-                <div>
-                    <dt>{% translate "Remarks" %}</dt>
-                    <dd>
-                        <span>{{ pledge.display_number }}</span>
-                        {% translate "Remarks copied" as copied %}
-                        {% translate "Copy remarks" as label %}
-                        {% include "campaigns/pay/includes/copy_button.html" with key="remarks" value=pledge.number %}
-                    </dd>
-                    <dd class="copy-status" role="status" data-copy-status="remarks"></dd>
-                    <dd class="qr-help">{% translate "Write this in Remarks (or Purpose), so we know the payment is yours." %}</dd>
-                </div>
-            </dl>
+            <section id="step-1" class="qr-step" aria-labelledby="step-1-title">
+                <h2 id="step-1-title">{% translate "Step 1: Pay with your app" %}</h2>
+                <p>{% translate "We check QR payments by hand: your gift shows as received once it reaches us." %}</p>
+                {% if pledge.frequency == "monthly" %}<p>{% translate "You'll pay this month's gift now." %}</p>{% endif %}
 
-            {% if qr_codes|length > 1 %}
-                <fieldset class="amount-options qr-choice">
-                    <legend>{% translate "Which app will you pay with?" %}</legend>
+                {% if qr_codes|length > 1 %}
+                    <fieldset class="amount-options qr-choice">
+                        <legend>{% translate "Which app will you pay with?" %}</legend>
+                        {% for code in qr_codes %}
+                            <label class="amount-option">
+                                <input type="radio" name="code" value="{{ code.pk }}"{% if paid_form.code.value == code.pk|stringformat:"s" or not paid_form.code.value and forloop.first %} checked{% endif %}>
+                                <span class="amount-figure">{{ code.name }}</span>
+                            </label>
+                        {% endfor %}
+                    </fieldset>
+                {% else %}
+                    <input type="hidden" name="code" value="{{ qr_codes.0.pk }}">
+                {% endif %}
+
+                <div class="qr-cards">
                     {% for code in qr_codes %}
-                        <label class="amount-option">
-                            <input type="radio" name="code" value="{{ code.pk }}"{% if paid_form.code.value == code.pk|stringformat:"s" or not paid_form.code.value and forloop.first %} checked{% endif %}>
-                            <span class="amount-figure">{{ code.name }}</span>
-                        </label>
-                    {% endfor %}
-                </fieldset>
-            {% else %}
-                <input type="hidden" name="code" value="{{ qr_codes.0.pk }}">
-            {% endif %}
-
-            <div class="qr-cards">
-                {% for code in qr_codes %}
-                    <section class="qr-card" aria-labelledby="qr-name-{{ code.pk }}">
-                        <h2 id="qr-name-{{ code.pk }}">{{ code.name }}</h2>
-                        <img src="{{ code.image.url }}"{% if code.image_small %} srcset="{{ code.image_small.url }} {{ code.small_width }}w, {{ code.image.url }} {{ code.image_width }}w" sizes="min(100vw, 24rem)"{% endif %} width="{{ code.image_width }}" height="{{ code.image_height }}" alt="{% blocktranslate with name=code.name charity=site_settings.name %}{{ name }} QR code to pay {{ charity }}{% endblocktranslate %}">
-                        <p><a class="button" href="{{ code.image.url }}" download>{% translate "Save image" %}</a></p>
-                        <p class="qr-help">{% translate "On an iPhone, press and hold the QR code, then choose Save to Photos. Then open your app's scanner and choose the photo." %}</p>
-                        <dl class="qr-details">
-                            <div>
-                                <dt>{% translate "Account name" %}</dt>
-                                <dd>
-                                    <span>{{ code.account_name }}</span>
-                                    {% translate "Account name copied" as copied %}
-                                    {% translate "Copy account name" as label %}
-                                    {% include "campaigns/pay/includes/copy_button.html" with key="account-name-" suffix=code.pk value=code.account_name %}
-                                </dd>
-                                <dd class="copy-status" role="status" data-copy-status="account-name-{{ code.pk }}"></dd>
+                        <section class="qr-card" aria-labelledby="qr-name-{{ code.pk }}">
+                            <h3 id="qr-name-{{ code.pk }}">{{ code.name }}</h3>
+                            <div class="qr-code">
+                                <img src="{{ code.image.url }}"{% if code.image_small %} srcset="{{ code.image_small.url }} {{ code.small_width }}w, {{ code.image.url }} {{ code.image_width }}w" sizes="(min-width: 48rem) 20rem, min(100vw, 24rem)"{% endif %} width="{{ code.image_width }}" height="{{ code.image_height }}" alt="{% blocktranslate with name=code.name charity=site_settings.name %}{{ name }} QR code to pay {{ charity }}{% endblocktranslate %}">
+                                <p><a class="button" href="{{ code.image.url }}" download>{% translate "Save image" %}</a></p>
                             </div>
-                            {% if code.account_number %}
-                                <div>
-                                    <dt>{% translate "Account number" %}</dt>
-                                    <dd>
-                                        <span>{{ code.account_number }}</span>
-                                        {% translate "Account number copied" as copied %}
-                                        {% translate "Copy account number" as label %}
-                                        {% include "campaigns/pay/includes/copy_button.html" with key="account-number-" suffix=code.pk value=code.account_number %}
-                                    </dd>
-                                    <dd class="copy-status" role="status" data-copy-status="account-number-{{ code.pk }}"></dd>
-                                    <dd class="qr-help">{% translate "Can't scan? Pay to this number." %}</dd>
+                            <div class="qr-instructions">
+                                {# Folded: most people know how to scan, and the help would push the account to pay instead far down a phone screen. #}
+                                <details class="qr-how">
+                                    <summary>{% translate "Need help saving or scanning the image?" %}</summary>
+                                    <p class="qr-help">{% translate "On an Android phone? Save the image, then in your app's scanner choose it from your photos." %}</p>
+                                    <p class="qr-help">{% translate "On an iPhone, press and hold the QR code, then choose Save to Photos." %}</p>
+                                    <p class="qr-help">{% translate "On a computer? Scan the code on screen with your phone." %}</p>
+                                </details>
+                                <p>{% blocktranslate with name=code.account_name %}After you scan, your app should show {{ name }}.{% endblocktranslate %}</p>
+                                <div class="qr-fallback">
+                                    <h4>{% translate "Can't scan the QR code? Pay to this account instead" %}</h4>
+                                    <dl class="qr-details">
+                                        <div>
+                                            <dt>{% translate "Account name" %}</dt>
+                                            <dd>
+                                                <span>{{ code.account_name }}</span>
+                                                {% translate "Account name copied" as copied %}
+                                                {% translate "Copy account name" as label %}
+                                                {% include "campaigns/pay/includes/copy_button.html" with key="account-name-" suffix=code.pk value=code.account_name %}
+                                            </dd>
+                                            <dd class="copy-status" role="status" data-copy-status="account-name-{{ code.pk }}"></dd>
+                                        </div>
+                                        {% if code.account_number %}
+                                            <div>
+                                                <dt>{% translate "Account number" %}</dt>
+                                                <dd>
+                                                    <span>{{ code.account_number }}</span>
+                                                    {% translate "Account number copied" as copied %}
+                                                    {% translate "Copy account number" as label %}
+                                                    {% include "campaigns/pay/includes/copy_button.html" with key="account-number-" suffix=code.pk value=code.account_number %}
+                                                </dd>
+                                                <dd class="copy-status" role="status" data-copy-status="account-number-{{ code.pk }}"></dd>
+                                            </div>
+                                        {% endif %}
+                                    </dl>
                                 </div>
-                            {% endif %}
-                        </dl>
-                        <p>{% blocktranslate with name=code.account_name %}Check your app shows {{ name }} before you pay.{% endblocktranslate %}</p>
-                    </section>
-                {% endfor %}
-            </div>
+                            </div>
+                        </section>
+                    {% endfor %}
+                </div>
 
-            <h2>{% translate "I've paid" %}</h2>
-            <p>
-                <label for="id_transaction_id">{% translate "Transaction ID" %}</label>
-                <input type="text" id="id_transaction_id" name="transaction_id" value="{{ paid_form.transaction_id.value|default:'' }}" maxlength="100" required autocomplete="off" aria-describedby="transaction-id-help">
-            </p>
-            <p id="transaction-id-help" class="qr-help">{% translate "Open the payment in your app's statement or history. The transaction ID (it may say reference or code) is on the receipt. Press and hold it to copy." %}</p>
-            <button class="button button-large" type="submit">{% translate "I've paid" %}</button>
+                <p>{% blocktranslate %}Paid in your app? Come back to this page and <a href="#step-2">go to step 2</a>.{% endblocktranslate %}</p>
+            </section>
+
+            <section id="step-2" class="qr-step" aria-labelledby="step-2-title">
+                <h2 id="step-2-title">{% translate "Step 2: Paid? Tell us here" %}</h2>
+                <div class="field">
+                    <label for="id_transaction_id">{% translate "Transaction ID" %}</label>
+                    <ol id="transaction-id-help" class="qr-help">
+                        <li>{% translate "In your app, open this payment's receipt." %}</li>
+                        <li>{% translate "Copy the transaction ID (it may say reference or code) and paste it here." %}</li>
+                    </ol>
+                    {# The error is read with the field, and the alert at the top links here. #}
+                    <input type="text" id="id_transaction_id" name="transaction_id" value="{{ paid_form.transaction_id.value|default:'' }}" maxlength="100" required autocomplete="off" aria-describedby="transaction-id-help{% if paid_form.transaction_id.errors %} id_transaction_id_error{% endif %}"{% if paid_form.transaction_id.errors %} aria-invalid="true"{% endif %}>
+                    {% if paid_form.transaction_id.errors %}
+                        <ul class="errorlist" id="id_transaction_id_error">{% for error in paid_form.transaction_id.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+                <button class="button button-large" type="submit" data-busy-text="{% translate 'Sending…' %}">{% translate "I've paid" %}</button>
+                {# Says "Sending…" to screen readers while donate.js holds the button. #}
+                <p class="visually-hidden" role="status" data-busy-status></p>
+            </section>
         </form>
         {% if state == "to-confirm" or state == "not-found" %}</details>{% endif %}
     {% endif %}

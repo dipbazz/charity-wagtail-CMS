@@ -1,17 +1,38 @@
 {% load i18n %}
-{# The same on every pay page: whether the pledge is saved, then the gift and the number to give when paying. #}
+{# The same on every pay page: whether the pledge is saved, then the gift and the number to give when paying. `copyable` (the QR page) says what each is for when paying and puts a copy button on the amount and the number. #}
 {% if saved %}<p>{% translate "Your pledge is saved." %}</p>{% endif %}
-<dl class="gift-summary">
+{% if pledge.frequency == "monthly" %}{% blocktranslate with amount=pledge.display_amount asvar gift_amount %}{{ amount }} a month{% endblocktranslate %}{% else %}{% firstof pledge.display_amount as gift_amount %}{% endif %}
+<dl class="gift-summary{% if copyable %} qr-details{% endif %}">
     <div>
-        <dt>{% translate "Your gift" %}</dt>
-        <dd>{% if pledge.frequency == "monthly" %}{% blocktranslate with amount=pledge.display_amount %}{{ amount }} a month{% endblocktranslate %}{% else %}{{ pledge.display_amount }}{% endif %}</dd>
+        <dt>{% if copyable %}{% translate "Your gift amount" %}{% else %}{% translate "Your gift" %}{% endif %}</dt>
+        {% if copyable %}
+            <dd>
+                <span>{{ gift_amount }}</span>
+                {% translate "Amount copied" as copied %}
+                {% translate "Copy amount" as label %}
+                {% include "campaigns/pay/includes/copy_button.html" with key="amount" value=pledge.amount %}
+            </dd>
+            <dd class="copy-status" role="status" data-copy-status="amount"></dd>
+        {% else %}
+            <dd>{{ gift_amount }}</dd>
+        {% endif %}
     </div>
     <div>
         <dt>{% translate "Appeal" %}</dt>
         <dd>{% if pledge.appeal %}{{ pledge.appeal.title }}{% else %}{% translate "Wherever it's needed most" %}{% endif %}</dd>
     </div>
     <div>
-        <dt>{% translate "Pledge number" %}</dt>
-        <dd>{{ pledge.display_number }}</dd>
+        <dt>{% if copyable %}{% translate "Pledge number (use this as Remarks)" %}{% else %}{% translate "Pledge number" %}{% endif %}</dt>
+        {% if copyable %}
+            <dd>
+                <span>{{ pledge.display_number }}</span>
+                {% translate "Remarks copied" as copied %}
+                {% translate "Copy remarks" as label %}
+                {% include "campaigns/pay/includes/copy_button.html" with key="remarks" value=pledge.number %}
+            </dd>
+            <dd class="copy-status" role="status" data-copy-status="remarks"></dd>
+        {% else %}
+            <dd>{{ pledge.display_number }}</dd>
+        {% endif %}
     </div>
 </dl>
