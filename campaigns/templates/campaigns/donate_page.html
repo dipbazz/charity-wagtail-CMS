@@ -15,7 +15,7 @@
         <div class="payment-notice">
             {# How paying works on this site, true whichever ways it offers; then anything the charity adds. #}
             {% if ways %}
-                <p>{% if pay_with and "in-person" in ways %}{% blocktranslate %}After you send this form, you can pay with {{ pay_with }}, or in person.{% endblocktranslate %}{% elif pay_with %}{% blocktranslate %}After you send this form, you can pay with {{ pay_with }}.{% endblocktranslate %}{% else %}{% translate "After you send this form, you can pay in person." %}{% endif %} {% translate "If you choose monthly, you'll pay the first month now." %}</p>
+                <p>{% if pay_with and IN_PERSON in ways %}{% blocktranslate %}After you send this form, you can pay with {{ pay_with }}, or in person.{% endblocktranslate %}{% elif pay_with %}{% blocktranslate %}After you send this form, you can pay with {{ pay_with }}.{% endblocktranslate %}{% else %}{% translate "After you send this form, you can pay in person." %}{% endif %} {% translate "If you choose monthly, you'll pay the first month now." %}</p>
             {% else %}
                 <p>{% translate "No payment is taken on this website yet. Send this form and we'll contact you about how to pay. If you choose monthly, we'll help you set up a regular payment." %}</p>
             {% endif %}

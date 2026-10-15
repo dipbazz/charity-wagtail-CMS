@@ -8,6 +8,7 @@ import datetime
 import re
 import uuid
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from bs4 import BeautifulSoup
@@ -369,6 +370,17 @@ class TestPayAnotherWay:
         page = soup(client.get(online_url(donate_page, pledge)))
 
         assert page.find(id="pay-another-way").find_parent("details") is None
+
+
+def test_templates_never_spell_a_ways_name():
+    """They compare with the names the code gives them, so renaming a way can't silently drop
+    its row, or "or in person" above the form."""
+    templates = Path(__file__).parents[1] / "templates" / "campaigns"
+    for template in [templates / "donate_page.html", *(templates / "pay").rglob("*.html")]:
+        source = template.read_text(encoding="utf-8")
+        for name in ("online", "in-person", "later"):
+            assert f'"{name}"' not in source, template.name
+            assert f"'{name}'" not in source, template.name
 
 
 class TestAWayNotOffered:

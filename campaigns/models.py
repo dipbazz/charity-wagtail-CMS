@@ -256,6 +256,9 @@ LATER = "later"
 # Each way's page, by its route's name.
 WAY_ROUTES = {ONLINE: "pay_online", IN_PERSON: "pay_in_person", LATER: "pay_later"}
 
+# The ways' names, for templates to compare with rather than spell out.
+WAY_NAMES = {"ONLINE": ONLINE, "IN_PERSON": IN_PERSON, "LATER": LATER}
+
 # The way whose page shows what became of paying, for each pay page state it shows. The choices
 # send a pledge in one of these states there, and that page shows even once its way isn't
 # offered any more.
@@ -374,6 +377,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             context_overrides={
                 "form": form,
                 "ways": ways,
+                **WAY_NAMES,
                 "pay_with": either([provider.name for provider in providers]),
             },
         )
@@ -459,6 +463,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             "other_ways": [other for other in [*ways, LATER] if other != way],
             "site_settings": site_settings,
             "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
+            **WAY_NAMES,
         }
         providers = [] if received else providers_for(pledge.currency, Decimal(pledge.amount))
         # Named on the choices, and on the online page.
