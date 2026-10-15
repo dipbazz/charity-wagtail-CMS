@@ -235,6 +235,11 @@
     line-height: 1;
 }
 
+/* A row with no line under its name ("Pay another way") centres the arrow on the name. */
+.pay-way strong + .pay-way-arrow {
+    grid-row: 1;
+}
+
 /* Paying in person: what to do at the counter, a step at a time. */
 .pay-steps li + li {
     margin-top: 0.75rem;
