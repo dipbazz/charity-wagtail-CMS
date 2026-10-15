@@ -292,10 +292,14 @@ class PledgeForm(forms.ModelForm):
 
 
 class QRPaidForm(forms.Form):
-    """ "I've paid", on the QR page: which QR code they scanned, and the transaction ID from their
-    app's receipt. The code is picked from the ones on the page, so nothing else can be named."""
+    """ "I've paid", the QR way's step 2: which QR code they scanned, and the transaction ID from
+    their app's receipt. The code is picked from the ones on the page, so nothing else can be
+    named."""
 
-    code = forms.ChoiceField(label=gettext_lazy("Which app did you pay with?"))
+    code = forms.ChoiceField(
+        label=gettext_lazy("Which app did you pay with?"),
+        error_messages={"required": gettext_lazy("Choose the app you paid with.")},
+    )
     transaction_id = forms.CharField(
         label=gettext_lazy("Transaction ID"),
         max_length=100,

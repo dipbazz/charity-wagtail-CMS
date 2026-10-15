@@ -106,6 +106,9 @@ msgstr "सुझाइएको रकम छान्नुहोस् वा
 msgid "Which app did you pay with?"
 msgstr "तपाईंले कुन एपबाट भुक्तानी गर्नुभयो?"
 
+msgid "Choose the app you paid with."
+msgstr "तपाईंले भुक्तानी गर्नुभएको एप छान्नुहोस्।"
+
 msgid "Transaction ID"
 msgstr "लेनदेन आईडी"
 
@@ -541,8 +544,20 @@ msgstr "कम्प्युटरमा हुनुहुन्छ? स्क
 msgid "Can't scan the QR code? Pay to this account instead"
 msgstr "QR कोड स्क्यान गर्न सकिएन? यही खातामा भुक्तानी गर्नुहोस्"
 
-msgid "Paid in your app? Come back to this page and <a href=\"#step-2\">go to step 2</a>."
-msgstr "आफ्नो एपमा भुक्तानी गर्नुभयो? यो पृष्ठमा फर्कनुहोस् र <a href=\"#step-2\">चरण २ मा जानुहोस्</a>।"
+msgid "Paid in your app? Come back to this page, then go to step 2."
+msgstr "आफ्नो एपमा भुक्तानी गर्नुभयो? यो पृष्ठमा फर्कनुहोस्, अनि चरण २ मा जानुहोस्।"
+
+msgid "Go to step 2"
+msgstr "चरण २ मा जानुहोस्"
+
+msgid "Don't forget to use the pledge number above as the Remarks (or reference), so we know the payment is yours."
+msgstr "भुक्तानी तपाईंको हो भनी हामीले चिन्न सकौं भनेर माथिको प्रतिबद्धता नम्बरलाई टिप्पणी (Remarks) वा रेफरेन्सको रूपमा प्रयोग गर्न नबिर्सनुहोस्।"
+
+msgid "Paid? Tell us here"
+msgstr "भुक्तानी गर्नुभयो? यहाँ हामीलाई बताउनुहोस्"
+
+msgid "Check which app you paid with below."
+msgstr "तल तपाईंले कुन एपबाट भुक्तानी गर्नुभयो, जाँच्नुहोस्।"
 
 msgid "Step 2: Paid? Tell us here"
 msgstr "चरण २: भुक्तानी गर्नुभयो? यहाँ हामीलाई बताउनुहोस्"

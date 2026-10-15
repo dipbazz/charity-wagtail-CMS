@@ -88,12 +88,12 @@ def pay_pages(demo_site, settings):
             page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
         )
         pay = f"{donate_page.url}pay/{pledge.reference}/"
-        paths += [pay + way for way in ("", "online/", "qr/", "in-person/", "later/")]
+        paths += [pay + way for way in ("", "online/", "qr/", "qr/paid/", "in-person/", "later/")]
     return paths
 
 
 def test_each_pay_page_fits_and_can_be_tapped_at_every_width(site_page, pay_pages):
-    assert len(pay_pages) == 10  # in both languages
+    assert len(pay_pages) == 12  # in both languages
     problems = []
     for path in pay_pages:
         problems += [f"{path} {item}" for item in layout_problems(site_page, path)]

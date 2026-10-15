@@ -9,13 +9,8 @@
 
 {% block pay %}
     <h1>{% translate "Scan our QR code" %}</h1>
-    {# What became of paying, or what is wrong with what was sent, first: donate.js moves focus to it. #}
-    {% if paid_form.errors %}
-        <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
-            {% if paid_form.transaction_id.errors %}<p><a href="#id_transaction_id">{% translate "Check the transaction ID below." %}</a></p>{% endif %}
-            {% for error in paid_form.code.errors %}<p>{{ error }}</p>{% endfor %}
-        </div>
-    {% elif state == "to-confirm" %}
+    {# What became of paying first: donate.js moves focus to it. #}
+    {% if state == "to-confirm" %}
         <div class="payment-message" tabindex="-1" data-focus-on-load>
             <p>{% blocktranslate with amount=claimed.display_amount name=claimed.qr_name date=claimed.created_at|date:"DATE_FORMAT" %}Thank you. You've told us you paid {{ amount }} by {{ name }} on {{ date }}. Our team will check it reaches us and mark your gift received.{% endblocktranslate %}</p>
             {% if claimed.supporters_reference %}<p>{% blocktranslate with id=claimed.supporters_reference %}You sent us the transaction ID {{ id }}.{% endblocktranslate %}</p>{% endif %}
@@ -35,24 +30,24 @@
         </div>
     {% endif %}
 
-    {# The two steps, ticked once they've told us they paid. While the QR code is folded away there's nothing to jump to, so they're plain text. #}
+    {# Step 1 of two pages, ticked at step 2 once they've told us they paid. While the QR code is folded away there's no step to go to, so they're plain text. #}
     {% if state == "to-confirm" %}
         {% include "campaigns/pay/includes/qr_steps.html" with done=True %}
     {% elif state == "not-found" %}
         {% include "campaigns/pay/includes/qr_steps.html" %}
     {% else %}
-        {% include "campaigns/pay/includes/qr_steps.html" with linked=True %}
+        {% include "campaigns/pay/includes/qr_steps.html" with current=1 linked=True %}
     {% endif %}
 
     {% include "campaigns/pay/includes/summary.html" with copyable=True %}
     <p data-copy-hint hidden>{% translate "Tap the copy button to copy a detail, then paste it in your app." %}</p>
 
-    {# While the team is checking, or couldn't find a payment, the QR code and "I've paid" are folded away so nobody pays twice by mistake. Paying another way stays open below. It opens by itself when what was sent was wrong, so the error is seen. #}
+    {# While the team is checking, or couldn't find a payment, the QR code is folded away so nobody pays twice by mistake. Paying another way stays open below. #}
     {% if qr_codes %}
-        {% if state == "to-confirm" or state == "not-found" %}<details class="pay-again"{% if paid_form.errors %} open{% endif %}><summary>{% translate "I didn't pay: scan the QR code" %}</summary>{% endif %}
-        <form class="qr-pay" method="post" action="{% routablepageurl page 'qr_paid' pledge.reference %}">
-            {% csrf_token %}
-            <section id="step-1" class="qr-step" aria-labelledby="step-1-title">
+        {% if state == "to-confirm" or state == "not-found" %}<details class="pay-again"><summary>{% translate "I didn't pay: scan the QR code" %}</summary>{% endif %}
+        {# Go to step 2 sends the app chosen here (?code=), so step 2 starts with it chosen. #}
+        <form class="qr-pay" method="get" action="{% routablepageurl page 'qr_paid' pledge.reference %}">
+            <section class="qr-step" aria-labelledby="step-1-title">
                 <h2 id="step-1-title">{% translate "Step 1: Pay with your app" %}</h2>
                 <p>{% translate "We check QR payments by hand: your gift shows as received once it reaches us." %}</p>
                 {% if pledge.frequency == "monthly" %}<p>{% translate "You'll pay this month's gift now." %}</p>{% endif %}
@@ -62,7 +57,7 @@
                         <legend>{% translate "Which app will you pay with?" %}</legend>
                         {% for code in qr_codes %}
                             <label class="amount-option">
-                                <input type="radio" name="code" value="{{ code.pk }}"{% if paid_form.code.value == code.pk|stringformat:"s" or not paid_form.code.value and forloop.first %} checked{% endif %}>
+                                <input type="radio" name="code" value="{{ code.pk }}"{% if forloop.first %} checked{% endif %}>
                                 <span class="amount-figure">{{ code.name }}</span>
                             </label>
                         {% endfor %}
@@ -114,32 +109,15 @@
                                             </div>
                                         {% endif %}
                                     </dl>
+                                    <p class="qr-help">{% translate "Don't forget to use the pledge number above as the Remarks (or reference), so we know the payment is yours." %}</p>
                                 </div>
                             </div>
                         </section>
                     {% endfor %}
                 </div>
 
-                <p>{% blocktranslate %}Paid in your app? Come back to this page and <a href="#step-2">go to step 2</a>.{% endblocktranslate %}</p>
-            </section>
-
-            <section id="step-2" class="qr-step" aria-labelledby="step-2-title">
-                <h2 id="step-2-title">{% translate "Step 2: Paid? Tell us here" %}</h2>
-                <div class="field">
-                    <label for="id_transaction_id">{% translate "Transaction ID" %}</label>
-                    <ol id="transaction-id-help" class="qr-help">
-                        <li>{% translate "In your app, open this payment's receipt." %}</li>
-                        <li>{% translate "Copy the transaction ID (it may say reference or code) and paste it here." %}</li>
-                    </ol>
-                    {# The error is read with the field, and the alert at the top links here. #}
-                    <input type="text" id="id_transaction_id" name="transaction_id" value="{{ paid_form.transaction_id.value|default:'' }}" maxlength="100" required autocomplete="off" aria-describedby="transaction-id-help{% if paid_form.transaction_id.errors %} id_transaction_id_error{% endif %}"{% if paid_form.transaction_id.errors %} aria-invalid="true"{% endif %}>
-                    {% if paid_form.transaction_id.errors %}
-                        <ul class="errorlist" id="id_transaction_id_error">{% for error in paid_form.transaction_id.errors %}<li>{{ error }}</li>{% endfor %}</ul>
-                    {% endif %}
-                </div>
-                <button class="button button-large" type="submit" data-busy-text="{% translate 'Sending…' %}">{% translate "I've paid" %}</button>
-                {# Says "Sending…" to screen readers while donate.js holds the button. #}
-                <p class="visually-hidden" role="status" data-busy-status></p>
+                <p>{% translate "Paid in your app? Come back to this page, then go to step 2." %}</p>
+                <button class="button button-large" type="submit">{% translate "Go to step 2" %}</button>
             </section>
         </form>
         {% if state == "to-confirm" or state == "not-found" %}</details>{% endif %}

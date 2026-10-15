@@ -240,28 +240,33 @@ and one of at most 800px (shown, through `srcset`), without location data and re
 that isn't a JPEG, PNG or WebP of up to 5 MB; both files go when the code is replaced or removed.
 Wagtail's history for each code says who added, changed or removed it, and when.
 
-**The QR page** (`…/qr/`) is "Scan our QR code". Under the heading is a row of the two steps (a
-`nav` of jump links, "Scan the QR code" and "Paid? Tell us"), then the gift summary, which here
-(and only here, `summary.html` with `copyable`) says "Your gift amount" and "Pledge number (use
-this as Remarks)", each with an icon Copy button that copies the plain value ("2500", "482913")
-and appears only with JavaScript. Then two sections divided by a line:
+**Paying by QR is two pages, one per step**, both headed "Scan our QR code" with a row of the two
+steps under the heading ("Scan the QR code", "Paid? Tell us"): the step you're on has a filled
+circle and `aria-current="step"`, the other is a link to its page.
 
-- **Step 1: Pay with your app.** How it's checked ("We check QR payments by hand: your gift shows
-  as received once it reaches us"); with two or more codes, "Which app will you pay with?" as radio
-  cards (the first chosen) that show one code at a time with CSS `:has()` (without it every code
-  shows, each under its name); then the code as uploaded with **Save image**, a folded "Need help
+- **Step 1** (`…/qr/`, "Pay with your app"). The gift summary, which here (and only here,
+  `summary.html` with `copyable`) says "Your gift amount" and "Pledge number (use this as
+  Remarks)", each with an icon Copy button that copies the plain value ("2500", "482913") and
+  appears only with JavaScript. Then how it's checked ("We check QR payments by hand: your gift
+  shows as received once it reaches us"); with two or more codes, "Which app will you pay with?" as
+  radio cards (the first chosen) that show one code at a time with CSS `:has()` (without it every
+  code shows, each under its name); the code as uploaded with **Save image**, a folded "Need help
   saving or scanning the image?" (Android, iPhone and computer), "After you scan, your app should
   show *the account name*", and a block headed "Can't scan the QR code? Pay to this account
-  instead" with the account name and number, each with a Copy button. From `48rem` the code sits
-  on the left and the rest on the right; the source order never changes. It ends with "Paid in
-  your app? Come back to this page and go to step 2."
-- **Step 2: Paid? Tell us here.** The **transaction ID** field with two numbered lines before it
-  (open the payment's receipt; copy the ID and paste it here), its error under the field (the
-  alert at the top says "Check the transaction ID below" and links to it), and **I've paid**,
-  which says "Sending…" while it's sent. Receipt screenshots come with #197's second part.
+  instead" with the account name and number (each with a Copy button) and a reminder to use the
+  pledge number as the Remarks. From `48rem` the code sits on the left and the rest on the right;
+  the source order never changes. It ends with "Paid in your app? Come back to this page, then go
+  to step 2" and **Go to step 2**, a GET form that sends the chosen app (`?code=`).
+- **Step 2** (`…/qr/paid/`, "Paid? Tell us here"). With two or more codes, "Which app did you pay
+  with?", chosen only if step 1 sent one of the codes on the page (`chosen_code()`): a guess could
+  send the team to the wrong statement. Then the **transaction ID** with two numbered lines before
+  it (open the payment's receipt; copy the ID and paste it here), each error under its field (the
+  alert at the top links to each one), and **I've paid**, which says "Sending…" while it's sent.
+  Once they've told us, this address goes back to step 1, which says thank you. Receipt
+  screenshots come with #197's second part.
 
-Once they've said they paid, the row of steps ticks step 2 and stops being links, because the
-steps are folded away (see the states below). Not found ticks nothing.
+Once they've said they paid, the row ticks step 2 and stops being links, because step 1 is folded
+away (see the states below). Not found ticks nothing.
 
 **"I've paid"** (`…/qr/paid/`) moves the pledge from waiting or failed to **To confirm** in one
 conditional update (`Pledge.claim_paid()`), and creates the payment only if that changed a row, so

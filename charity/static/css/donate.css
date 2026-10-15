@@ -343,10 +343,11 @@
     align-self: flex-start;
 }
 
-/* The two steps of paying: a numbered row that jumps to each (filled circles in the brand
-   colour, the same pair the filled buttons use, so the brand contrast check covers them), then
-   each step as a section divided from the one before by a line. */
-.pay-steps {
+/* The two steps of paying by QR, each its own page: a numbered row that links to the other
+   page. The step you're on has a filled circle in the brand colour (the same pair the filled
+   buttons use, so the brand contrast check covers it), the other an outline in the link colour;
+   a done step is filled with a tick. Then the step itself, divided by a line. */
+.qr-progress {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem 1.5rem;
@@ -355,7 +356,7 @@
     list-style: none;
 }
 
-.pay-step {
+.qr-progress-step {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -363,21 +364,28 @@
     font-weight: 600;
 }
 
-span.pay-step {
+span.qr-progress-step {
     color: var(--colour-primary-dark);
 }
 
-.pay-step-number {
+.qr-progress-number {
     display: inline-flex;
     flex: none;
     align-items: center;
     justify-content: center;
     width: 2rem;
     height: 2rem;
+    border: 2px solid var(--colour-primary);
     border-radius: 50%;
+    background: transparent;
+    color: var(--colour-primary);
+    font-weight: 700;
+}
+
+.is-current .qr-progress-number,
+.qr-progress-number.is-done {
     background: var(--colour-primary);
     color: var(--colour-on-dark);
-    font-weight: 700;
 }
 
 .pay-page .qr-step {

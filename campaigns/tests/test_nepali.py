@@ -300,11 +300,18 @@ class TestTheQRPageInNepali:
             "हाम्रो QR कोड स्क्यान गर्नुहोस्",
             "रकम",
             "तस्बिर सेभ गर्नुहोस्",
-            "लेनदेन आईडी",
-            "मैले भुक्तानी गरें",
+            "चरण २ मा जानुहोस्",
         ]:
             assert nepali in text
-        for english in ["Save image", "Transaction ID", "Scan our QR code", "I've paid"]:
+        for english in ["Save image", "Scan our QR code", "Go to step 2"]:
+            assert english not in text
+
+    def test_step_2_is_in_nepali_with_no_english_left(self, client, qr_page):
+        text = visible_text(client.get(qr_page.wsgi_request.path + "paid/"))
+
+        for nepali in ["लेनदेन आईडी", "मैले भुक्तानी गरें", "यहाँ हामीलाई बताउनुहोस्"]:
+            assert nepali in text
+        for english in ["Transaction ID", "I've paid", "Tell us here"]:
             assert english not in text
 
     def test_names_the_copy_buttons_in_nepali(self, qr_page):
