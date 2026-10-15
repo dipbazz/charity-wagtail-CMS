@@ -223,6 +223,7 @@ class TestPayingInNepali:
         }
         site_settings = SiteSettings.for_site(site)
         site_settings.phone = "+977 1-4567890"
+        site_settings.takes_gifts_in_person = True
         site_settings.save()
 
         text = visible_text(client.get(nepali_donate_page.url))
@@ -254,6 +255,7 @@ class TestPayingInNepali:
     ):
         site_settings = SiteSettings.for_site(site)
         site_settings.phone = "+977 1-4567890"
+        site_settings.takes_gifts_in_person = True
         site_settings.save()
         pledge = Pledge.objects.create(
             page=nepali_donate_page, amount=2500, currency="NPR", name="सीता", email="s@example.com"

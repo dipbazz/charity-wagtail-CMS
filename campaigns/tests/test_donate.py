@@ -173,6 +173,7 @@ class TestHowPayingWorks:
     def give_an_office_phone(self, site):
         site_settings = SiteSettings.for_site(site)
         site_settings.phone = "+977 1-4567890"
+        site_settings.takes_gifts_in_person = True
         site_settings.save()
 
     def test_names_the_providers_set_up_here(self, client, donate_page, settings):

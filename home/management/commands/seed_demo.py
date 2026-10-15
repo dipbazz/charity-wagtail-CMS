@@ -544,6 +544,7 @@ class Command(BaseCommand):
         settings.charity_number = "1234567 (fictional)"
         settings.contact_email = "hello@brightwell.example"
         settings.phone = "0123 456 7890"
+        settings.takes_gifts_in_person = True
         settings.texts = [
             SiteSettingsText(
                 locale=Locale.get_default(),

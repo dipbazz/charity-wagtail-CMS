@@ -92,6 +92,7 @@ def office(site):
     """An office to pay at, from Site settings: paying in person is offered."""
     site_settings = SiteSettings.for_site(site)
     site_settings.phone = "+977 1-4567890"
+    site_settings.takes_gifts_in_person = True
     site_settings.texts = [
         SiteSettingsText(locale=Locale.get_default(), address="Ward 4\nThamel, Kathmandu")
     ]
@@ -997,6 +998,7 @@ class TestComingBack:
         """Otherwise checking looks like nothing happened, and the payer may pay again."""
         site_settings = SiteSettings.for_site(site)
         site_settings.phone = "+977 1-4567890"
+        site_settings.takes_gifts_in_person = True
         site_settings.save()
         if isinstance(outcome, Outcome):
             fake_provider.outcome = outcome

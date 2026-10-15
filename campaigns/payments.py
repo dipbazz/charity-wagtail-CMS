@@ -55,12 +55,13 @@ IN_PERSON = "in-person"
 
 def ways_to_pay(currency, amount, site_settings):
     """The ways a pledge in this currency (and amount) can be paid here, in the order they're
-    offered: online with a provider set up here, and in person when Site settings give an office
-    address or phone to pay at. "Not ready to pay yet" isn't one: it's always offered."""
+    offered: online with a provider set up here, and in person when Site settings say the charity
+    takes gifts at its office and give an address or phone to find it. "Not ready to pay yet"
+    isn't one: it's always offered."""
     ways = []
     if providers_for(currency, amount):
         ways.append(ONLINE)
-    if site_settings.address or site_settings.phone:
+    if site_settings.takes_gifts_in_person and (site_settings.address or site_settings.phone):
         ways.append(IN_PERSON)
     return ways
 

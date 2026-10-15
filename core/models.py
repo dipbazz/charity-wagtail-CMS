@@ -144,6 +144,12 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     charity_number = models.CharField(max_length=20, blank=True)
     contact_email = models.EmailField(blank=True)
     phone = models.CharField(max_length=30, blank=True)
+    takes_gifts_in_person = models.BooleanField(
+        "We take gifts at our office",
+        default=False,
+        help_text="Offers paying in person after a pledge, with your office address and phone "
+        "from these settings. Leave it off if you show your office but take no money there.",
+    )
     donate_page = models.ForeignKey(
         "wagtailcore.Page",
         null=True,
@@ -240,6 +246,7 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
                 FieldPanel("charity_number"),
                 FieldPanel("contact_email"),
                 FieldPanel("phone"),
+                FieldPanel("takes_gifts_in_person"),
                 FieldPanel("currency"),
                 FieldPanel("phone_country"),
             ],

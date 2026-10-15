@@ -83,9 +83,11 @@ class TestProvidersOffered:
         assert {("esewa", "eSewa"), ("khalti", "Khalti")} <= set(method_choices())
 
 
-def office(address="", phone=""):
+def office(address="", phone="", takes_gifts_in_person=True):
     """What ways_to_pay() reads of Site settings."""
-    return SimpleNamespace(address=address, phone=phone)
+    return SimpleNamespace(
+        address=address, phone=phone, takes_gifts_in_person=takes_gifts_in_person
+    )
 
 
 class TestWaysToPay:
@@ -115,6 +117,18 @@ class TestWaysToPay:
         settings.PAYMENT_KEYS = {}
 
         assert ways_to_pay("NPR", Decimal(2500), office(**where)) == ["in-person"]
+
+    def test_not_in_person_at_an_office_that_takes_no_gifts(self, settings):
+        """A charity can show its office in the footer without taking money there."""
+        settings.PAYMENT_KEYS = {}
+        where = office("Ward 4, Thamel", "+977 1-4567890", takes_gifts_in_person=False)
+
+        assert ways_to_pay("NPR", Decimal(2500), where) == []
+
+    def test_not_in_person_without_an_office_to_pay_at(self, settings):
+        settings.PAYMENT_KEYS = {}
+
+        assert ways_to_pay("NPR", Decimal(2500), office()) == []
 
     def test_both_online_first(self, settings):
         settings.PAYMENT_KEYS = KHALTI_KEYS

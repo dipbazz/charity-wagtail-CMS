@@ -102,7 +102,7 @@ then reads only about the way they chose:
 | Way | Page | Offered when |
 |---|---|---|
 | **Pay online** | `…/online/` | a provider set up here takes the pledge's currency and amount |
-| **Pay in person** | `…/in-person/` | Site settings give an office address or phone |
+| **Pay in person** | `…/in-person/` | Site settings tick **We take gifts at our office** and give an office address or phone |
 | **Not ready to pay yet?** | `…/later/` | always (it isn't a way to pay, so it never counts as one) |
 
 `ways_to_pay()` (`campaigns/payments.py`) decides which ways are offered, for the pay page, the
@@ -133,7 +133,9 @@ or a link kept to pay later never offers paying again.
   with a way's name.
 - **Pay in person:** what to do at the counter, as numbered steps: come to the office (the
   address from Site settings, with "Call us before you come" and the phone), pay in cash and give
-  the pledge number, and ask for a receipt. With a phone but no address, the first step is "Call
+  the pledge number, and ask for a receipt. The setting is off until a charity says on the
+onboarding form (DO01) that it takes gifts at its office: many show their office in the footer
+but take no money there. With a phone but no address, the first step is "Call
   us to arrange paying". It then says "This page won't change after you pay: your receipt is your
   record" and "There's nothing more to do here", with a link to the appeals. It promises nothing
   the site can't do: recording a cash payment in the admin is #209.
@@ -214,8 +216,8 @@ are in `nepal_payments/`, a package that knows nothing of this site; adding one 
 
 The page writes this itself, in the reader's language, from the same `ways_to_pay()` as the pay
 page, so it's true on every site: "After you send this form, you can pay with eSewa or Khalti, or
-in person.", naming the providers set up there, and "or in person" only with an office address or
-phone; "you can pay in person." with no provider; or, with no way to pay, that no payment is
+in person.", naming the providers set up there, and "or in person" only when paying in person is
+offered; "you can pay in person." with no provider; or, with no way to pay, that no payment is
 taken on the website yet and the charity will be in touch. The editors' **payment notice** follows it, for anything a charity wants to add, such as
 bank details for a transfer. Until #93 every Donate page had a default notice saying no payment was
 taken; a migration removed it wherever it hadn't been changed.
