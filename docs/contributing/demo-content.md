@@ -22,6 +22,9 @@ the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is Eng
   flooded camp, labelled as such in its caption and alt text.
 - A placeholder **Privacy notice** (`/privacy/`), chosen in Site settings, describes what the
   site stores. It says it's example text to replace before going live.
+- One **QR code**, "Sample Pay", with a card the script draws itself: it has none of a QR code's
+  corner squares, so no app can scan it and the demo never sends a gift anywhere. It makes the
+  QR page visible on the demo and in the layout checks.
 
 ## Nepali content
 

@@ -81,6 +81,17 @@ anyone can type it; a test sends a forged return and checks that nothing changes
   do.
 - **Providers get no personal details** from the site: the amount, our reference and what the gift
   is for.
+- **A QR payment is paid only by the team, and the supporter's word never pays it.** "I've paid"
+  makes a payment *to confirm*; only a person with `campaigns.confirm_payment` (Moderators) marks it
+  paid, from the pledge in the admin, and it's logged with who did it. Those actions refuse every
+  provider's payment, and a test posts as an editor to check they're refused. A QR payment is
+  always live, so it can never pass for a test and can't be deleted.
+- **QR codes are where money goes, so they're a moderator's, and the image is stored on the code,**
+  not in the image library an editor can replace a file in.
+- **An upload from outside the image library is re-saved, never stored as it came** (a QR card
+  now, and a payment receipt from a supporter next): `core/images.clean_image()` decodes it,
+  drops location and camera data and anything hidden in other bytes, allows JPEG, PNG and WebP of
+  up to 5 MB (no SVG), and names the file itself.
 
 ## Production refuses to start half-configured
 
