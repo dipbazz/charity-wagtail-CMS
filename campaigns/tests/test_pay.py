@@ -1084,6 +1084,22 @@ class TestComingBack:
         assert "can't be deleted" not in page
         assert "can't be deleted" in admin
 
+    def test_what_it_found_isnt_kept_when_paying_online_has_gone(
+        self, admin_client, donate_page, pledge, fake_provider, settings
+    ):
+        """The provider's keys removed before the payer reaches the online page: it sends them on
+        but takes the note, which would otherwise turn up in the admin, or later on the pay
+        page as a stale "We couldn't reach"."""
+        fake_provider.failure = ProviderUnavailable("Fake Pay is down.")
+        start(admin_client, donate_page, pledge)
+        settings.PAYMENT_KEYS = {}
+
+        response = admin_client.get(online_url(donate_page, pledge))
+
+        assert response.status_code == 303
+        admin = admin_client.get(reverse("pledges:index"))
+        assert "not-started" not in BeautifulSoup(admin.content, "html.parser").get_text()
+
     @pytest.mark.parametrize("case", ["provider gone", "other mode", "khalti with no pidx"])
     def test_a_payment_that_cant_be_checked_is_left_waiting(
         self, client, donate_page, pledge, fake_provider, settings, monkeypatch, case

@@ -427,6 +427,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         it's the one dealing with the pledge: an online payment may have gone through after the
         provider's keys were removed. While that payment may be paid, every other way's page goes
         to its page, so nobody pays twice."""
+        # Taken before any redirect: left in the session, it would turn up in the admin, or here
+        # later as news that's no longer true.
+        result = pay_page_result(request) if way == ONLINE else None
         pledge = self.get_pledge(reference)
         state = pledge.pay_page_state()
         if state in HELD and way != STATE_WAYS[state]:
@@ -436,10 +439,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         offered = way == LATER or way in ways or STATE_WAYS.get(state) == way
         if state not in THANKED and not offered:
             return self.redirect_to(request, "pay", reference)
-        return self.render_pay_page(request, pledge, state, ways, site_settings, way)
+        return self.render_pay_page(request, pledge, state, ways, site_settings, way, result)
 
-    def render_pay_page(self, request, pledge, state, ways, site_settings, way=None):
-        """The choices (way None) or a way's page, or the thanks once paid."""
+    def render_pay_page(self, request, pledge, state, ways, site_settings, way=None, result=None):
+        """The choices (way None) or a way's page, or the thanks once paid. `result` is what
+        asking a provider found, for the online page."""
         # An attempt for another amount (the pledge changed after it started) doesn't pay it,
         # but the money was still received, and isn't asked for again.
         received = pledge.paid_payment() if state in THANKED else None
@@ -467,8 +471,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 # Before a charity goes live its real supporters can still get here.
                 "test_mode": not settings.LIVE_PAYMENTS,
                 "latest": latest,
-                # Only this page reads what asking a provider found, so no other takes it.
-                "result": pay_page_result(request),
+                "result": result,
                 # The others to try when the latest attempt's provider couldn't start it.
                 "others": either([p.name for p in providers if latest and p.code != latest.method]),
             }
