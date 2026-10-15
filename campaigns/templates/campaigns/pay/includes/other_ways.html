@@ -1,7 +1,7 @@
 {% load i18n %}
 {# At the bottom of every way's page, in every state: the phone's Back button goes to the choices, and this goes straight to another way. #}
 {% if other_ways %}
-    <section aria-labelledby="pay-another-way">
+    <section class="other-ways" aria-labelledby="pay-another-way">
         <h2 id="pay-another-way">{% translate "Pay another way" %}</h2>
         {% include "campaigns/pay/includes/way_links.html" with list=other_ways explain=False %}
     </section>
