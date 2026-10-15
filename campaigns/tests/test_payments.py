@@ -3,6 +3,7 @@
 import re
 import uuid
 from decimal import Decimal
+from types import SimpleNamespace
 
 import pytest
 from django.core import checks
@@ -14,6 +15,7 @@ from campaigns.payments import (
     method_choices,
     provider_for,
     providers_for,
+    ways_to_pay,
 )
 from nepal_payments import (
     Outcome,
@@ -79,6 +81,54 @@ class TestProvidersOffered:
 
     def test_every_provider_can_be_named_on_a_payment(self):
         assert {("esewa", "eSewa"), ("khalti", "Khalti")} <= set(method_choices())
+
+
+def office(address="", phone=""):
+    """What ways_to_pay() reads of Site settings."""
+    return SimpleNamespace(address=address, phone=phone)
+
+
+class TestWaysToPay:
+    """Only a way that works is offered. "Not ready to pay yet" isn't one: it's always there."""
+
+    def test_online_when_a_provider_takes_the_pledge(self, settings):
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay("NPR", Decimal(2500), office()) == ["online"]
+
+    def test_not_online_for_an_amount_no_provider_takes(self, settings):
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay("NPR", Decimal(5), office()) == []
+
+    def test_not_online_in_a_currency_no_provider_takes(self, settings):
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay("GBP", Decimal(25), office()) == []
+
+    @pytest.mark.parametrize(
+        "where",
+        [{"address": "Ward 4, Thamel"}, {"phone": "+977 1-4567890"}],
+        ids=["address", "phone"],
+    )
+    def test_in_person_with_an_office_address_or_phone(self, settings, where):
+        settings.PAYMENT_KEYS = {}
+
+        assert ways_to_pay("NPR", Decimal(2500), office(**where)) == ["in-person"]
+
+    def test_both_online_first(self, settings):
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay("NPR", Decimal(2500), office(phone="+977 1-4567890")) == [
+            "online",
+            "in-person",
+        ]
+
+    def test_any_amount_when_none_is_given(self, settings):
+        """The Donate page says how paying works before anyone chooses an amount."""
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+
+        assert ways_to_pay("NPR", None, office()) == ["online"]
 
 
 class TestPaymentKeysCheck:

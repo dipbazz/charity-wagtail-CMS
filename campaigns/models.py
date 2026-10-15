@@ -33,7 +33,7 @@ from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
 from wagtail.search import index
 
-from campaigns.payments import method_choices, provider_for, providers_for
+from campaigns.payments import ONLINE, method_choices, provider_for, providers_for, ways_to_pay
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
 from core.models import SiteSettings, SocialMetaMixin
@@ -323,16 +323,19 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 pledge = form.save()
                 # 303 See Other: the browser fetches the next page with GET, so reloading it
                 # doesn't send the form again.
-                if providers_for(pledge.currency, Decimal(pledge.amount)):
+                if ways_to_pay(pledge.currency, Decimal(pledge.amount), site_settings):
                     return self.redirect_to(request, "pay", pledge.reference)
                 return self.redirect_to(request, "thank_you")
         else:
             form = self.get_form(site_settings=site_settings, link=request.GET)
-        providers = providers_for(site_settings.currency)
+        # How paying works here, before an amount is chosen: any amount a provider takes.
+        ways = ways_to_pay(site_settings.currency, None, site_settings)
+        providers = providers_for(site_settings.currency) if ONLINE in ways else []
         return self.render(
             request,
             context_overrides={
                 "form": form,
+                "ways": ways,
                 "pay_with": either([provider.name for provider in providers]),
             },
         )

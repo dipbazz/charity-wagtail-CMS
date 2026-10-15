@@ -213,12 +213,17 @@ class TestPayingInNepali:
             client.get(nepali_donate_page.url)
         )
 
-    def test_the_form_names_the_providers_in_nepali(self, client, nepali_donate_page, settings):
+    def test_the_form_names_the_providers_in_nepali(
+        self, client, site, nepali_donate_page, settings
+    ):
         settings.PAYMENT_KEYS = {
             "ESEWA_PRODUCT_CODE": "EPAYTEST",
             "ESEWA_SECRET_KEY": "s",
             "KHALTI_SECRET_KEY": "k",
         }
+        site_settings = SiteSettings.for_site(site)
+        site_settings.phone = "+977 1-4567890"
+        site_settings.save()
 
         text = visible_text(client.get(nepali_donate_page.url))
 

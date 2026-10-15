@@ -170,25 +170,42 @@ class TestHowPayingWorks:
         )
         assert self.button(client, donate_page) == "Send my pledge"
 
+    def give_an_office_phone(self, site):
+        site_settings = SiteSettings.for_site(site)
+        site_settings.phone = "+977 1-4567890"
+        site_settings.save()
+
     def test_names_the_providers_set_up_here(self, client, donate_page, settings):
         settings.PAYMENT_KEYS = {"KHALTI_SECRET_KEY": "k"}
 
         sentence = self.notice(client, donate_page).p.get_text(" ", strip=True)
 
-        assert sentence.startswith(
-            "After you send this form, you can pay with Khalti, or in person."
-        )
+        assert sentence.startswith("After you send this form, you can pay with Khalti.")
         assert "If you choose monthly, you'll pay the first month now." in sentence
         assert self.button(client, donate_page) == "Continue to payment"
 
-    def test_names_every_provider_set_up_here(self, client, donate_page, settings):
+    def test_names_every_provider_set_up_here(self, client, site, donate_page, settings):
         settings.PAYMENT_KEYS = {
             "ESEWA_PRODUCT_CODE": "EPAYTEST",
             "ESEWA_SECRET_KEY": "s",
             "KHALTI_SECRET_KEY": "k",
         }
+        self.give_an_office_phone(site)
 
         assert "pay with eSewa or Khalti, or in person" in self.notice(client, donate_page).text
+
+    def test_offers_paying_in_person_only_with_an_office_to_pay_at(
+        self, client, site, donate_page, settings
+    ):
+        """Without an address or phone, nobody would know where to go."""
+        settings.PAYMENT_KEYS = {}
+        self.give_an_office_phone(site)
+
+        sentence = self.notice(client, donate_page).p.get_text(" ", strip=True)
+
+        assert sentence.startswith("After you send this form, you can pay in person.")
+        assert "If you choose monthly, you'll pay the first month now." in sentence
+        assert self.button(client, donate_page) == "Continue to payment"
 
     def test_a_site_in_pounds_takes_no_rupee_payments_online(
         self, client, site, donate_page, settings
