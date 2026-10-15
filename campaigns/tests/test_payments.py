@@ -12,6 +12,7 @@ from django.db import IntegrityError
 from campaigns.models import Payment, PaymentStatus, PaymentStep, Pledge, StepKind
 from campaigns.payments import (
     check_payment_keys,
+    is_team_confirmed,
     method_choices,
     provider_for,
     providers_for,
@@ -82,6 +83,15 @@ class TestProvidersOffered:
     def test_every_provider_can_be_named_on_a_payment(self):
         assert {("esewa", "eSewa"), ("khalti", "Khalti")} <= set(method_choices())
 
+    def test_so_can_the_methods_the_team_confirms(self):
+        assert ("qr", "QR code") in method_choices()
+        assert is_team_confirmed("qr")
+        assert not is_team_confirmed("esewa")
+
+    def test_a_methods_name_isnt_a_provider(self):
+        """Nothing can be asked about a QR payment, and nobody can start one with a provider."""
+        assert provider_for("qr") is None
+
 
 def office(address="", phone="", takes_gifts_in_person=True):
     """What ways_to_pay() reads of Site settings."""
@@ -137,6 +147,19 @@ class TestWaysToPay:
             "online",
             "in-person",
         ]
+
+    def test_qr_after_online_and_before_in_person(self, settings):
+        settings.PAYMENT_KEYS = KHALTI_KEYS
+        where = office(phone="+977 1-4567890")
+
+        ways = ways_to_pay(providers_for("NPR", Decimal(2500)), where, qr_codes=["a code"])
+
+        assert ways == ["online", "qr", "in-person"]
+
+    def test_qr_alone_with_no_provider_set_up(self, settings):
+        settings.PAYMENT_KEYS = {}
+
+        assert ways_to_pay(providers_for("NPR", Decimal(2500)), office(), ["a code"]) == ["qr"]
 
     def test_any_amount_when_none_is_given(self, settings):
         """The Donate page says how paying works before anyone chooses an amount."""
@@ -351,8 +374,10 @@ class TestPayment:
 
         assert kwargs["choices"] is method_choices
 
-    def test_statuses_are_the_payment_packages(self):
-        assert [status.value for status in Status] == PaymentStatus.values
+    def test_statuses_are_the_payment_packages_and_the_one_only_the_team_gives(self):
+        assert [status.value for status in Status] + ["to-confirm"] == sorted(
+            PaymentStatus.values, key=lambda value: value == "to-confirm"
+        )
 
 
 def steps(payment):

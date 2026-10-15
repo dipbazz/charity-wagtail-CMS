@@ -50,26 +50,42 @@ def provider_for(code):
 
 # The ways to pay a pledge, each with its own page after the pay page's choices.
 ONLINE = "online"
+QR = "qr"
 IN_PERSON = "in-person"
 
+# The currencies the charity's QR codes are offered for: the apps that scan them are Nepali.
+QR_CURRENCIES = ("NPR",)
 
-def ways_to_pay(providers, site_settings):
+# The methods a payment can have that no provider answers for: the team checks them by hand and
+# marks them paid, so the site never asks anyone about them. Code and name, like a provider's.
+TEAM_CONFIRMED = {QR: "QR code"}
+
+
+def is_team_confirmed(method):
+    return method in TEAM_CONFIRMED
+
+
+def ways_to_pay(providers, site_settings, qr_codes=()):
     """The ways a pledge can be paid here, in the order they're offered: online with any of
-    `providers` (from providers_for(), so the pay buttons come from the same list), and in person
-    when Site settings say the charity takes gifts at its office and give an address or phone to
-    find it. "Not ready to pay yet" isn't one: it's always offered."""
+    `providers` (from providers_for(), so the pay buttons come from the same list), by scanning
+    one of the charity's `qr_codes`, and in person when Site settings say the charity takes gifts
+    at its office and give an address or phone to find it. "Not ready to pay yet" isn't one: it's
+    always offered."""
     ways = []
     if providers:
         ways.append(ONLINE)
+    if qr_codes:
+        ways.append(QR)
     if site_settings.takes_gifts_in_person and (site_settings.address or site_settings.phone):
         ways.append(IN_PERSON)
     return ways
 
 
 def method_choices():
-    """Every provider, for a payment's `method`. A function, so migrations name it rather than
-    copy its list, and a new provider needs no migration."""
-    return [(code, provider.name) for code, provider in all_providers().items()]
+    """Every provider, then the methods the team confirms, for a payment's `method`. A function,
+    so migrations name it rather than copy its list, and a new provider needs no migration."""
+    providers = [(code, provider.name) for code, provider in all_providers().items()]
+    return providers + list(TEAM_CONFIRMED.items())
 
 
 @checks.register()

@@ -289,3 +289,36 @@ class PledgeForm(forms.ModelForm):
                 # The same copy sent twice at once (a double click): the first one saved it.
                 return Pledge.objects.get(submission_id=pledge.submission_id)
         return pledge
+
+
+class QRPaidForm(forms.Form):
+    """ "I've paid", on the QR page: which QR code they scanned, and the transaction ID from their
+    app's receipt. The code is picked from the ones on the page, so nothing else can be named."""
+
+    code = forms.ChoiceField(label=gettext_lazy("Which app did you pay with?"))
+    transaction_id = forms.CharField(
+        label=gettext_lazy("Transaction ID"),
+        max_length=100,
+        strip=True,
+        error_messages={"required": gettext_lazy("Enter the transaction ID from your receipt.")},
+    )
+
+    def __init__(self, *args, codes, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.codes = {str(code.pk): code for code in codes}
+        self.fields["code"].choices = [(pk, code.name) for pk, code in self.codes.items()]
+        # With one code the page shows no choice: it's that one.
+        if len(self.codes) == 1:
+            self.fields["code"].initial = next(iter(self.codes))
+
+    def clean_code(self):
+        return self.codes[self.cleaned_data["code"]]
+
+
+class MarkPaidForm(forms.Form):
+    """What the team enters when it finds a QR payment in its statement. Whole amounts only, as
+    pledges are."""
+
+    received_on = forms.DateField(label="Date received")
+    amount = forms.IntegerField(label="Amount received", min_value=1)
+    reference = forms.CharField(label="Reference from the statement", max_length=100, strip=True)

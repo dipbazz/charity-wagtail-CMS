@@ -256,3 +256,102 @@
     align-items: center;
     min-height: 2.75rem;
 }
+
+/* Scan our QR code: the details to copy, the app to pay with, the QR card, then "I've paid". The
+   page also carries the form-page class, so its field, radio and card rules apply. */
+.qr-details {
+    margin-block: 1.5rem;
+}
+
+.qr-details > div + div {
+    margin-top: 0.75rem;
+}
+
+.qr-details dt {
+    color: var(--colour-muted);
+    font-size: 0.9375rem;
+}
+
+.qr-details dd {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: var(--colour-primary-dark);
+    font-size: 1.25rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.qr-details dd.qr-help {
+    font-size: 0.9375rem;
+    font-weight: 400;
+}
+
+.qr-help {
+    color: var(--colour-muted);
+    font-size: 0.9375rem;
+}
+
+/* Icon only, so a row never wraps at 320px; its spoken name is its aria-label. */
+.copy-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 2px solid var(--colour-border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--colour-primary);
+    cursor: pointer;
+}
+
+.copy-icon-button[hidden] {
+    display: none;
+}
+
+.copy-icon-button .copy-tick,
+.copy-icon-button.is-copied .copy-icon {
+    display: none;
+}
+
+.copy-icon-button.is-copied .copy-tick {
+    display: block;
+}
+
+/* The QR card as uploaded: no border or frame added, smoothly scaled, never wider than 24rem. */
+.qr-card img {
+    display: block;
+    width: min(100%, 24rem);
+    height: auto;
+    margin-block: 1rem;
+}
+
+.qr-card h2 {
+    margin-bottom: 0;
+}
+
+.form-page main .qr-card p > .button {
+    align-self: flex-start;
+}
+
+/* With 2 or more QR codes, only the chosen one shows. CSS only, so it works without
+   JavaScript; browsers without :has() show every code, each under its name. Each rule pairs
+   the nth app with the nth card (up to eight; any more are always shown). */
+.qr-pay:has(.qr-choice label:nth-of-type(1) input:checked) .qr-card:not(:nth-of-type(1)),
+.qr-pay:has(.qr-choice label:nth-of-type(2) input:checked) .qr-card:not(:nth-of-type(2)),
+.qr-pay:has(.qr-choice label:nth-of-type(3) input:checked) .qr-card:not(:nth-of-type(3)),
+.qr-pay:has(.qr-choice label:nth-of-type(4) input:checked) .qr-card:not(:nth-of-type(4)),
+.qr-pay:has(.qr-choice label:nth-of-type(5) input:checked) .qr-card:not(:nth-of-type(5)),
+.qr-pay:has(.qr-choice label:nth-of-type(6) input:checked) .qr-card:not(:nth-of-type(6)),
+.qr-pay:has(.qr-choice label:nth-of-type(7) input:checked) .qr-card:not(:nth-of-type(7)),
+.qr-pay:has(.qr-choice label:nth-of-type(8) input:checked) .qr-card:not(:nth-of-type(8)) {
+    display: none;
+}
+
+.qr-pay h2:last-of-type {
+    margin-top: 2rem;
+}

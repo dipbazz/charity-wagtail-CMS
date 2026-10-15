@@ -275,3 +275,39 @@ class TestPayingInNepali:
         assert "रसिद माग्नुहोस्।" in in_person
         assert "अहिले भुक्तानी गर्न तयार हुनुहुन्न?" in later
         assert "अर्को तरिकाले भुक्तानी गर्नुहोस्" in later
+
+
+class TestTheQRPageInNepali:
+    @pytest.fixture
+    def qr_page(self, client, nepali_donate_page):
+        from campaigns.models import Pledge
+        from campaigns.tests.test_qr import make_code
+
+        make_code("eSewa", account_name="BRIGHTWELL WATER")
+        pledge = Pledge.objects.create(
+            page=nepali_donate_page,
+            amount=2500,
+            currency="NPR",
+            name="Sita Sharma",
+            email="sita@example.com",
+        )
+        return client.get(f"{nepali_donate_page.url}pay/{pledge.reference}/qr/")
+
+    def test_is_in_nepali_with_no_english_left(self, qr_page):
+        text = visible_text(qr_page)
+
+        for nepali in [
+            "हाम्रो QR कोड स्क्यान गर्नुहोस्",
+            "रकम",
+            "तस्बिर सेभ गर्नुहोस्",
+            "लेनदेन आईडी",
+            "मैले भुक्तानी गरें",
+        ]:
+            assert nepali in text
+        for english in ["Save image", "Transaction ID", "Scan our QR code", "I've paid"]:
+            assert english not in text
+
+    def test_names_the_copy_buttons_in_nepali(self, qr_page):
+        labels = [b["aria-label"] for b in soup(qr_page).select("button[data-copy-value]")]
+
+        assert labels[0] == "रकम प्रतिलिपि गर्नुहोस्"

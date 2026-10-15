@@ -5,6 +5,8 @@
         <li>
             {% if each == ONLINE %}
                 <a class="pay-way" href="{% routablepageurl page 'pay_online' pledge.reference %}"><strong>{% translate "Pay online" %}</strong>{% if explain %}<span>{{ pay_with }}</span>{% endif %}<span class="pay-way-arrow" aria-hidden="true">›</span></a>
+            {% elif each == QR %}
+                <a class="pay-way" href="{% routablepageurl page 'pay_qr' pledge.reference %}"><strong>{% translate "Scan our QR code" %}</strong>{% if explain %}<span>{% translate "With your bank or wallet app" %}</span>{% endif %}<span class="pay-way-arrow" aria-hidden="true">›</span></a>
             {% elif each == IN_PERSON %}
                 <a class="pay-way" href="{% routablepageurl page 'pay_in_person' pledge.reference %}"><strong>{% translate "Pay in person" %}</strong>{% if explain %}<span>{% translate "At our office" %}</span>{% endif %}<span class="pay-way-arrow" aria-hidden="true">›</span></a>
             {% elif each == LATER %}

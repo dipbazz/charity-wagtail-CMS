@@ -9,15 +9,18 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.core.validators import MinValueValidator
+from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
 from django.db.models import Q
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.cache import add_never_cache_headers
 from django.utils.translation import gettext, gettext_lazy
 from modelcluster.fields import ParentalKey
+from modelcluster.models import ClusterableModel
 from wagtail.admin.panels import (
     FieldPanel,
     FieldRowPanel,
@@ -37,14 +40,22 @@ from wagtail.search import index
 from campaigns.payments import (
     IN_PERSON,
     ONLINE,
+    QR,
+    QR_CURRENCIES,
+    is_team_confirmed,
     method_choices,
     provider_for,
     providers_for,
     ways_to_pay,
 )
 from core.blocks import BaseStreamBlock
-from core.images import with_card_images
-from core.models import SiteSettings, SocialMetaMixin
+from core.images import UPLOAD_EXTENSIONS, check_upload, clean_image, with_card_images
+from core.models import (
+    SiteSettings,
+    SocialMetaMixin,
+    TextInEachLanguage,
+    TextInEachLanguageMixin,
+)
 from core.money import CURRENCY_CHOICES, format_money
 from nepal_payments import PaymentError, PaymentRequest, ProviderRefused, UnreadableAnswer
 
@@ -255,15 +266,20 @@ def pay_page_result(request):
 LATER = "later"
 
 # Each way's page, by its route's name.
-WAY_ROUTES = {ONLINE: "pay_online", IN_PERSON: "pay_in_person", LATER: "pay_later"}
+WAY_ROUTES = {ONLINE: "pay_online", QR: "pay_qr", IN_PERSON: "pay_in_person", LATER: "pay_later"}
 
 # The ways' names, for templates to compare with rather than spell out.
-WAY_NAMES = {"ONLINE": ONLINE, "IN_PERSON": IN_PERSON, "LATER": LATER}
+WAY_NAMES = {"ONLINE": ONLINE, "QR": QR, "IN_PERSON": IN_PERSON, "LATER": LATER}
 
 # The way whose page shows what became of paying, for each pay page state it shows. The choices
 # send a pledge in one of these states there, and that page shows even once its way isn't
 # offered any more.
-STATE_WAYS = {"check-first": ONLINE, "failed": ONLINE}
+STATE_WAYS = {
+    "check-first": ONLINE,
+    "failed": ONLINE,
+    "to-confirm": QR,
+    "not-found": QR,
+}
 
 # The states in which every other way's page goes to that way's: an attempt may already have paid,
 # so nothing to pay with shows before checking it.
@@ -327,6 +343,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     pay_templates = {
         None: "campaigns/pay/choices.html",
         ONLINE: "campaigns/pay/online.html",
+        QR: "campaigns/pay/qr.html",
         IN_PERSON: "campaigns/pay/in_person.html",
         LATER: "campaigns/pay/later.html",
     }
@@ -362,7 +379,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 pledge = form.save()
                 # 303 See Other: the browser fetches the next page with GET, so reloading it
                 # doesn't send the form again.
-                _, ways = self.ways_for(pledge, site_settings)
+                _, ways, _ = self.ways_for(request, pledge, site_settings)
                 if len(ways) == 1:
                     return self.redirect_to(request, WAY_ROUTES[ways[0]], pledge.reference)
                 if ways:
@@ -372,7 +389,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             form = self.get_form(site_settings=site_settings, link=request.GET)
         # How paying works here, before an amount is chosen: any amount a provider takes.
         providers = providers_for(site_settings.currency)
-        ways = ways_to_pay(providers, site_settings)
+        qr_codes = self.qr_codes_for(request, site_settings.currency)
+        ways = ways_to_pay(providers, site_settings, qr_codes)
         return self.render(
             request,
             context_overrides={
@@ -380,18 +398,40 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "ways": ways,
                 **WAY_NAMES,
                 "pay_with": either([provider.name for provider in providers]),
+                "how_to_pay": self.how_to_pay(providers, ways),
             },
         )
+
+    def how_to_pay(self, providers, ways):
+        """The ways as a phrase after "you can pay": "with eSewa or Khalti, by scanning our QR
+        code or in person"."""
+        phrases = []
+        if ONLINE in ways:
+            names = either([provider.name for provider in providers])
+            phrases.append(gettext("with %(names)s") % {"names": names})
+        if QR in ways:
+            phrases.append(gettext("by scanning our QR code"))
+        if IN_PERSON in ways:
+            phrases.append(gettext("in person"))
+        return either(phrases)
 
     @path("thank-you/", name="thank_you")
     def thank_you(self, request):
         return self.render(request, template=self.landing_page_template)
 
-    def ways_for(self, pledge, site_settings):
-        """The providers that take the pledge, and the ways to pay it, worked out once so they
-        can't disagree."""
+    def qr_codes_for(self, request, currency):
+        """The charity's QR codes, when they take this currency: they're offered for rupees only,
+        like the providers (the apps they're scanned with are Nepali)."""
+        if currency not in QR_CURRENCIES:
+            return []
+        return QRCode.for_pay_page()
+
+    def ways_for(self, request, pledge, site_settings):
+        """The providers that take the pledge, the ways to pay it and the QR codes offered,
+        worked out once so they can't disagree."""
         providers = providers_for(pledge.currency, Decimal(pledge.amount))
-        return providers, ways_to_pay(providers, site_settings)
+        qr_codes = self.qr_codes_for(request, pledge.currency)
+        return providers, ways_to_pay(providers, site_settings, qr_codes), qr_codes
 
     def get_pledge(self, reference):
         return get_object_or_404(
@@ -412,19 +452,58 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         state = pledge.pay_page_state()
         site_settings = SiteSettings.for_request(request)
         if state in THANKED:
-            return self.render_pay_page(request, pledge, state, [], [], site_settings)
+            return self.render_pay_page(request, pledge, state, [], [], [], site_settings)
         if state in STATE_WAYS:
             return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
-        providers, ways = self.ways_for(pledge, site_settings)
+        providers, ways, qr_codes = self.ways_for(request, pledge, site_settings)
         if not ways:
             return self.redirect_to(request, "thank_you")
         if len(ways) == 1:
             return self.redirect_to(request, WAY_ROUTES[ways[0]], reference)
-        return self.render_pay_page(request, pledge, state, providers, ways, site_settings)
+        return self.render_pay_page(
+            request, pledge, state, providers, ways, qr_codes, site_settings
+        )
 
     @path("pay/<uuid:reference>/online/", name="pay_online")
     def pay_online(self, request, reference):
         return self.way_page(request, reference, ONLINE)
+
+    @path("pay/<uuid:reference>/qr/", name="pay_qr")
+    def pay_qr(self, request, reference):
+        return self.way_page(request, reference, QR)
+
+    @path("pay/<uuid:reference>/qr/paid/", name="qr_paid")
+    def qr_paid(self, request, reference):
+        """The supporter says they paid by scanning a QR code. The pledge becomes To confirm
+        once, however many times and tabs this is sent from: only the one that moves it creates
+        the payment. The team then looks for it in its statement."""
+        if request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
+        pledge = self.get_pledge(reference)
+        site_settings = SiteSettings.for_request(request)
+        qr_codes = self.qr_codes_for(request, pledge.currency)
+        if not qr_codes or pledge.has_paid_payment():
+            return self.redirect_to(request, "pay", reference)
+        from campaigns.forms import QRPaidForm  # forms imports this module's Pledge
+
+        form = QRPaidForm(request.POST, codes=qr_codes)
+        if not form.is_valid():
+            providers, ways, _ = self.ways_for(request, pledge, site_settings)
+            response = self.render_pay_page(
+                request,
+                pledge,
+                pledge.pay_page_state(),
+                providers,
+                ways,
+                qr_codes,
+                site_settings,
+                QR,
+                paid_form=form,
+            )
+            response.status_code = 422
+            return response
+        pledge.claim_paid(form.cleaned_data["code"], form.cleaned_data["transaction_id"])
+        return self.redirect_to(request, "pay_qr", reference)
 
     @path("pay/<uuid:reference>/in-person/", name="pay_in_person")
     def pay_in_person(self, request, reference):
@@ -448,16 +527,26 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
         site_settings = SiteSettings.for_request(request)
         if state in THANKED:
-            return self.render_pay_page(request, pledge, state, [], [], site_settings, way)
-        providers, ways = self.ways_for(pledge, site_settings)
+            return self.render_pay_page(request, pledge, state, [], [], [], site_settings, way)
+        providers, ways, qr_codes = self.ways_for(request, pledge, site_settings)
         if not (way == LATER or way in ways or STATE_WAYS.get(state) == way):
             return self.redirect_to(request, "pay", reference)
         return self.render_pay_page(
-            request, pledge, state, providers, ways, site_settings, way, result
+            request, pledge, state, providers, ways, qr_codes, site_settings, way, result
         )
 
     def render_pay_page(
-        self, request, pledge, state, providers, ways, site_settings, way=None, result=None
+        self,
+        request,
+        pledge,
+        state,
+        providers,
+        ways,
+        qr_codes,
+        site_settings,
+        way=None,
+        result=None,
+        paid_form=None,
     ):
         """The choices (way None) or a way's page, or the thanks once paid (with no providers or
         ways: there's nothing left to pay). `result` is what asking a provider found, for the
@@ -492,6 +581,17 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "result": result,
                 # The others to try when the latest attempt's provider couldn't start it.
                 "others": either([p.name for p in providers if latest and p.code != latest.method]),
+            }
+        if way == QR:
+            from campaigns.forms import QRPaidForm  # forms imports this module's Pledge
+
+            # The attempt the team is checking (or couldn't find): not an online one that came
+            # after it.
+            claimed = next((p for p in pledge.payments.all() if is_team_confirmed(p.method)), None)
+            context |= {
+                "qr_codes": qr_codes,
+                "claimed": claimed,
+                "paid_form": paid_form or QRPaidForm(codes=qr_codes),
             }
         if way == LATER:
             context["pay_link"] = request.build_absolute_uri(
@@ -651,6 +751,123 @@ class DonatePageAmount(AbstractDonationAmount):
     page = ParentalKey(DonatePage, on_delete=models.CASCADE, related_name="donation_amounts")
 
 
+# The longest side of a QR card as saved: the larger one is for saving and scanning, the smaller
+# is what the page shows (both in the upload's own format).
+QR_IMAGE_WIDTHS = (1600, 800)
+
+
+class QRCode(TextInEachLanguageMixin, ClusterableModel, Orderable):
+    """One QR code a supporter can scan to pay: a wallet's or a bank's, as an image to show and
+    save (#197).
+
+    A record of its own in the admin, listed under QR codes, so only the people given its
+    permissions can add, change or remove one (moderators). The image is stored on the code, not
+    in the image library: an editor can replace a library image, which would send gifts to
+    another account. Wagtail logs who added, changed or removed each code, in its history.
+    """
+
+    image = models.ImageField(
+        upload_to="qr-codes",
+        width_field="image_width",
+        height_field="image_height",
+        validators=[FileExtensionValidator(UPLOAD_EXTENSIONS), check_upload],
+        help_text="The QR card as your wallet or bank gives it: it's shown as it is, so keep its "
+        "name and logo. A JPEG, PNG or WebP of up to 5 MB.",
+    )
+    # The same card at a smaller size, for phones to show. Made from `image` when it's uploaded.
+    image_small = models.ImageField(
+        upload_to="qr-codes", editable=False, width_field="small_width", blank=True
+    )
+    image_width = models.PositiveIntegerField(null=True, editable=False)
+    image_height = models.PositiveIntegerField(null=True, editable=False)
+    small_width = models.PositiveIntegerField(null=True, editable=False)
+    account_name = models.CharField(
+        max_length=255,
+        help_text="Exactly as the app shows it after scanning the QR code. Supporters are asked "
+        "to check it before they pay.",
+    )
+    account_number = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="The account or wallet number, for supporters who can't scan.",
+    )
+
+    panels = [
+        InlinePanel(
+            "texts",
+            heading="Name in each language",
+            label="Language",
+            help_text="What supporters pick it by, such as eSewa or Fonepay (bank). A language "
+            "with no name of its own shows the main language's.",
+        ),
+        FieldPanel("image"),
+        FieldPanel("account_name"),
+        FieldPanel("account_number"),
+    ]
+
+    class Meta(Orderable.Meta):
+        verbose_name = "QR code"
+        # A code never given a place (made in code, say) goes after those that were, oldest first.
+        ordering = ["sort_order", "pk"]
+
+    def __str__(self):
+        return self.name or self.account_name
+
+    @classmethod
+    def for_pay_page(cls):
+        """The codes supporters can pay to, in order, with their names in each language: one
+        query when there are none, two otherwise. The names are attached by hand: Prefetch
+        gives every code of a cluster the last one's."""
+        codes = list(cls.objects.all())
+        if codes:
+            by_code = {code.pk: {} for code in codes}
+            for text in QRCodeName.objects.filter(code__in=codes).select_related("locale"):
+                by_code[text.code_id][text.locale.language_code] = text
+            for code in codes:
+                code._texts_by_language = by_code[code.pk]
+        return codes
+
+    @property
+    def name(self):
+        return self.text_in_reading_language("name")
+
+    def save(self, *args, **kwargs):
+        """Saves a new image's two sizes in place of the upload, and removes the files it
+        replaces. The names are our own: nothing from the upload's name is kept."""
+        previous = set()
+        if self.pk:
+            was = QRCode.objects.filter(pk=self.pk).values_list("image", "image_small").first()
+            previous = set(was or ()) - {""}
+        if self.image and not self.image._committed:
+            extension, (large, small) = clean_image(self.image.file, QR_IMAGE_WIDTHS)
+            name = uuid.uuid4().hex
+            self.image.save(f"{name}.{extension}", large, save=False)
+            self.image_small.save(f"{name}-small.{extension}", small, save=False)
+        super().save(*args, **kwargs)
+        for name in previous - {self.image.name, self.image_small.name}:
+            self.image.storage.delete(name)
+
+
+@receiver(post_delete, sender=QRCode)
+def delete_qr_code_images(sender, instance, **kwargs):
+    """A removed QR leaves nothing behind that could still be fetched."""
+    for field in (instance.image, instance.image_small):
+        if field.name:
+            field.storage.delete(field.name)
+
+
+class QRCodeName(TextInEachLanguage):
+    code = ParentalKey(QRCode, on_delete=models.CASCADE, related_name="texts")
+    name = models.CharField(max_length=100)
+
+    panels = [FieldPanel("locale"), FieldPanel("name")]
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["code", "locale"], name="one_qr_name_per_language")
+        ]
+
+
 class Frequency(models.TextChoices):
     """How often a supporter gives. Shared by pledges, the pledge form and anything that acts on
     them (such as monthly reminders), so compare with Frequency.MONTHLY, never the string."""
@@ -664,16 +881,22 @@ class PaymentStatus(models.TextChoices):
     (nepal_payments.Status), with the names the team reads in the admin."""
 
     WAITING = "waiting", "Waiting"
+    # Said paid by the supporter, and waiting for the team to find it in its statement.
+    TO_CONFIRM = "to-confirm", "To confirm"
     PAID = "paid", "Paid"
     FAILED = "failed", "Failed"
 
 
 # The statuses a payment may change from, to each status: paid never goes back, and a failed
-# attempt may still turn out paid (eSewa sends the payer back to one address, paid or not).
+# attempt may still turn out paid (eSewa sends the payer back to one address, paid or not; the
+# team may find a QR payment it first couldn't).
 CHANGES_FROM = {
-    PaymentStatus.PAID: [PaymentStatus.WAITING, PaymentStatus.FAILED],
-    PaymentStatus.FAILED: [PaymentStatus.WAITING],
+    PaymentStatus.PAID: [PaymentStatus.WAITING, PaymentStatus.TO_CONFIRM, PaymentStatus.FAILED],
+    PaymentStatus.FAILED: [PaymentStatus.WAITING, PaymentStatus.TO_CONFIRM],
 }
+
+# The statuses of a payment that may still turn out paid, so nothing else marks its pledge failed.
+MAY_STILL_PAY = [PaymentStatus.WAITING, PaymentStatus.TO_CONFIRM, PaymentStatus.PAID]
 
 
 def new_pledge_number():
@@ -731,7 +954,7 @@ class Pledge(models.Model):
     submission_id = models.UUIDField(null=True, unique=True, editable=False)
     # Whether it's been paid online (#93): only Payment.record() changes these.
     payment_status = models.CharField(
-        "payment", max_length=7, choices=PaymentStatus, default=PaymentStatus.WAITING
+        "payment", max_length=10, choices=PaymentStatus, default=PaymentStatus.WAITING
     )
     paid_at = models.DateTimeField("paid", null=True, blank=True)
     # The address of its pay page. Not submission_id: whoever holds that can send the form again
@@ -744,6 +967,9 @@ class Pledge(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        # Whoever finds a payment in the team's statement and marks it paid, or says it isn't
+        # there: moderators have it, editors only read pledges.
+        permissions = [("confirm_payment", "Can confirm payments")]
 
     def __str__(self):
         return f"{self.name}: {self.display_amount()} {self.get_frequency_display().lower()}"
@@ -805,23 +1031,34 @@ class Pledge(models.Model):
     def pay_page_state(self):
         """What its pay page shows, from what became of paying it:
 
-        - "paid": an attempt paid it.
-        - "received": an attempt paid what it said before it was changed; a person sorts it out.
+        - "paid": an attempt paid it, for what the pledge asks.
+        - "received": an attempt paid another amount (the team received less or more than the
+          pledge, or the pledge was changed after the attempt started); a person sorts it out.
+        - "check-first": the latest attempt is waiting, so it may already be paid.
+        - "to-confirm": the supporter says they paid by QR, and the team hasn't found it yet.
+        - "not-found": the team couldn't find the supporter's QR payment.
         - "failed": the latest attempt failed after reaching its provider, so it may still turn
           out paid: checking comes before paying again.
         - "not-started": the latest attempt failed before reaching its provider: no money taken.
-        - "check-first": the latest attempt is waiting, so it may already be paid.
         - "ready": nothing started yet.
 
         Reads payments as fetched, so the pay page can prefetch them.
         """
-        if self.paid_payment():
-            return "paid" if self.payment_status == PaymentStatus.PAID else "received"
-        latest = next(iter(self.payments.all()), None)  # newest first
-        if self.payment_status == PaymentStatus.FAILED:
-            return "failed" if latest and latest.reached_provider() else "not-started"
+        paid = self.paid_payment()
+        if paid:
+            same_gift = paid.amount == self.amount and paid.currency == self.currency
+            return "paid" if self.payment_status == PaymentStatus.PAID and same_gift else "received"
+        payments = list(self.payments.all())  # newest first
+        latest = payments[0] if payments else None
         if latest and latest.status == PaymentStatus.WAITING:
             return "check-first"
+        # Still to confirm even when a later online attempt has failed.
+        if any(p.status == PaymentStatus.TO_CONFIRM for p in payments):
+            return "to-confirm"
+        if self.payment_status == PaymentStatus.FAILED:
+            if latest and is_team_confirmed(latest.method):
+                return "not-found"
+            return "failed" if latest and latest.reached_provider() else "not-started"
         return "ready"
 
     def has_paid_payment(self):
@@ -832,6 +1069,35 @@ class Pledge(models.Model):
     def received_money(self):
         """Whether a payment of it moved real money, not just a provider's test system."""
         return self.payments.filter(status=PaymentStatus.PAID, live=True).exists()
+
+    def claim_paid(self, code, transaction_id):
+        """The supporter says they paid by scanning `code`: a payment for the team to confirm,
+        and the pledge To confirm. Returns the payment, or None when the pledge wasn't waiting or
+        failed any more (a second tap, another tab, or paid since), so only one claim makes one.
+
+        A conditional update, not a read then a save: two sends at once can't both change it.
+        """
+        with transaction.atomic():
+            changed = Pledge.objects.filter(
+                pk=self.pk, payment_status__in=[PaymentStatus.WAITING, PaymentStatus.FAILED]
+            ).update(payment_status=PaymentStatus.TO_CONFIRM)
+            if not changed:
+                return None
+            payment = self.payments.create(
+                method=QR,
+                amount=self.amount,
+                currency=self.currency,
+                status=PaymentStatus.TO_CONFIRM,
+                # Real money, whatever the site's mode: it's never shown as a test, and it can't
+                # be deleted.
+                live=True,
+                qr_code=code,
+                qr_name=code.name,
+                supporters_reference=transaction_id,
+            )
+            payment.add_step(StepKind.CLAIMED)
+        self.payment_status = PaymentStatus.TO_CONFIRM
+        return payment
 
     def start_payment(self, method, live):
         """A new attempt to pay this pledge, with the provider whose code is `method`. After a
@@ -853,7 +1119,7 @@ class Payment(models.Model):
     method = models.CharField("paid with", max_length=20, choices=method_choices)
     amount = models.PositiveIntegerField(help_text="A whole amount in the payment's currency.")
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES)
-    status = models.CharField(max_length=7, choices=PaymentStatus, default=PaymentStatus.WAITING)
+    status = models.CharField(max_length=10, choices=PaymentStatus, default=PaymentStatus.WAITING)
     # Ours, sent to the provider (eSewa's transaction_uuid, Khalti's purchase_order_id), and the
     # address the payer comes back to.
     reference = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
@@ -873,6 +1139,17 @@ class Payment(models.Model):
     )
     live = models.BooleanField(
         default=False, help_text="Unticked: made in the provider's test system, so no money moved."
+    )
+    # A QR payment: the code the supporter says they scanned, and its name as it was then, so "by
+    # eSewa QR" is still said once the code is removed or renamed.
+    qr_code = models.ForeignKey(
+        QRCode, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    qr_name = models.CharField("QR code", max_length=100, blank=True)
+    # The transaction ID the supporter read from their app's receipt: what to look for in the
+    # statement, and what the team's reference starts as when it marks the payment paid.
+    supporters_reference = models.CharField(
+        "transaction ID from the supporter", max_length=100, blank=True
     )
     created_at = models.DateTimeField("started", auto_now_add=True)
     updated_at = models.DateTimeField("updated", auto_now=True)
@@ -917,6 +1194,8 @@ class Payment(models.Model):
         Only known values are stored: an error's text, which can quote the provider's reply,
         goes to the log, and the provider's word only if it's one of its `statuses`.
         """
+        if is_team_confirmed(self.method):
+            return None  # no provider to ask: the team looks in its statement
         provider = self.provider()
         if provider is None:
             self.add_step(StepKind.NOT_ASKED, by=by)
@@ -931,6 +1210,57 @@ class Payment(models.Model):
         self.add_step(StepKind.ASKED, word=word, by=by)
         self.record(outcome.status, outcome.provider_reference)
         return outcome
+
+    def mark_paid(self, by, received_on, amount, reference):
+        """The team found this payment in its statement: paid, for the `amount` received (whole
+        rupees, which may differ from the pledge's) on `received_on`, with the statement's
+        `reference`. Set once: a paid payment is never changed, like any other. Returns whether
+        it changed anything: not for a payment no provider answers for, one already paid, or one
+        whose pledge another payment has paid.
+        """
+        if not is_team_confirmed(self.method):
+            return False
+        now = timezone.now()
+        paid_at = (
+            now
+            if received_on == timezone.localdate()
+            else timezone.make_aware(datetime.datetime.combine(received_on, datetime.time(12)))
+        )
+        with transaction.atomic():
+            if self.pledge.payments.filter(status=PaymentStatus.PAID).exists():
+                return False
+            changed = Payment.objects.filter(
+                pk=self.pk, status__in=[PaymentStatus.TO_CONFIRM, PaymentStatus.FAILED]
+            ).update(
+                status=PaymentStatus.PAID,
+                amount=amount,
+                provider_reference=reference,
+                updated_at=now,
+            )
+            if not changed:
+                return False
+            # Whatever the team received: it's looked at the statement, so the pledge is paid,
+            # and the pay page says "received" when it was another amount.
+            Pledge.objects.filter(pk=self.pledge_id).update(
+                payment_status=PaymentStatus.PAID, paid_at=paid_at
+            )
+            self.add_step(StepKind.MARKED_PAID, by=by)
+        self.status, self.amount, self.provider_reference = (
+            PaymentStatus.PAID,
+            amount,
+            reference,
+        )
+        return True
+
+    def mark_not_found(self, by):
+        """The team couldn't find this payment in its statement: it failed (it may still be
+        marked paid later, if it turns up). Returns whether it changed anything."""
+        if not is_team_confirmed(self.method) or self.status != PaymentStatus.TO_CONFIRM:
+            return False
+        if not self.record(PaymentStatus.FAILED):
+            return False
+        self.add_step(StepKind.NOT_FOUND, by=by)
+        return True
 
     def add_step(self, kind, word="", by=None):
         """Add a step to its history. Pass only known values, never a provider's reply."""
@@ -966,9 +1296,9 @@ class Payment(models.Model):
             else:
                 # Not while another attempt may still pay it: the pay page would say this one
                 # failed and hide the check for that one.
-                unpaid.exclude(
-                    payments__status__in=[PaymentStatus.WAITING, PaymentStatus.PAID]
-                ).update(payment_status=PaymentStatus.FAILED)
+                unpaid.exclude(payments__status__in=MAY_STILL_PAY).update(
+                    payment_status=PaymentStatus.FAILED
+                )
         for name, value in changes.items():
             setattr(self, name, value)
         return True
@@ -984,6 +1314,10 @@ class StepKind(models.TextChoices):
     UNREADABLE = "unreadable", "Answer not understood"
     REFUSED = "refused", "The provider refused"
     NOT_ASKED = "not-asked", "Couldn't ask the provider"
+    # What happens to a payment the team confirms, which no provider is asked about.
+    CLAIMED = "claimed", "The supporter said they paid"
+    MARKED_PAID = "marked-paid", "Marked paid by the team"
+    NOT_FOUND = "not-found", "Marked not found by the team"
 
 
 def step_for_error(error):

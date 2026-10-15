@@ -2,29 +2,44 @@
 // Buttons stay hidden without JavaScript; visitors can still select the text themselves.
 // The words shown (in the reader's language) come from the button's data-copied,
 // data-copied-status and data-copy-failed-status.
+// A button with data-copy-value copies that value, not an input's: an icon-only button, shown
+// as copied by its tick (the .is-copied class), with the status line saying it for everyone.
+// Anything marked data-copy-hint is shown only once there is a button to press.
 document.querySelectorAll("[data-copy]").forEach((button) => {
     const input = document.getElementById(button.dataset.copy);
     const status = document.querySelector(`[data-copy-status="${button.dataset.copy}"]`);
+    const ownValue = button.dataset.copyValue;
 
     const label = button.textContent;
     let resetTimer;
 
     button.hidden = false;
+    document.querySelectorAll("[data-copy-hint]").forEach((hint) => {
+        hint.hidden = false;
+    });
     button.addEventListener("click", async () => {
         try {
-            await navigator.clipboard.writeText(input.value);
-            // Confirm on the button itself, where the visitor is looking. The tick is decorative;
-            // screen readers get the status message below instead.
-            button.textContent = `${button.dataset.copied} `;
-            button.insertAdjacentHTML("beforeend", '<span aria-hidden="true">✓</span>');
+            await navigator.clipboard.writeText(ownValue ?? input.value);
             clearTimeout(resetTimer);
-            resetTimer = setTimeout(() => {
-                button.textContent = label;
-            }, 2000);
+            if (ownValue === undefined) {
+                // Confirm on the button itself, where the visitor is looking. The tick is
+                // decorative; screen readers get the status message below instead.
+                button.textContent = `${button.dataset.copied} `;
+                button.insertAdjacentHTML("beforeend", '<span aria-hidden="true">✓</span>');
+                resetTimer = setTimeout(() => {
+                    button.textContent = label;
+                }, 2000);
+            } else {
+                document.querySelectorAll(".copy-icon-button.is-copied").forEach((other) => {
+                    other.classList.remove("is-copied");
+                });
+                button.classList.add("is-copied");
+                resetTimer = setTimeout(() => button.classList.remove("is-copied"), 2000);
+            }
             status.textContent = button.dataset.copiedStatus;
         } catch {
             // Clipboard access can be blocked (e.g. on plain http); select the text instead.
-            input.select();
+            if (input) input.select();
             status.textContent = button.dataset.copyFailedStatus;
         }
     });
