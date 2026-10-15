@@ -1,0 +1,15 @@
+{% load i18n wagtailroutablepage_tags %}
+{# A row for each way in `list`, linking to its page: the way's name, then (with `explain`) a line on how. Used for the choices and for "Pay another way". #}
+<ul class="pay-ways">
+    {% for each in list %}
+        <li>
+            {% if each == "online" %}
+                <a class="pay-way" href="{% routablepageurl page 'pay_online' pledge.reference %}"><strong>{% translate "Pay online" %}</strong>{% if explain %}<span>{{ pay_with }}</span>{% endif %}<span class="pay-way-arrow" aria-hidden="true">›</span></a>
+            {% elif each == "in-person" %}
+                <a class="pay-way" href="{% routablepageurl page 'pay_in_person' pledge.reference %}"><strong>{% translate "Pay in person" %}</strong>{% if explain %}<span>{% translate "At our office" %}</span>{% endif %}<span class="pay-way-arrow" aria-hidden="true">›</span></a>
+            {% elif each == "later" %}
+                <a class="pay-way" href="{% routablepageurl page 'pay_later' pledge.reference %}"><strong>{% translate "Not ready to pay yet?" %}</strong>{% if explain %}<span>{% translate "Save the link and come back" %}</span>{% endif %}<span class="pay-way-arrow" aria-hidden="true">›</span></a>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>

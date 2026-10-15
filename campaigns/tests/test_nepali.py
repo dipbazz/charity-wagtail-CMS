@@ -235,11 +235,9 @@ class TestPayingInNepali:
             page=nepali_donate_page, amount=2500, currency="NPR", name="सीता", email="s@example.com"
         )
 
-        text = visible_text(client.get(f"{nepali_donate_page.url}pay/{pledge.reference}/"))
+        text = visible_text(client.get(f"{nepali_donate_page.url}pay/{pledge.reference}/online/"))
 
-        assert "तपाईंको दान भुक्तानी गर्नुहोस्" in text
         assert "Fake Pay बाट तिर्नुहोस्" in text
-        assert "आफैं आएर भुक्तानी गर्नुहोस्" in text
         assert "यहाँ अनलाइन भुक्तानी परीक्षण मोडमा छ: कुनै पैसा लिइने छैन।" in text
         assert "9800000001" not in text  # the test accounts are in the docs, not here
         assert "जहाँ सबैभन्दा बढी आवश्यक छ" in text

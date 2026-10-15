@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n static wagtailcore_tags %}
+
+{# Every address of a pledge's pay page: its choices and each way's page. Once paid, each says thank you, so a page left open or a link saved to pay later never offers paying again. #}
+{% block title %}{% if received %}{% translate "Thank you" %}{% else %}{% block pay_title %}{% endblock %}{% endif %}{% endblock %}
+
+{% block body_class %}template-donatepage pay-page{% endblock %}
+
+{% block extra_meta %}
+    {# A pledge's own page: if its address is ever shared, it still stays out of search results. #}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/donate.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container narrow">
+        {% if state == "paid" %}
+            <h1>{% translate "Thank you" %}</h1>
+            {# The first line says what happened, so a test payment never reads as money received, nor a monthly gift as one set up for every month. #}
+            <p class="lead" tabindex="-1" data-focus-on-load>{% if not received.live %}{% translate "Test payment completed. No money was taken." %}{% elif pledge.frequency == "monthly" %}{% blocktranslate with amount=pledge.display_amount %}This month's gift of {{ amount }} has reached us. We'll be in touch about next month.{% endblocktranslate %}{% else %}{% blocktranslate with amount=pledge.display_amount %}Your gift of {{ amount }} has reached us.{% endblocktranslate %}{% endif %}</p>
+            {% if received.provider_reference %}
+                <p>{% blocktranslate with provider=received.get_method_display reference=received.provider_reference %}{{ provider }} reference: {{ reference }}{% endblocktranslate %}</p>
+            {% endif %}
+            {% with appeals=appeals_page %}{% if appeals %}
+                <p><a class="button" href="{% pageurl appeals %}">{% translate "See all our appeals" %}</a></p>
+            {% else %}
+                <p><a class="button" href="{% pageurl page.get_parent %}">{% translate "Back to the home page" %}</a></p>
+            {% endif %}{% endwith %}
+        {% elif state == "received" %}
+            {# Paid, but for what the pledge said before it was changed: a person sorts out the difference. #}
+            <h1>{% translate "Thank you" %}</h1>
+            <p class="lead" tabindex="-1" data-focus-on-load>{% if received.provider_reference %}{% blocktranslate with amount=received.display_amount provider=received.get_method_display reference=received.provider_reference %}We received {{ amount }} from you by {{ provider }} (reference {{ reference }}).{% endblocktranslate %}{% else %}{% blocktranslate with amount=received.display_amount provider=received.get_method_display %}We received {{ amount }} from you by {{ provider }}.{% endblocktranslate %}{% endif %} {% translate "Our team will be in touch." %}</p>
+        {% else %}
+            {% block pay %}{% endblock %}
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/donate.js' %}"></script>
+{% endblock %}

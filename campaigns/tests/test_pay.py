@@ -62,12 +62,17 @@ def pledge(client, donate_page, fake_provider):
     return Pledge.objects.get()
 
 
-def pay_url(donate_page, pledge):
-    return f"{donate_page.url}pay/{pledge.reference}/"
+def pay_url(donate_page, pledge, way=""):
+    """A pledge's pay page: its choices, or one way's page."""
+    return f"{donate_page.url}pay/{pledge.reference}/{way + '/' if way else ''}"
+
+
+def online_url(donate_page, pledge):
+    return pay_url(donate_page, pledge, "online")
 
 
 def start(client, donate_page, pledge, method="fakepay"):
-    return client.post(f"{pay_url(donate_page, pledge)}{method}/")
+    return client.post(f"{online_url(donate_page, pledge)}{method}/")
 
 
 def return_url(donate_page, payment):
@@ -82,13 +87,39 @@ def pay_buttons(response):
     return [button.get_text(strip=True) for button in soup(response).select("form button")]
 
 
+@pytest.fixture
+def office(site):
+    """An office to pay at, from Site settings: paying in person is offered."""
+    site_settings = SiteSettings.for_site(site)
+    site_settings.phone = "+977 1-4567890"
+    site_settings.texts = [
+        SiteSettingsText(locale=Locale.get_default(), address="Ward 4\nThamel, Kathmandu")
+    ]
+    site_settings.save()
+    return site_settings
+
+
 class TestAfterSendingAPledge:
-    def test_goes_to_its_pay_page_when_a_provider_can_take_it(self, client, donate_page, pledge):
+    def test_goes_to_its_pay_page_to_choose_a_way(self, client, donate_page, pledge, office):
         response = send_pledge(client, donate_page, name="Ram")
 
         assert response.status_code == 303
         ram = Pledge.objects.get(name="Ram")
         assert response["Location"] == pay_url(donate_page, ram)
+
+    def test_with_only_one_way_goes_straight_to_it(self, client, donate_page, pledge):
+        response = send_pledge(client, donate_page, name="Ram")
+
+        assert response["Location"] == online_url(donate_page, Pledge.objects.get(name="Ram"))
+
+    def test_with_only_an_office_goes_to_paying_in_person(
+        self, client, donate_page, settings, office
+    ):
+        settings.PAYMENT_KEYS = {}
+
+        response = send_pledge(client, donate_page)
+
+        assert response["Location"] == pay_url(donate_page, Pledge.objects.get(), "in-person")
 
     def test_goes_to_the_thank_you_page_when_none_is_set_up(self, client, donate_page, settings):
         settings.PAYMENT_KEYS = {}
@@ -105,57 +136,321 @@ class TestAfterSendingAPledge:
         assert response["Location"] == donate_page.url + "thank-you/"
 
 
-class TestPayPage:
-    def test_shows_the_gift_and_nothing_about_the_giver(self, client, donate_page, pledge):
-        page = text(client.get(pay_url(donate_page, pledge)))
+# Every address a pledge's pay page has: its choices, and each way's page.
+EVERY_WAY = ["", "online", "in-person", "later"]
+TITLES = {
+    "": "Pay your gift",
+    "online": "Pay online",
+    "in-person": "Pay in person",
+    "later": "Not ready to pay yet?",
+}
 
-        assert "Pay your gift" in page
+
+class TestEveryPayPage:
+    """The choices and each way's page, with an office and a provider, so each is offered."""
+
+    @pytest.fixture(autouse=True)
+    def offered(self, office):
+        pass
+
+    @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_has_its_own_title(self, client, donate_page, pledge, way):
+        page = soup(client.get(pay_url(donate_page, pledge, way)))
+
+        assert page.title.get_text(" ", strip=True).startswith(TITLES[way])
+        assert page.h1.get_text(strip=True) == TITLES[way]
+
+    @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_shows_the_gift_and_nothing_about_the_giver(self, client, donate_page, pledge, way):
+        page = text(client.get(pay_url(donate_page, pledge, way)))
+
         assert "Rs 2,500" in page
         assert "Flood relief" in page
+        assert f"Pledge number {pledge.display_number()}" in page
         assert "Sita" not in page
         assert "sita@example.com" not in page
+
+    @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_is_kept_out_of_search_engines(self, client, donate_page, pledge, way):
+        robots = soup(client.get(pay_url(donate_page, pledge, way))).find(
+            "meta", attrs={"name": "robots"}
+        )
+
+        assert robots["content"] == "noindex"
+
+    @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_loads_the_donate_pages_stylesheet(self, client, donate_page, pledge, way):
+        page = soup(client.get(pay_url(donate_page, pledge, way)))
+
+        links = page.find_all("link", rel="stylesheet")
+        assert any(link["href"].endswith("/donate.css") for link in links)
+
+    @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_stays_within_its_query_budget(
+        self, client, donate_page, pledge, way, django_assert_max_num_queries
+    ):
+        """What every page with a header spends (charity/tests/test_query_budgets.py), plus two:
+        the pledge with its appeal, and its payments. Paying in person ends with a link to the
+        appeals, which costs two more: the appeals page, and its view restrictions."""
+        client.get(pay_url(donate_page, pledge, way))  # the first visit fills caches
+
+        with django_assert_max_num_queries(16 if way == "in-person" else 14):
+            client.get(pay_url(donate_page, pledge, way))
+
+    @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_an_unknown_pledge_isnt_found(self, client, donate_page, way):
+        missing = Pledge(reference=uuid.uuid4())
+
+        assert client.get(pay_url(donate_page, missing, way)).status_code == 404
+
+    @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_once_paid_every_address_says_thank_you(self, client, donate_page, pledge, way):
+        """A pay page left open in another tab, or a link saved to pay later."""
+        pledge.start_payment("fakepay", live=False).record(Status.PAID, "FAKE-1")
+
+        response = client.get(pay_url(donate_page, pledge, way))
+
+        assert response.status_code == 200
+        assert soup(response).h1.get_text() == "Thank you"
+        assert soup(response).find(class_="pay-ways") is None
+
+
+class TestChoosingAWay:
+    """The pay page's own address: the ways to pay, or the way that owns what happened."""
+
+    def ways(self, response):
+        return [
+            row.find("strong").get_text(strip=True) for row in soup(response).select(".pay-ways a")
+        ]
+
+    def test_says_the_pledge_is_saved_and_offers_each_way(
+        self, client, donate_page, pledge, office
+    ):
+        response = client.get(pay_url(donate_page, pledge))
+
+        assert response.status_code == 200
+        assert "Your pledge is saved." in text(response)
+        assert self.ways(response) == ["Pay online", "Pay in person", "Not ready to pay yet?"]
+
+    def test_each_choice_links_to_its_page(self, client, donate_page, pledge, office):
+        links = soup(client.get(pay_url(donate_page, pledge))).select(".pay-ways a")
+
+        assert [link["href"] for link in links] == [
+            pay_url(donate_page, pledge, way) for way in ("online", "in-person", "later")
+        ]
+
+    def test_each_choice_says_how_in_a_line(self, client, donate_page, pledge, office):
+        page = soup(client.get(pay_url(donate_page, pledge)))
+
+        online = page.select_one(".pay-ways a").get_text(" ", strip=True)
+        assert online.startswith("Pay online Fake Pay")
+        # The arrow is drawn, not read out.
+        assert page.select_one(".pay-ways a [aria-hidden=true]").get_text() == "›"
+
+    @pytest.mark.parametrize("state", ["check first", "failed"])
+    def test_a_payment_that_may_be_paid_goes_to_paying_online(
+        self, client, donate_page, pledge, office, state
+    ):
+        """Its page has the check, so nobody pays twice."""
+        payment = pledge.start_payment("fakepay", live=False)
+        Payment.objects.filter(pk=payment.pk).update(provider_id="fake-id")
+        if state == "failed":
+            payment.refresh_from_db()
+            payment.record(Status.FAILED)
+
+        response = client.get(pay_url(donate_page, pledge))
+
+        assert response.status_code == 303
+        assert response["Location"] == online_url(donate_page, pledge)
+
+    def test_a_payment_that_never_reached_its_provider_leaves_the_choice(
+        self, client, donate_page, pledge, office
+    ):
+        """No money can have been taken, so any way will do."""
+        pledge.start_payment("fakepay", live=False).record(Status.FAILED)
+
+        response = client.get(pay_url(donate_page, pledge))
+
+        assert response.status_code == 200
+        assert self.ways(response) == ["Pay online", "Pay in person", "Not ready to pay yet?"]
+
+    def test_with_one_way_goes_to_it(self, client, donate_page, pledge):
+        response = client.get(pay_url(donate_page, pledge))
+
+        assert response.status_code == 303
+        assert response["Location"] == online_url(donate_page, pledge)
+
+    def test_with_no_way_left_goes_to_the_thank_you_page(
+        self, client, donate_page, pledge, settings
+    ):
+        settings.PAYMENT_KEYS = {}
+
+        response = client.get(pay_url(donate_page, pledge))
+
+        assert response["Location"] == donate_page.url + "thank-you/"
+
+    def test_never_takes_a_note_meant_for_paying_online(
+        self, client, donate_page, pledge, office, fake_provider
+    ):
+        """Its note would be lost: only the online page says it."""
+        fake_provider.failure = ProviderUnavailable("Fake Pay is down.")
+        start(client, donate_page, pledge)
+
+        client.get(pay_url(donate_page, pledge))
+
+        page = text(client.get(online_url(donate_page, pledge)))
+        assert "We couldn't reach Fake Pay just now." in page
+
+
+class TestPayAnotherWay:
+    """At the bottom of each way's page, links straight to the others, in every state."""
+
+    def others(self, client, donate_page, pledge, way):
+        section = (
+            soup(client.get(pay_url(donate_page, pledge, way))).find(id="pay-another-way").parent
+        )
+        return [link.find("strong").get_text(strip=True) for link in section.find_all("a")]
+
+    @pytest.mark.parametrize(
+        ("way", "others"),
+        [
+            ("online", ["Pay in person", "Not ready to pay yet?"]),
+            ("in-person", ["Pay online", "Not ready to pay yet?"]),
+            ("later", ["Pay online", "Pay in person"]),
+        ],
+    )
+    def test_lists_the_other_ways(self, client, donate_page, pledge, office, way, others):
+        assert self.others(client, donate_page, pledge, way) == others
+
+    def test_names_each_way_without_the_line_under_it(self, client, donate_page, pledge, office):
+        section = (
+            soup(client.get(online_url(donate_page, pledge))).find(id="pay-another-way").parent
+        )
+
+        assert section.find("a").get_text(" ", strip=True) == "Pay in person ›"
+
+    def test_with_one_way_offers_not_being_ready_yet(self, client, donate_page, pledge):
+        assert self.others(client, donate_page, pledge, "online") == ["Not ready to pay yet?"]
+
+    def test_with_one_way_says_the_pledge_is_saved(self, client, donate_page, pledge):
+        """The form came straight here, past the choices."""
+        assert "Your pledge is saved." in text(client.get(online_url(donate_page, pledge)))
+
+    def test_stays_out_while_a_payment_may_be_paid(self, client, donate_page, pledge, office):
+        """Only paying online again folds away; paying another way is still a choice."""
+        pledge.start_payment("fakepay", live=False)
+
+        page = soup(client.get(online_url(donate_page, pledge)))
+
+        section = page.find(id="pay-another-way").parent
+        assert section is not None
+        assert section.find_parent("details") is None
+
+
+class TestAWayNotOffered:
+    def test_goes_back_to_the_choices(self, client, donate_page, pledge):
+        """No office address or phone: nowhere to pay in person."""
+        response = client.get(pay_url(donate_page, pledge, "in-person"))
+
+        assert response.status_code == 303
+        assert response["Location"] == pay_url(donate_page, pledge)
+
+    def test_online_with_no_provider_left_goes_back_to_the_choices(
+        self, client, donate_page, pledge, office, settings
+    ):
+        settings.PAYMENT_KEYS = {}
+
+        response = client.get(online_url(donate_page, pledge))
+
+        assert response["Location"] == pay_url(donate_page, pledge)
+
+    def test_still_shows_a_payment_it_may_have_taken(
+        self, client, donate_page, pledge, office, settings
+    ):
+        """The provider's keys removed while a payment may be paid: the check stays, without
+        buttons to pay again."""
+        payment = pledge.start_payment("fakepay", live=False)
+        settings.PAYMENT_KEYS = {}
+
+        response = client.get(online_url(donate_page, pledge))
+
+        assert response.status_code == 200
+        assert soup(response).find("a", href=return_url(donate_page, payment))
+        assert pay_buttons(response) == []
+        chooser = client.get(pay_url(donate_page, pledge))
+        assert chooser["Location"] == online_url(donate_page, pledge)
+
+
+class TestNotReadyYet:
+    def test_gives_the_pay_pages_link_to_copy(self, client, donate_page, pledge):
+        page = soup(client.get(pay_url(donate_page, pledge, "later")))
+
+        field = page.find("input", id="pay-link")
+        assert field["value"] == "http://testserver" + pay_url(donate_page, pledge)
+        assert field.has_attr("readonly")
+        assert page.find("button", attrs={"data-copy": "pay-link"}).get_text() == "Copy link"
+        assert page.find(attrs={"data-copy-status": "pay-link"})["role"] == "status"
+
+    def test_says_the_pledge_is_saved(self, client, donate_page, pledge):
+        assert "Your pledge is saved." in text(client.get(pay_url(donate_page, pledge, "later")))
+
+    def test_is_offered_even_with_no_way_to_pay(self, client, donate_page, pledge, settings):
+        """A link saved to pay later still works once the way it was for has gone."""
+        settings.PAYMENT_KEYS = {}
+
+        assert client.get(pay_url(donate_page, pledge, "later")).status_code == 200
+
+
+class TestPayPage:
+    def test_shows_the_gift(self, client, donate_page, pledge):
+        page = text(client.get(online_url(donate_page, pledge)))
+
+        assert "Rs 2,500" in page
+        assert "Flood relief" in page
 
     def test_a_gift_for_wherever_its_needed_most_says_so(self, client, donate_page, fake_provider):
         send_pledge(client, donate_page, appeal="")
 
-        page = text(client.get(pay_url(donate_page, Pledge.objects.get())))
+        page = text(client.get(online_url(donate_page, Pledge.objects.get())))
 
         assert "Wherever it's needed most" in page
 
     def test_a_monthly_gift_pays_this_months_gift(self, client, donate_page, fake_provider):
         send_pledge(client, donate_page, frequency="monthly")
 
-        page = text(client.get(pay_url(donate_page, Pledge.objects.get())))
+        page = text(client.get(online_url(donate_page, Pledge.objects.get())))
 
         assert "Rs 2,500 a month" in page
         assert "this month's gift" in page
 
     def test_offers_each_provider_set_up_here(self, client, donate_page, pledge):
-        response = client.get(pay_url(donate_page, pledge))
+        response = client.get(online_url(donate_page, pledge))
 
         form = soup(response).find("button", string="Pay with Fake Pay").find_parent("form")
         assert form["method"] == "post"
-        assert form["action"] == f"{pay_url(donate_page, pledge)}fakepay/"
+        assert form["action"] == f"{online_url(donate_page, pledge)}fakepay/"
         assert form.find("input", attrs={"name": "csrfmiddlewaretoken"})
 
     def test_names_whose_page_the_payer_will_pay_on(self, client, donate_page, pledge, settings):
         settings.PAYMENT_KEYS = {**settings.PAYMENT_KEYS, "KHALTI_SECRET_KEY": "test-key"}
 
-        page = text(client.get(pay_url(donate_page, pledge)))
+        page = text(client.get(online_url(donate_page, pledge)))
 
         assert "You'll pay on the secure page of Khalti or Fake Pay, then come back here." in page
 
     def test_never_shows_a_test_account(self, client, donate_page, pledge):
         """It pushed the pay buttons down, and handed anyone a way to make test payments: the
         team finds the test accounts in the docs instead."""
-        page = text(client.get(pay_url(donate_page, pledge)))
+        page = text(client.get(online_url(donate_page, pledge)))
 
         assert "9800000001" not in page  # FakePay's test account
 
     def test_says_when_no_money_moves(self, client, donate_page, pledge):
         """Before a charity goes live, a real supporter can reach this page: one sentence, so the
         buttons stay where they are."""
-        section = soup(client.get(pay_url(donate_page, pledge))).find(id="pay-online").parent
+        section = (
+            soup(client.get(online_url(donate_page, pledge))).find(class_="payment-options").parent
+        )
 
         assert "Online payments are in test mode here: no money will be taken." in " ".join(
             section.get_text().split()
@@ -164,32 +459,7 @@ class TestPayPage:
     def test_says_nothing_of_test_mode_once_live(self, client, donate_page, pledge, settings):
         settings.LIVE_PAYMENTS = True
 
-        assert "test mode" not in text(client.get(pay_url(donate_page, pledge)))
-
-    def test_is_kept_out_of_search_engines(self, client, donate_page, pledge):
-        robots = soup(client.get(pay_url(donate_page, pledge))).find(
-            "meta", attrs={"name": "robots"}
-        )
-
-        assert robots["content"] == "noindex"
-
-    def test_loads_the_donate_pages_stylesheet(self, client, donate_page, pledge):
-        links = soup(client.get(pay_url(donate_page, pledge))).find_all("link", rel="stylesheet")
-
-        assert any(link["href"].endswith("/donate.css") for link in links)
-
-    def test_stays_within_its_query_budget(
-        self, client, donate_page, pledge, django_assert_max_num_queries
-    ):
-        """What every page with a header spends (charity/tests/test_query_budgets.py), plus two:
-        the pledge with its appeal, and its payments."""
-        client.get(pay_url(donate_page, pledge))  # the first visit fills caches
-
-        with django_assert_max_num_queries(14):
-            client.get(pay_url(donate_page, pledge))
-
-    def test_an_unknown_pledge_isnt_found(self, client, donate_page, fake_provider):
-        assert client.get(f"{donate_page.url}pay/{uuid.uuid4()}/").status_code == 404
+        assert "test mode" not in text(client.get(online_url(donate_page, pledge)))
 
 
 class TestWhatScreenReadersHearFirst:
@@ -197,7 +467,7 @@ class TestWhatScreenReadersHearFirst:
     ready for donate.js to move focus to it, so it's the first thing read."""
 
     STATES = {
-        "ready": "Pay your gift",
+        "ready": "Pay online",
         "check first": "Check your payment",
         "failed": "Try paying again",
         "paid": "Thank you",
@@ -212,7 +482,7 @@ class TestWhatScreenReadersHearFirst:
                 pledge.start_payment("fakepay", live=False).record(Status.FAILED)
             elif state == "paid":
                 pledge.start_payment("fakepay", live=False).record(Status.PAID, "FAKE-1")
-            return soup(client.get(pay_url(donate_page, pledge)))
+            return soup(client.get(online_url(donate_page, pledge)))
 
         return page_in
 
@@ -232,28 +502,61 @@ class TestWhatScreenReadersHearFirst:
 
 
 class TestPayInPerson:
-    def test_gives_the_charitys_address_and_phone(self, client, site, donate_page, pledge):
-        site_settings = SiteSettings.for_site(site)
-        site_settings.phone = "+977 1-4567890"
-        site_settings.texts = [
-            SiteSettingsText(locale=Locale.get_default(), address="Ward 4\nThamel, Kathmandu")
+    """Only what happens at the counter: the site can't see a cash payment (#209)."""
+
+    def page(self, client, donate_page, pledge):
+        return soup(client.get(pay_url(donate_page, pledge, "in-person")))
+
+    def steps(self, page):
+        return [" ".join(step.get_text(" ", strip=True).split()) for step in page.ol.find_all("li")]
+
+    def test_lists_the_steps_at_the_counter(self, client, donate_page, pledge, office):
+        Pledge.objects.filter(pk=pledge.pk).update(number="482913")
+
+        steps = self.steps(self.page(client, donate_page, pledge))
+
+        assert steps == [
+            "Come to our office: Ward 4 Thamel, Kathmandu Call us before you come: +977 1-4567890",
+            "Pay in cash and give your pledge number, 482 913.",
+            "Ask for a receipt.",
         ]
-        site_settings.save()
 
-        section = soup(client.get(pay_url(donate_page, pledge))).find(id="pay-in-person").parent
+    def test_the_address_and_phone_are_marked_up_as_such(self, client, donate_page, pledge, office):
+        page = self.page(client, donate_page, pledge)
 
-        assert section.find("address").get_text(" ", strip=True) == "Ward 4 Thamel, Kathmandu"
-        assert section.find("a", href="tel:+97714567890").get_text() == "+977 1-4567890"
+        assert page.ol.find("address").get_text(" ", strip=True) == "Ward 4 Thamel, Kathmandu"
+        assert page.ol.find("a", href="tel:+97714567890").get_text() == "+977 1-4567890"
 
-    def test_without_them_says_well_be_in_touch(self, client, donate_page, pledge):
-        section = soup(client.get(pay_url(donate_page, pledge))).find(id="pay-in-person").parent
+    def test_with_only_a_phone_says_to_call_to_arrange_it(
+        self, client, donate_page, pledge, office
+    ):
+        office.texts = []
+        office.save()
 
-        assert "we'll contact you about how to pay" in section.get_text()
+        first = self.steps(self.page(client, donate_page, pledge))[0]
 
-    def test_can_finish_without_paying_online(self, client, donate_page, pledge):
-        section = soup(client.get(pay_url(donate_page, pledge))).find(id="pay-in-person").parent
+        assert first == "Call us to arrange paying: +977 1-4567890"
 
-        assert section.find("a", href=donate_page.url + "thank-you/")
+    def test_with_only_an_address_says_just_to_come(self, client, donate_page, pledge, office):
+        office.phone = ""
+        office.save()
+
+        first = self.steps(self.page(client, donate_page, pledge))[0]
+
+        assert first == "Come to our office: Ward 4 Thamel, Kathmandu"
+
+    def test_promises_nothing_the_site_cant_do(self, client, donate_page, pledge, office):
+        page = " ".join(self.page(client, donate_page, pledge).get_text().split())
+
+        assert "This page won't change after you pay: your receipt is your record." in page
+        assert "There's nothing more to do here." in page
+        assert "email" not in page.lower()
+        assert "mark" not in page.lower()
+
+    def test_ends_with_the_appeals(self, client, donate_page, pledge, office):
+        page = self.page(client, donate_page, pledge)
+
+        assert page.find("a", string="See all our appeals")["href"] == "/appeals/"
 
 
 class TestStartingAPayment:
@@ -328,7 +631,7 @@ class TestStartingAPayment:
 
         response = client.get(go)
 
-        assert response["Location"] == pay_url(donate_page, pledge)
+        assert response["Location"] == online_url(donate_page, pledge)
 
     def test_once_paid_another_way_the_providers_form_isnt_sent_again(
         self, client, donate_page, pledge, fake_provider
@@ -342,7 +645,7 @@ class TestStartingAPayment:
         response = client.get(go)
 
         assert response.status_code == 303
-        assert response["Location"] == pay_url(donate_page, pledge)
+        assert response["Location"] == online_url(donate_page, pledge)
 
     def test_money_received_for_an_older_amount_isnt_asked_for_again(
         self, client, donate_page, pledge
@@ -353,7 +656,7 @@ class TestStartingAPayment:
 
         response = start(client, donate_page, pledge)
 
-        assert response["Location"] == pay_url(donate_page, pledge)
+        assert response["Location"] == online_url(donate_page, pledge)
         assert Payment.objects.count() == 1
 
     def test_a_second_tap_goes_back_to_the_same_attempt(
@@ -414,7 +717,7 @@ class TestStartingAPayment:
         assert len(fake_provider.started) == 1
 
     def test_only_by_sending_the_form(self, client, donate_page, pledge):
-        response = client.get(f"{pay_url(donate_page, pledge)}fakepay/")
+        response = client.get(f"{online_url(donate_page, pledge)}fakepay/")
 
         assert response.status_code == 405
         assert not Payment.objects.exists()
@@ -429,7 +732,7 @@ class TestStartingAPayment:
 
         response = start(client, donate_page, pledge)
 
-        assert response["Location"] == pay_url(donate_page, pledge)
+        assert response["Location"] == online_url(donate_page, pledge)
         assert Payment.objects.count() == 1
 
     def test_a_provider_that_cant_be_reached_lets_the_payer_try_again(
@@ -439,9 +742,9 @@ class TestStartingAPayment:
 
         response = start(client, donate_page, pledge)
 
-        assert response["Location"] == pay_url(donate_page, pledge)
+        assert response["Location"] == online_url(donate_page, pledge)
         assert Payment.objects.get().status == PaymentStatus.FAILED
-        page = client.get(pay_url(donate_page, pledge))
+        page = client.get(online_url(donate_page, pledge))
         assert "We couldn't reach Fake Pay just now. Try again in a few minutes." in text(page)
         assert "didn't go through" not in text(page)
         assert "Pay with Fake Pay" in pay_buttons(page)
@@ -496,11 +799,11 @@ class TestComingBack:
         response = client.get(return_url(donate_page, payment))
 
         assert response.status_code == 303
-        assert response["Location"] == pay_url(donate_page, pledge)
+        assert response["Location"] == online_url(donate_page, pledge)
         pledge.refresh_from_db()
         assert pledge.payment_status == PaymentStatus.PAID
         assert pledge.paid_at is not None
-        page = client.get(pay_url(donate_page, pledge))
+        page = client.get(online_url(donate_page, pledge))
         assert soup(page).find(class_="lead").get_text() == "Your gift of Rs 2,500 has reached us."
         assert "FAKE-123" in text(page)
         assert "test" not in text(page).lower()
@@ -512,7 +815,7 @@ class TestComingBack:
         """Not "has reached us": it hasn't."""
         client.get(return_url(donate_page, payment))
 
-        page = client.get(pay_url(donate_page, pledge))
+        page = client.get(online_url(donate_page, pledge))
 
         lead = soup(page).find(class_="lead").get_text()
         assert lead == "Test payment completed. No money was taken."
@@ -527,7 +830,7 @@ class TestComingBack:
         pledge = Pledge.objects.get()
         client.get(return_url(donate_page, pledge.start_payment("fakepay", live=True)))
 
-        page = client.get(pay_url(donate_page, pledge))
+        page = client.get(online_url(donate_page, pledge))
 
         assert soup(page).find(class_="lead").get_text() == (
             "This month's gift of Rs 2,500 has reached us. We'll be in touch about next month."
@@ -536,7 +839,7 @@ class TestComingBack:
     def test_thanks_lead_to_the_appeals(self, client, donate_page, pledge, payment):
         client.get(return_url(donate_page, payment))
 
-        page = soup(client.get(pay_url(donate_page, pledge)))
+        page = soup(client.get(online_url(donate_page, pledge)))
 
         assert page.find("a", string="See all our appeals")["href"] == "/appeals/"
 
@@ -547,7 +850,7 @@ class TestComingBack:
         CampaignIndexPage.objects.get().unpublish()
         client.get(return_url(donate_page, payment))
 
-        page = soup(client.get(pay_url(donate_page, pledge)))
+        page = soup(client.get(online_url(donate_page, pledge)))
 
         assert page.find("a", string="Back to the home page")["href"] == "/"
 
@@ -596,7 +899,7 @@ class TestComingBack:
 
         client.get(return_url(donate_page, payment))
 
-        page = client.get(pay_url(donate_page, pledge))
+        page = client.get(online_url(donate_page, pledge))
         assert "Fake Pay says your payment didn't go through." in text(page)
         assert "Pay with Fake Pay" in pay_buttons(page)
 
@@ -608,7 +911,7 @@ class TestComingBack:
         fake_provider.outcome = Outcome(Status.FAILED)
         client.get(return_url(donate_page, payment))
 
-        page = client.get(pay_url(donate_page, pledge))
+        page = client.get(online_url(donate_page, pledge))
 
         assert "no money was taken" not in text(page)
         assert "If money has left your account, don't pay again." in text(page)
@@ -648,9 +951,9 @@ class TestComingBack:
         """The provider was never reached, so this one is known."""
         fake_provider.failure = ProviderUnavailable("Fake Pay is down.")
         start(client, donate_page, pledge)
-        client.get(pay_url(donate_page, pledge))  # the one-off "couldn't reach" message
+        client.get(online_url(donate_page, pledge))  # the one-off "couldn't reach" message
 
-        page = client.get(pay_url(donate_page, pledge))
+        page = client.get(online_url(donate_page, pledge))
 
         assert "didn't go through, and no money was taken" in text(page)
         assert not soup(page).find("a", string=re.compile("Check my"))
@@ -666,7 +969,7 @@ class TestComingBack:
         client.get(return_url(donate_page, older))
 
         assert Pledge.objects.get().payment_status == PaymentStatus.WAITING
-        page = client.get(pay_url(donate_page, pledge))
+        page = client.get(online_url(donate_page, pledge))
         assert "didn't go through" not in text(page)
         assert soup(page).find("a", href=return_url(donate_page, newer))
 
@@ -677,7 +980,7 @@ class TestComingBack:
 
         response = client.get(return_url(donate_page, payment))
 
-        assert response["Location"] == pay_url(donate_page, pledge)
+        assert response["Location"] == online_url(donate_page, pledge)
         assert Payment.objects.get().status == PaymentStatus.WAITING
 
     @pytest.mark.parametrize(
@@ -706,10 +1009,10 @@ class TestComingBack:
         assert "If money has left your account, don't pay again" in text(page)
         message = soup(page).find(string=re.compile("don't pay again")).find_parent("div")
         assert message.find("a", href="tel:+97714567890")
-        assert found not in text(client.get(pay_url(donate_page, pledge)))
+        assert found not in text(client.get(online_url(donate_page, pledge)))
 
     def test_says_nothing_of_a_check_before_one(self, client, donate_page, pledge, payment):
-        page = text(client.get(pay_url(donate_page, pledge)))
+        page = text(client.get(online_url(donate_page, pledge)))
 
         assert "Did you finish paying with Fake Pay?" in page
         assert "don't pay again" not in page
@@ -753,7 +1056,7 @@ class TestComingBack:
 
         response = client.get(return_url(donate_page, payment))
 
-        assert response["Location"] == pay_url(donate_page, pledge)
+        assert response["Location"] == online_url(donate_page, pledge)
         assert Payment.objects.get().status == PaymentStatus.WAITING
         assert fake_provider.checked == []
         assert asked == []
@@ -761,7 +1064,7 @@ class TestComingBack:
     def test_a_payment_still_waiting_offers_a_check_before_paying_again(
         self, client, donate_page, pledge, payment
     ):
-        page = soup(client.get(pay_url(donate_page, pledge)))
+        page = soup(client.get(online_url(donate_page, pledge)))
 
         check = page.find("a", href=return_url(donate_page, payment))
         assert check.get_text(strip=True) == "Check my Fake Pay payment"
@@ -770,7 +1073,7 @@ class TestComingBack:
         self, client, donate_page, pledge, payment
     ):
         """Checking leads, so nobody pays twice; someone who didn't pay opens the pay buttons."""
-        page = soup(client.get(pay_url(donate_page, pledge)))
+        page = soup(client.get(online_url(donate_page, pledge)))
 
         check = page.find("a", href=return_url(donate_page, payment))
         folded = page.find("details")
@@ -781,7 +1084,7 @@ class TestComingBack:
         assert check in folded.find_all_previous("a")
 
     def test_with_nothing_to_check_the_pay_buttons_are_open(self, client, donate_page, pledge):
-        page = soup(client.get(pay_url(donate_page, pledge)))
+        page = soup(client.get(online_url(donate_page, pledge)))
 
         assert page.find("details") is None
         assert page.find("button", string="Pay with Fake Pay")
@@ -804,14 +1107,14 @@ class TestComingBack:
 
         client.get(return_url(donate_page, payment))
 
-        response = client.get(pay_url(donate_page, pledge))
+        response = client.get(online_url(donate_page, pledge))
         page = text(response)
         assert "has reached us" not in page
         # What was received, and no way to pay again: a person sorts out the difference.
         assert "We received Rs 2,500 from you by Fake Pay (reference FAKE-123)." in page
         assert "Our team will be in touch." in page
         assert pay_buttons(response) == []
-        assert soup(response).find(id="pay-in-person") is None
+        assert soup(response).find(class_="pay-ways") is None
 
     def test_an_unknown_payment_isnt_found(self, client, donate_page, fake_provider):
         assert client.get(f"{donate_page.url}payment/{uuid.uuid4()}/").status_code == 404

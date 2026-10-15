@@ -1,0 +1,13 @@
+{% extends "campaigns/pay/base.html" %}
+{% load i18n %}
+
+{% block pay_title %}{% translate "Pay your gift" %}{% endblock %}
+
+{% block pay %}
+    <h1>{% translate "Pay your gift" %}</h1>
+    {% include "campaigns/pay/includes/summary.html" %}
+    <section aria-labelledby="how-to-pay">
+        <h2 id="how-to-pay">{% translate "How would you like to pay?" %}</h2>
+        {% include "campaigns/pay/includes/way_links.html" with list=other_ways explain=True %}
+    </section>
+{% endblock %}
