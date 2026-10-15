@@ -232,7 +232,7 @@ table, an Add button when there are none, and each row opens its edit page. Each
 each language ("Fonepay (bank)"; a blank translation shows the main language's), an image, the
 **account name** exactly as the app shows it after scanning, and an optional account or wallet
 number for people who can't scan. Drag a row to put a code first. Only **Moderators** can add,
-change or remove them (`campaigns/migrations/0016_qr_and_confirm_permissions.py`): an editor who
+change or remove them (`campaigns/migrations/0014_qr_payments.py`): an editor who
 could change one would send gifts to another account. For the same reason the image is stored on
 the code, not in the image library, where an editor could replace it. It's re-saved on upload
 (`core/images.clean_image()`), in its own format, as one file of at most 1600px (to save and scan)

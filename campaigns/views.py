@@ -234,7 +234,7 @@ class PledgeViewSet(ModelViewSet):
 class QRCodeViewSet(SnippetViewSet):
     """The charity's QR codes, listed like any other records: an Add button when there are none,
     and each row opens its edit page. Only moderators have the permissions (see
-    0016_qr_and_confirm_permissions), so an editor never sees them. Wagtail's history for each
+    0014_qr_payments), so an editor never sees them. Wagtail's history for each
     code says who added, changed or removed it, and when. Drag a row to put a code first."""
 
     model = QRCode

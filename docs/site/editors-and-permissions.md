@@ -70,7 +70,7 @@ test database) gets the same permissions and nobody has to set them by hand:
   testimonials and site settings;
 - `news/migrations/0004_editor_and_moderator_permissions.py`: news categories;
 - `campaigns/migrations/0006_pledge_permissions.py`: viewing pledges;
-- `campaigns/migrations/0016_qr_and_confirm_permissions.py`: QR codes, and confirming payments;
+- `campaigns/migrations/0014_qr_payments.py`: QR codes, and confirming payments;
 - `core/migrations/0008_translation_permissions.py`: translating pages.
 
 **A new snippet or setting needs a migration like these, or editors can't see it in the admin.**
