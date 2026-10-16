@@ -15,8 +15,10 @@ from core.phone import normalise_mobile, phone_country_choices
 NEEDED_MOST = gettext_lazy("Wherever it's needed most")
 CHOOSE_AN_AMOUNT = gettext_lazy("Choose an amount or enter your own.")
 OTHER = "other"
-# The most a pledge can be for, and so the most the team can mark received for one.
-MAX_AMOUNT = 99_999_999
+# The most a pledge can be for, and so the most the team can mark received for one: more than
+# any gift made through a form (a bigger one is arranged with the charity), so a typing slip
+# like an extra zero is refused.
+MAX_AMOUNT = 999_999
 
 
 @dataclass(frozen=True)

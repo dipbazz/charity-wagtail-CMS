@@ -847,8 +847,11 @@ class TestTheMarkPaidForm:
 
         assert form.errors["received_on"] == ["It can't be before the pledge was sent."]
 
+    def test_takes_up_to_the_most_a_pledge_can_be(self, pledge):
+        assert self.form(pledge, timezone.localdate(), amount=999_999).is_valid()
+
     def test_refuses_an_amount_no_pledge_could_have(self, pledge):
-        form = self.form(pledge, timezone.localdate(), amount=50_000_000_000)
+        form = self.form(pledge, timezone.localdate(), amount=1_000_000)
 
         assert "amount" in form.errors
 

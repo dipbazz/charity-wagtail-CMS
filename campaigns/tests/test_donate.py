@@ -527,6 +527,17 @@ class TestOwnAmountInput:
 
         assert stored(donate_page).amount == stored_amount
 
+    def test_takes_up_to_999_999(self, client, donate_page):
+        pledge(client, donate_page, amount="other", other_amount="9,99,999")
+
+        assert stored(donate_page).amount == 999_999
+
+    def test_refuses_more_than_999_999(self, client, donate_page):
+        response = pledge(client, donate_page, amount="other", other_amount="10,00,000")
+
+        assert "less than or equal to 999999" in response.content.decode()
+        assert not Pledge.objects.exists()
+
     @pytest.mark.parametrize("typed", ["abc", "12.5"])
     def test_rejects_anything_but_a_whole_amount(self, client, donate_page, typed):
         response = pledge(client, donate_page, amount="other", other_amount=typed)

@@ -67,7 +67,9 @@ order:
 
 - **How much**: the page's suggested amounts (up to six) as large cards with what each pays for,
   and **Other amount**, which reveals **Your own amount**: a text box with a number keypad that
-  accepts "1,00,000" or "2500" (a number input would change the amount when scrolled over).
+  accepts "1,00,000" or "2500" (a number input would change the amount when scrolled over), up
+  to 999,999 (`MAX_AMOUNT`): a bigger gift is arranged with the charity, and an extra zero typed
+  by mistake is refused.
 - **How often**: one-off or monthly. **Monthly** reveals an optional **mobile number**, a country
   and a number, for a monthly reminder on WhatsApp or by text. It's checked and stored as an
   international number, and only numbers that can receive a message are accepted
@@ -295,7 +297,7 @@ page (`STATE_ROUTES`).
 actions on a QR payment, and only on one: **Mark as paid** takes the date received, the amount
 received and the reference from the statement (the supporter's transaction ID to start with), set
 once, as the payment becomes paid. The date can't be after today or before the pledge was sent (a
-Bikram Sambat year such as 2083 is refused), and the amount can't be more than a pledge can be. A different amount marks the pledge paid and makes the pay page
+Bikram Sambat year such as 2083 is refused), and the amount can't be more than a pledge can be (999,999). A different amount marks the pledge paid and makes the pay page
 say it received that amount. **Not found** fails the payment; it can still be marked paid later
 if it turns up. Each adds a step with who did it. eSewa and Khalti payments can't be marked by
 hand, and `Payment.ask()` returns nothing for a QR payment, so a scheduled check (#198) never
