@@ -1242,6 +1242,12 @@ class Payment(models.Model):
             return None
         return form
 
+    @property
+    def team_confirms(self):
+        """Whether the team, not a provider, says if it's paid: for templates, which can't call
+        is_team_confirmed()."""
+        return is_team_confirmed(self.method)
+
     def reached_provider(self):
         """Whether the provider started it, so the payer may have paid even after it's said to
         have failed (eSewa can say "not found" before "complete"). One that never started can't

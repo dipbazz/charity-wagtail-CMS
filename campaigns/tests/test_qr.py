@@ -16,6 +16,7 @@ from wagtail.models import Locale
 
 from campaigns.forms import MarkPaidForm
 from campaigns.models import Payment, PaymentStatus, Pledge, QRCode, QRCodeName, StepKind
+from campaigns.payments import TEAM_CONFIRMED
 from core.models import SiteSettings
 
 pytestmark = pytest.mark.django_db
@@ -901,6 +902,21 @@ class TestConfirmingInTheAdmin:
         assert "Not found" in moderators
         assert "TXN-8841" in editors
         assert "Mark as paid" not in editors
+
+    def test_any_method_the_team_confirms_gets_the_actions(
+        self, client, moderator, pledge, monkeypatch
+    ):
+        # Say a bank transfer, checked by hand like a QR payment.
+        monkeypatch.setitem(TEAM_CONFIRMED, "bank", "Bank transfer")
+        pledge.payments.create(
+            method="bank", amount=2500, currency="NPR", status=PaymentStatus.TO_CONFIRM, live=True
+        )
+        client.force_login(moderator)
+
+        html = client.get(reverse("pledges:inspect", args=[pledge.pk])).content.decode()
+
+        assert "Mark as paid" in html
+        assert "Not found" in html
 
     def test_to_confirm_is_listed_and_filterable(self, client, moderator, claimed):
         client.force_login(moderator)

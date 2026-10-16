@@ -36,7 +36,7 @@
             </dl>
 
             {# Only payments the team confirms, and only for people who may: eSewa and Khalti payments are never marked by hand. #}
-            {% if can_confirm and payment.method == "qr" and payment.status != "paid" %}
+            {% if can_confirm and payment.team_confirms and payment.status != "paid" %}
                 <form method="post" action="{% url 'pledges:mark_paid' object.pk payment.pk %}">
                     {% csrf_token %}
                     <h4>Mark as paid</h4>
