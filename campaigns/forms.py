@@ -5,6 +5,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.utils.translation import gettext, gettext_lazy
 
 from campaigns.models import Frequency, PaymentStatus, Pledge
@@ -14,6 +15,8 @@ from core.phone import normalise_mobile, phone_country_choices
 NEEDED_MOST = gettext_lazy("Wherever it's needed most")
 CHOOSE_AN_AMOUNT = gettext_lazy("Choose an amount or enter your own.")
 OTHER = "other"
+# The most a pledge can be for, and so the most the team can mark received for one.
+MAX_AMOUNT = 99_999_999
 
 
 @dataclass(frozen=True)
@@ -72,7 +75,7 @@ class PledgeForm(forms.ModelForm):
     # could pledge an amount they never meant. inputmode still brings up the number keypad.
     other_amount = WholeAmountField(
         required=False,
-        max_value=99_999_999,
+        max_value=MAX_AMOUNT,
         widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
     )
     phone_country = forms.ChoiceField(choices=phone_country_choices, label=gettext_lazy("Country"))
@@ -324,5 +327,19 @@ class MarkPaidForm(forms.Form):
     pledges are."""
 
     received_on = forms.DateField(label="Date received")
-    amount = forms.IntegerField(label="Amount received", min_value=1)
+    amount = forms.IntegerField(label="Amount received", min_value=1, max_value=MAX_AMOUNT)
     reference = forms.CharField(label="Reference from the statement", max_length=100, strip=True)
+
+    def __init__(self, *args, pledge, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pledge = pledge
+
+    def clean_received_on(self):
+        """Between the day the pledge was sent and today: a year typed from a Nepali statement
+        (2083 for 2026) would otherwise date the gift in the future."""
+        received_on = self.cleaned_data["received_on"]
+        if received_on > timezone.localdate():
+            raise ValidationError("It can't be after today.")
+        if received_on < timezone.localdate(self.pledge.created_at):
+            raise ValidationError("It can't be before the pledge was sent.")
+        return received_on

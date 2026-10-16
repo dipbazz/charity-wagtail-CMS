@@ -12,7 +12,7 @@ from wagtail.admin.views.generic import DeleteView, EditView, IndexView, Inspect
 from wagtail.admin.viewsets.model import ModelViewSet
 from wagtail.snippets.views.snippets import SnippetViewSet
 
-from campaigns.forms import MarkPaidForm
+from campaigns.forms import MAX_AMOUNT, MarkPaidForm
 from campaigns.models import Payment, Pledge, QRCode
 from core.exports import VisitorTextExportMixin
 
@@ -86,6 +86,7 @@ class PledgeInspectView(InspectView):
         context["payments"] = self.object.payments.prefetch_related("steps__by")
         context["can_confirm"] = self.request.user.has_perm(CONFIRM_PERMISSION)
         context["today"] = timezone.localdate()
+        context["max_amount"] = MAX_AMOUNT
         return context
 
 
@@ -139,7 +140,7 @@ class PledgeViewSet(ModelViewSet):
     @method_decorator(require_POST)
     def mark_paid_view(self, request, pk, payment_pk):
         payment = self.confirmable_payment(request, pk, payment_pk)
-        form = MarkPaidForm(request.POST)
+        form = MarkPaidForm(request.POST, pledge=payment.pledge)
         if not form.is_valid():
             problems = "; ".join(f"{name}: {', '.join(e)}" for name, e in form.errors.items())
             messages.error(request, f"Not marked paid. {problems}")

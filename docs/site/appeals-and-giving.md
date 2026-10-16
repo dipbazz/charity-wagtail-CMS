@@ -294,7 +294,8 @@ The choices send a pledge in To confirm or Not found to the QR page (`STATE_WAYS
 (`campaigns.confirm_payment`, given to Moderators; editors still only read pledges) sees two
 actions on a QR payment, and only on one: **Mark as paid** takes the date received, the amount
 received and the reference from the statement (the supporter's transaction ID to start with), set
-once, as the payment becomes paid. A different amount marks the pledge paid and makes the pay page
+once, as the payment becomes paid. The date can't be after today or before the pledge was sent (a
+Bikram Sambat year such as 2083 is refused), and the amount can't be more than a pledge can be. A different amount marks the pledge paid and makes the pay page
 say it received that amount. **Not found** fails the payment; it can still be marked paid later
 if it turns up. Each adds a step with who did it. eSewa and Khalti payments can't be marked by
 hand, and `Payment.ask()` returns nothing for a QR payment, so a scheduled check (#198) never

@@ -1,6 +1,7 @@
 """Paying a pledge by scanning the charity's own QR code (#197): the QR codes in the admin, the QR
 page and its states, "I've paid", and the team marking it paid or not found."""
 
+import datetime
 import io
 
 import pytest
@@ -12,6 +13,7 @@ from django.utils import timezone, translation
 from PIL import Image
 from wagtail.models import Locale
 
+from campaigns.forms import MarkPaidForm
 from campaigns.models import Payment, PaymentStatus, Pledge, QRCode, QRCodeName, StepKind
 from core.models import SiteSettings
 
@@ -780,6 +782,33 @@ class TestOnceThePaymentIsConfirmed:
             assert says in text(page), tail
 
 
+class TestTheMarkPaidForm:
+    def form(self, pledge, received_on, amount=2500):
+        return MarkPaidForm(
+            {"received_on": received_on, "amount": amount, "reference": "RBB-77"}, pledge=pledge
+        )
+
+    def test_takes_today_and_the_day_of_the_pledge(self, pledge):
+        assert self.form(pledge, timezone.localdate()).is_valid()
+        assert self.form(pledge, timezone.localdate(pledge.created_at)).is_valid()
+
+    def test_refuses_a_day_after_today(self, pledge):
+        # Say the year from a Nepali statement: 2083 in Bikram Sambat.
+        form = self.form(pledge, timezone.localdate().replace(year=2083))
+
+        assert form.errors["received_on"] == ["It can't be after today."]
+
+    def test_refuses_a_day_before_the_pledge(self, pledge):
+        form = self.form(pledge, timezone.localdate(pledge.created_at) - datetime.timedelta(1))
+
+        assert form.errors["received_on"] == ["It can't be before the pledge was sent."]
+
+    def test_refuses_an_amount_no_pledge_could_have(self, pledge):
+        form = self.form(pledge, timezone.localdate(), amount=50_000_000_000)
+
+        assert "amount" in form.errors
+
+
 class TestConfirmingInTheAdmin:
     @pytest.fixture
     def claimed(self, pledge, esewa_qr):
@@ -796,7 +825,7 @@ class TestConfirmingInTheAdmin:
 
         response = client.post(
             self.mark_paid_url(claimed),
-            {"received_on": "2026-10-15", "amount": "2500", "reference": "RBB-77"},
+            {"received_on": timezone.localdate(), "amount": "2500", "reference": "RBB-77"},
         )
 
         assert response.status_code == 302
