@@ -3,5 +3,11 @@
 # X-Forwarded-Proto, which Django trusts (SECURE_PROXY_SSL_HEADER in production settings).
 {$SITE_HOST} {
 	encode zstd gzip
+	# The largest request the site takes: the admin's images and documents are up to 10 MB, and a
+	# supporter's receipt 5 MB. Django writes an upload to a temporary file before any form checks
+	# its size, so without this one request to any form could fill the disk.
+	request_body {
+		max_size 12MB
+	}
 	reverse_proxy web:8000
 }

@@ -16,7 +16,10 @@ site on one Linux server (an AWS EC2 instance) with Docker Compose. Why one serv
   missing.
 - **`Caddyfile`**: Caddy answers on ports 80 and 443, gets and renews the HTTPS certificate itself
   (Let's Encrypt, falling back to ZeroSSL), redirects http to https, and sets `X-Forwarded-Proto`,
-  which Django trusts.
+  which Django trusts. It refuses a request over 12 MB (the admin's images and documents are up
+  to 10 MB, a receipt screenshot 5 MB): Django writes an upload to a temporary file before any
+  form checks its size, so without a limit one request could fill the disk. Any other host's web
+  server needs the same limit.
 - **Data** lives in `/srv/charity/data` on the server, mounted into the container at `/data`: the
   SQLite database, uploads, supporters' receipt screenshots (`receipts/`, readable by the
   container's user only) and the latest backup. It outlives the container, so rebuilding keeps

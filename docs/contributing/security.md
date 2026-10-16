@@ -114,8 +114,13 @@ public. The rules for it, and for any later upload from visitors:
 - **Deleted as soon as it's done its job:** when the payment is marked paid or not found, with
   its pledge, and after 30 days at most (`delete_old_receipts`, run by `backup.sh`). It's never
   backed up, so deleted means gone, as the privacy notice says.
-- **Accepted risk:** there's no limit on a request's size or on the storage as a whole, only the
-  5 MB per file, checked before the picture is decoded.
+- **No request can fill the disk:** Django writes an upload to a temporary file before a form
+  checks its size, so Caddy refuses any request over 12 MB, the most the admin's uploads need
+  ([Running the live site](../hosting.md)). Any other web server in front of the site needs the
+  same limit.
+- **Accepted risk:** there's no limit on how many receipts are sent or on the storage as a whole,
+  only 5 MB and 13 million pixels per file, both checked before the picture is decoded, and one
+  per payment.
 
 ## Production refuses to start half-configured
 
