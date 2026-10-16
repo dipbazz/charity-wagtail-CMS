@@ -81,6 +81,18 @@ class TestCleanImage:
 
         assert Image.open(io.BytesIO(files[0].read())).format == image_format
 
+    def test_saves_a_phone_cameras_jpeg_as_a_plain_jpeg(self):
+        # Many phone cameras add a second, smaller picture to each JPEG, which Pillow reads as MPO.
+        saved = io.BytesIO()
+        first, second = Image.new("RGB", (400, 300), "white"), Image.new("RGB", (40, 30))
+        first.save(saved, format="MPO", save_all=True, append_images=[second])
+        assert Image.open(io.BytesIO(saved.getvalue())).format == "MPO"
+
+        extension, files = clean_image(SimpleUploadedFile("photo.jpg", saved.getvalue()), (800,))
+
+        assert extension == "jpg"
+        assert Image.open(io.BytesIO(files[0].read())).format == "JPEG"
+
     def test_never_enlarges_a_small_image(self):
         _, files = clean_image(self.upload(size=(300, 300)), widths=(1600, 800))
 

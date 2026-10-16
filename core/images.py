@@ -26,6 +26,9 @@ def with_card_images(pages):
 # What a visitor or a moderator may upload straight to the server, outside the image library: the
 # formats browsers and phones all make, and nothing a viewer would have to run (SVG).
 UPLOAD_FORMATS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
+# Formats saved as another: a phone camera's JPEG often carries a second, smaller picture, which
+# Pillow reads as MPO. Only the first is kept.
+SAVED_AS = {"MPO": "JPEG"}
 # The file names those come with: a JPEG is as often called .jpeg as .jpg.
 UPLOAD_EXTENSIONS = ["jpg", "jpeg", "png", "webp"]
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
@@ -46,7 +49,7 @@ def clean_image(upload, widths):
         raise ValidationError(NOT_AN_IMAGE, code="invalid_image")
     try:
         with Image.open(upload) as opened:
-            image_format = opened.format
+            image_format = SAVED_AS.get(opened.format, opened.format)
             if image_format not in UPLOAD_FORMATS or (
                 opened.width * opened.height > MAX_UPLOAD_PIXELS
             ):
