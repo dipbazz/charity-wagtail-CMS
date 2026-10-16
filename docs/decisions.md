@@ -578,3 +578,33 @@ framework, and `valoris-payment-gateway` is for FastAPI and installs from GitHub
 - Keys aren't editable in the admin: whoever runs the server sets them, once per charity. A
   charity can't switch a provider on by itself.
 - Until it's published, the package's API can still change; after, others depend on it.
+
+## Checks before each commit with pre-commit
+
+**Status:** in use
+
+**Context**
+
+ruff is the quickest check CI runs, and running it by hand before each commit depended on
+remembering it. Commit subjects over 72 characters (the limit in
+[Contributing](contributing/index.md#commits)) were only noticed after committing. Both cost a CI
+round or an amended commit.
+
+**Decision**
+
+- **[pre-commit](https://pre-commit.com/)** for every contributor (dev dependency), set up once
+  per clone with `uv run pre-commit install`. `.pre-commit-config.yaml` runs `ruff check` and
+  `ruff format --check` on the staged Python files, and refuses a commit subject over 72
+  characters (git's own merge and revert subjects excepted).
+- **ruff through uv,** as a local hook, rather than the `ruff-pre-commit` repository, so the
+  version is the one in `uv.lock` and CI and the hook can never disagree.
+- CI keeps running ruff: the hook is skipped by `git commit --no-verify`, or a clone that never
+  installed it.
+
+A Claude Code hook was the alternative: the same checks, but only for commits Claude makes.
+
+**Consequences**
+
+- A commit takes a second or two longer, and a commit with a lint error is refused until it's
+  fixed.
+- pre-commit needs git 2.31 or newer for `pre-commit run --all-files`.

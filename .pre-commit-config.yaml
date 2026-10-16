@@ -1,0 +1,26 @@
+# Checks run before each commit: the quick part of CI, and the commit subject's length.
+# Set up once per clone with `uv run pre-commit install` (docs/getting-started/index.md).
+# ruff runs through uv, so it's the version in uv.lock, the same one CI runs.
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --no-sync ruff check --force-exclude
+        language: system
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff format --check
+        entry: uv run --no-sync ruff format --check --force-exclude
+        language: system
+        types_or: [python, pyi]
+      # Fails on a first line over 72 characters. Merge and revert subjects are git's own.
+      - id: commit-subject-length
+        name: commit subject is 72 characters or fewer
+        entry: '\A(?!Merge |Revert ")[^\r\n]{73,}'
+        language: pygrep
+        args: [--multiline]
+        stages: [commit-msg]
