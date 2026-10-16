@@ -42,9 +42,9 @@
     {% include "campaigns/pay/includes/summary.html" with copyable=True %}
     <p data-copy-hint hidden>{% translate "Tap the copy button to copy a detail, then paste it in your app." %}</p>
 
-    {# While the team is checking, or couldn't find a payment, the QR code is folded away so nobody pays twice by mistake. Paying another way stays open below. #}
-    {% if qr_codes %}
-        {% if state == "to-confirm" or state == "not-found" %}<details class="pay-again"><summary>{% translate "I didn't pay: scan the QR code" %}</summary>{% endif %}
+    {# While the team is checking a payment, nothing else can be paid. Once it couldn't find one, the QR code is folded away so nobody pays twice by mistake, and paying another way is open below. #}
+    {% if qr_codes and state != "to-confirm" %}
+        {% if state == "not-found" %}<details class="pay-again"><summary>{% translate "I didn't pay: scan the QR code" %}</summary>{% endif %}
         {# Go to step 2 sends the app chosen here (?code=), so step 2 starts with it chosen. #}
         <form class="qr-pay" method="get" action="{% routablepageurl page 'qr_paid' pledge.reference %}">
             <section class="qr-step" aria-labelledby="step-1-title">
@@ -120,7 +120,7 @@
                 <button class="button button-large" type="submit">{% translate "Go to step 2" %}</button>
             </section>
         </form>
-        {% if state == "to-confirm" or state == "not-found" %}</details>{% endif %}
+        {% if state == "not-found" %}</details>{% endif %}
     {% endif %}
 
     {% include "campaigns/pay/includes/other_ways.html" %}

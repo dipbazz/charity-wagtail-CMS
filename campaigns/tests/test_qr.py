@@ -572,15 +572,15 @@ class TestSayingIvePaid:
         assert "There's nothing more to do here." in text(page)
         assert "Checking your payment" in soup(page).title.get_text()
 
-    def test_the_qr_and_ive_paid_fold_away_while_to_confirm(
-        self, client, donate_page, pledge, esewa_qr
+    def test_no_way_to_pay_is_offered_while_to_confirm(
+        self, client, donate_page, pledge, esewa_qr, fake_provider
     ):
         say_paid(client, donate_page, pledge, esewa_qr)
 
         page = soup(client.get(qr_url(donate_page, pledge)))
 
-        fold = page.select_one("details.pay-again")
-        assert fold.select_one("form.qr-pay .qr-card")
+        assert page.select("details.pay-again, form.qr-pay, .qr-card") == []
+        assert "Pay another way" not in text_of(page)
 
     def test_the_pay_page_goes_to_it(self, client, donate_page, pledge, esewa_qr, site):
         say_paid(client, donate_page, pledge, esewa_qr)
@@ -669,15 +669,28 @@ class TestSayingIvePaid:
         assert response.status_code == 303
         assert pledge.payments.count() == 1
 
-    def test_the_online_page_folds_its_buttons_while_to_confirm(
+    @pytest.mark.parametrize("tail", ["online/", "in-person/", "later/"])
+    def test_every_other_ways_page_goes_to_it_while_to_confirm(
+        self, client, donate_page, pledge, esewa_qr, fake_provider, tail
+    ):
+        say_paid(client, donate_page, pledge, esewa_qr)
+
+        response = client.get(f"{donate_page.url}pay/{pledge.reference}/{tail}")
+
+        assert response.status_code == 303
+        assert response.url == qr_url(donate_page, pledge)
+
+    def test_no_online_payment_starts_while_to_confirm(
         self, client, donate_page, pledge, esewa_qr, fake_provider
     ):
         say_paid(client, donate_page, pledge, esewa_qr)
 
-        page = soup(client.get(f"{donate_page.url}pay/{pledge.reference}/online/"))
+        response = client.post(f"{donate_page.url}pay/{pledge.reference}/online/fakepay/")
 
-        assert page.select_one("details.pay-again form")
-        assert "You've told us you paid by scanning our QR code" in page.get_text()
+        assert response.status_code == 303
+        assert response.url == qr_url(donate_page, pledge)
+        assert list(pledge.payments.values_list("method", flat=True)) == ["qr"]
+        assert fake_provider.started == []
 
 
 class TestWhenTheTeamCouldntFindIt:

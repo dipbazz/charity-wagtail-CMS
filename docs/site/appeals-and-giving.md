@@ -273,14 +273,15 @@ conditional update (`Pledge.claim_paid()`), and creates the payment only if that
 two taps or two tabs make one payment. The payment's method is `qr` and it's always live: it's
 real money, so it's never shown as a test and can't be deleted. It keeps the code's name as it was
 (`qr_name`), so "by eSewa" survives the code being renamed or removed. A pledge that is already
-paid, or isn't in rupees, never makes one.
+paid, or isn't in rupees, never makes one, and one sent while an online attempt may be paid (Check
+your payment, say from a tab opened before it started) goes to the online page instead.
 
 **The pay page's states for QR:**
 
 | State | What the QR page shows |
 |---|---|
-| To confirm | "Thank you. You've told us you paid Rs 2,500 by eSewa on 15 October …", what they sent, the charity's phone, "There's nothing more to do here" and the appeals link. The QR and I've paid are folded under "I didn't pay: scan the QR code"; the online page folds its buttons too. **Pay another way** stays open. Title "Checking your payment" |
-| Not found | A problem message: "We haven't found your payment yet. If money has left your account, don't pay again", with the phone. The QR and I've paid are folded the same way |
+| To confirm | "Thank you. You've told us you paid Rs 2,500 by eSewa on 15 October …", what they sent, the charity's phone, "There's nothing more to do here" and the appeals link. Nothing else can be paid until the team marks it paid or not found: no QR, no **Pay another way**, and every other way's page and **Pay with** go to this page (`HELD`). Title "Checking your payment" |
+| Not found | A problem message: "We haven't found your payment yet. If money has left your account, don't pay again", with the phone. The QR and I've paid are folded under "I didn't pay: scan the QR code", and **Pay another way** is open |
 | Paid | Thanks, with the reference the team entered, on every pay address |
 | Received a different amount | "We received Rs 2,000 from you by eSewa." |
 

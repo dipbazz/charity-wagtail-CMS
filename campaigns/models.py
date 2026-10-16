@@ -281,9 +281,10 @@ STATE_WAYS = {
     "not-found": QR,
 }
 
-# The states in which every other way's page goes to that way's: an attempt may already have paid,
-# so nothing to pay with shows before checking it.
-HELD = ("check-first",)
+# The states in which every other way's page goes to that way's, and nothing else can be paid: an
+# online attempt may already have paid, or the team is checking a QR payment the supporter says
+# they made. Only once it's found or not can the pledge be paid another way.
+HELD = ("check-first", "to-confirm")
 
 # The states in which every pay page address says thank you.
 THANKED = ("paid", "received")
@@ -593,8 +594,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             "ways": ways,
             # The choices say it, and a way's page the form went straight to.
             "saved": way is None or ways == [way],
-            # Every other way, at the bottom of a way's page, then Not ready to pay yet.
-            "other_ways": [other for other in [*ways, LATER] if other != way],
+            # Every other way, at the bottom of a way's page, then Not ready to pay yet. None while
+            # the team checks a QR payment: nothing else is paid until it's found or not.
+            "other_ways": []
+            if state == "to-confirm"
+            else [other for other in [*ways, LATER] if other != way],
             "site_settings": site_settings,
             "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
             **WAY_NAMES,
@@ -645,6 +649,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         )
         if pledge.has_paid_payment():
             return self.redirect_to(request, "pay_online", pledge.reference)
+        state = pledge.pay_page_state()
+        if state in HELD and STATE_WAYS[state] != ONLINE:
+            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
         provider = provider_for(method)
         if provider is None or type(provider) not in providers_for(
             pledge.currency, Decimal(pledge.amount)

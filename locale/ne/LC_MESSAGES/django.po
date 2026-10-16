@@ -401,12 +401,6 @@ msgstr "मेरो %(provider)s भुक्तानी जाँच्नु
 msgid "Your payment didn't go through, and no money was taken. You can try again, or pay another way."
 msgstr "तपाईंको भुक्तानी पूरा भएन, र कुनै पैसा लिइएन। फेरि प्रयास गर्न, वा अर्को तरिकाले तिर्न सक्नुहुन्छ।"
 
-msgid "You've told us you paid by scanning our QR code. Our team will check it reaches us, so you don't need to pay again."
-msgstr "तपाईंले हाम्रो QR कोड स्क्यान गरेर भुक्तानी गरेको हामीलाई जानकारी गराउनुभएको छ। हाम्रो टोलीले यो हामीसम्म पुगेको जाँच्नेछ, त्यसैले फेरि भुक्तानी गर्नुपर्दैन।"
-
-msgid "See what you told us"
-msgstr "तपाईंले के जानकारी दिनुभएको थियो हेर्नुहोस्"
-
 #, python-format
 msgid "We asked %(provider)s just now, and it hasn't confirmed your payment yet."
 msgstr "हामीले भर्खरै %(provider)s सँग सोध्यौं, तर उसले तपाईंको भुक्तानी अझै पुष्टि गरेको छैन।"

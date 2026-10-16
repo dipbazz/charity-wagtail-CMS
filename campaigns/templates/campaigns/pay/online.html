@@ -21,12 +21,6 @@
                 <p>{% translate "Your payment didn't go through, and no money was taken. You can try again, or pay another way." %}</p>
             {% endif %}
         </div>
-    {% elif state == "to-confirm" %}
-        {# They've said they paid by QR: online isn't closed, but it comes after what they told us. #}
-        <div class="payment-message" tabindex="-1" data-focus-on-load>
-            <p>{% translate "You've told us you paid by scanning our QR code. Our team will check it reaches us, so you don't need to pay again." %}</p>
-            <p><a class="button" href="{% routablepageurl page 'pay_qr' pledge.reference %}">{% translate "See what you told us" %}</a></p>
-        </div>
     {% elif state == "check-first" %}
         <div class="payment-message" tabindex="-1" data-focus-on-load>
             {% if result == "checked" %}
@@ -50,7 +44,7 @@
     {% endif %}
 
     {# While an attempt may already be paid, checking it leads and paying again, online or another way, is folded away, so nobody pays twice by mistake. #}
-    {% if state == "check-first" or state == "to-confirm" %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
+    {% if state == "check-first" %}<details class="pay-again"><summary>{% translate "I didn't pay: choose a way to pay" %}</summary>{% endif %}
     {% if providers %}
         <section aria-label="{% translate 'Pay online' %}">
             {# One sentence, not a box: the buttons stay where they are, and no test account is given away. #}
@@ -68,5 +62,5 @@
         </section>
     {% endif %}
     {% include "campaigns/pay/includes/other_ways.html" %}
-    {% if state == "check-first" or state == "to-confirm" %}</details>{% endif %}
+    {% if state == "check-first" %}</details>{% endif %}
 {% endblock %}
