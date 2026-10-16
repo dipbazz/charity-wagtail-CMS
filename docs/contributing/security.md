@@ -102,10 +102,13 @@ public. The rules for it, and for any later upload from visitors:
 - **Re-saved before it's kept** (`clean_image()`, above), in the form, so a file that isn't a
   picture is refused with the form's other mistakes. One file per payment.
 - **Small enough to decode safely:** a file of a few KB can decode to a picture that fills the
-  server's memory (about 4 MB per million pixels while it's re-saved), so a receipt may be at
-  most 13 million pixels (`RECEIPT_MAX_PIXELS`): any phone's screenshot, or a 12.5 megapixel
-  photo. `clean_image()` checks that before decoding, and holds one copy of the picture at a
-  time. A moderator's QR card may be up to 40 million.
+  server's memory (about 4 MB per million pixels while it's re-saved), so a receipt may decode to
+  at most 13 million pixels (`RECEIPT_MAX_PIXELS`), checked before decoding. A PNG or WebP is
+  decoded whole, so that's any phone's screenshot. A JPEG is decoded straight to a half, a
+  quarter or an eighth of its size (Pillow's `draft()`), at least the 2000px it's saved at, so a
+  photo from any phone camera passes, and a 40 megapixel one takes under 80 MB. `clean_image()`
+  holds one copy of the picture at a time and keeps only the smaller copy. A moderator's QR card
+  may decode to up to 40 million.
 - **Kept where no address serves it:** `STORAGES["receipts"]` is `core.storage.PrivateStorage`,
   in `receipts/` beside `media/`, never inside it. It has no URL (`url()` raises), and only the
   site's own user can read its files. The one way to see a screenshot is the pledge's page in the
@@ -119,7 +122,7 @@ public. The rules for it, and for any later upload from visitors:
   ([Running the live site](../hosting.md)). Any other web server in front of the site needs the
   same limit.
 - **Accepted risk:** there's no limit on how many receipts are sent or on the storage as a whole,
-  only 5 MB and 13 million pixels per file, both checked before the picture is decoded, and one
+  only 5 MB and 13 million decoded pixels per file, both checked before the picture is decoded, and one
   per payment.
 
 ## Production refuses to start half-configured

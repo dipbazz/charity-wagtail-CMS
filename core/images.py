@@ -35,8 +35,8 @@ SAVED_AS = {"MPO": "JPEG"}
 UPLOAD_EXTENSIONS = ["jpg", "jpeg", "png", "webp"]
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 # A small file can still decode to a huge picture, which would fill the server's memory: each
-# million pixels takes about 4 MB while it's re-saved. A moderator's QR card may be a big scan; a
-# visitor's upload passes a lower limit of its own (`max_pixels`).
+# million pixels decoded takes about 4 MB while it's re-saved. The most a moderator's QR card may
+# decode to (a big scan); a visitor's upload passes a lower limit of its own (`max_pixels`).
 MAX_UPLOAD_PIXELS = 40_000_000
 NOT_AN_IMAGE = gettext_lazy("Upload a JPEG, PNG or WebP image of up to 5 MB.")
 TOO_MANY_PIXELS = gettext_lazy("This picture is too large: upload a smaller one.")
@@ -51,8 +51,12 @@ def clean_image(upload, widths, max_pixels=MAX_UPLOAD_PIXELS):
     PNG stays a lossless PNG) and never larger than the upload. Saving it afresh drops everything
     but the picture: location and camera details, and anything hidden in the file's other bytes.
     Raises `ValidationError` for a file that isn't a JPEG, PNG or WebP picture, is over 5 MB, or
-    decodes to more than `max_pixels`. It holds one decoded copy at a time: turned upright in
-    place, then made smaller in place, largest width first.
+    decodes to more than `max_pixels`. Only the smaller copies are kept, never the upload.
+
+    It holds one decoded copy at a time: turned upright in place, then made smaller in place,
+    largest width first. A JPEG is decoded straight to a half, a quarter or an eighth of its size
+    (at least the largest width, and under twice it), so a big photo is never held whole and
+    passes a limit its full size wouldn't. A PNG or WebP can only be decoded whole.
     """
     if upload.size > MAX_UPLOAD_BYTES:
         raise ValidationError(NOT_AN_IMAGE, code="invalid_image")
@@ -63,6 +67,11 @@ def clean_image(upload, widths, max_pixels=MAX_UPLOAD_PIXELS):
         image_format = SAVED_AS.get(picture.format, picture.format)
         if image_format not in UPLOAD_FORMATS:
             raise ValidationError(NOT_AN_IMAGE, code="invalid_image")
+        # Only a JPEG's reader can do this; it sets the size it will decode to.
+        scale = max(widths) / max(picture.size)
+        if scale < 1:
+            fitted = (max(1, round(picture.width * scale)), max(1, round(picture.height * scale)))
+            picture.draft(None, fitted)
         if picture.width * picture.height > max_pixels:
             raise ValidationError(TOO_MANY_PIXELS, code="too_many_pixels")
         picture.load()  # decodes it all, so a cut-off or disguised file fails here

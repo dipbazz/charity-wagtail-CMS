@@ -1206,9 +1206,10 @@ class Pledge(models.Model):
 # A receipt screenshot's longest side as saved: a phone's whole screen, its small print still
 # readable.
 RECEIPT_WIDTH = 2000
-# The most a receipt may decode to: any phone's screenshot, or a photo from a 12.5 megapixel
-# camera. Anyone can send one, so a bigger picture (up to about 4 MB of memory per million
-# pixels while it's re-saved) could run the server out of memory.
+# The most a receipt may decode to: any phone's screenshot. A photo from any phone camera passes
+# too, as a JPEG is decoded straight to about RECEIPT_WIDTH. Anyone can send one, so a bigger
+# picture (about 4 MB of memory per million pixels while it's re-saved) could run the server out
+# of memory.
 RECEIPT_MAX_PIXELS = 13_000_000
 # The longest a screenshot is kept when nobody has checked its payment (delete_old_receipts).
 RECEIPTS_KEPT_FOR = datetime.timedelta(days=30)

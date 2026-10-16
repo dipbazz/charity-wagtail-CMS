@@ -119,12 +119,19 @@ class TestSendingIt:
         )
         assert pledge.payments.count() == 0
 
-    def test_takes_a_photo_from_a_phone_camera(self, client, donate_page, pledge, esewa_qr):
-        upload = screenshot("JPEG", name="photo.jpg", size=(4080, 3072))  # 12.5 megapixels
+    @pytest.mark.parametrize(
+        "size",
+        [(4608, 3456), (5712, 4284)],
+        ids=["16-megapixel camera", "iPhone's 24 megapixels"],
+    )
+    def test_takes_a_photo_from_any_phone_camera(self, client, donate_page, pledge, esewa_qr, size):
+        upload = screenshot("JPEG", name="photo.jpg", size=size)
 
         say_paid(client, donate_page, pledge, esewa_qr, receipt=upload)
 
-        assert pledge.payments.get().receipt
+        # Only the smaller copy is kept, never the photo as it came.
+        receipt = pledge.payments.get().receipt
+        assert Image.open(receipt).size == (2000, round(2000 * size[1] / size[0]))
 
     def test_is_saved_afresh_under_a_name_of_our_own(self, client, donate_page, pledge, esewa_qr):
         upload = screenshot("JPEG", name="sita-sharma-receipt.jpg", size=(1440, 3200))

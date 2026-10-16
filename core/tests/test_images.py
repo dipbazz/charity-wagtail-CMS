@@ -128,6 +128,15 @@ class TestCleanImage:
 
         assert Image.open(io.BytesIO(files[0].read())).size == (200, 400)
 
+    def test_turns_a_sideways_photo_upright_when_decoded_smaller(self):
+        exif = Image.Exif()
+        exif[0x0112] = 6
+        photo = self.upload("JPEG", size=(4000, 2000), exif=exif.tobytes())
+
+        _, files = clean_image(photo, widths=(1000,))
+
+        assert Image.open(io.BytesIO(files[0].read())).size == (500, 1000)
+
     @pytest.mark.parametrize(
         "upload",
         [
@@ -171,6 +180,23 @@ class TestCleanImage:
             clean_image(upload, widths=(800,), max_pixels=3_000_000)
 
         assert refused.value.messages == ["This picture is too large: upload a smaller one."]
+
+    def test_decodes_a_big_jpeg_straight_to_a_smaller_size(self):
+        # Only what's decoded counts: a JPEG is read at about the size it's saved at, a PNG whole.
+        photo = self.upload("JPEG", size=(4000, 4000), mode="L")
+        screenshot = self.upload("PNG", size=(4000, 4000), mode="L")
+
+        _, files = clean_image(photo, widths=(2000,), max_pixels=5_000_000)
+        with pytest.raises(ValidationError):
+            clean_image(screenshot, widths=(2000,), max_pixels=5_000_000)
+
+        assert Image.open(io.BytesIO(files[0].read())).size == (2000, 2000)
+
+    def test_refuses_a_jpeg_that_is_cut_off(self):
+        whole = self.upload("JPEG", size=(4000, 3000)).read()
+
+        with pytest.raises(ValidationError):
+            clean_image(SimpleUploadedFile("photo.jpg", whole[: len(whole) // 2]), (2000,))
 
     def test_returns_each_width_in_the_order_asked(self):
         _, files = clean_image(self.upload(size=(2400, 1200)), widths=(800, 1600))
