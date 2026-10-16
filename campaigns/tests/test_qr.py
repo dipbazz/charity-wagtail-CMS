@@ -169,6 +169,26 @@ class TestClaimingPaid:
 
         assert pledge.claim_paid(esewa_qr, "TXN-8841") is None
 
+    def test_keeps_the_name_in_the_sites_main_language(self, pledge, esewa_qr):
+        # The team reads it in the admin and exports, whichever language the supporter read in.
+        nepali, _ = Locale.objects.get_or_create(language_code="ne")
+        QRCodeName.objects.create(code=esewa_qr, locale=nepali, name="इसेवा")
+
+        with translation.override("ne"):
+            payment = pledge.claim_paid(QRCode.objects.get(pk=esewa_qr.pk), "TXN-8841")
+
+        assert payment.qr_name == "eSewa"
+
+    def test_keeps_a_name_only_written_in_another_language(self, pledge):
+        nepali, _ = Locale.objects.get_or_create(language_code="ne")
+        code = QRCode.objects.create(image=card(), account_name="BRIGHTWELL WATER")
+        QRCodeName.objects.create(code=code, locale=nepali, name="इसेवा")
+
+        with translation.override("ne"):
+            payment = pledge.claim_paid(QRCode.objects.get(pk=code.pk), "TXN-8841")
+
+        assert payment.qr_name == "इसेवा"
+
     def test_keeps_the_codes_name_once_it_is_removed(self, pledge, esewa_qr):
         payment = pledge.claim_paid(esewa_qr, "TXN-8841")
 
@@ -606,6 +626,17 @@ class TestSayingIvePaid:
 
         assert page.select("details.pay-again, form.qr-pay, .qr-card") == []
         assert "Pay another way" not in text_of(page)
+
+    def test_thanks_names_the_code_in_the_readers_language(
+        self, client, donate_page, nepali_home_page, esewa_qr
+    ):
+        nepali_page = donate_page.copy_for_translation(nepali_home_page.locale)
+        nepali_page.save_revision().publish()
+        QRCodeName.objects.create(code=esewa_qr, locale=nepali_home_page.locale, name="इसेवा")
+        pledge = Pledge.objects.create(page=nepali_page, amount=2500, currency="NPR", name="Sita")
+        say_paid(client, nepali_page, pledge, esewa_qr)
+
+        assert "इसेवा" in text(client.get(qr_url(nepali_page, pledge)))
 
     def test_the_pay_page_goes_to_it(self, client, donate_page, pledge, esewa_qr, site):
         say_paid(client, donate_page, pledge, esewa_qr)

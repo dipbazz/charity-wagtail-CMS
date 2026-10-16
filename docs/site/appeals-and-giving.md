@@ -272,7 +272,9 @@ away (see the states below). Not found ticks nothing.
 conditional update (`Pledge.claim_paid()`), and creates the payment only if that changed a row, so
 two taps or two tabs make one payment. The payment's method is `qr` and it's always live: it's
 real money, so it's never shown as a test and can't be deleted. It keeps the code's name as it was
-(`qr_name`), so "by eSewa" survives the code being renamed or removed. A pledge that is already
+(`qr_name`), in the site's main language whichever language the supporter read in, so the team
+always reads the same name and "by eSewa" survives the code being renamed or removed. The QR page
+names the code in the reader's language while it still exists. A pledge that is already
 paid, or isn't in rupees, never makes one, and one sent while an online attempt may be paid (Check
 your payment, say from a tab opened before it started) goes to the online page instead.
 

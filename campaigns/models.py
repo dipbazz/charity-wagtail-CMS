@@ -16,7 +16,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.http import Http404, HttpResponseNotAllowed, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.utils.cache import add_never_cache_headers
 from django.utils.translation import gettext, gettext_lazy
 from modelcluster.fields import ParentalKey
@@ -50,6 +50,7 @@ from campaigns.payments import (
 )
 from core.blocks import BaseStreamBlock
 from core.images import UPLOAD_EXTENSIONS, check_upload, clean_image, with_card_images
+from core.languages import main_language
 from core.models import (
     SiteSettings,
     SocialMetaMixin,
@@ -626,6 +627,13 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             context |= {
                 "qr_codes": qr_codes,
                 "claimed": claimed,
+                # In the reader's language while the code is still there; the kept name, in the
+                # site's main language, once it isn't.
+                "claimed_name": claimed
+                and next(
+                    (code.name for code in qr_codes if code.pk == claimed.qr_code_id),
+                    claimed.qr_name,
+                ),
                 # Step 1's Go to step 2 says which code they chose, if it's one on the page.
                 "paid_form": paid_form
                 or QRPaidForm(codes=qr_codes, initial=chosen_code(request, qr_codes)),
@@ -1126,7 +1134,11 @@ class Pledge(models.Model):
         failed any more (a second tap, another tab, or paid since), so only one claim makes one.
 
         A conditional update, not a read then a save: two sends at once can't both change it.
+        The code's name is kept in the site's main language, which the team reads, whichever
+        language the supporter read in (or theirs, if it has no name in the main one).
         """
+        with translation.override(main_language()):
+            qr_name = code.name
         with transaction.atomic():
             changed = Pledge.objects.filter(
                 pk=self.pk, payment_status__in=[PaymentStatus.WAITING, PaymentStatus.FAILED]
@@ -1142,7 +1154,7 @@ class Pledge(models.Model):
                 # be deleted.
                 live=True,
                 qr_code=code,
-                qr_name=code.name,
+                qr_name=qr_name or code.name,
                 supporters_reference=transaction_id,
             )
             payment.add_step(StepKind.CLAIMED)

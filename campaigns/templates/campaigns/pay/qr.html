@@ -12,7 +12,7 @@
     {# What became of paying first: donate.js moves focus to it. #}
     {% if state == "to-confirm" %}
         <div class="payment-message" tabindex="-1" data-focus-on-load>
-            <p>{% blocktranslate with amount=claimed.display_amount name=claimed.qr_name date=claimed.created_at|date:"DATE_FORMAT" %}Thank you. You've told us you paid {{ amount }} by {{ name }} on {{ date }}. Our team will check it reaches us and mark your gift received.{% endblocktranslate %}</p>
+            <p>{% blocktranslate with amount=claimed.display_amount name=claimed_name date=claimed.created_at|date:"DATE_FORMAT" %}Thank you. You've told us you paid {{ amount }} by {{ name }} on {{ date }}. Our team will check it reaches us and mark your gift received.{% endblocktranslate %}</p>
             {% if claimed.supporters_reference %}<p>{% blocktranslate with id=claimed.supporters_reference %}You sent us the transaction ID {{ id }}.{% endblocktranslate %}</p>{% endif %}
             {% if site_settings.phone %}
                 <p>{% translate "Questions? Call us:" %}</p>
