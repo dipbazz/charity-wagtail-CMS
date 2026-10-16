@@ -6,6 +6,7 @@ import io
 import pytest
 from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone, translation
 from PIL import Image
@@ -84,22 +85,46 @@ class TestQRCodeImages:
 
         assert "my-secret-name" not in code.image.name
 
-    def test_replacing_the_image_removes_the_old_files(self, esewa_qr):
+    def test_replacing_the_image_removes_the_old_files(
+        self, esewa_qr, django_capture_on_commit_callbacks
+    ):
         old = {esewa_qr.image.name, esewa_qr.image_small.name}
 
-        esewa_qr.image = card("JPEG", "new.jpg")
-        esewa_qr.save()
+        with django_capture_on_commit_callbacks(execute=True):
+            esewa_qr.image = card("JPEG", "new.jpg")
+            esewa_qr.save()
 
         storage = esewa_qr.image.storage
         assert not any(storage.exists(name) for name in old)
         assert storage.exists(esewa_qr.image.name)
 
-    def test_removing_the_code_removes_both_files(self, esewa_qr):
+    def test_removing_the_code_removes_both_files(
+        self, esewa_qr, django_capture_on_commit_callbacks
+    ):
         names = {esewa_qr.image.name, esewa_qr.image_small.name}
 
-        esewa_qr.delete()
+        with django_capture_on_commit_callbacks(execute=True):
+            esewa_qr.delete()
 
         assert not any(esewa_qr.image.storage.exists(name) for name in names)
+
+    @pytest.mark.parametrize("change", ["replace", "delete"])
+    def test_a_change_undone_keeps_the_files_the_code_points_at(
+        self, esewa_qr, django_capture_on_commit_callbacks, change
+    ):
+        # Say Wagtail's history entry fails after the save: the code still points at these.
+        names = {esewa_qr.image.name, esewa_qr.image_small.name}
+
+        with django_capture_on_commit_callbacks(execute=True):
+            with pytest.raises(RuntimeError), transaction.atomic():
+                if change == "replace":
+                    esewa_qr.image = card("JPEG", "new.jpg")
+                    esewa_qr.save()
+                else:
+                    esewa_qr.delete()
+                raise RuntimeError
+
+        assert all(esewa_qr.image.storage.exists(name) for name in names)
 
     def test_saving_again_without_a_new_image_keeps_the_files(self, esewa_qr):
         name = QRCode.objects.get(pk=esewa_qr.pk).image.name

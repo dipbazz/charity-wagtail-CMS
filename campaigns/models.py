@@ -887,16 +887,23 @@ class QRCode(TextInEachLanguageMixin, ClusterableModel, Orderable):
             self.image.save(f"{name}.{extension}", large, save=False)
             self.image_small.save(f"{name}-small.{extension}", small, save=False)
         super().save(*args, **kwargs)
-        for name in previous - {self.image.name, self.image_small.name}:
-            self.image.storage.delete(name)
+        delete_files_once_saved(
+            self.image.storage, previous - {self.image.name, self.image_small.name}
+        )
+
+
+def delete_files_once_saved(storage, names):
+    """Deletes the files once the change that left them behind is saved for good: undone, the
+    code still points at them, and the pay page would show a broken QR."""
+    if names:
+        transaction.on_commit(lambda: [storage.delete(name) for name in names])
 
 
 @receiver(post_delete, sender=QRCode)
 def delete_qr_code_images(sender, instance, **kwargs):
     """A removed QR leaves nothing behind that could still be fetched."""
-    for field in (instance.image, instance.image_small):
-        if field.name:
-            field.storage.delete(field.name)
+    names = {field.name for field in (instance.image, instance.image_small) if field.name}
+    delete_files_once_saved(instance.image.storage, names)
 
 
 class QRCodeName(TextInEachLanguage):
