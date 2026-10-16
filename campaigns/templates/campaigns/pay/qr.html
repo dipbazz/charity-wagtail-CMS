@@ -17,11 +17,9 @@
         </div>
     {% endif %}
 
-    {# Step 1 of two pages. While the QR code is folded away there's no step to go to, so they're plain text. #}
-    {% if state == "not-found" %}
-        {% include "campaigns/pay/includes/qr_steps.html" %}
-    {% else %}
-        {% include "campaigns/pay/includes/qr_steps.html" with current=1 linked=True %}
+    {# Step 1 of two pages. Once the QR code is folded away, the steps fold away with it. #}
+    {% if state != "not-found" %}
+        {% include "campaigns/pay/includes/qr_steps.html" with current=1 %}
     {% endif %}
 
     {% include "campaigns/pay/includes/summary.html" with copyable=True %}
@@ -29,7 +27,10 @@
 
     {# Once the team couldn't find a payment, the QR code is folded away so nobody pays twice by mistake, and paying another way is open below. #}
     {% if qr_codes %}
-        {% if state == "not-found" %}<details class="pay-again"><summary>{% translate "I didn't pay: scan the QR code" %}</summary>{% endif %}
+        {% if state == "not-found" %}
+            <details class="pay-again"><summary>{% translate "I didn't pay: scan the QR code" %}</summary>
+            {% include "campaigns/pay/includes/qr_steps.html" with current=1 %}
+        {% endif %}
         {# Go to step 2 sends the app chosen here (?code=), so step 2 starts with it chosen. #}
         <form class="qr-pay" method="get" action="{% routablepageurl page 'qr_paid' pledge.reference %}">
             <section class="qr-step" aria-labelledby="step-1-title">

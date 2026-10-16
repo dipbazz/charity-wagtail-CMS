@@ -95,11 +95,17 @@ def pay_pages(demo_site, settings):
         )
         claimed.claim_paid(QRCode.objects.first(), "TXN-8841")
         paths.append(f"{donate_page.url}pay/{claimed.reference}/checking/")
+        # The QR page once the team couldn't find it, with the QR code and its steps folded away.
+        not_found = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        not_found.claim_paid(QRCode.objects.first(), "TXN-8842").mark_not_found(by=None)
+        paths.append(f"{donate_page.url}pay/{not_found.reference}/qr/")
     return paths
 
 
 def test_each_pay_page_fits_and_can_be_tapped_at_every_width(site_page, pay_pages):
-    assert len(pay_pages) == 14  # in both languages
+    assert len(pay_pages) == 16  # in both languages
     problems = []
     for path in pay_pages:
         problems += [f"{path} {item}" for item in layout_problems(site_page, path)]

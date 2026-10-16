@@ -564,6 +564,22 @@ class TestTheTwoSteps:
 
         assert page.select_one("form.qr-paid input[name=transaction_id]")
 
+    def test_the_steps_fold_away_with_the_qr_code_when_the_team_couldnt_find_it(
+        self, client, donate_page, pledge, esewa_qr, django_user_model
+    ):
+        pledge.claim_paid(esewa_qr, "TXN-8841").mark_not_found(
+            django_user_model.objects.create_user(username="ram")
+        )
+
+        page = soup(client.get(qr_url(donate_page, pledge)))
+
+        fold = page.select_one("details.pay-again")
+        assert page.select("ol.qr-progress") == fold.select("ol.qr-progress")
+        nav = fold.select_one("nav[aria-label=Steps]")
+        here = nav.select_one("[aria-current=step]")
+        assert here.get_text(strip=True).lstrip("12") == "Scan the QR code"
+        assert [a["href"] for a in nav.select("a")] == [qr_url(donate_page, pledge, "paid/")]
+
     def test_step_2_isnt_offered_without_codes(self, client, donate_page, pledge):
         response = client.get(qr_url(donate_page, pledge, "paid/"))
 

@@ -268,7 +268,8 @@ circle and `aria-current="step"`, the other is a link to its page.
   Once they've told us, this address goes to the checking page (below). Receipt screenshots
   come with #197's second part.
 
-While the QR code is folded away (Not found, below), the row is plain text.
+Once the QR code is folded away (Not found, below), the row folds away with it, so opening the
+fold shows step 1 as the current step and step 2 as a link, as on a new pledge.
 
 **"I've paid"** (`…/qr/paid/`) moves the pledge from waiting or failed to **To confirm** in one
 conditional update (`Pledge.claim_paid()`), and creates the payment only if that changed a row, so
