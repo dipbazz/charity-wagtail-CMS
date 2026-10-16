@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
 
-from campaigns.models import RECEIPT_WIDTH, Payment, PaymentStatus, Pledge
+from campaigns.models import RECEIPT_MAX_PIXELS, RECEIPT_WIDTH, Payment, PaymentStatus, Pledge
 from campaigns.tests.test_qr import checking_url, make_code, qr_url, soup, text
 
 pytestmark = pytest.mark.django_db
@@ -100,6 +100,31 @@ class TestSendingIt:
         assert alert.select_one("a[href='#id_receipt']")
         assert "Check the screenshot below." in alert.get_text()
         assert pledge.payments.count() == 0
+
+    def test_refuses_a_picture_bigger_than_a_phone_makes(
+        self, client, donate_page, pledge, esewa_qr
+    ):
+        # A few KB that would decode to a picture filling the server's memory.
+        saved = io.BytesIO()
+        side = int(RECEIPT_MAX_PIXELS**0.5) + 1
+        Image.new("1", (side, side), 1).save(saved, format="PNG")
+        upload = SimpleUploadedFile("receipt.png", saved.getvalue())
+
+        response = say_paid(client, donate_page, pledge, esewa_qr, "TXN-8841", upload)
+
+        assert response.status_code == 422
+        assert (
+            "This picture is too large: upload a smaller one."
+            in soup(response).select_one("#id_receipt_error").get_text()
+        )
+        assert pledge.payments.count() == 0
+
+    def test_takes_a_photo_from_a_phone_camera(self, client, donate_page, pledge, esewa_qr):
+        upload = screenshot("JPEG", name="photo.jpg", size=(4080, 3072))  # 12.5 megapixels
+
+        say_paid(client, donate_page, pledge, esewa_qr, receipt=upload)
+
+        assert pledge.payments.get().receipt
 
     def test_is_saved_afresh_under_a_name_of_our_own(self, client, donate_page, pledge, esewa_qr):
         upload = screenshot("JPEG", name="sita-sharma-receipt.jpg", size=(1440, 3200))

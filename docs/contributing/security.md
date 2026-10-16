@@ -101,6 +101,11 @@ public. The rules for it, and for any later upload from visitors:
 
 - **Re-saved before it's kept** (`clean_image()`, above), in the form, so a file that isn't a
   picture is refused with the form's other mistakes. One file per payment.
+- **Small enough to decode safely:** a file of a few KB can decode to a picture that fills the
+  server's memory (about 4 MB per million pixels while it's re-saved), so a receipt may be at
+  most 13 million pixels (`RECEIPT_MAX_PIXELS`): any phone's screenshot, or a 12.5 megapixel
+  photo. `clean_image()` checks that before decoding, and holds one copy of the picture at a
+  time. A moderator's QR card may be up to 40 million.
 - **Kept where no address serves it:** `STORAGES["receipts"]` is `core.storage.PrivateStorage`,
   in `receipts/` beside `media/`, never inside it. It has no URL (`url()` raises), and only the
   site's own user can read its files. The one way to see a screenshot is the pledge's page in the

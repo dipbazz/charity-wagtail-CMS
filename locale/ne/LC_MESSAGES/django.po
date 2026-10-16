@@ -1,11 +1,11 @@
 # Nepali text for the site's menus, buttons, forms and messages.
 # Same license as the project.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 22:44+0100\n"
+"POT-Creation-Date: 2026-10-16 23:24+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -649,6 +649,9 @@ msgstr "धन्यवाद, हामीले तपाईंको सन�
 
 msgid "Upload a JPEG, PNG or WebP image of up to 5 MB."
 msgstr "५ MB सम्मको JPEG, PNG वा WebP तस्बिर अपलोड गर्नुहोस्।"
+
+msgid "This picture is too large: upload a smaller one."
+msgstr "यो तस्बिर धेरै ठूलो छ: अझ सानो तस्बिर अपलोड गर्नुहोस्।"
 
 #, python-format
 msgid "Enter a mobile number, like %(example)s."

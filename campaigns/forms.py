@@ -8,7 +8,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.translation import gettext, gettext_lazy
 
-from campaigns.models import RECEIPT_WIDTH, Frequency, PaymentStatus, Pledge
+from campaigns.models import RECEIPT_MAX_PIXELS, RECEIPT_WIDTH, Frequency, PaymentStatus, Pledge
 from core.images import clean_image
 from core.money import CURRENCIES, format_money
 from core.phone import normalise_mobile, phone_country_choices
@@ -327,7 +327,7 @@ class QRPaidForm(forms.Form):
         upload = self.cleaned_data["receipt"]
         if not upload:
             return None
-        extension, (saved,) = clean_image(upload, (RECEIPT_WIDTH,))
+        extension, (saved,) = clean_image(upload, (RECEIPT_WIDTH,), RECEIPT_MAX_PIXELS)
         saved.name = f"{uuid.uuid4().hex}.{extension}"
         return saved
 

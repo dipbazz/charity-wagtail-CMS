@@ -151,3 +151,21 @@ class TestCleanImage:
 
         with pytest.raises(ValidationError):
             clean_image(huge, widths=(800,))
+
+    def test_refuses_more_pixels_than_the_caller_allows(self):
+        # A receipt allows far fewer than a QR card: a small file can decode to a picture that
+        # fills the server's memory.
+        upload = self.upload("PNG", size=(2000, 2000), mode="1")
+
+        with pytest.raises(ValidationError) as refused:
+            clean_image(upload, widths=(800,), max_pixels=3_000_000)
+
+        assert refused.value.messages == ["This picture is too large: upload a smaller one."]
+
+    def test_returns_each_width_in_the_order_asked(self):
+        _, files = clean_image(self.upload(size=(2400, 1200)), widths=(800, 1600))
+
+        assert [Image.open(io.BytesIO(file.read())).size for file in files] == [
+            (800, 400),
+            (1600, 800),
+        ]

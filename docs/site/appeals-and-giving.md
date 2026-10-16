@@ -266,7 +266,8 @@ circle and `aria-current="step"`, the other is a link to its page.
   receipt; copy the Transaction ID or Transaction code and paste it here; in Nepali too the ID
   keeps its English name, as the wallets' receipts are in English), and a **Screenshot of the
   receipt** (a JPEG, PNG or WebP image of up to 5 MB). Sending neither says "Enter the transaction
-  ID, or add a screenshot of the receipt"; a file that isn't such a picture is refused. Each error
+  ID, or add a screenshot of the receipt"; a file that isn't such a picture is refused, and so is
+  one of more than 13 million pixels ("This picture is too large"). Each error
   is under its field (the alert at the top links to each one; a file must be chosen again after a
   mistake), and **I've paid** says "Sending…" while it's sent. Once they've told us, this address
   goes to the checking page (below).
