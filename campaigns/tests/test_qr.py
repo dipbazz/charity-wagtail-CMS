@@ -7,7 +7,8 @@ import io
 import pytest
 from bs4 import BeautifulSoup
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import transaction
+from django.db import connection, transaction
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone, translation
 from PIL import Image
@@ -926,6 +927,21 @@ class TestQRCodesInTheAdmin:
 
         assert "BRIGHTWELL WATER" in html
         assert reverse("wagtailsnippets_campaigns_qrcode:edit", args=[esewa_qr.pk]) in html
+
+    def test_the_list_costs_the_same_however_many_codes(self, client, moderator, esewa_qr):
+        client.force_login(moderator)
+        url = reverse("wagtailsnippets_campaigns_qrcode:list")
+        client.get(url)  # the first request warms Wagtail's caches
+
+        with CaptureQueriesContext(connection) as one:
+            client.get(url)
+        make_code("Fonepay (bank)")
+        make_code("Khalti")
+        with CaptureQueriesContext(connection) as three:
+            html = client.get(url).content.decode()
+
+        assert len(three) == len(one)
+        assert "Fonepay (bank)" in html and "Khalti" in html
 
     def test_an_editor_cant_open_them(self, client, editor, esewa_qr):
         client.force_login(editor)

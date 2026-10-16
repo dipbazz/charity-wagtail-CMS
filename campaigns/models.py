@@ -870,7 +870,14 @@ class QRCode(TextInEachLanguageMixin, ClusterableModel, Orderable):
         any, and how many), one query, and the codes can't be named. The names are attached by
         hand: Prefetch gave every code of a cluster the last one's."""
         codes = list(cls.objects.all())
-        if codes and names:
+        return cls.with_names(codes) if names else codes
+
+    @staticmethod
+    def with_names(codes):
+        """The codes, each with its names in every language: one query, none when there are no
+        codes, so a list of them costs the same however long it is."""
+        codes = list(codes)
+        if codes:
             by_code = {code.pk: {} for code in codes}
             for text in QRCodeName.objects.filter(code__in=codes).select_related("locale"):
                 by_code[text.code_id][text.locale.language_code] = text

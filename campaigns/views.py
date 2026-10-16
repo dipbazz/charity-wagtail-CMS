@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 from wagtail.admin.ui.tables import Column
 from wagtail.admin.views.generic import DeleteView, EditView, IndexView, InspectView
 from wagtail.admin.viewsets.model import ModelViewSet
+from wagtail.snippets.views.snippets import IndexView as SnippetIndexView
 from wagtail.snippets.views.snippets import SnippetViewSet
 
 from campaigns.forms import MAX_AMOUNT, MarkPaidForm
@@ -232,6 +233,12 @@ class PledgeViewSet(ModelViewSet):
     export_filename = "pledges"
 
 
+class QRCodeIndexView(SnippetIndexView):
+    def get_table(self, object_list):
+        # Each row's name: all of them in one query, not one per code.
+        return super().get_table(QRCode.with_names(object_list))
+
+
 class QRCodeViewSet(SnippetViewSet):
     """The charity's QR codes, listed like any other records: an Add button when there are none,
     and each row opens its edit page. Only moderators have the permissions (see
@@ -243,4 +250,5 @@ class QRCodeViewSet(SnippetViewSet):
     menu_label = "QR codes"
     add_to_admin_menu = True
     menu_order = 260
+    index_view_class = QRCodeIndexView
     list_display = ["name", "account_name", "account_number"]
