@@ -279,7 +279,7 @@ msgstr "तपाईंको भुक्तानी जाँचिँदै�
 
 #, python-format
 msgid "Thank you. You've told us you paid %(amount)s by %(name)s on %(date)s. Our team will check it reaches us and mark your gift received."
-msgstr "धन्यवाद। तपाईंले %(date)s मा %(name)s बाट %(amount)s भुक्तानी गरेको हामीलाई जानकारी गराउनुभएको छ। हाम्रो सदस्यले तपाईंको दान प्राप्त भए नभएको जाँचेर जनाउनेछन।"
+msgstr "धन्यवाद। तपाईंले %(date)s मा %(name)s बाट %(amount)s भुक्तानी गरेको हामीलाई जानकारी गराउनुभएको छ। हाम्रो सदस्यले तपाईंको दान प्राप्त भए नभएको जाँचेर जनाउनेछन्।"
 
 #, python-format
 msgid "You sent us the transaction ID %(id)s."
@@ -475,7 +475,7 @@ msgid "Call us:"
 msgstr "हामीलाई फोन गर्नुहोस्:"
 
 msgid "Tap the copy button to copy a detail, then paste it in your app."
-msgstr "विवरण प्रतिलिपि गर्न कपी बटन थिच्नुहोस्, त्यसपछि आफ्नो एपमा राख्नुहोस।"
+msgstr "विवरण प्रतिलिपि गर्न कपी बटन थिच्नुहोस्, त्यसपछि आफ्नो एपमा राख्नुहोस्।"
 
 msgid "I didn't pay: scan the QR code"
 msgstr "मैले भुक्तानी गरेको छैन: QR कोड स्क्यान गर्नुहोस्"
@@ -558,7 +558,7 @@ msgid "In your app, open this payment's receipt."
 msgstr "आफ्नो एपमा यो भुक्तानीको रसिद खोल्नुहोस्।"
 
 msgid "Copy the Transaction ID or Transaction code and paste it here."
-msgstr "Transaction ID वा Transaction Code प्रतिलिपि गरेर यहाँ राख्नुहोस।"
+msgstr "Transaction ID वा Transaction Code प्रतिलिपि गरेर यहाँ राख्नुहोस्।"
 
 msgid "Sending…"
 msgstr "पठाउँदै…"
