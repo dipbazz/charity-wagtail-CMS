@@ -526,6 +526,10 @@ class TestTheTwoSteps:
         field = page.select_one("input[name=transaction_id]")
         steps = page.select("#transaction-id-help li")
         assert len(steps) == 2
+        # The receipt calls it one or the other.
+        assert steps[1].get_text(strip=True) == (
+            "Copy the Transaction ID or Transaction code and paste it here."
+        )
         assert field.sourceline > steps[1].sourceline
         assert "transaction-id-help" in field["aria-describedby"]
         assert field.has_attr("required")

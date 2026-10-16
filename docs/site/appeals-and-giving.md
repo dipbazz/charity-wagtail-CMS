@@ -262,7 +262,8 @@ circle and `aria-current="step"`, the other is a link to its page.
 - **Step 2** (`…/qr/paid/`, "Paid? Tell us here"). With two or more codes, "Which app did you pay
   with?", chosen only if step 1 sent one of the codes on the page (`chosen_code()`): a guess could
   send the team to the wrong statement. Then the **transaction ID** with two numbered lines before
-  it (open the payment's receipt; copy the ID and paste it here), each error under its field (the
+  it (open the payment's receipt; copy the Transaction ID or Transaction code and paste it
+  here; in Nepali too the ID keeps its English name, as the wallets' receipts are in English), each error under its field (the
   alert at the top links to each one), and **I've paid**, which says "Sending…" while it's sent.
   Once they've told us, this address goes to the checking page (below). Receipt screenshots
   come with #197's second part.

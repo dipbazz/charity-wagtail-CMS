@@ -46,7 +46,7 @@
                 <label for="id_transaction_id">{% translate "Transaction ID" %}</label>
                 <ol id="transaction-id-help" class="qr-help">
                     <li>{% translate "In your app, open this payment's receipt." %}</li>
-                    <li>{% translate "Copy the transaction ID (it may say reference or code) and paste it here." %}</li>
+                    <li>{% translate "Copy the Transaction ID or Transaction code and paste it here." %}</li>
                 </ol>
                 {# The error is read with the field, and the alert at the top links here. #}
                 <input type="text" id="id_transaction_id" name="transaction_id" value="{{ paid_form.transaction_id.value|default:'' }}" maxlength="100" required autocomplete="off" aria-describedby="transaction-id-help{% if paid_form.transaction_id.errors %} id_transaction_id_error{% endif %}"{% if paid_form.transaction_id.errors %} aria-invalid="true"{% endif %}>

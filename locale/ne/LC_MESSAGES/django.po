@@ -110,10 +110,10 @@ msgid "Choose the app you paid with."
 msgstr "तपाईंले भुक्तानी गर्नुभएको एप छान्नुहोस्।"
 
 msgid "Transaction ID"
-msgstr "लेनदेन आईडी"
+msgstr "Transaction ID"
 
 msgid "Enter the transaction ID from your receipt."
-msgstr "आफ्नो रसिदमा रहेको लेनदेन आईडी लेख्नुहोस्।"
+msgstr "आफ्नो रसिदमा रहेको Transaction ID लेख्नुहोस्।"
 
 msgid "Open appeals"
 msgstr "खुला अपिलहरू"
@@ -283,7 +283,7 @@ msgstr "धन्यवाद। तपाईंले %(date)s मा %(name)s 
 
 #, python-format
 msgid "You sent us the transaction ID %(id)s."
-msgstr "तपाईंले पठाउनुभएको लेनदेन आईडी %(id)s हो।"
+msgstr "तपाईंले पठाउनुभएको Transaction ID %(id)s हो।"
 
 #, python-format
 msgid "Questions? Call us and give your pledge number, %(number)s:"
@@ -549,7 +549,7 @@ msgid "Check which app you paid with below."
 msgstr "तल तपाईंले कुन एपबाट भुक्तानी गर्नुभयो, जाँच्नुहोस्।"
 
 msgid "Check the transaction ID below."
-msgstr "तल लेनदेन आईडी जाँच्नुहोस्।"
+msgstr "तल Transaction ID जाँच्नुहोस्।"
 
 msgid "Step 2: Paid? Tell us here"
 msgstr "चरण २: भुक्तानी गर्नुभयो? यहाँ हामीलाई बताउनुहोस्"
@@ -557,8 +557,8 @@ msgstr "चरण २: भुक्तानी गर्नुभयो? यह
 msgid "In your app, open this payment's receipt."
 msgstr "आफ्नो एपमा यो भुक्तानीको रसिद खोल्नुहोस्।"
 
-msgid "Copy the transaction ID (it may say reference or code) and paste it here."
-msgstr "लेनदेन आईडी (यसमा रेफरेन्स वा कोड लेखिएको हुन सक्छ) प्रतिलिपि गरेर यहाँ टाँस्नुहोस्।"
+msgid "Copy the Transaction ID or Transaction code and paste it here."
+msgstr "Transaction ID (यसमा Reference वा Code लेखिएको हुन सक्छ) प्रतिलिपि गरेर यहाँ टाँस्नुहोस्।"
 
 msgid "Sending…"
 msgstr "पठाउँदै…"

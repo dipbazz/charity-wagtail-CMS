@@ -310,10 +310,24 @@ class TestTheQRPageInNepali:
     def test_step_2_is_in_nepali_with_no_english_left(self, client, qr_page):
         text = visible_text(client.get(qr_page.wsgi_request.path + "paid/"))
 
-        for nepali in ["लेनदेन आईडी", "मैले भुक्तानी गरें", "यहाँ हामीलाई बताउनुहोस्"]:
+        for nepali in ["मैले भुक्तानी गरें", "यहाँ हामीलाई बताउनुहोस्"]:
             assert nepali in text
-        for english in ["Transaction ID", "I've paid", "Tell us here"]:
+        for english in ["I've paid", "Tell us here"]:
             assert english not in text
+
+    def test_step_2_names_the_transaction_id_as_the_receipt_does(self, client, qr_page):
+        # Nepali wallets' receipts are in English, so the ID keeps its English name.
+        step_2 = qr_page.wsgi_request.path + "paid/"
+        text = visible_text(client.get(step_2))
+        errors = visible_text(client.post(step_2, {"transaction_id": " "}))
+
+        assert "लेनदेन आईडी" not in text + errors
+        assert (
+            "Transaction ID (यसमा Reference वा Code लेखिएको हुन सक्छ) प्रतिलिपि गरेर यहाँ टाँस्नुहोस्।"
+            in text
+        )
+        assert "तल Transaction ID जाँच्नुहोस्।" in errors
+        assert "आफ्नो रसिदमा रहेको Transaction ID लेख्नुहोस्।" in errors
 
     def test_the_checking_page_is_in_nepali_with_no_english_left(self, client, qr_page, site):
         from campaigns.models import QRCode
@@ -329,7 +343,12 @@ class TestTheQRPageInNepali:
         pledge = Pledge.objects.get()
 
         assert response.redirect_chain[-1][0].endswith("/checking/")
-        for nepali in ["धन्यवाद।", "केही प्रश्न छ?", pledge.display_number()]:
+        for nepali in [
+            "धन्यवाद।",
+            "तपाईंले पठाउनुभएको Transaction ID TXN-8841 हो।",
+            "केही प्रश्न छ?",
+            pledge.display_number(),
+        ]:
             assert nepali in text
         for english in ["Thank you", "Questions?", "Call us"]:
             assert english not in text
