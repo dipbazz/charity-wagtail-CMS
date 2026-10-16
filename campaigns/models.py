@@ -493,6 +493,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         if request.method != "POST":
             return HttpResponseNotAllowed(["GET", "POST"])
         pledge = self.get_pledge(reference)
+        # Sent from a tab opened before an online attempt started: that attempt may be paid.
+        state = pledge.pay_page_state()
+        if state in HELD and STATE_WAYS[state] != QR:
+            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
         site_settings = SiteSettings.for_request(request)
         qr_codes = self.qr_codes_for(pledge.currency, names=True)
         if not qr_codes or pledge.has_paid_payment():

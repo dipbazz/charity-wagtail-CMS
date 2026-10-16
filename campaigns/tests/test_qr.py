@@ -650,6 +650,17 @@ class TestSayingIvePaid:
     def test_is_only_opened_or_sent(self, client, donate_page, pledge, esewa_qr):
         assert client.put(qr_url(donate_page, pledge, "paid/")).status_code == 405
 
+    def test_not_while_an_online_payment_may_be_paid(self, client, donate_page, pledge, esewa_qr):
+        # Step 2 opened before the online attempt started, and sent after it: the stale tab.
+        pledge.start_payment("esewa", live=False)
+
+        response = say_paid(client, donate_page, pledge, esewa_qr)
+
+        assert response.status_code == 303
+        assert response.url == f"{donate_page.url}pay/{pledge.reference}/online/"
+        assert not pledge.payments.filter(method="qr").exists()
+        assert Pledge.objects.get(pk=pledge.pk).payment_status == PaymentStatus.WAITING
+
     def test_not_once_paid(self, client, donate_page, pledge, esewa_qr):
         pledge.start_payment("esewa", live=False).record("paid", "000AWEO")
 
