@@ -77,7 +77,14 @@ AP08,3 Online giving,Appeals / सहयोग अपिल,"Up to 4 suggested a
 DO01,1 Go live,Donate / दान दिनुहोस्,Which ways can people give to you? / मानिसहरूले तपाईंलाई कसरी दान दिन सक्छन्?,,checkboxes,eSewa | Khalti | QR code / QR कोड | Bank transfer / बैंक ट्रान्सफर | In person at our office / कार्यालयमा आएर | Other,Yes,Charity,Donate page (standard)
 DO02,1 Go live,Donate / दान दिनुहोस्,Bank details to show / देखाउने बैंक खाताको विवरण,"Account name, bank, branch and account number. Only an account in your organisation's name.
 खाताको नाम, बैंक, शाखा र खाता नम्बर। संस्थाको नाममा भएको खाता मात्र।",long,,Yes,Charity,
-DO03,1 Go live,Donate / दान दिनुहोस्,Your QR code for donations / दानका लागि तपाईंको QR कोड,,upload,1,Yes,Charity,
+DO03,1 Go live,Donate / दान दिनुहोस्,Your QR codes for donations: one image for each app or bank (up to 3) / दानका लागि तपाईंका QR कोड: प्रत्येक एप वा बैंकको एउटा तस्बिर (३ वटासम्म),"The whole card as your app or bank gives it, with its name and logo: a screenshot or saved image, not a photo of a printout.
+एप वा बैंकले दिएको पूरै कार्ड, नाम र लोगोसहित: स्क्रिनसट वा सेभ गरेको तस्बिर, कागजको फोटो होइन।",upload,3,Yes,Charity,QR codes (standard)
+DO08,1 Go live,Donate / दान दिनुहोस्,"For each QR code: its name, as supporters will pick it / प्रत्येक QR कोडको नाम, जसरी दाताले छान्नेछन्","For example: eSewa, Fonepay (bank).
+जस्तै: eSewa, Fonepay (बैंक)।",long,,Yes,Charity,QR codes (standard)
+DO09,1 Go live,Donate / दान दिनुहोस्,"For each QR code: the account name your app shows after scanning it, exactly as written / प्रत्येक QR कोड स्क्यान गरेपछि एपमा देखिने खाताको नाम, ठ्याक्कै जस्तो लेखिएको छ","Supporters are asked to check this name before they pay.
+दाताहरूलाई भुक्तानी गर्नुअघि यो नाम जाँच्न भनिन्छ।",long,,Yes,Charity,QR codes (standard)
+DO10,1 Go live,Donate / दान दिनुहोस्,For each QR code: the account or wallet number (optional) / प्रत्येक QR कोडको खाता वा वालेट नम्बर (ऐच्छिक),"For supporters who can't scan.
+स्क्यान गर्न नसक्ने दाताहरूका लागि।",long,,Yes,Charity,QR codes (standard)
 DO04,1 Go live,Donate / दान दिनुहोस्,Where the money goes / रकम कहाँ जान्छ,"For example ""Rs 85 of every Rs 100 reaches the children"". Only if your audited accounts show it.
 जस्तै ""हरेक रु १०० मध्ये रु ८५ बालबालिकासम्म पुग्छ""। लेखापरीक्षण प्रतिवेदनले देखाउँछ भने मात्र।",long,,Yes,Charity,Home + Donate (standard)
 DO05,1 Go live,Donate / दान दिनुहोस्,Is your organisation approved by the Inland Revenue Department for tax-exempt donations? / दानमा कर छुटका लागि संस्था आन्तरिक राजस्व विभागबाट स्वीकृत छ?,"If yes, the Donate page tells donors they can deduct their gift from their taxable income.

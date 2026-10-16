@@ -1,12 +1,20 @@
 import re
 
 from django.contrib import messages
-from django.shortcuts import redirect
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import path, reverse
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 from wagtail.admin.ui.tables import Column
-from wagtail.admin.views.generic import DeleteView, EditView, IndexView
+from wagtail.admin.views.generic import DeleteView, EditView, IndexView, InspectView
 from wagtail.admin.viewsets.model import ModelViewSet
+from wagtail.snippets.views.snippets import IndexView as SnippetIndexView
+from wagtail.snippets.views.snippets import SnippetViewSet
 
-from campaigns.models import Pledge
+from campaigns.forms import MAX_AMOUNT, MarkPaidForm
+from campaigns.models import Payment, Pledge, QRCode
 from core.exports import VisitorTextExportMixin
 
 
@@ -65,6 +73,24 @@ class PledgeDeleteView(DeleteView):
         return redirect("pledges:inspect", self.object.pk)
 
 
+CONFIRM_PERMISSION = "campaigns.confirm_payment"
+
+
+class PledgeInspectView(InspectView):
+    """The pledge, then its payments with what happened to each. A payment the team confirms (a
+    QR payment) is marked paid or not found here, by people who may confirm payments."""
+
+    template_name = "campaigns/admin/pledge_inspect.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["payments"] = self.object.payments.prefetch_related("steps__by")
+        context["can_confirm"] = self.request.user.has_perm(CONFIRM_PERMISSION)
+        context["today"] = timezone.localdate()
+        context["max_amount"] = MAX_AMOUNT
+        return context
+
+
 class PledgeViewSet(ModelViewSet):
     """Pledges from the Donate page: listed, filtered, read and exported.
 
@@ -85,6 +111,59 @@ class PledgeViewSet(ModelViewSet):
     index_view_class = PledgeIndexView
     edit_view_class = PledgeEditView
     delete_view_class = PledgeDeleteView
+    inspect_view_class = PledgeInspectView
+
+    def get_urlpatterns(self):
+        return [
+            *super().get_urlpatterns(),
+            path(
+                "<int:pk>/payments/<int:payment_pk>/mark-paid/",
+                self.mark_paid_view,
+                name="mark_paid",
+            ),
+            path(
+                "<int:pk>/payments/<int:payment_pk>/not-found/",
+                self.not_found_view,
+                name="not_found",
+            ),
+        ]
+
+    @staticmethod
+    def confirmable_payment(request, pk, payment_pk):
+        """The payment, if this person may confirm payments (a 403 otherwise). Only payments the
+        team confirms are ever changed here: a provider's are never marked by hand."""
+        if not request.user.has_perm(CONFIRM_PERMISSION):
+            raise PermissionDenied
+        return get_object_or_404(
+            Payment.objects.select_related("pledge"), pk=payment_pk, pledge_id=pk
+        )
+
+    @method_decorator(require_POST)
+    def mark_paid_view(self, request, pk, payment_pk):
+        payment = self.confirmable_payment(request, pk, payment_pk)
+        form = MarkPaidForm(request.POST, pledge=payment.pledge)
+        if not form.is_valid():
+            problems = "; ".join(f"{name}: {', '.join(e)}" for name, e in form.errors.items())
+            messages.error(request, f"Not marked paid. {problems}")
+        elif payment.mark_paid(
+            request.user,
+            form.cleaned_data["received_on"],
+            form.cleaned_data["amount"],
+            form.cleaned_data["reference"],
+        ):
+            messages.success(request, "Marked paid.")
+        else:
+            messages.error(request, "This payment can't be marked paid: it may already be paid.")
+        return redirect(reverse("pledges:inspect", args=[pk]))
+
+    @method_decorator(require_POST)
+    def not_found_view(self, request, pk, payment_pk):
+        payment = self.confirmable_payment(request, pk, payment_pk)
+        if payment.mark_not_found(request.user):
+            messages.success(request, "Marked not found.")
+        else:
+            messages.error(request, "This payment can't be marked not found.")
+        return redirect(reverse("pledges:inspect", args=[pk]))
 
     # Wagtail needs these for its add and edit views, which only a superuser can open.
     form_fields = [
@@ -152,3 +231,24 @@ class PledgeViewSet(ModelViewSet):
         "paid_with": "Paid with",
     }
     export_filename = "pledges"
+
+
+class QRCodeIndexView(SnippetIndexView):
+    def get_table(self, object_list):
+        # Each row's name: all of them in one query, not one per code.
+        return super().get_table(QRCode.with_names(object_list))
+
+
+class QRCodeViewSet(SnippetViewSet):
+    """The charity's QR codes, listed like any other records: an Add button when there are none,
+    and each row opens its edit page. Only moderators have the permissions (see
+    0014_qr_payments), so an editor never sees them. Wagtail's history for each
+    code says who added, changed or removed it, and when. Drag a row to put a code first."""
+
+    model = QRCode
+    icon = "image"
+    menu_label = "QR codes"
+    add_to_admin_menu = True
+    menu_order = 260
+    index_view_class = QRCodeIndexView
+    list_display = ["name", "account_name", "account_number"]

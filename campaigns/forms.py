@@ -5,6 +5,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.utils.translation import gettext, gettext_lazy
 
 from campaigns.models import Frequency, PaymentStatus, Pledge
@@ -14,6 +15,10 @@ from core.phone import normalise_mobile, phone_country_choices
 NEEDED_MOST = gettext_lazy("Wherever it's needed most")
 CHOOSE_AN_AMOUNT = gettext_lazy("Choose an amount or enter your own.")
 OTHER = "other"
+# The most a pledge can be for, and so the most the team can mark received for one: more than
+# any gift made through a form (a bigger one is arranged with the charity), so a typing slip
+# like an extra zero is refused.
+MAX_AMOUNT = 999_999
 
 
 @dataclass(frozen=True)
@@ -72,7 +77,7 @@ class PledgeForm(forms.ModelForm):
     # could pledge an amount they never meant. inputmode still brings up the number keypad.
     other_amount = WholeAmountField(
         required=False,
-        max_value=99_999_999,
+        max_value=MAX_AMOUNT,
         widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
     )
     phone_country = forms.ChoiceField(choices=phone_country_choices, label=gettext_lazy("Country"))
@@ -289,3 +294,54 @@ class PledgeForm(forms.ModelForm):
                 # The same copy sent twice at once (a double click): the first one saved it.
                 return Pledge.objects.get(submission_id=pledge.submission_id)
         return pledge
+
+
+class QRPaidForm(forms.Form):
+    """ "I've paid", the QR way's step 2: which QR code they scanned, and the transaction ID from
+    their app's receipt. The code is picked from the ones on the page, so nothing else can be
+    named."""
+
+    code = forms.ChoiceField(
+        label=gettext_lazy("Which app did you pay with?"),
+        error_messages={"required": gettext_lazy("Choose the app you paid with.")},
+    )
+    transaction_id = forms.CharField(
+        label=gettext_lazy("Transaction ID"),
+        max_length=100,
+        strip=True,
+        error_messages={"required": gettext_lazy("Enter the transaction ID from your receipt.")},
+    )
+
+    def __init__(self, *args, codes, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.codes = {str(code.pk): code for code in codes}
+        self.fields["code"].choices = [(pk, code.name) for pk, code in self.codes.items()]
+        # With one code the page shows no choice: it's that one.
+        if len(self.codes) == 1:
+            self.fields["code"].initial = next(iter(self.codes))
+
+    def clean_code(self):
+        return self.codes[self.cleaned_data["code"]]
+
+
+class MarkPaidForm(forms.Form):
+    """What the team enters when it finds a QR payment in its statement. Whole amounts only, as
+    pledges are."""
+
+    received_on = forms.DateField(label="Date received")
+    amount = forms.IntegerField(label="Amount received", min_value=1, max_value=MAX_AMOUNT)
+    reference = forms.CharField(label="Reference from the statement", max_length=100, strip=True)
+
+    def __init__(self, *args, pledge, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pledge = pledge
+
+    def clean_received_on(self):
+        """Between the day the pledge was sent and today: a year typed from a Nepali statement
+        (2083 for 2026) would otherwise date the gift in the future."""
+        received_on = self.cleaned_data["received_on"]
+        if received_on > timezone.localdate():
+            raise ValidationError("It can't be after today.")
+        if received_on < timezone.localdate(self.pledge.created_at):
+            raise ValidationError("It can't be before the pledge was sent.")
+        return received_on

@@ -280,7 +280,13 @@ The Donate page shows every way to give, what a gift does, and where the money g
   office.
 - **Bank details to show,** if you take bank transfers: account name, bank, branch and account
   number. Only an account in your organisation's name.
-- **Your QR code,** if you have one for donations.
+- **Your QR codes,** if you have them for donations: the whole card as your app or bank gives it
+  (a screenshot or saved image), for each app or bank. For each one we also need its **name** as
+  supporters will pick it (for example "eSewa" or "Fonepay (bank)"), the **account name your app
+  shows after scanning it**, exactly as written, and optionally the **account or wallet number**.
+  Supporters scan the code, then tell us they have paid, and our team marks the gift received
+  once it reaches your account. A QR code takes real money from the first day, with no merchant
+  account.
 - **Where the money goes.** Many donors ask how much of their gift reaches the people you help (for
   example "Rs 85 of every Rs 100"). We show this only if your audited accounts show it is true.
 - **Tax relief.** If the Inland Revenue Department has approved your organisation for tax-exempt

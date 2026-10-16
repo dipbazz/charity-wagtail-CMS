@@ -10,7 +10,7 @@ import re
 
 import pytest
 
-from campaigns.models import DonatePage, Pledge
+from campaigns.models import DonatePage, Pledge, QRCode
 from conftest import SITE
 from core.brand import FONT_STACKS, contrast
 from core.models import SiteSettings
@@ -80,7 +80,7 @@ def test_page_fits_and_can_be_tapped_at_every_width(site_page, demo_site, path):
 def pay_pages(demo_site, settings):
     """Every address of a pledge's pay page (the choices and each way's), for a pledge on the
     demo Donate page in each language. eSewa is set up with made-up keys: its pay button shows
-    without asking eSewa anything."""
+    without asking eSewa anything. The demo's sample QR code can't be scanned."""
     settings.PAYMENT_KEYS = {"ESEWA_PRODUCT_CODE": "EPAYTEST", "ESEWA_SECRET_KEY": "made-up"}
     paths = []
     for donate_page in DonatePage.objects.live():
@@ -88,12 +88,24 @@ def pay_pages(demo_site, settings):
             page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
         )
         pay = f"{donate_page.url}pay/{pledge.reference}/"
-        paths += [pay + way for way in ("", "online/", "in-person/", "later/")]
+        paths += [pay + way for way in ("", "online/", "qr/", "qr/paid/", "in-person/", "later/")]
+        # The page while the team checks a QR payment, which every pay address then goes to.
+        claimed = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        claimed.claim_paid(QRCode.objects.first(), "TXN-8841")
+        paths.append(f"{donate_page.url}pay/{claimed.reference}/checking/")
+        # The QR page once the team couldn't find it, with the QR code and its steps folded away.
+        not_found = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        not_found.claim_paid(QRCode.objects.first(), "TXN-8842").mark_not_found(by=None)
+        paths.append(f"{donate_page.url}pay/{not_found.reference}/qr/")
     return paths
 
 
 def test_each_pay_page_fits_and_can_be_tapped_at_every_width(site_page, pay_pages):
-    assert len(pay_pages) == 8  # in both languages
+    assert len(pay_pages) == 16  # in both languages
     problems = []
     for path in pay_pages:
         problems += [f"{path} {item}" for item in layout_problems(site_page, path)]

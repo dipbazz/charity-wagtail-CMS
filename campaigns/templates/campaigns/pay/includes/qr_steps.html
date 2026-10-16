@@ -1,0 +1,20 @@
+{% load i18n wagtailroutablepage_tags %}
+{# The QR way's two steps, each its own page. `current` is the page this is (1 or 2); the other is a link to its page. #}
+{% routablepageurl page 'pay_qr' pledge.reference as step_1_url %}
+{% routablepageurl page 'qr_paid' pledge.reference as step_2_url %}
+<nav aria-label="{% translate 'Steps' %}">
+<ol class="qr-progress">
+    <li>
+        {% if current != 1 %}<a class="qr-progress-step" href="{{ step_1_url }}">{% else %}<span class="qr-progress-step is-current" aria-current="step">{% endif %}
+            <span class="qr-progress-number" aria-hidden="true">1</span>
+            {% translate "Scan the QR code" %}
+        {% if current != 1 %}</a>{% else %}</span>{% endif %}
+    </li>
+    <li>
+        {% if current != 2 %}<a class="qr-progress-step" href="{{ step_2_url }}">{% else %}<span class="qr-progress-step is-current" aria-current="step">{% endif %}
+            <span class="qr-progress-number" aria-hidden="true">2</span>
+            {% translate "Paid? Tell us" %}
+        {% if current != 2 %}</a>{% else %}</span>{% endif %}
+    </li>
+</ol>
+</nav>

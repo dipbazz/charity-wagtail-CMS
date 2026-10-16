@@ -275,3 +275,82 @@ class TestPayingInNepali:
         assert "रसिद माग्नुहोस्।" in in_person
         assert "अहिले भुक्तानी गर्न तयार हुनुहुन्न?" in later
         assert "अर्को तरिकाले भुक्तानी गर्नुहोस्" in later
+
+
+class TestTheQRPageInNepali:
+    @pytest.fixture
+    def qr_page(self, client, nepali_donate_page):
+        from campaigns.models import Pledge
+        from campaigns.tests.test_qr import make_code
+
+        make_code("eSewa", account_name="BRIGHTWELL WATER")
+        pledge = Pledge.objects.create(
+            page=nepali_donate_page,
+            amount=2500,
+            currency="NPR",
+            name="Sita Sharma",
+            email="sita@example.com",
+        )
+        return client.get(f"{nepali_donate_page.url}pay/{pledge.reference}/qr/")
+
+    def test_is_in_nepali_with_no_english_left(self, qr_page):
+        text = visible_text(qr_page)
+
+        for nepali in [
+            "हाम्रो QR कोड स्क्यान गर्नुहोस्",
+            "रकम",
+            "QR कोड सेभ गर्नुहोस्",
+            "QR कोड सेभ गर्न वा स्क्यान गर्न मद्दत चाहियो?",
+            "चरण २ मा जानुहोस्",
+        ]:
+            assert nepali in text
+        for english in ["Save QR code", "Scan our QR code", "Go to step 2"]:
+            assert english not in text
+
+    def test_step_2_is_in_nepali_with_no_english_left(self, client, qr_page):
+        text = visible_text(client.get(qr_page.wsgi_request.path + "paid/"))
+
+        for nepali in ["मैले भुक्तानी गरें", "यहाँ हामीलाई बताउनुहोस्"]:
+            assert nepali in text
+        for english in ["I've paid", "Tell us here"]:
+            assert english not in text
+
+    def test_step_2_names_the_transaction_id_as_the_receipt_does(self, client, qr_page):
+        # Nepali wallets' receipts are in English, so the ID keeps its English name.
+        step_2 = qr_page.wsgi_request.path + "paid/"
+        text = visible_text(client.get(step_2))
+        errors = visible_text(client.post(step_2, {"transaction_id": " "}))
+
+        assert "लेनदेन आईडी" not in text + errors
+        assert "Transaction ID वा Transaction Code प्रतिलिपि गरेर यहाँ राख्नुहोस्।" in text
+        assert "तल Transaction ID जाँच्नुहोस्।" in errors
+        assert "आफ्नो रसिदमा रहेको Transaction ID लेख्नुहोस्।" in errors
+
+    def test_the_checking_page_is_in_nepali_with_no_english_left(self, client, qr_page, site):
+        from campaigns.models import QRCode
+
+        site_settings = SiteSettings.for_site(site)
+        site_settings.phone = "+977 1-4567890"
+        site_settings.save()
+        step_2 = qr_page.wsgi_request.path + "paid/"
+        client.post(step_2, {"code": QRCode.objects.get().pk, "transaction_id": "TXN-8841"})
+
+        response = client.get(step_2, follow=True)
+        text = visible_text(response)
+        pledge = Pledge.objects.get()
+
+        assert response.redirect_chain[-1][0].endswith("/checking/")
+        for nepali in [
+            "धन्यवाद।",
+            "तपाईंले पठाउनुभएको Transaction ID TXN-8841 हो।",
+            "केही प्रश्न छ?",
+            pledge.display_number(),
+        ]:
+            assert nepali in text
+        for english in ["Thank you", "Questions?", "Call us"]:
+            assert english not in text
+
+    def test_names_the_copy_buttons_in_nepali(self, qr_page):
+        labels = [b["aria-label"] for b in soup(qr_page).select("button[data-copy-value]")]
+
+        assert labels[0] == "रकम प्रतिलिपि गर्नुहोस्"

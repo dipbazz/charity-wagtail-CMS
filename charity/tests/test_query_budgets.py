@@ -13,8 +13,9 @@ pytestmark = pytest.mark.django_db
 # (core.images.with_card_images). On a just-started server that one query replaces one per card.
 # Public listings (/, /appeals/, /stories/ and its feed) also spend one query reading the page
 # privacy restrictions, so pages behind a password or login stay out of them (`.public()`, #47).
-# /donate/ spends three more than /about/: its suggested amounts, and the open appeals offered in
-# the form with their privacy restrictions (#31). A link naming an appeal costs one more, to check
+# /donate/ spends four more than /about/: its suggested amounts, the open appeals offered in
+# the form with their privacy restrictions (#31), and whether the charity has QR codes, which
+# changes how the form says paying works (#197). A link naming an appeal costs one more, to check
 # that appeal is on offer before preselecting it.
 # Every page spends one query on the language being read: Wagtail looks up its Locale to find the
 # home page in that language (#113). A page in the second language spends one more, finding that
@@ -34,8 +35,8 @@ BUDGETS = {
     "/stories/feed/": 11,
     "/about/": 14,
     "/volunteer/": 15,
-    "/donate/": 17,
-    "/donate/?appeal=flood-relief&amount=2500": 18,
+    "/donate/": 18,
+    "/donate/?appeal=flood-relief&amount=2500": 19,
     "/search/?query=water": 23,
     "/api/v2/pages/?type=campaigns.CampaignPage&fields=*": 19,
     "/ne/": 21,

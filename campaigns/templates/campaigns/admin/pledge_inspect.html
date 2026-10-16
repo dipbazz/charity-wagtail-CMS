@@ -1,0 +1,69 @@
+{% extends "wagtailadmin/generic/inspect.html" %}
+{% load i18n %}
+
+{% block fields_output %}
+    {{ block.super }}
+
+    <h2>Payments</h2>
+    {% for payment in payments %}
+        <section class="payment-record">
+            <h3>{{ payment }}</h3>
+            <dl>
+                <dt>Started</dt>
+                <dd>{{ payment.created_at }}</dd>
+                {% if payment.qr_name %}
+                    <dt>QR code</dt>
+                    <dd>{{ payment.qr_name }}</dd>
+                {% endif %}
+                {% if payment.supporters_reference %}
+                    <dt>Transaction ID from the supporter</dt>
+                    <dd>{{ payment.supporters_reference }}</dd>
+                {% endif %}
+                {% if payment.provider_reference %}
+                    <dt>Reference</dt>
+                    <dd>{{ payment.provider_reference }}</dd>
+                {% endif %}
+                <dt>Steps</dt>
+                <dd>
+                    <ol>
+                        {% for step in payment.steps.all %}
+                            <li>{{ step.at }}: {{ step }}{% if step.by %} ({{ step.by }}){% endif %}</li>
+                        {% empty %}
+                            <li>None recorded.</li>
+                        {% endfor %}
+                    </ol>
+                </dd>
+            </dl>
+
+            {# Only payments the team confirms, and only for people who may: eSewa and Khalti payments are never marked by hand. #}
+            {% if can_confirm and payment.team_confirms and payment.status != "paid" %}
+                <form method="post" action="{% url 'pledges:mark_paid' object.pk payment.pk %}">
+                    {% csrf_token %}
+                    <h4>Mark as paid</h4>
+                    <p>Check the amount and reference in your wallet or bank statement first.</p>
+                    <p>
+                        <label for="received-on-{{ payment.pk }}">Date received</label>
+                        <input type="date" id="received-on-{{ payment.pk }}" name="received_on" value="{{ today|date:'Y-m-d' }}" min="{{ object.created_at|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}" required>
+                    </p>
+                    <p>
+                        <label for="amount-{{ payment.pk }}">Amount received</label>
+                        <input type="number" id="amount-{{ payment.pk }}" name="amount" min="1" max="{{ max_amount }}" value="{{ payment.amount }}" required>
+                    </p>
+                    <p>
+                        <label for="reference-{{ payment.pk }}">Reference from the statement</label>
+                        <input type="text" id="reference-{{ payment.pk }}" name="reference" maxlength="100" value="{{ payment.supporters_reference }}" required>
+                    </p>
+                    <button type="submit" class="button">Mark as paid</button>
+                </form>
+                {% if payment.status == "to-confirm" %}
+                    <form method="post" action="{% url 'pledges:not_found' object.pk payment.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="button button-secondary">Not found</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        </section>
+    {% empty %}
+        <p>No one has started paying this pledge.</p>
+    {% endfor %}
+{% endblock %}

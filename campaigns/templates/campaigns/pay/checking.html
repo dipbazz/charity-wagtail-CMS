@@ -1,0 +1,21 @@
+{% extends "campaigns/pay/base.html" %}
+{% load i18n wagtailcore_tags %}
+
+{# While the team checks a payment the supporter says they made, every pay address of the pledge comes here. The thanks says what they told us, so nothing else repeats it, and nothing is offered to pay until it's found or not. #}
+{% block pay_title %}{% translate "Checking your payment" %}{% endblock %}
+
+{% block pay %}
+    <h1>{% translate "Checking your payment" %}</h1>
+    <p class="lead" tabindex="-1" data-focus-on-load>{% blocktranslate with amount=claimed.display_amount name=paid_by date=claimed.created_at|date:"DATE_FORMAT" %}Thank you. You've told us you paid {{ amount }} by {{ name }} on {{ date }}. Our team will check it reaches us and mark your gift received.{% endblocktranslate %}</p>
+    {% if claimed.supporters_reference %}<p>{% blocktranslate with id=claimed.supporters_reference %}You sent us the transaction ID {{ id }}.{% endblocktranslate %}</p>{% endif %}
+    {% if site_settings.phone %}
+        <p>{% blocktranslate with number=pledge.display_number %}Questions? Call us and give your pledge number, {{ number }}:{% endblocktranslate %}</p>
+        <p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>
+    {% endif %}
+    <p>{% translate "There's nothing more to do here." %}</p>
+    {% with appeals=appeals_page %}{% if appeals %}
+        <p><a class="button" href="{% pageurl appeals %}">{% translate "See all our appeals" %}</a></p>
+    {% else %}
+        <p><a class="button" href="{% pageurl page.get_parent %}">{% translate "Back to the home page" %}</a></p>
+    {% endif %}{% endwith %}
+{% endblock %}

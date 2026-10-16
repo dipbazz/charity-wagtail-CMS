@@ -164,7 +164,8 @@
     margin-block: 1.5rem;
 }
 
-.pay-again summary {
+.pay-again summary,
+.qr-how summary {
     min-height: 2.75rem;
     padding-block: 0.625rem;
     color: var(--colour-primary);
@@ -255,4 +256,211 @@
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
+}
+
+/* Scan our QR code: the details to copy, the app to pay with, the QR card, then "I've paid". The
+   page also carries the form-page class, so its field, radio and card rules apply. */
+.qr-details {
+    margin-block: 1.5rem;
+}
+
+.qr-details > div + div {
+    margin-top: 0.75rem;
+}
+
+.qr-details dt {
+    color: var(--colour-muted);
+    font-size: 0.9375rem;
+}
+
+.qr-details dd {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: var(--colour-primary-dark);
+    font-size: 1.25rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.qr-help {
+    color: var(--colour-muted);
+    font-size: 0.9375rem;
+}
+
+/* "Copied", straight under the value that was copied. No height of its own until it speaks. */
+.qr-details dd.copy-status {
+    min-height: 0;
+    margin: 0;
+    color: var(--colour-muted);
+    font-size: 0.9375rem;
+    font-weight: 400;
+}
+
+/* Icon only, so a row never wraps at 320px; its spoken name is its aria-label. */
+.copy-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 2px solid var(--colour-border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--colour-primary);
+    cursor: pointer;
+}
+
+.copy-icon-button[hidden] {
+    display: none;
+}
+
+.copy-icon-button .copy-tick,
+.copy-icon-button.is-copied .copy-icon {
+    display: none;
+}
+
+.copy-icon-button.is-copied .copy-tick {
+    display: block;
+}
+
+/* The QR card as uploaded: no border or frame added, smoothly scaled, never wider than 24rem. */
+.qr-card img {
+    display: block;
+    width: min(100%, 24rem);
+    height: auto;
+    margin-block: 1rem;
+}
+
+.qr-card h3 {
+    margin-bottom: 0;
+}
+
+.form-page main .qr-card p > .button {
+    align-self: flex-start;
+}
+
+/* The two steps of paying by QR, each its own page: a numbered row that links to the other
+   page. The step you're on has a filled circle in the brand colour (the same pair the filled
+   buttons use, so the brand contrast check covers it), the other an outline in the link colour.
+   Then the step itself, divided by a line. */
+.qr-progress {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+    margin: 1.5rem 0;
+    padding: 0;
+    list-style: none;
+}
+
+.qr-progress-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    font-weight: 600;
+}
+
+span.qr-progress-step {
+    color: var(--colour-primary-dark);
+}
+
+.qr-progress-number {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--colour-primary);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--colour-primary);
+    font-weight: 700;
+}
+
+.is-current .qr-progress-number {
+    background: var(--colour-primary);
+    color: var(--colour-on-dark);
+}
+
+.pay-page .qr-step {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--colour-border);
+    scroll-margin-top: 1rem;
+}
+
+.qr-step > h2 {
+    margin-top: 0;
+}
+
+.pay-page .qr-card {
+    margin-top: 1rem;
+}
+
+/* "Pay another way", at the bottom of every way's page: set apart from the way above it by a
+   line, as the QR steps are. */
+.pay-page .other-ways {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--colour-border);
+}
+
+.other-ways > h2 {
+    margin-top: 0;
+}
+
+/* "Can't scan?": the account to pay instead, set apart from the QR code's own help. */
+.qr-fallback {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--colour-border);
+}
+
+.qr-fallback h4 {
+    margin: 0;
+    font-size: 1.0625rem;
+}
+
+.qr-fallback .qr-details {
+    margin-block: 0.75rem 0;
+}
+
+ol.qr-help {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+/* From 48rem there's room beside the QR code for its help and the account to pay instead:
+   the code on the left at a size that scans, the rest on the right. The source order is the
+   same, so the keyboard and screen reader order doesn't change. */
+@media (min-width: 48rem) {
+    .qr-card {
+        display: grid;
+        grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+        column-gap: 2rem;
+        align-items: start;
+    }
+
+    .qr-card h3 {
+        grid-column: 1 / -1;
+    }
+}
+
+/* With 2 or more QR codes, only the chosen one shows. CSS only, so it works without
+   JavaScript; browsers without :has() show every code, each under its name. Each rule pairs
+   the nth app with the nth card (up to eight; any more are always shown). */
+.qr-pay:has(.qr-choice label:nth-of-type(1) input:checked) .qr-card:not(:nth-of-type(1)),
+.qr-pay:has(.qr-choice label:nth-of-type(2) input:checked) .qr-card:not(:nth-of-type(2)),
+.qr-pay:has(.qr-choice label:nth-of-type(3) input:checked) .qr-card:not(:nth-of-type(3)),
+.qr-pay:has(.qr-choice label:nth-of-type(4) input:checked) .qr-card:not(:nth-of-type(4)),
+.qr-pay:has(.qr-choice label:nth-of-type(5) input:checked) .qr-card:not(:nth-of-type(5)),
+.qr-pay:has(.qr-choice label:nth-of-type(6) input:checked) .qr-card:not(:nth-of-type(6)),
+.qr-pay:has(.qr-choice label:nth-of-type(7) input:checked) .qr-card:not(:nth-of-type(7)),
+.qr-pay:has(.qr-choice label:nth-of-type(8) input:checked) .qr-card:not(:nth-of-type(8)) {
+    display: none;
 }

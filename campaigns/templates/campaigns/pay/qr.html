@@ -1,0 +1,113 @@
+{% extends "campaigns/pay/base.html" %}
+{% load i18n wagtailroutablepage_tags %}
+
+{# Each state its own title, the first thing a screen reader says about the page. #}
+{% block pay_title %}{% if state == "not-found" %}{% translate "We haven't found your payment" %}{% else %}{% translate "Scan our QR code" %}{% endif %}{% endblock %}
+
+{# A form page too, for its field, radio and card styles. #}
+{% block body_class %}template-donatepage pay-page form-page{% endblock %}
+
+{% block pay %}
+    <h1>{% translate "Scan our QR code" %}</h1>
+    {# What became of paying first: donate.js moves focus to it. #}
+    {% if state == "not-found" %}
+        <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
+            <p>{% translate "We haven't found your payment yet. If money has left your account, don't pay again." %}{% if site_settings.phone %} {% translate "Call us:" %}{% endif %}</p>
+            {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
+        </div>
+    {% endif %}
+
+    {# Step 1 of two pages. Once the QR code is folded away, the steps fold away with it. #}
+    {% if state != "not-found" %}
+        {% include "campaigns/pay/includes/qr_steps.html" with current=1 %}
+    {% endif %}
+
+    {% include "campaigns/pay/includes/summary.html" with copyable=True %}
+    <p data-copy-hint hidden>{% translate "Tap the copy button to copy a detail, then paste it in your app." %}</p>
+
+    {# Once the team couldn't find a payment, the QR code is folded away so nobody pays twice by mistake, and paying another way is open below. #}
+    {% if qr_codes %}
+        {% if state == "not-found" %}
+            <details class="pay-again"><summary>{% translate "I didn't pay: scan the QR code" %}</summary>
+            {% include "campaigns/pay/includes/qr_steps.html" with current=1 %}
+        {% endif %}
+        {# Go to step 2 sends the app chosen here (?code=), so step 2 starts with it chosen. #}
+        <form class="qr-pay" method="get" action="{% routablepageurl page 'qr_paid' pledge.reference %}">
+            <section class="qr-step" aria-labelledby="step-1-title">
+                <h2 id="step-1-title">{% translate "Step 1: Pay with your app" %}</h2>
+                <p>{% translate "We check QR payments by hand: your gift shows as received once it reaches us." %}</p>
+                {% if pledge.frequency == "monthly" %}<p>{% translate "You'll pay this month's gift now." %}</p>{% endif %}
+
+                {% if qr_codes|length > 1 %}
+                    <fieldset class="amount-options qr-choice">
+                        <legend>{% translate "Which app will you pay with?" %}</legend>
+                        {% for code in qr_codes %}
+                            <label class="amount-option">
+                                <input type="radio" name="code" value="{{ code.pk }}"{% if forloop.first %} checked{% endif %}>
+                                <span class="amount-figure">{{ code.name }}</span>
+                            </label>
+                        {% endfor %}
+                    </fieldset>
+                {% else %}
+                    <input type="hidden" name="code" value="{{ qr_codes.0.pk }}">
+                {% endif %}
+
+                <div class="qr-cards">
+                    {% for code in qr_codes %}
+                        <section class="qr-card" aria-labelledby="qr-name-{{ code.pk }}">
+                            <h3 id="qr-name-{{ code.pk }}">{{ code.name }}</h3>
+                            <div class="qr-code">
+                                <img src="{{ code.image.url }}"{% if code.image_small %} srcset="{{ code.image_small.url }} {{ code.small_width }}w, {{ code.image.url }} {{ code.image_width }}w" sizes="(min-width: 48rem) 20rem, min(100vw, 24rem)"{% endif %} width="{{ code.image_width }}" height="{{ code.image_height }}" alt="{% blocktranslate with name=code.name charity=site_settings.name %}{{ name }} QR code to pay {{ charity }}{% endblocktranslate %}">
+                                <p><a class="button" href="{{ code.image.url }}" download>{% translate "Save QR code" %}</a></p>
+                            </div>
+                            <div class="qr-instructions">
+                                {# Folded: most people know how to scan, and the help would push the account to pay instead far down a phone screen. #}
+                                <details class="qr-how">
+                                    <summary>{% translate "Need help saving or scanning the QR code?" %}</summary>
+                                    <p class="qr-help">{% translate "On an Android phone? Save the QR code, then in your app's scanner choose it from your photos." %}</p>
+                                    <p class="qr-help">{% translate "On an iPhone, press and hold the QR code, then choose Save to Photos." %}</p>
+                                    <p class="qr-help">{% translate "On a computer? Scan the code on screen with your phone." %}</p>
+                                </details>
+                                <p>{% blocktranslate with name=code.account_name %}After you scan, your app should show {{ name }}.{% endblocktranslate %}</p>
+                                <div class="qr-fallback">
+                                    <h4>{% translate "Can't scan the QR code? Pay to this account instead" %}</h4>
+                                    <dl class="qr-details">
+                                        <div>
+                                            <dt>{% translate "Account name" %}</dt>
+                                            <dd>
+                                                <span>{{ code.account_name }}</span>
+                                                {% translate "Account name copied" as copied %}
+                                                {% translate "Copy account name" as label %}
+                                                {% include "campaigns/pay/includes/copy_button.html" with key="account-name-" suffix=code.pk value=code.account_name %}
+                                            </dd>
+                                            <dd class="copy-status" role="status" data-copy-status="account-name-{{ code.pk }}"></dd>
+                                        </div>
+                                        {% if code.account_number %}
+                                            <div>
+                                                <dt>{% translate "Account number" %}</dt>
+                                                <dd>
+                                                    <span>{{ code.account_number }}</span>
+                                                    {% translate "Account number copied" as copied %}
+                                                    {% translate "Copy account number" as label %}
+                                                    {% include "campaigns/pay/includes/copy_button.html" with key="account-number-" suffix=code.pk value=code.account_number %}
+                                                </dd>
+                                                <dd class="copy-status" role="status" data-copy-status="account-number-{{ code.pk }}"></dd>
+                                            </div>
+                                        {% endif %}
+                                    </dl>
+                                    <p class="qr-help">{% translate "Don't forget to use the pledge number above as the Remarks (or reference), so we know the payment is yours." %}</p>
+                                </div>
+                            </div>
+                        </section>
+                    {% endfor %}
+                </div>
+
+                <p>{% translate "Paid in your app? Come back to this page, then go to step 2." %}</p>
+                <button class="button button-large" type="submit">{% translate "Go to step 2" %}</button>
+            </section>
+        </form>
+        {% if state == "not-found" %}</details>{% endif %}
+    {% endif %}
+
+    {% include "campaigns/pay/includes/other_ways.html" %}
+{% endblock %}

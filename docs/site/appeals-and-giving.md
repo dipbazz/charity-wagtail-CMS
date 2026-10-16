@@ -67,7 +67,9 @@ order:
 
 - **How much**: the page's suggested amounts (up to six) as large cards with what each pays for,
   and **Other amount**, which reveals **Your own amount**: a text box with a number keypad that
-  accepts "1,00,000" or "2500" (a number input would change the amount when scrolled over).
+  accepts "1,00,000" or "2500" (a number input would change the amount when scrolled over), up
+  to 999,999 (`MAX_AMOUNT`): a bigger gift is arranged with the charity, and an extra zero typed
+  by mistake is refused.
 - **How often**: one-off or monthly. **Monthly** reveals an optional **mobile number**, a country
   and a number, for a monthly reminder on WhatsApp or by text. It's checked and stored as an
   international number, and only numbers that can receive a message are accepted
@@ -102,12 +104,14 @@ then reads only about the way they chose:
 | Way | Page | Offered when |
 |---|---|---|
 | **Pay online** | `…/online/` | a provider set up here takes the pledge's currency and amount |
+| **Scan our QR code** | `…/qr/` | the charity has added a QR code (QR codes in the admin menu) and the pledge is in rupees |
 | **Pay in person** | `…/in-person/` | Site settings tick **We take gifts at our office** and give an office address or phone |
 | **Not ready to pay yet?** | `…/later/` | always (it isn't a way to pay, so it never counts as one) |
 
 `ways_to_pay()` (`campaigns/payments.py`) decides which ways are offered, for the pay page, the
 form's redirect and the sentence above the form, so they can't disagree. It's given the providers
-that take the pledge, the same list the pay buttons come from. With only one way, the
+that take the pledge, the same list the pay buttons come from, and the charity's QR codes
+(`DonatePage.qr_codes_for()`, none for a pledge that isn't in rupees). With only one way, the
 form and the pay page go straight to its page, which then says "Your pledge is saved."; with
 none, the form goes to the thank-you page. A way that isn't offered goes back to the choices,
 unless it's dealing with the pledge: the online page still shows a payment that may have gone
@@ -136,6 +140,7 @@ or a link kept to pay later never offers paying again.
   page, reached again with Back, goes to the pay page, where the payment can be checked. A
   provider says this with `opens_once`. The buttons post to `…/online/<provider>/`, so no
   provider's code can clash with a way's name.
+- **Scan our QR code:** see [Paying by QR code](#paying-by-qr-code) below.
 - **Pay in person:** what to do at the counter, as numbered steps: come to the office (the
   address from Site settings, with "Call us before you come" and the phone), pay in cash and give
   the pledge number, and ask for a receipt. The setting is off until a charity says on the
@@ -218,12 +223,95 @@ developer docs. The providers
 are in `nepal_payments/`, a package that knows nothing of this site; adding one is adding a file
 ([Extending the site](../contributing/extending.md#add-a-payment-provider)).
 
+### Paying by QR code
+
+Many small charities have only a QR code from their bank or a wallet, not an eSewa or Khalti
+merchant account, and it's how most people in Nepal pay. A charity's own (static) QR code carries
+no reference the site could look up, so **the site can't check it**: the team does, by hand.
+
+**The QR codes** are listed under **QR codes** in the admin menu, like pledges or partners: the
+table, an Add button when there are none, and each row opens its edit page. Each has a name in
+each language ("Fonepay (bank)"; a blank translation shows the main language's), an image, the
+**account name** exactly as the app shows it after scanning, and an optional account or wallet
+number for people who can't scan. Drag a row to put a code first. Only **Moderators** can add,
+change or remove them (`campaigns/migrations/0014_qr_payments.py`): an editor who
+could change one would send gifts to another account. For the same reason the image is stored on
+the code, not in the image library, where an editor could replace it. It's re-saved on upload
+(`core/images.clean_image()`), in its own format, as one file of at most 1600px (to save and scan)
+and one of at most 800px (shown, through `srcset`), without location data and refusing anything
+that isn't a JPEG, PNG or WebP of up to 5 MB; both files go when the code is replaced or removed.
+Wagtail's history for each code says who added, changed or removed it, and when.
+
+**Paying by QR is two pages, one per step**, both headed "Scan our QR code" with a row of the two
+steps under the heading ("Scan the QR code", "Paid? Tell us"): the step you're on has a filled
+circle and `aria-current="step"`, the other is a link to its page.
+
+- **Step 1** (`…/qr/`, "Pay with your app"). The gift summary, which here (and only here,
+  `summary.html` with `copyable`) says "Your gift amount" and "Pledge number (use this as
+  Remarks)", each with an icon Copy button that copies the plain value ("2500", "482913") and
+  appears only with JavaScript. Then how it's checked ("We check QR payments by hand: your gift
+  shows as received once it reaches us"); with two or more codes, "Which app will you pay with?" as
+  radio cards (the first chosen) that show one code at a time with CSS `:has()` (without it every
+  code shows, each under its name); the code as uploaded with **Save QR code**, a folded "Need help
+  saving or scanning the QR code?" (Android, iPhone and computer), "After you scan, your app should
+  show *the account name*", and a block headed "Can't scan the QR code? Pay to this account
+  instead" with the account name and number (each with a Copy button) and a reminder to use the
+  pledge number as the Remarks. From `48rem` the code sits on the left and the rest on the right;
+  the source order never changes. It ends with "Paid in your app? Come back to this page, then go
+  to step 2" and **Go to step 2**, a GET form that sends the chosen app (`?code=`).
+- **Step 2** (`…/qr/paid/`, "Paid? Tell us here"). With two or more codes, "Which app did you pay
+  with?", chosen only if step 1 sent one of the codes on the page (`chosen_code()`): a guess could
+  send the team to the wrong statement. Then the **transaction ID** with two numbered lines before
+  it (open the payment's receipt; copy the Transaction ID or Transaction code and paste it
+  here; in Nepali too the ID keeps its English name, as the wallets' receipts are in English), each error under its field (the
+  alert at the top links to each one), and **I've paid**, which says "Sending…" while it's sent.
+  Once they've told us, this address goes to the checking page (below). Receipt screenshots
+  come with #197's second part.
+
+Once the QR code is folded away (Not found, below), the row folds away with it, so opening the
+fold shows step 1 as the current step and step 2 as a link, as on a new pledge.
+
+**"I've paid"** (`…/qr/paid/`) moves the pledge from waiting or failed to **To confirm** in one
+conditional update (`Pledge.claim_paid()`), and creates the payment only if that changed a row, so
+two taps or two tabs make one payment. The payment's method is `qr` and it's always live: it's
+real money, so it's never shown as a test and can't be deleted. It keeps the code's name as it was
+(`qr_name`), in the site's main language whichever language the supporter read in, so the team
+always reads the same name and "by eSewa" survives the code being renamed or removed. The checking
+page names the code in the reader's language while it still exists (`Payment.paid_by()`). A pledge that is already
+paid, or isn't in rupees, never makes one, and one sent while an online attempt may be paid (Check
+your payment, say from a tab opened before it started) goes to the online page instead.
+
+**The pay page's states for QR:**
+
+| State | What it shows |
+|---|---|
+| To confirm | The **checking page** (`…/checking/`), which every pay address and **Pay with** go to (`HELD`): "Thank you. You've told us you paid Rs 2,500 by eSewa on 15 October …", the transaction ID they sent, "Questions? Call us and give your pledge number, 482 913:" with the charity's phone, "There's nothing more to do here" and the appeals link (or the home page). The thanks says the gift, so there's no summary, and nothing else can be paid until the team marks it paid or not found: no steps, no QR, no **Pay another way**. Title "Checking your payment". Opened in any other state, it goes to the pay page. A later way the team checks by hand gets this page too |
+| Not found | A problem message: "We haven't found your payment yet. If money has left your account, don't pay again", with the phone. The QR and I've paid are folded under "I didn't pay: scan the QR code", and **Pay another way** is open |
+| Paid | Thanks, with the reference the team entered, on every pay address |
+| Received a different amount | "We received Rs 2,000 from you by eSewa." |
+
+The choices send a pledge in To confirm to the checking page, and one in Not found to the QR
+page (`STATE_ROUTES`).
+
+**The team confirms from the pledge** (Pledges → open one). Each payment is listed with its steps
+(the supporter said they paid, marked paid by …). Someone with **Can confirm payments**
+(`campaigns.confirm_payment`, given to Moderators; editors still only read pledges) sees two
+actions on a QR payment, and only on one: **Mark as paid** takes the date received, the amount
+received and the reference from the statement (the supporter's transaction ID to start with), set
+once, as the payment becomes paid. The date can't be after today or before the pledge was sent (a
+Bikram Sambat year such as 2083 is refused), and the amount can't be more than a pledge can be (999,999). A different amount marks the pledge paid and makes the pay page
+say it received that amount. **Not found** fails the payment; it can still be marked paid later
+if it turns up. Each adds a step with who did it. eSewa and Khalti payments can't be marked by
+hand, and `Payment.ask()` returns nothing for a QR payment, so a scheduled check (#198) never
+touches one.
+
 ### How paying works, above the form
 
 The page writes this itself, in the reader's language, from the same `ways_to_pay()` as the pay
 page, so it's true on every site: "After you send this form, you can pay with eSewa or Khalti, or
 in person.", naming the providers set up there, and "or in person" only when paying in person is
-offered; "you can pay in person." with no provider; or, with no way to pay, that no payment is
+offered; "you can pay with eSewa or Khalti, by scanning our QR code or in person." when the
+charity has QR codes; "you can pay in person." with no provider; or, with no way to pay, that no payment is
 taken on the website yet and the charity will be in touch. The editors' **payment notice** follows it, for anything a charity wants to add, such as
 bank details for a transfer. Until #93 every Donate page had a default notice saying no payment was
 taken; a migration removed it wherever it hadn't been changed.
@@ -231,7 +319,8 @@ taken; a migration removed it wherever it hadn't been changed.
 ## Pledges in the admin
 
 **Pledges** in the admin menu lists every pledge: when it was sent, the name, amount, how often,
-the appeal and its **payment** (waiting, paid or failed; **Paid (test)** when a provider's test
+the appeal and its **payment** (waiting, **to confirm** for a QR payment the supporter says they
+made, paid or failed; **Paid (test)** when a provider's test
 system took it, which anyone can do with a public test account, so no money moved). The team can
 filter (by how often, appeal, payment, each consent and date), search by name or email, open one
 to read it, and export the list to CSV or Excel. Each pledge has a six-digit **pledge number**

@@ -3,9 +3,10 @@ import datetime
 from django.db.models import Sum
 from wagtail import hooks
 from wagtail.admin.ui.components import Component
+from wagtail.snippets.models import register_snippet
 
 from campaigns.models import CampaignPage
-from campaigns.views import PledgeViewSet
+from campaigns.views import PledgeViewSet, QRCodeViewSet
 
 CLOSING_SOON_DAYS = 14
 
@@ -45,3 +46,6 @@ def add_fundraising_panel(request, panels):
 @hooks.register("register_admin_viewset")
 def register_pledge_viewset():
     return PledgeViewSet()
+
+
+register_snippet(QRCodeViewSet)
