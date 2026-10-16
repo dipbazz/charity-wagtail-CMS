@@ -322,10 +322,7 @@ class TestTheQRPageInNepali:
         errors = visible_text(client.post(step_2, {"transaction_id": " "}))
 
         assert "लेनदेन आईडी" not in text + errors
-        assert (
-            "Transaction ID (यसमा Reference वा Code लेखिएको हुन सक्छ) प्रतिलिपि गरेर यहाँ टाँस्नुहोस्।"
-            in text
-        )
+        assert "Transaction ID वा Transaction Code प्रतिलिपि गरेर यहाँ राख्नुहोस।" in text
         assert "तल Transaction ID जाँच्नुहोस्।" in errors
         assert "आफ्नो रसिदमा रहेको Transaction ID लेख्नुहोस्।" in errors
 
