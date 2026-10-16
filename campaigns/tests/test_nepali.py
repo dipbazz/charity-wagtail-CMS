@@ -299,11 +299,12 @@ class TestTheQRPageInNepali:
         for nepali in [
             "हाम्रो QR कोड स्क्यान गर्नुहोस्",
             "रकम",
-            "तस्बिर सेभ गर्नुहोस्",
+            "QR कोड सेभ गर्नुहोस्",
+            "QR कोड सेभ गर्न वा स्क्यान गर्न मद्दत चाहियो?",
             "चरण २ मा जानुहोस्",
         ]:
             assert nepali in text
-        for english in ["Save image", "Scan our QR code", "Go to step 2"]:
+        for english in ["Save QR code", "Scan our QR code", "Go to step 2"]:
             assert english not in text
 
     def test_step_2_is_in_nepali_with_no_english_left(self, client, qr_page):

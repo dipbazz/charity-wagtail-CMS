@@ -250,8 +250,8 @@ circle and `aria-current="step"`, the other is a link to its page.
   appears only with JavaScript. Then how it's checked ("We check QR payments by hand: your gift
   shows as received once it reaches us"); with two or more codes, "Which app will you pay with?" as
   radio cards (the first chosen) that show one code at a time with CSS `:has()` (without it every
-  code shows, each under its name); the code as uploaded with **Save image**, a folded "Need help
-  saving or scanning the image?" (Android, iPhone and computer), "After you scan, your app should
+  code shows, each under its name); the code as uploaded with **Save QR code**, a folded "Need help
+  saving or scanning the QR code?" (Android, iPhone and computer), "After you scan, your app should
   show *the account name*", and a block headed "Can't scan the QR code? Pay to this account
   instead" with the account name and number (each with a Copy button) and a reminder to use the
   pledge number as the Remarks. From `48rem` the code sits on the left and the rest on the right;

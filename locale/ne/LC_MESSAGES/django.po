@@ -474,8 +474,8 @@ msgstr "तपाईं कुन एपबाट भुक्तानी ग�
 msgid "%(name)s QR code to pay %(charity)s"
 msgstr "%(charity)s लाई भुक्तानी गर्ने %(name)s QR कोड"
 
-msgid "Save image"
-msgstr "तस्बिर सेभ गर्नुहोस्"
+msgid "Save QR code"
+msgstr "QR कोड सेभ गर्नुहोस्"
 
 msgid "Account name"
 msgstr "खाताको नाम"
@@ -523,11 +523,11 @@ msgstr "तल लेनदेन आईडी जाँच्नुहोस्
 msgid "Step 1: Pay with your app"
 msgstr "चरण १: आफ्नो एपबाट भुक्तानी गर्नुहोस्"
 
-msgid "Need help saving or scanning the image?"
-msgstr "तस्बिर सेभ गर्न वा स्क्यान गर्न मद्दत चाहियो?"
+msgid "Need help saving or scanning the QR code?"
+msgstr "QR कोड सेभ गर्न वा स्क्यान गर्न मद्दत चाहियो?"
 
-msgid "On an Android phone? Save the image, then in your app's scanner choose it from your photos."
-msgstr "एन्ड्रोइड फोनमा हुनुहुन्छ? तस्बिर सेभ गर्नुहोस्, अनि आफ्नो एपको स्क्यानरमा फोटोहरूबाट त्यो छान्नुहोस्।"
+msgid "On an Android phone? Save the QR code, then in your app's scanner choose it from your photos."
+msgstr "एन्ड्रोइड फोनमा हुनुहुन्छ? QR कोड सेभ गर्नुहोस्, अनि आफ्नो एपको स्क्यानरमा फोटोहरूबाट त्यो छान्नुहोस्।"
 
 msgid "On an iPhone, press and hold the QR code, then choose Save to Photos."
 msgstr "आईफोनमा QR कोड थिचिराख्नुहोस्, अनि ‘Save to Photos’ छान्नुहोस्।"

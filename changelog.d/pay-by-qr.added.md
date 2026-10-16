@@ -2,7 +2,7 @@ Supporters can pay a pledge by scanning the charity's own QR code. The new **QR 
 admin lists them, with an **Add** button when there are none; each has a name in each language, an
 image, and the account name the app shows after scanning. Only moderators can change them. The
 **Scan our QR code** has two steps, each on its own page. Step 1 shows the amount and the pledge
-number to copy into the app's Remarks, the QR as uploaded with a **Save image** link, the account
+number to copy into the app's Remarks, the QR as uploaded with a **Save QR code** link, the account
 name to check after scanning, and the account to pay instead if scanning doesn't work. Step 2,
 **I've paid**, takes the transaction ID from the receipt, and the pledge shows **To confirm**: it
 can't be paid another way until it's checked, so nobody pays twice. The

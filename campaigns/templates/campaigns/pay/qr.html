@@ -72,13 +72,13 @@
                             <h3 id="qr-name-{{ code.pk }}">{{ code.name }}</h3>
                             <div class="qr-code">
                                 <img src="{{ code.image.url }}"{% if code.image_small %} srcset="{{ code.image_small.url }} {{ code.small_width }}w, {{ code.image.url }} {{ code.image_width }}w" sizes="(min-width: 48rem) 20rem, min(100vw, 24rem)"{% endif %} width="{{ code.image_width }}" height="{{ code.image_height }}" alt="{% blocktranslate with name=code.name charity=site_settings.name %}{{ name }} QR code to pay {{ charity }}{% endblocktranslate %}">
-                                <p><a class="button" href="{{ code.image.url }}" download>{% translate "Save image" %}</a></p>
+                                <p><a class="button" href="{{ code.image.url }}" download>{% translate "Save QR code" %}</a></p>
                             </div>
                             <div class="qr-instructions">
                                 {# Folded: most people know how to scan, and the help would push the account to pay instead far down a phone screen. #}
                                 <details class="qr-how">
-                                    <summary>{% translate "Need help saving or scanning the image?" %}</summary>
-                                    <p class="qr-help">{% translate "On an Android phone? Save the image, then in your app's scanner choose it from your photos." %}</p>
+                                    <summary>{% translate "Need help saving or scanning the QR code?" %}</summary>
+                                    <p class="qr-help">{% translate "On an Android phone? Save the QR code, then in your app's scanner choose it from your photos." %}</p>
                                     <p class="qr-help">{% translate "On an iPhone, press and hold the QR code, then choose Save to Photos." %}</p>
                                     <p class="qr-help">{% translate "On a computer? Scan the code on screen with your phone." %}</p>
                                 </details>

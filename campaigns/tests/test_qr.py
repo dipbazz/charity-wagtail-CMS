@@ -348,7 +348,7 @@ class TestTheQRPage:
         assert names == ["eSewa", "Fonepay (bank)"]
         save = page.select_one(".qr-card a[download]")
         assert save["href"].endswith(".png")
-        assert "Save image" in save.get_text()
+        assert "Save QR code" in save.get_text()
 
     def test_one_code_has_no_chooser(self, client, donate_page, pledge, esewa_qr):
         page = soup(client.get(qr_url(donate_page, pledge)))
@@ -430,10 +430,10 @@ class TestTheQRPage:
 
         # Folded under a title that says what's inside, so it doesn't push the account down.
         how = soup(response).select_one(".qr-card details.qr-how")
-        assert how.summary.get_text(strip=True) == "Need help saving or scanning the image?"
+        assert how.summary.get_text(strip=True) == "Need help saving or scanning the QR code?"
         assert not how.has_attr("open")
         assert len(how.select("p.qr-help")) == 3
-        assert "On an Android phone? Save the image" in words
+        assert "On an Android phone? Save the QR code" in words
         assert "On a computer? Scan the code on screen with your phone." in words
         assert "On an iPhone, press and hold the QR code" in words
 
