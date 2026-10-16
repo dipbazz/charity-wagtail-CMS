@@ -231,7 +231,9 @@ from GitHub with a backup and an approval each time.
    data, restore the backup (below).
 
 A changed file in `deploy/aws/systemd/` must be copied to `/etc/systemd/system/` again, followed
-by `sudo systemctl daemon-reload`. A new variable in `env.example` must be added to the server's
+by `sudo systemctl daemon-reload`. A changed `Caddyfile` takes effect only after
+`sudo docker compose exec -w /etc/caddy caddy caddy reload` (`up -d` leaves Caddy running with the
+old one). A new variable in `env.example` must be added to the server's
 `.env` by hand before `up -d`.
 
 ## Restore a backup
