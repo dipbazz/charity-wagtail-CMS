@@ -102,7 +102,7 @@ Run them with `uv run python manage.py <command>` locally, or
 |---|---|
 | `update_site_url` | Points the Wagtail Site at `SITE_URL`. Safe to run on every deploy; the image runs it on every start. Refuses a `SITE_URL` it can't store faithfully |
 | `backup_site <folder>` | Writes `db.sqlite3` (a consistent copy, made with SQLite's backup API, safe while the site serves requests) and `media.tar.gz` (the uploads, under `media/`) to a folder, overwriting an earlier backup there. Refuses a folder inside the uploads, or every backup would contain the previous ones. SQLite only |
-| `delete_old_receipts` | Deletes the receipt screenshots supporters sent with a QR payment more than 30 days ago that nobody has marked paid or not found (the payment stays To confirm), and any screenshot file that old that no payment points at. `backup.sh` runs it first, every night |
+| `delete_old_receipts` | Deletes the receipt screenshots supporters sent with a QR payment more than 30 days ago that nobody has marked paid or not found (the payment stays To confirm), and any screenshot file that old that no payment points at. `backup.sh` runs it after the backup, every night |
 | `seed_demo` | Builds the demo charity ([Demo content](contributing/demo-content.md)). Safe to re-run: if appeals exist it adds nothing, but it always runs `update_site_url`. Refuses a Nepali-first site, because the demo is English-first |
 | `publish_scheduled` | Wagtail's: publishes and unpublishes pages with a go-live or expiry time |
 
@@ -113,10 +113,12 @@ Go-live and expiry times only take effect because `publish_scheduled` runs every
 
 ## Backups
 
-`backup.sh` runs `delete_old_receipts`, then `backup_site /data/backups/latest` inside the running
-container, then copies the database and uploads archive to S3 under `backups/<UTC time>/`. The
-server's IAM role can write and read `backups/` but not delete, so a compromised server can't wipe
-them; the bucket's lifecycle rule removes them after 30 days.
+`backup.sh` runs `backup_site /data/backups/latest` inside the running container, copies the
+database and uploads archive to S3 under `backups/<UTC time>/`, then runs `delete_old_receipts`.
+The clean-up comes last so a failure there can't stop the backup; it still fails the run, which
+`journalctl -u charity-backup.service` shows. The server's IAM role can write and read `backups/`
+but not delete, so a compromised server can't wipe them; the bucket's lifecycle rule removes them
+after 30 days.
 
 **Receipt screenshots aren't backed up.** They're kept in `receipts/` beside `media/` in the data
 directory, which no address serves and the uploads archive doesn't include, so a deleted
