@@ -19,6 +19,19 @@
                     <dt>Transaction ID from the supporter</dt>
                     <dd>{{ payment.supporters_reference }}</dd>
                 {% endif %}
+                {% if payment.receipt %}
+                    <dt>Screenshot of the receipt</dt>
+                    {# Deleted once the payment is marked paid or not found, or after 30 days. #}
+                    <dd>
+                        {% if can_confirm %}
+                            {% url 'pledges:receipt' object.pk payment.pk as receipt_url %}
+                            <a href="{{ receipt_url }}"><img src="{{ receipt_url }}" alt="The supporter's screenshot of their receipt" style="display: block; width: min(100%, 20rem); height: auto"></a>
+                            <p>Deleted once you mark the payment paid or not found.</p>
+                        {% else %}
+                            Sent. Only people who can confirm payments can see it.
+                        {% endif %}
+                    </dd>
+                {% endif %}
                 {% if payment.provider_reference %}
                     <dt>Reference</dt>
                     <dd>{{ payment.provider_reference }}</dd>

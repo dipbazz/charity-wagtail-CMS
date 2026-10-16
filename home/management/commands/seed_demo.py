@@ -329,8 +329,10 @@ class Command(BaseCommand):
                         "paragraph",
                         "<p>When you pledge a gift, we keep your name, email address and the "
                         "message you write, and your home address and postcode if you give them. "
-                        "For a monthly gift you can also give a mobile number. When you sign up "
-                        "to volunteer, we keep the answers you give on the form.</p>",
+                        "For a monthly gift you can also give a mobile number. If you pay by "
+                        "scanning our QR code, you can send us a screenshot of your app's receipt. "
+                        "When you sign up to volunteer, we keep the answers you give on the "
+                        "form.</p>",
                     ),
                     ("heading", {"heading_text": "What we use it for", "size": "h2"}),
                     (
@@ -354,7 +356,10 @@ class Command(BaseCommand):
                     (
                         "paragraph",
                         "<p>Write here how long your charity keeps pledges and volunteer "
-                        "sign-ups, and why.</p>",
+                        "sign-ups, and why.</p><p>A screenshot of a receipt is seen only by the "
+                        "team members who check payments. We keep it until we've checked your "
+                        "payment, and 30 days at most, then delete it; it isn't kept in our "
+                        "backups.</p>",
                     ),
                     ("heading", {"heading_text": "Seeing or deleting your details", "size": "h2"}),
                     (

@@ -2,9 +2,11 @@ import re
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import path, reverse
 from django.utils import timezone
+from django.utils.cache import add_never_cache_headers
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from wagtail.admin.ui.tables import Column
@@ -16,6 +18,7 @@ from wagtail.snippets.views.snippets import SnippetViewSet
 from campaigns.forms import MAX_AMOUNT, MarkPaidForm
 from campaigns.models import Payment, Pledge, QRCode
 from core.exports import VisitorTextExportMixin
+from core.images import UPLOAD_CONTENT_TYPES
 
 
 class PledgeIndexView(VisitorTextExportMixin, IndexView):
@@ -126,6 +129,11 @@ class PledgeViewSet(ModelViewSet):
                 self.not_found_view,
                 name="not_found",
             ),
+            path(
+                "<int:pk>/payments/<int:payment_pk>/receipt/",
+                self.receipt_view,
+                name="receipt",
+            ),
         ]
 
     @staticmethod
@@ -164,6 +172,22 @@ class PledgeViewSet(ModelViewSet):
         else:
             messages.error(request, "This payment can't be marked not found.")
         return redirect(reverse("pledges:inspect", args=[pk]))
+
+    def receipt_view(self, request, pk, payment_pk):
+        """The supporter's screenshot of their receipt, for people who may confirm payments
+        only: nothing else serves it. Never cached, so it's gone from the browser too once it's
+        deleted."""
+        payment = self.confirmable_payment(request, pk, payment_pk)
+        if not payment.receipt:
+            raise Http404
+        try:
+            file = payment.receipt.open("rb")
+        except FileNotFoundError as missing:
+            raise Http404 from missing
+        extension = payment.receipt.name.rpartition(".")[2]
+        response = FileResponse(file, content_type=UPLOAD_CONTENT_TYPES[extension])
+        add_never_cache_headers(response)
+        return response
 
     # Wagtail needs these for its add and edit views, which only a superuser can open.
     form_fields = [

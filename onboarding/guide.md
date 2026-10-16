@@ -284,8 +284,10 @@ The Donate page shows every way to give, what a gift does, and where the money g
   (a screenshot or saved image), for each app or bank. For each one we also need its **name** as
   supporters will pick it (for example "eSewa" or "Fonepay (bank)"), the **account name your app
   shows after scanning it**, exactly as written, and optionally the **account or wallet number**.
-  Supporters scan the code, then tell us they have paid, and our team marks the gift received
-  once it reaches your account. A QR code takes real money from the first day, with no merchant
+  Supporters scan the code, then tell us they have paid, with the transaction ID from their app, a
+  screenshot of its receipt, or both, and our team marks the gift received once it reaches your
+  account. Only the people who confirm payments see a screenshot, and the website deletes it once
+  the payment is checked, or after 30 days at most. A QR code takes real money from the first day, with no merchant
   account.
 - **Where the money goes.** Many donors ask how much of their gift reaches the people you help (for
   example "Rs 85 of every Rs 100"). We show this only if your audited accounts show it is true.

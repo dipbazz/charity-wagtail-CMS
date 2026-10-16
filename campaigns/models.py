@@ -8,6 +8,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.core.files.storage import storages
 from django.core.paginator import Paginator
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import IntegrityError, models, transaction
@@ -492,8 +493,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
 
     @path("pay/<uuid:reference>/qr/paid/", name="qr_paid")
     def qr_paid(self, request, reference):
-        """Step 2 of paying by QR: the supporter tells us they paid. Opened, it's the form (or the
-        checking page, once they've told us); sent, the pledge becomes To confirm once, however
+        """Step 2 of paying by QR: the supporter tells us they paid, with the transaction ID, a
+        screenshot of the receipt, or both. Opened, it's the form (or the checking page, once
+        they've told us); sent, the pledge becomes To confirm once, however
         many times and tabs it's sent from: only the one that moves it creates the payment. The
         team then looks for it in its statement."""
         if request.method == "GET":
@@ -512,7 +514,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             return self.redirect_to(request, "pay", reference)
         from campaigns.forms import QRPaidForm  # forms imports this module's Pledge
 
-        form = QRPaidForm(request.POST, codes=qr_codes)
+        form = QRPaidForm(request.POST, request.FILES, codes=qr_codes)
         if not form.is_valid():
             providers, ways, _ = self.ways_for(pledge, site_settings)
             response = self.render_pay_page(
@@ -529,7 +531,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             )
             response.status_code = 422
             return response
-        pledge.claim_paid(form.cleaned_data["code"], form.cleaned_data["transaction_id"])
+        pledge.claim_paid(
+            form.cleaned_data["code"],
+            form.cleaned_data["transaction_id"],
+            form.cleaned_data["receipt"],
+        )
         return self.redirect_to(request, "checking", reference)
 
     @path("pay/<uuid:reference>/checking/", name="checking")
@@ -1149,10 +1155,12 @@ class Pledge(models.Model):
         """Whether a payment of it moved real money, not just a provider's test system."""
         return self.payments.filter(status=PaymentStatus.PAID, live=True).exists()
 
-    def claim_paid(self, code, transaction_id):
+    def claim_paid(self, code, transaction_id, receipt=None):
         """The supporter says they paid by scanning `code`: a payment for the team to confirm,
         and the pledge To confirm. Returns the payment, or None when the pledge wasn't waiting or
         failed any more (a second tap, another tab, or paid since), so only one claim makes one.
+        `receipt` is their screenshot of the receipt, already saved afresh by clean_image() and
+        named (QRPaidForm), if they sent one.
 
         A conditional update, not a read then a save: two sends at once can't both change it.
         The code's name is kept in the site's main language, which the team reads, whichever
@@ -1177,6 +1185,7 @@ class Pledge(models.Model):
                 qr_code=code,
                 qr_name=qr_name or code.name,
                 supporters_reference=transaction_id,
+                receipt=receipt,
             )
             payment.add_step(StepKind.CLAIMED)
         self.payment_status = PaymentStatus.TO_CONFIRM
@@ -1192,6 +1201,18 @@ class Pledge(models.Model):
             return self.payments.create(
                 method=method, amount=self.amount, currency=self.currency, live=live
             )
+
+
+# A receipt screenshot's longest side as saved: a phone's whole screen, its small print still
+# readable.
+RECEIPT_WIDTH = 2000
+# The longest a screenshot is kept when nobody has checked its payment (delete_old_receipts).
+RECEIPTS_KEPT_FOR = datetime.timedelta(days=30)
+
+
+def receipts_storage():
+    """Where receipt screenshots are kept: STORAGES["receipts"], which no address serves."""
+    return storages["receipts"]
 
 
 class Payment(models.Model):
@@ -1233,6 +1254,12 @@ class Payment(models.Model):
     # statement, and what the team's reference starts as when it marks the payment paid.
     supporters_reference = models.CharField(
         "transaction ID from the supporter", max_length=100, blank=True
+    )
+    # A screenshot of that receipt, if the supporter sent one, as clean_image() saved it afresh.
+    # Only people who can confirm payments see it, and it's deleted once the payment is marked
+    # paid or not found, or after RECEIPTS_KEPT_FOR at most.
+    receipt = models.FileField(
+        "screenshot of the receipt", storage=receipts_storage, blank=True, editable=False
     )
     created_at = models.DateTimeField("started", auto_now_add=True)
     updated_at = models.DateTimeField("updated", auto_now=True)
@@ -1343,6 +1370,7 @@ class Payment(models.Model):
                 payment_status=PaymentStatus.PAID, paid_at=paid_at
             )
             self.add_step(StepKind.MARKED_PAID, by=by)
+            self.delete_receipt()
         self.status, self.amount, self.provider_reference = (
             PaymentStatus.PAID,
             amount,
@@ -1358,7 +1386,18 @@ class Payment(models.Model):
         if not self.record(PaymentStatus.FAILED):
             return False
         self.add_step(StepKind.NOT_FOUND, by=by)
+        self.delete_receipt()
         return True
+
+    def delete_receipt(self):
+        """Deletes the supporter's screenshot of the receipt, once its payment is checked or it's
+        been kept as long as it may be. The file goes once the change is saved for good."""
+        if not self.receipt:
+            return
+        name = self.receipt.name
+        Payment.objects.filter(pk=self.pk).update(receipt="")
+        delete_files_once_saved(self.receipt.storage, {name})
+        self.receipt = None
 
     def add_step(self, kind, word="", by=None):
         """Add a step to its history. Pass only known values, never a provider's reply."""
@@ -1400,6 +1439,13 @@ class Payment(models.Model):
         for name, value in changes.items():
             setattr(self, name, value)
         return True
+
+
+@receiver(post_delete, sender=Payment)
+def delete_payment_receipt(sender, instance, **kwargs):
+    """A payment removed with its pledge leaves no screenshot behind."""
+    if instance.receipt:
+        delete_files_once_saved(instance.receipt.storage, {instance.receipt.name})
 
 
 class StepKind(models.TextChoices):

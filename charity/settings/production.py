@@ -115,5 +115,10 @@ STORAGES = {
 DATA_DIR = Path(os.environ.get("DJANGO_DATA_DIR", BASE_DIR))
 DATABASES = {"default": {**DATABASES["default"], "NAME": DATA_DIR / "db.sqlite3"}}
 MEDIA_ROOT = DATA_DIR / "media"
+# Beside media/, not in it: nothing serves them, and they aren't backed up.
+STORAGES = {
+    **STORAGES,
+    "receipts": {**STORAGES["receipts"], "OPTIONS": {"location": DATA_DIR / "receipts"}},
+}
 # Turn on when no web server or object storage serves MEDIA_URL in front of the app.
 SERVE_MEDIA = os.environ.get("DJANGO_SERVE_MEDIA", "false").lower() == "true"

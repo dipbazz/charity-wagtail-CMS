@@ -196,6 +196,11 @@ STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
+    # The receipt screenshots supporters send with "I've paid": outside MEDIA_ROOT, with no URL.
+    "receipts": {
+        "BACKEND": "core.storage.PrivateStorage",
+        "OPTIONS": {"location": BASE_DIR / "receipts"},
+    },
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },

@@ -26,6 +26,8 @@ def with_card_images(pages):
 # What a visitor or a moderator may upload straight to the server, outside the image library: the
 # formats browsers and phones all make, and nothing a viewer would have to run (SVG).
 UPLOAD_FORMATS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
+# What to serve each as, by the extension clean_image() gives it.
+UPLOAD_CONTENT_TYPES = {"jpg": "image/jpeg", "png": "image/png", "webp": "image/webp"}
 # Formats saved as another: a phone camera's JPEG often carries a second, smaller picture, which
 # Pillow reads as MPO. Only the first is kept.
 SAVED_AS = {"MPO": "JPEG"}

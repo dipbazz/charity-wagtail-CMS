@@ -88,10 +88,29 @@ anyone can type it; a test sends a forged return and checks that nothing changes
   always live, so it can never pass for a test and can't be deleted.
 - **QR codes are where money goes, so they're a moderator's, and the image is stored on the code,**
   not in the image library an editor can replace a file in.
-- **An upload from outside the image library is re-saved, never stored as it came** (a QR card
-  now, and a payment receipt from a supporter next): `core/images.clean_image()` decodes it,
-  drops location and camera data and anything hidden in other bytes, allows JPEG, PNG and WebP of
-  up to 5 MB (no SVG), and names the file itself.
+- **An upload from outside the image library is re-saved, never stored as it came** (a QR card,
+  and a supporter's receipt screenshot): `core/images.clean_image()` decodes it, drops location
+  and camera data and anything hidden in other bytes, allows JPEG, PNG and WebP of up to 5 MB (no
+  SVG; a phone camera's JPEG that Pillow reads as MPO is saved as a plain JPEG), and names the file
+  itself.
+
+## A supporter's upload is private and short-lived
+
+The receipt screenshot a supporter can send with "I've paid" is the site's first upload from the
+public. The rules for it, and for any later upload from visitors:
+
+- **Re-saved before it's kept** (`clean_image()`, above), in the form, so a file that isn't a
+  picture is refused with the form's other mistakes. One file per payment.
+- **Kept where no address serves it:** `STORAGES["receipts"]` is `core.storage.PrivateStorage`,
+  in `receipts/` beside `media/`, never inside it. It has no URL (`url()` raises), and only the
+  site's own user can read its files. The one way to see a screenshot is the pledge's page in the
+  admin, through a view that checks `campaigns.confirm_payment` and is never cached. Editors read
+  only that one was sent.
+- **Deleted as soon as it's done its job:** when the payment is marked paid or not found, with
+  its pledge, and after 30 days at most (`delete_old_receipts`, run by `backup.sh`). It's never
+  backed up, so deleted means gone, as the privacy notice says.
+- **Accepted risk:** there's no limit on a request's size or on the storage as a whole, only the
+  5 MB per file, checked before the picture is decoded.
 
 ## Production refuses to start half-configured
 

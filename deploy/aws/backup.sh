@@ -12,6 +12,8 @@ data_dir=$(setting DATA_DIR)
 data_dir=${data_dir:-/srv/charity/data}
 [ -n "$bucket" ] || { echo "Set BACKUP_BUCKET in $(pwd)/.env" >&2; exit 1; }
 
+# Receipt screenshots aren't backed up (they're outside media/); this keeps each one 30 days at most.
+docker compose exec -T web python manage.py delete_old_receipts
 docker compose exec -T web python manage.py backup_site /data/backups/latest
 
 stamp=$(date -u +%Y-%m-%dT%H%M%SZ)
