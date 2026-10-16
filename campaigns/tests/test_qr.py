@@ -57,6 +57,10 @@ def qr_url(donate_page, pledge, tail=""):
     return f"{donate_page.url}pay/{pledge.reference}/qr/{tail}"
 
 
+def checking_url(donate_page, pledge):
+    return f"{donate_page.url}pay/{pledge.reference}/checking/"
+
+
 def soup(response):
     return BeautifulSoup(response.content, "html.parser")
 
@@ -535,7 +539,7 @@ class TestTheTwoSteps:
         assert button["data-busy-text"] == "Sending…"
         assert page.select_one("form.qr-paid [data-busy-status][role=status]")
 
-    def test_step_2_goes_back_to_step_1_once_they_have_told_us(
+    def test_step_2_goes_to_the_checking_page_once_they_have_told_us(
         self, client, donate_page, pledge, esewa_qr
     ):
         say_paid(client, donate_page, pledge, esewa_qr)
@@ -543,7 +547,7 @@ class TestTheTwoSteps:
         response = client.get(qr_url(donate_page, pledge, "paid/"))
 
         assert response.status_code == 303
-        assert response.url == qr_url(donate_page, pledge)
+        assert response.url == checking_url(donate_page, pledge)
 
     def test_step_2_is_open_when_the_team_couldnt_find_it(
         self, client, donate_page, pledge, esewa_qr, django_user_model
@@ -560,33 +564,6 @@ class TestTheTwoSteps:
         response = client.get(qr_url(donate_page, pledge, "paid/"))
 
         assert response.status_code in (302, 303)
-
-    def test_the_second_is_ticked_once_they_have_paid_and_nothing_links_into_the_fold(
-        self, client, donate_page, pledge, esewa_qr
-    ):
-        say_paid(client, donate_page, pledge, esewa_qr)
-
-        page = soup(client.get(qr_url(donate_page, pledge)))
-
-        assert page.select("nav[aria-label=Steps]") == []
-        steps = page.select("ol.qr-progress > li")
-        assert [li.select("a") for li in steps] == [[], []]
-        assert page.select("ol.qr-progress [aria-current]") == []
-        assert steps[0].select(".is-done") == []
-        assert steps[1].select_one(".is-done svg")
-        assert "(done)" in steps[1].get_text()
-
-    def test_nothing_is_ticked_when_the_team_couldnt_find_it(
-        self, client, donate_page, pledge, esewa_qr, django_user_model
-    ):
-        payment = pledge.claim_paid(esewa_qr, "TXN-8841")
-        payment.mark_not_found(django_user_model.objects.create_user(username="ram"))
-
-        page = soup(client.get(qr_url(donate_page, pledge)))
-
-        assert len(page.select("ol.qr-progress > li")) == 2
-        assert page.select("ol.qr-progress .is-done") == []
-        assert "(done)" not in page.select_one("ol.qr-progress").get_text()
 
 
 class TestCopiedMessages:
@@ -610,45 +587,22 @@ class TestCopiedMessages:
 
 
 class TestSayingIvePaid:
-    def test_goes_to_the_page_that_says_thank_you(self, client, donate_page, pledge, esewa_qr):
+    def test_goes_to_the_checking_page(self, client, donate_page, pledge, esewa_qr):
         response = say_paid(client, donate_page, pledge, esewa_qr)
 
         assert response.status_code == 303
-        assert response.url == qr_url(donate_page, pledge)
-        page = client.get(response.url)
-        assert "Thank you. You've told us you paid Rs 2,500 by eSewa" in text(page)
-        assert "TXN-8841" in text(page)
-        assert "There's nothing more to do here." in text(page)
-        assert "Checking your payment" in soup(page).title.get_text()
+        assert response.url == checking_url(donate_page, pledge)
 
-    def test_no_way_to_pay_is_offered_while_to_confirm(
-        self, client, donate_page, pledge, esewa_qr, fake_provider
+    def test_sent_again_from_a_stale_tab_goes_to_the_checking_page(
+        self, client, donate_page, pledge, esewa_qr
     ):
         say_paid(client, donate_page, pledge, esewa_qr)
 
-        page = soup(client.get(qr_url(donate_page, pledge)))
-
-        assert page.select("details.pay-again, form.qr-pay, .qr-card") == []
-        assert "Pay another way" not in text_of(page)
-
-    def test_thanks_names_the_code_in_the_readers_language(
-        self, client, donate_page, nepali_home_page, esewa_qr
-    ):
-        nepali_page = donate_page.copy_for_translation(nepali_home_page.locale)
-        nepali_page.save_revision().publish()
-        QRCodeName.objects.create(code=esewa_qr, locale=nepali_home_page.locale, name="इसेवा")
-        pledge = Pledge.objects.create(page=nepali_page, amount=2500, currency="NPR", name="Sita")
-        say_paid(client, nepali_page, pledge, esewa_qr)
-
-        assert "इसेवा" in text(client.get(qr_url(nepali_page, pledge)))
-
-    def test_the_pay_page_goes_to_it(self, client, donate_page, pledge, esewa_qr, site):
-        say_paid(client, donate_page, pledge, esewa_qr)
-
-        response = client.get(f"{donate_page.url}pay/{pledge.reference}/")
+        response = say_paid(client, donate_page, pledge, esewa_qr, transaction_id="TXN-2")
 
         assert response.status_code == 303
-        assert response.url == qr_url(donate_page, pledge)
+        assert response.url == checking_url(donate_page, pledge)
+        assert list(pledge.payments.values_list("supporters_reference", flat=True)) == ["TXN-8841"]
 
     def test_sending_it_twice_makes_one_payment(self, client, donate_page, pledge, esewa_qr):
         say_paid(client, donate_page, pledge, esewa_qr)
@@ -729,8 +683,79 @@ class TestSayingIvePaid:
         assert response.status_code == 303
         assert pledge.payments.count() == 1
 
-    @pytest.mark.parametrize("tail", ["online/", "in-person/", "later/"])
-    def test_every_other_ways_page_goes_to_it_while_to_confirm(
+
+class TestTheCheckingPage:
+    """Where a pledge's every pay address goes while the team checks a payment the supporter
+    says they made: nothing else can be paid until it's found or not."""
+
+    def test_says_thank_you_and_what_they_told_us(self, client, donate_page, pledge, esewa_qr):
+        say_paid(client, donate_page, pledge, esewa_qr)
+
+        response = client.get(checking_url(donate_page, pledge))
+        page = soup(response)
+
+        assert response.status_code == 200
+        lead = page.select_one("[data-focus-on-load]")
+        assert "Thank you. You've told us you paid Rs 2,500 by eSewa" in text_of(lead)
+        assert "You sent us the transaction ID TXN-8841." in text(response)
+        assert "There's nothing more to do here." in text(response)
+        assert "Checking your payment" in page.title.get_text()
+        assert page.h1.get_text(strip=True) == "Checking your payment"
+
+    def test_repeats_nothing_and_offers_nothing_to_pay(
+        self, client, donate_page, pledge, esewa_qr, fake_provider
+    ):
+        say_paid(client, donate_page, pledge, esewa_qr)
+
+        page = soup(client.get(checking_url(donate_page, pledge)))
+
+        # The thanks already says the amount: no summary, no steps, no QR, no other way.
+        content = page.select_one("main")
+        assert content.select("dl.gift-summary, ol.qr-progress, form, .qr-card, .pay-way") == []
+        assert "Pay another way" not in text_of(page)
+
+    def test_gives_the_pledge_number_to_call_about_it(
+        self, client, donate_page, pledge, esewa_qr, site
+    ):
+        site_settings = SiteSettings.for_site(site)
+        site_settings.phone = "+977 1-4567890"
+        site_settings.save()
+        say_paid(client, donate_page, pledge, esewa_qr)
+
+        page = soup(client.get(checking_url(donate_page, pledge)))
+
+        assert (
+            f"Questions? Call us and give your pledge number, {pledge.display_number()}:"
+            in text_of(page)
+        )
+        assert page.select_one("main a[href='tel:+97714567890']")
+
+    def test_asks_nobody_to_call_without_a_phone(self, client, donate_page, pledge, esewa_qr):
+        say_paid(client, donate_page, pledge, esewa_qr)
+
+        page = soup(client.get(checking_url(donate_page, pledge)))
+
+        assert "Call us" not in text_of(page.select_one("main"))
+
+    def test_names_the_code_in_the_readers_language(
+        self, client, donate_page, nepali_home_page, esewa_qr
+    ):
+        nepali_page = donate_page.copy_for_translation(nepali_home_page.locale)
+        nepali_page.save_revision().publish()
+        QRCodeName.objects.create(code=esewa_qr, locale=nepali_home_page.locale, name="इसेवा")
+        pledge = Pledge.objects.create(page=nepali_page, amount=2500, currency="NPR", name="Sita")
+        say_paid(client, nepali_page, pledge, esewa_qr)
+
+        assert "इसेवा" in text(client.get(checking_url(nepali_page, pledge)))
+
+    def test_keeps_the_codes_name_once_it_is_removed(self, client, donate_page, pledge, esewa_qr):
+        say_paid(client, donate_page, pledge, esewa_qr)
+        esewa_qr.delete()
+
+        assert "by eSewa on" in text(client.get(checking_url(donate_page, pledge)))
+
+    @pytest.mark.parametrize("tail", ["", "online/", "qr/", "qr/paid/", "in-person/", "later/"])
+    def test_every_pay_address_goes_to_it(
         self, client, donate_page, pledge, esewa_qr, fake_provider, tail
     ):
         say_paid(client, donate_page, pledge, esewa_qr)
@@ -738,9 +763,9 @@ class TestSayingIvePaid:
         response = client.get(f"{donate_page.url}pay/{pledge.reference}/{tail}")
 
         assert response.status_code == 303
-        assert response.url == qr_url(donate_page, pledge)
+        assert response.url == checking_url(donate_page, pledge)
 
-    def test_no_online_payment_starts_while_to_confirm(
+    def test_no_online_payment_starts_meanwhile(
         self, client, donate_page, pledge, esewa_qr, fake_provider
     ):
         say_paid(client, donate_page, pledge, esewa_qr)
@@ -748,9 +773,26 @@ class TestSayingIvePaid:
         response = client.post(f"{donate_page.url}pay/{pledge.reference}/online/fakepay/")
 
         assert response.status_code == 303
-        assert response.url == qr_url(donate_page, pledge)
+        assert response.url == checking_url(donate_page, pledge)
         assert list(pledge.payments.values_list("method", flat=True)) == ["qr"]
         assert fake_provider.started == []
+
+    @pytest.mark.parametrize("outcome", ["unpaid", "not-found", "paid"])
+    def test_goes_to_the_pay_page_when_nothing_is_being_checked(
+        self, client, donate_page, pledge, esewa_qr, django_user_model, outcome
+    ):
+        if outcome != "unpaid":
+            payment = pledge.claim_paid(esewa_qr, "TXN-8841")
+            user = django_user_model.objects.create_user(username="ram")
+            if outcome == "paid":
+                payment.mark_paid(user, timezone.localdate(), 2500, "RBB-77")
+            else:
+                payment.mark_not_found(user)
+
+        response = client.get(checking_url(donate_page, pledge))
+
+        assert response.status_code == 303
+        assert response.url == f"{donate_page.url}pay/{pledge.reference}/"
 
 
 class TestWhenTheTeamCouldntFindIt:

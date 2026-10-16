@@ -315,6 +315,25 @@ class TestTheQRPageInNepali:
         for english in ["Transaction ID", "I've paid", "Tell us here"]:
             assert english not in text
 
+    def test_the_checking_page_is_in_nepali_with_no_english_left(self, client, qr_page, site):
+        from campaigns.models import QRCode
+
+        site_settings = SiteSettings.for_site(site)
+        site_settings.phone = "+977 1-4567890"
+        site_settings.save()
+        step_2 = qr_page.wsgi_request.path + "paid/"
+        client.post(step_2, {"code": QRCode.objects.get().pk, "transaction_id": "TXN-8841"})
+
+        response = client.get(step_2, follow=True)
+        text = visible_text(response)
+        pledge = Pledge.objects.get()
+
+        assert response.redirect_chain[-1][0].endswith("/checking/")
+        for nepali in ["धन्यवाद।", "केही प्रश्न छ?", pledge.display_number()]:
+            assert nepali in text
+        for english in ["Thank you", "Questions?", "Call us"]:
+            assert english not in text
+
     def test_names_the_copy_buttons_in_nepali(self, qr_page):
         labels = [b["aria-label"] for b in soup(qr_page).select("button[data-copy-value]")]
 

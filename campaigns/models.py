@@ -272,19 +272,20 @@ WAY_ROUTES = {ONLINE: "pay_online", QR: "pay_qr", IN_PERSON: "pay_in_person", LA
 # The ways' names, for templates to compare with rather than spell out.
 WAY_NAMES = {"ONLINE": ONLINE, "QR": QR, "IN_PERSON": IN_PERSON, "LATER": LATER}
 
-# The way whose page shows what became of paying, for each pay page state it shows. The choices
-# send a pledge in one of these states there, and that page shows even once its way isn't
-# offered any more.
-STATE_WAYS = {
-    "check-first": ONLINE,
-    "failed": ONLINE,
-    "to-confirm": QR,
-    "not-found": QR,
+# The page that shows what became of paying, by its route's name, for each pay page state it
+# shows: the way's page, or the checking page while the team checks a payment. The choices send
+# a pledge in one of these states there, and a way's page shows even once its way isn't offered
+# any more.
+STATE_ROUTES = {
+    "check-first": "pay_online",
+    "failed": "pay_online",
+    "to-confirm": "checking",
+    "not-found": "pay_qr",
 }
 
-# The states in which every other way's page goes to that way's, and nothing else can be paid: an
-# online attempt may already have paid, or the team is checking a QR payment the supporter says
-# they made. Only once it's found or not can the pledge be paid another way.
+# The states in which every other pay page goes to that state's page, and nothing else can be
+# paid: an online attempt may already have paid, or the team is checking a payment the supporter
+# says they made. Only once it's found or not can the pledge be paid another way.
 HELD = ("check-first", "to-confirm")
 
 # The states in which every pay page address says thank you.
@@ -296,6 +297,10 @@ def chosen_code(request, qr_codes):
     one of the codes on the page."""
     code = request.GET.get("code", "")
     return {"code": code} if code in {str(qr.pk) for qr in qr_codes} else {}
+
+
+def phone_link(site_settings):
+    return "tel:" + re.sub(r"[^\d+]", "", site_settings.phone)
 
 
 def either(names):
@@ -358,6 +363,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     }
     # Paying by QR is two pages: scanning (the way's page), then telling us it's paid.
     qr_paid_template = "campaigns/pay/qr_paid.html"
+    checking_template = "campaigns/pay/checking.html"
     redirect_template = "campaigns/donate_page_redirect.html"
     preview_modes = [("", "Donate page"), ("thank-you", "Thank-you page")]
 
@@ -465,8 +471,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         site_settings = SiteSettings.for_request(request)
         if state in THANKED:
             return self.render_pay_page(request, pledge, state, [], [], [], site_settings)
-        if state in STATE_WAYS:
-            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
+        if state in STATE_ROUTES:
+            return self.redirect_to(request, STATE_ROUTES[state], reference)
         providers, ways, qr_codes = self.ways_for(pledge, site_settings)
         if not ways:
             return self.redirect_to(request, "thank_you")
@@ -487,18 +493,19 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     @path("pay/<uuid:reference>/qr/paid/", name="qr_paid")
     def qr_paid(self, request, reference):
         """Step 2 of paying by QR: the supporter tells us they paid. Opened, it's the form (or the
-        QR page, once they've told us); sent, the pledge becomes To confirm once, however many
-        times and tabs it's sent from: only the one that moves it creates the payment. The team
-        then looks for it in its statement."""
+        checking page, once they've told us); sent, the pledge becomes To confirm once, however
+        many times and tabs it's sent from: only the one that moves it creates the payment. The
+        team then looks for it in its statement."""
         if request.method == "GET":
             return self.way_page(request, reference, QR, step=2)
         if request.method != "POST":
             return HttpResponseNotAllowed(["GET", "POST"])
         pledge = self.get_pledge(reference)
-        # Sent from a tab opened before an online attempt started: that attempt may be paid.
+        # Sent again, or from a tab opened before an online attempt started (that attempt may be
+        # paid): the page dealing with the pledge.
         state = pledge.pay_page_state()
-        if state in HELD and STATE_WAYS[state] != QR:
-            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
+        if state in HELD:
+            return self.redirect_to(request, STATE_ROUTES[state], reference)
         site_settings = SiteSettings.for_request(request)
         qr_codes = self.qr_codes_for(pledge.currency, names=True)
         if not qr_codes or pledge.has_paid_payment():
@@ -523,7 +530,31 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             response.status_code = 422
             return response
         pledge.claim_paid(form.cleaned_data["code"], form.cleaned_data["transaction_id"])
-        return self.redirect_to(request, "pay_qr", reference)
+        return self.redirect_to(request, "checking", reference)
+
+    @path("pay/<uuid:reference>/checking/", name="checking")
+    def checking(self, request, reference):
+        """While the team checks a payment the supporter says they made (by QR): thanks, what they
+        told us, and the pledge number to call about it. Every pay address of the pledge comes
+        here meanwhile, as nothing else can be paid. Once it's found or not, this goes to the pay
+        page, which says which."""
+        pledge = self.get_pledge(reference)
+        if pledge.pay_page_state() != "to-confirm":
+            return self.redirect_to(request, "pay", reference)
+        claimed = next(p for p in pledge.payments.all() if p.status == PaymentStatus.TO_CONFIRM)
+        site_settings = SiteSettings.for_request(request)
+        return self.render(
+            request,
+            template=self.checking_template,
+            context_overrides={
+                "pledge": pledge,
+                "state": "to-confirm",
+                "claimed": claimed,
+                "paid_by": claimed.paid_by(),
+                "site_settings": site_settings,
+                "phone_link": phone_link(site_settings),
+            },
+        )
 
     @path("pay/<uuid:reference>/in-person/", name="pay_in_person")
     def pay_in_person(self, request, reference):
@@ -537,22 +568,19 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         """One way's page. A way that isn't offered (any more) goes back to the choices, unless
         it's the one dealing with the pledge: an online payment may have gone through after the
         provider's keys were removed. While that payment may be paid, every other way's page goes
-        to its page, so nobody pays twice. `step` 2 is the QR way's second page, which goes back
-        to the first once they've told us they paid."""
+        to its page, so nobody pays twice. `step` 2 is the QR way's second page."""
         # Taken before any redirect: left in the session, it would turn up in the admin, or here
         # later as news that's no longer true.
         result = pay_page_result(request) if way == ONLINE else None
         pledge = self.get_pledge(reference)
         state = pledge.pay_page_state()
-        if state in HELD and way != STATE_WAYS[state]:
-            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
-        if step == 2 and state == "to-confirm":
-            return self.redirect_to(request, WAY_ROUTES[QR], reference)
+        if state in HELD and STATE_ROUTES[state] != WAY_ROUTES[way]:
+            return self.redirect_to(request, STATE_ROUTES[state], reference)
         site_settings = SiteSettings.for_request(request)
         if state in THANKED:
             return self.render_pay_page(request, pledge, state, [], [], [], site_settings, way)
         providers, ways, qr_codes = self.ways_for(pledge, site_settings, names=way == QR)
-        if not (way == LATER or way in ways or STATE_WAYS.get(state) == way):
+        if not (way == LATER or way in ways or STATE_ROUTES.get(state) == WAY_ROUTES[way]):
             return self.redirect_to(request, "pay", reference)
         return self.render_pay_page(
             request,
@@ -595,13 +623,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             "ways": ways,
             # The choices say it, and a way's page the form went straight to.
             "saved": way is None or ways == [way],
-            # Every other way, at the bottom of a way's page, then Not ready to pay yet. None while
-            # the team checks a QR payment: nothing else is paid until it's found or not.
-            "other_ways": []
-            if state == "to-confirm"
-            else [other for other in [*ways, LATER] if other != way],
+            # Every other way, at the bottom of a way's page, then Not ready to pay yet.
+            "other_ways": [other for other in [*ways, LATER] if other != way],
             "site_settings": site_settings,
-            "phone_link": "tel:" + re.sub(r"[^\d+]", "", site_settings.phone),
+            "phone_link": phone_link(site_settings),
             **WAY_NAMES,
         }
         # Named on the choices, and on the online page.
@@ -621,19 +646,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         if way == QR:
             from campaigns.forms import QRPaidForm  # forms imports this module's Pledge
 
-            # The attempt the team is checking (or couldn't find): not an online one that came
-            # after it.
-            claimed = next((p for p in pledge.payments.all() if is_team_confirmed(p.method)), None)
             context |= {
                 "qr_codes": qr_codes,
-                "claimed": claimed,
-                # In the reader's language while the code is still there; the kept name, in the
-                # site's main language, once it isn't.
-                "claimed_name": claimed
-                and next(
-                    (code.name for code in qr_codes if code.pk == claimed.qr_code_id),
-                    claimed.qr_name,
-                ),
                 # Step 1's Go to step 2 says which code they chose, if it's one on the page.
                 "paid_form": paid_form
                 or QRPaidForm(codes=qr_codes, initial=chosen_code(request, qr_codes)),
@@ -658,8 +672,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         if pledge.has_paid_payment():
             return self.redirect_to(request, "pay_online", pledge.reference)
         state = pledge.pay_page_state()
-        if state in HELD and STATE_WAYS[state] != ONLINE:
-            return self.redirect_to(request, WAY_ROUTES[STATE_WAYS[state]], reference)
+        if state in HELD and STATE_ROUTES[state] != WAY_ROUTES[ONLINE]:
+            return self.redirect_to(request, STATE_ROUTES[state], reference)
         provider = provider_for(method)
         if provider is None or type(provider) not in providers_for(
             pledge.currency, Decimal(pledge.amount)
@@ -1241,6 +1255,15 @@ class Payment(models.Model):
         if not form or (form.get("once") and form.get("shown")):
             return None
         return form
+
+    def paid_by(self):
+        """What the supporter says they paid by, in the language they read: the QR code's name
+        while the code is still there, or the name it had then (in the site's main language)."""
+        if self.qr_code_id:
+            name = QRCode.with_names([self.qr_code])[0].name
+            if name:
+                return name
+        return self.qr_name or self.get_method_display()
 
     @property
     def team_confirms(self):

@@ -1,5 +1,5 @@
 {% load i18n wagtailroutablepage_tags %}
-{# The QR way's two steps, each its own page. `current` is the page this is (1 or 2); the other is a link to its page while `linked` (not while the QR code is folded away, once they've told us they paid or the team couldn't find it). `done` ticks step 2, once they've told us. #}
+{# The QR way's two steps, each its own page. `current` is the page this is (1 or 2); the other is a link to its page while `linked` (not while the QR code is folded away, once the team couldn't find it). #}
 {% routablepageurl page 'pay_qr' pledge.reference as step_1_url %}
 {% routablepageurl page 'qr_paid' pledge.reference as step_2_url %}
 {% if linked %}<nav aria-label="{% translate 'Steps' %}">{% endif %}
@@ -12,10 +12,8 @@
     </li>
     <li>
         {% if linked and current != 2 %}<a class="qr-progress-step" href="{{ step_2_url }}">{% else %}<span class="qr-progress-step{% if current == 2 %} is-current{% endif %}"{% if current == 2 %} aria-current="step"{% endif %}>{% endif %}
-            <span class="qr-progress-number{% if done %} is-done{% endif %}" aria-hidden="true">
-                {% if done %}<svg focusable="false" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{% else %}2{% endif %}
-            </span>
-            {% translate "Paid? Tell us" %}{% if done %} <span class="visually-hidden">({% translate "done" %})</span>{% endif %}
+            <span class="qr-progress-number" aria-hidden="true">2</span>
+            {% translate "Paid? Tell us" %}
         {% if linked and current != 2 %}</a>{% else %}</span>{% endif %}
     </li>
 </ol>

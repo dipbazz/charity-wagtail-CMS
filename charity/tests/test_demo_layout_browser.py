@@ -10,7 +10,7 @@ import re
 
 import pytest
 
-from campaigns.models import DonatePage, Pledge
+from campaigns.models import DonatePage, Pledge, QRCode
 from conftest import SITE
 from core.brand import FONT_STACKS, contrast
 from core.models import SiteSettings
@@ -89,11 +89,17 @@ def pay_pages(demo_site, settings):
         )
         pay = f"{donate_page.url}pay/{pledge.reference}/"
         paths += [pay + way for way in ("", "online/", "qr/", "qr/paid/", "in-person/", "later/")]
+        # The page while the team checks a QR payment, which every pay address then goes to.
+        claimed = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        claimed.claim_paid(QRCode.objects.first(), "TXN-8841")
+        paths.append(f"{donate_page.url}pay/{claimed.reference}/checking/")
     return paths
 
 
 def test_each_pay_page_fits_and_can_be_tapped_at_every_width(site_page, pay_pages):
-    assert len(pay_pages) == 12  # in both languages
+    assert len(pay_pages) == 14  # in both languages
     problems = []
     for path in pay_pages:
         problems += [f"{path} {item}" for item in layout_problems(site_page, path)]

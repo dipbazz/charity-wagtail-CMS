@@ -262,32 +262,32 @@ circle and `aria-current="step"`, the other is a link to its page.
   send the team to the wrong statement. Then the **transaction ID** with two numbered lines before
   it (open the payment's receipt; copy the ID and paste it here), each error under its field (the
   alert at the top links to each one), and **I've paid**, which says "Sending…" while it's sent.
-  Once they've told us, this address goes back to step 1, which says thank you. Receipt
-  screenshots come with #197's second part.
+  Once they've told us, this address goes to the checking page (below). Receipt screenshots
+  come with #197's second part.
 
-Once they've said they paid, the row ticks step 2 and stops being links, because step 1 is folded
-away (see the states below). Not found ticks nothing.
+While the QR code is folded away (Not found, below), the row is plain text.
 
 **"I've paid"** (`…/qr/paid/`) moves the pledge from waiting or failed to **To confirm** in one
 conditional update (`Pledge.claim_paid()`), and creates the payment only if that changed a row, so
 two taps or two tabs make one payment. The payment's method is `qr` and it's always live: it's
 real money, so it's never shown as a test and can't be deleted. It keeps the code's name as it was
 (`qr_name`), in the site's main language whichever language the supporter read in, so the team
-always reads the same name and "by eSewa" survives the code being renamed or removed. The QR page
-names the code in the reader's language while it still exists. A pledge that is already
+always reads the same name and "by eSewa" survives the code being renamed or removed. The checking
+page names the code in the reader's language while it still exists (`Payment.paid_by()`). A pledge that is already
 paid, or isn't in rupees, never makes one, and one sent while an online attempt may be paid (Check
 your payment, say from a tab opened before it started) goes to the online page instead.
 
 **The pay page's states for QR:**
 
-| State | What the QR page shows |
+| State | What it shows |
 |---|---|
-| To confirm | "Thank you. You've told us you paid Rs 2,500 by eSewa on 15 October …", what they sent, the charity's phone, "There's nothing more to do here" and the appeals link. Nothing else can be paid until the team marks it paid or not found: no QR, no **Pay another way**, and every other way's page and **Pay with** go to this page (`HELD`). Title "Checking your payment" |
+| To confirm | The **checking page** (`…/checking/`), which every pay address and **Pay with** go to (`HELD`): "Thank you. You've told us you paid Rs 2,500 by eSewa on 15 October …", the transaction ID they sent, "Questions? Call us and give your pledge number, 482 913:" with the charity's phone, "There's nothing more to do here" and the appeals link (or the home page). The thanks says the gift, so there's no summary, and nothing else can be paid until the team marks it paid or not found: no steps, no QR, no **Pay another way**. Title "Checking your payment". Opened in any other state, it goes to the pay page. A later way the team checks by hand gets this page too |
 | Not found | A problem message: "We haven't found your payment yet. If money has left your account, don't pay again", with the phone. The QR and I've paid are folded under "I didn't pay: scan the QR code", and **Pay another way** is open |
 | Paid | Thanks, with the reference the team entered, on every pay address |
 | Received a different amount | "We received Rs 2,000 from you by eSewa." |
 
-The choices send a pledge in To confirm or Not found to the QR page (`STATE_WAYS`).
+The choices send a pledge in To confirm to the checking page, and one in Not found to the QR
+page (`STATE_ROUTES`).
 
 **The team confirms from the pledge** (Pledges → open one). Each payment is listed with its steps
 (the supporter said they paid, marked paid by …). Someone with **Can confirm payments**

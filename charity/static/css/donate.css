@@ -345,8 +345,8 @@
 
 /* The two steps of paying by QR, each its own page: a numbered row that links to the other
    page. The step you're on has a filled circle in the brand colour (the same pair the filled
-   buttons use, so the brand contrast check covers it), the other an outline in the link colour;
-   a done step is filled with a tick. Then the step itself, divided by a line. */
+   buttons use, so the brand contrast check covers it), the other an outline in the link colour.
+   Then the step itself, divided by a line. */
 .qr-progress {
     display: flex;
     flex-wrap: wrap;
@@ -382,8 +382,7 @@ span.qr-progress-step {
     font-weight: 700;
 }
 
-.is-current .qr-progress-number,
-.qr-progress-number.is-done {
+.is-current .qr-progress-number {
     background: var(--colour-primary);
     color: var(--colour-on-dark);
 }

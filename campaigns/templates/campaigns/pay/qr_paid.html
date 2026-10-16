@@ -1,7 +1,7 @@
 {% extends "campaigns/pay/base.html" %}
 {% load i18n wagtailroutablepage_tags %}
 
-{# Step 2 of paying by QR, a page of its own: which app they paid with, and the transaction ID from its receipt. Once they've told us, it goes back to step 1's page, which says thank you. #}
+{# Step 2 of paying by QR, a page of its own: which app they paid with, and the transaction ID from its receipt. Once they've told us, the checking page says thank you. #}
 {% block pay_title %}{% translate "Paid? Tell us here" %}{% endblock %}
 
 {# A form page too, for its field and radio styles. #}
