@@ -581,7 +581,7 @@ framework, and `valoris-payment-gateway` is for FastAPI and installs from GitHub
 
 ## Checks before each commit with pre-commit
 
-**Status:** in use
+**Status:** in use (since #216)
 
 **Context**
 
