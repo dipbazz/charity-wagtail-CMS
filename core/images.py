@@ -40,6 +40,8 @@ MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 MAX_UPLOAD_PIXELS = 40_000_000
 NOT_AN_IMAGE = gettext_lazy("Upload a JPEG, PNG or WebP image of up to 5 MB.")
 TOO_MANY_PIXELS = gettext_lazy("This picture is too large: upload a smaller one.")
+# What a re-saved picture keeps from its upload: its colours, and a palette PNG's see-through one.
+PICTURE_INFO = ("icc_profile", "transparency")
 
 
 def clean_image(upload, widths, max_pixels=MAX_UPLOAD_PIXELS):
@@ -71,6 +73,9 @@ def clean_image(upload, widths, max_pixels=MAX_UPLOAD_PIXELS):
         picture = picture.convert("RGB")
     if image_format == "WEBP" and picture.mode not in ("RGB", "RGBA"):
         picture = picture.convert("RGBA")
+    # Saving copies some of what was read with the picture, such as a JPEG's comment (free text
+    # anyone can write in the file). Only what the picture needs to look the same is kept.
+    picture.info = {key: picture.info[key] for key in PICTURE_INFO if key in picture.info}
 
     files = {}
     for width in sorted(set(widths), reverse=True):

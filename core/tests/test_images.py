@@ -109,6 +109,16 @@ class TestCleanImage:
 
         assert b"Camera Maker" not in files[0].read()
 
+    def test_drops_a_jpegs_comment(self):
+        # Free text anyone can write into the file, which Pillow would otherwise save again.
+        saved = io.BytesIO()
+        Image.new("RGB", (400, 200), "white").save(saved, format="JPEG", comment=b"hidden note")
+        photo = SimpleUploadedFile("photo.jpg", saved.getvalue())
+
+        _, files = clean_image(photo, widths=(800,))
+
+        assert b"hidden note" not in files[0].read()
+
     def test_turns_a_sideways_photo_upright(self):
         exif = Image.Exif()
         exif[0x0112] = 6  # rotated: displayed turned a quarter
