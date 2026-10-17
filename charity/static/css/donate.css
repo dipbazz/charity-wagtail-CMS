@@ -177,16 +177,45 @@
     margin-top: 0.5rem;
 }
 
-/* A button for each provider: full width on a phone, side by side where 14rem ones fit, with no
-   breakpoint. */
+/* A button for each provider, one under another: full width on a phone, then no wider than 24rem,
+   so on a wide screen they're a short column lined up with the text. No breakpoint. */
 .payment-options {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
     gap: 0.75rem;
+    max-width: 24rem;
 }
 
 .payment-options .button {
     width: 100%;
+}
+
+/* A provider's button (#201): its logo, then "Pay with …", on white with a border in the brand
+   colour. The logos sit on the white they were drawn for (eSewa's guidelines ask for it), the
+   buttons read as equal choices rather than two main actions, and the text keeps the page's own
+   colour, so it reads as well on every charity's site. */
+.pay-provider {
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding-inline: 1rem;
+    border: 2px solid var(--colour-primary);
+    background: var(--colour-background);
+    color: var(--colour-text);
+    text-align: start;
+}
+
+.pay-provider:hover {
+    background: var(--colour-surface);
+}
+
+/* Every logo in the same box, so each "Pay with …" starts at the same place. The logo keeps its
+   proportions inside it (contain), against the left. 2rem tall: the providers' files carry their
+   own clear space, so the mark itself is smaller. */
+.pay-provider img {
+    flex: none;
+    width: 5.25rem;
+    height: 2rem;
+    object-fit: contain;
+    object-position: left center;
 }
 
 /* The ways to pay, and "Pay another way": a full-width row for each, drawn like the amount cards,

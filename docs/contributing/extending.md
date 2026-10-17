@@ -102,7 +102,9 @@ file:
 1. **Create `nepal_payments/providers/<code>.py`** with one `PaymentProvider` subclass: its `code`
    (permanent, lowercase letters and digits), `name`, `currencies`, `min_amount`, `keys`,
    `order` and `statuses` (every word its check answers with, what it means and a sentence for
-   the team, such as "The payer cancelled at IME Pay. Nothing was taken."), then `start()` (where
+   the team, such as "The payer cancelled at IME Pay. Nothing was taken."), `logo` (its own logo
+   file, unchanged, put in `nepal_payments/static/payment-logos/`; its pay button shows it, and
+   the contract test fails a provider without one), then `start()` (where
    to send the payer) and `check()` (ask the provider what became of a payment, with its word).
    Reach the provider only through `nepal_payments.http.request_json`.
 2. **Run the tests.** `nepal_payments/tests/test_contract.py` checks every provider it finds,

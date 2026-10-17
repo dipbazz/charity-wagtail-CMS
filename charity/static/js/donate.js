@@ -27,12 +27,14 @@ if (pledgeForm) {
 // slow connection, so the pressed button says it's opening, all of them stop taking taps (a second
 // tap would start a second payment), and a status line tells screen readers. A page restored from
 // the browser's cache, by Back from the provider, gets working buttons again. Without JavaScript,
-// the buttons just send their form.
+// the buttons just send their form. A button with a logo has its words in [data-busy-label], and
+// only those change, so the logo stays.
 const busyButtons = [...document.querySelectorAll("button[data-busy-text]")];
 if (busyButtons.length) {
     const status = document.querySelector("[data-busy-status]");
     const groups = new Set(busyButtons.map((button) => button.closest(".payment-options")));
-    const labels = new Map(busyButtons.map((button) => [button, button.textContent]));
+    const labelOf = (button) => button.querySelector("[data-busy-label]") ?? button;
+    const labels = new Map(busyButtons.map((button) => [button, labelOf(button).textContent]));
     let busy = false;
     for (const button of busyButtons) {
         button.form.addEventListener("submit", (event) => {
@@ -42,7 +44,7 @@ if (busyButtons.length) {
             }
             busy = true;
             const pressed = event.submitter ?? button;
-            pressed.textContent = pressed.dataset.busyText;
+            labelOf(pressed).textContent = pressed.dataset.busyText;
             if (status) status.textContent = pressed.dataset.busyText;
             groups.forEach((group) => group?.setAttribute("aria-busy", "true"));
             busyButtons.forEach((other) => (other.disabled = true));
@@ -52,7 +54,7 @@ if (busyButtons.length) {
         if (!event.persisted) return;
         busy = false;
         for (const [button, label] of labels) {
-            button.textContent = label;
+            labelOf(button).textContent = label;
             button.disabled = false;
         }
         groups.forEach((group) => group?.removeAttribute("aria-busy"));

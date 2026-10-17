@@ -298,7 +298,8 @@ Every page works without JavaScript:
 - **A pay button says it's busy** (`donate.js`, `button[data-busy-text]`): once pressed it reads
   "Opening eSewa…", every pay button stops taking taps so a second tap can't start a second
   payment, and a hidden status line tells screen readers. Back from the provider gives working
-  buttons again.
+  buttons again. Only the words change (`[data-busy-label]` when a button has one), so a
+  provider's logo stays on its button.
 
 ## Accessibility
 

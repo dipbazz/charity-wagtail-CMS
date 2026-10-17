@@ -42,6 +42,7 @@ STATUSES = {
 class Khalti(PaymentProvider):
     code = "khalti"
     name = "Khalti"
+    logo = "khalti.svg"  # from khalti.com: red since the merger with IME Pay
     currencies = frozenset({"NPR"})
     min_amount = Decimal(10)
     # Even its test system needs a merchant's own key, from test-admin.khalti.com.

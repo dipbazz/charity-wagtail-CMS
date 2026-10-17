@@ -7,6 +7,7 @@ from decimal import Decimal
 import pytest
 
 from nepal_payments import (
+    LOGOS,
     PaymentError,
     PaymentRequest,
     ProviderUnavailable,
@@ -65,6 +66,15 @@ def test_explains_each_of_its_statuses(provider):
         assert sentence == sentence.strip() and sentence.endswith(".")
         assert provider.describe(word) == sentence
     assert provider.describe("NO_SUCH_WORD") == ""
+
+
+@each_provider
+def test_brings_its_own_logo(provider):
+    """Shown on its pay button, so a payer finds their app at a glance: a new provider can't
+    ship as text alone."""
+    assert provider.logo_file().is_file()
+    assert provider.logo_file().parent == LOGOS
+    assert provider.logo_file().suffix in {".svg", ".png"}
 
 
 @each_provider

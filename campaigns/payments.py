@@ -5,8 +5,14 @@ is offered once all its keys are in PAYMENT_KEYS (from DJANGO_PAYMENT_<PROVIDER>
 real money only when LIVE_PAYMENTS is on.
 """
 
+import functools
+import re
+from xml.etree import ElementTree
+
 from django.conf import settings
 from django.core import checks
+from django.templatetags.static import static
+from PIL import Image
 
 # The prefix the settings read keys with, so the checks' hints name the variables they read.
 from charity.settings.payments import PREFIX
@@ -37,6 +43,30 @@ def providers_for(currency, amount=None):
         and currency in provider.currencies
         and (amount is None or provider.accepts(currency, amount))
     ]
+
+
+def logo_for(provider):
+    """A provider's logo for an <img>: its address among the static files (STATICFILES_DIRS
+    serves `nepal_payments.LOGOS` as "payment-logos/") and its size, so the page doesn't move
+    while it loads."""
+    width, height = logo_size(provider.logo_file())
+    return {"url": static(f"payment-logos/{provider.logo}"), "width": width, "height": height}
+
+
+@functools.cache
+def logo_size(path):
+    """A logo's width and height: an SVG's own, or else its viewBox's; a PNG's in pixels. Read
+    once: the files only change with a new version."""
+    if path.suffix != ".svg":
+        with Image.open(path) as image:
+            return image.size
+    svg = ElementTree.parse(path).getroot()
+    if svg.get("width") and svg.get("height"):
+        return tuple(
+            round(float(re.match(r"[\d.]+", svg.get(side))[0])) for side in ("width", "height")
+        )
+    *_, width, height = (round(float(n)) for n in svg.get("viewBox").replace(",", " ").split())
+    return width, height
 
 
 def provider_for(code):
