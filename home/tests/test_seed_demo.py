@@ -53,6 +53,13 @@ def test_adds_a_placeholder_privacy_notice_linked_from_every_page(seeded, client
     assert f'<a href="{privacy.url}">Privacy notice</a>' in client.get("/").content.decode()
 
 
+def test_privacy_notice_says_how_long_a_receipt_screenshot_is_kept(seeded):
+    body = str(SiteSettings.for_site(seeded).privacy_page.specific.body)
+
+    assert "a screenshot of your app's receipt" in body
+    assert "until we've checked your payment, and 30 days at most" in body
+
+
 # Regression: ISSUE-003 — the notice called a tick box "Email updates", which the pledge form
 # labels "Email me stories from our projects and appeals that need help".
 # Found by /qa on 2026-10-07 (PR #125).

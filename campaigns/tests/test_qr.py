@@ -546,7 +546,6 @@ class TestTheTwoSteps:
         )
         assert field.sourceline > steps[1].sourceline
         assert "transaction-id-help" in field["aria-describedby"]
-        assert field.has_attr("required")
         assert "Paid? Tell us here" in page.title.get_text()
 
     def test_ive_paid_says_it_is_sending(self, client, donate_page, pledge, esewa_qr):
@@ -644,11 +643,11 @@ class TestSayingIvePaid:
 
         assert pledge.payments.count() == 1
 
-    def test_needs_the_transaction_id(self, client, donate_page, pledge, esewa_qr):
+    def test_needs_the_transaction_id_or_a_screenshot(self, client, donate_page, pledge, esewa_qr):
         response = say_paid(client, donate_page, pledge, esewa_qr, transaction_id="  ")
 
         assert response.status_code == 422
-        assert "Enter the transaction ID from your receipt." in text(response)
+        assert "Enter the transaction ID, or add a screenshot of the receipt." in text(response)
         assert pledge.payments.count() == 0
         assert Pledge.objects.get(pk=pledge.pk).payment_status == PaymentStatus.WAITING
 
@@ -661,7 +660,7 @@ class TestSayingIvePaid:
         error = page.select_one("#id_transaction_id_error")
         assert field["aria-invalid"] == "true"
         assert "id_transaction_id_error" in field["aria-describedby"].split()
-        assert "Enter the transaction ID from your receipt." in error.get_text()
+        assert "Enter the transaction ID, or add a screenshot of the receipt." in error.get_text()
         assert field.find_parent("div").select_one("#id_transaction_id_error")
         alert = page.select_one("[role=alert]")
         assert alert.select_one("a")["href"] == "#id_transaction_id"
