@@ -17,7 +17,7 @@ from wagtail.models import Locale
 from campaigns.forms import MarkPaidForm
 from campaigns.models import Payment, PaymentStatus, Pledge, QRCode, QRCodeName, StepKind
 from campaigns.payments import TEAM_CONFIRMED
-from core.models import SiteSettings
+from core.models import SiteSettings, SiteSettingsText
 
 pytestmark = pytest.mark.django_db
 
@@ -328,6 +328,20 @@ class TestWhenTheQRPageIsOffered:
 
 
 class TestTheQRPage:
+    def test_shows_the_refund_policy_before_the_qr_code(
+        self, client, donate_page, pledge, esewa_qr, site
+    ):
+        site_settings = SiteSettings.for_site(site)
+        site_settings.texts = [
+            SiteSettingsText(locale=Locale.get_default(), refund_policy="We can't refund gifts.")
+        ]
+        site_settings.save()
+
+        policy = soup(client.get(qr_url(donate_page, pledge))).find(class_="refund-policy")
+
+        assert "We can't refund gifts." in policy.get_text()
+        assert policy.find_next("img") is not None
+
     def test_gives_the_amount_and_the_remarks_to_copy_first(
         self, client, donate_page, pledge, esewa_qr
     ):

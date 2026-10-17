@@ -125,6 +125,10 @@ payment may be paid, below). The phone's Back button goes
 back to the choices. Once the pledge is paid, every address says thank you, so a page left open
 or a link kept to pay later never offers paying again.
 
+When Site settings give a **refund policy**, every unpaid pay page shows it under the summary,
+headed "Refunds", so a supporter reads it before choosing to pay. With none set, the pages say
+nothing about refunds: no site states a policy its charity hasn't.
+
 - **Pay online:** a button for each provider set up here, in their order (eSewa, then Khalti). The
   supporter pays on the provider's own page and is sent back here. Khalti's page is a link;
   eSewa's takes a signed form, which the site keeps on the payment and sends from its own page

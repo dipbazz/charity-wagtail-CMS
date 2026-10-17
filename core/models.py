@@ -366,6 +366,11 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         return self.text_in_reading_language("address")
 
     @property
+    def refund_policy(self):
+        """Shown on the pay pages only when set, so no site states a policy its charity hasn't."""
+        return self.text_in_reading_language("refund_policy")
+
+    @property
     def social_links(self):
         links = [
             ("Facebook", self.facebook_url),
@@ -384,8 +389,18 @@ class SiteSettingsText(TextInEachLanguage):
         "Until it's filled in, the site shows the name it was set up with.",
     )
     address = models.TextField(blank=True, help_text="Shown in the footer of every page.")
+    refund_policy = models.TextField(
+        blank=True,
+        help_text="Whether and how you refund a gift, shown before someone pays a pledge. "
+        "Leave empty if you haven't decided one: the site then says nothing about refunds.",
+    )
 
-    panels = [FieldPanel("locale"), FieldPanel("name"), FieldPanel("address")]
+    panels = [
+        FieldPanel("locale"),
+        FieldPanel("name"),
+        FieldPanel("address"),
+        FieldPanel("refund_policy"),
+    ]
 
     class Meta:
         constraints = [
