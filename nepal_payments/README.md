@@ -61,6 +61,8 @@ or `Status.FAILED` (cancelled, expired or refunded), with the gateway's own word
 (`outcome.word`, such as `CANCELED`). Each provider's `statuses` lists every word it answers with,
 what it means and a sentence for the people who follow payments up:
 `ESewa.describe("CANCELED")` is "The payer cancelled at eSewa. Nothing was taken."
+`needs_checking` names the words that mean a person must look, such as eSewa's `PARTIAL_REFUND`:
+some money was kept, so the payment is neither paid in full nor failed.
 
 When the gateway can't be reached it raises `ProviderUnavailable`: nothing is known, so leave the
 payment as it was and ask again later. When it answers with something that can't be read (not
@@ -91,6 +93,7 @@ Every provider can say which payments it takes, so a page can offer only those t
            "SUCCESS": (Status.PAID, "IME Pay says it's paid."),
            "CANCELLED": (Status.FAILED, "The payer cancelled at IME Pay. Nothing was taken."),
        }
+       needs_checking = frozenset()  # its words that mean a person must look, if any
 
        def start(self, request): ...  # return Started(Redirect(...), provider_id=...)
        def check(self, reference, amount, provider_id=""): ...  # return Outcome(...)
@@ -105,7 +108,8 @@ Every provider can say which payments it takes, so a page can offer only those t
    - it describes itself;
    - it needs its keys;
    - it sends the payer only to an `https` page;
-   - it gives every word in `statuses` a meaning and a sentence;
+   - it gives every word in `statuses` a meaning and a sentence, and every word in
+     `needs_checking` is one of them and never means paid;
    - it never says *paid* for an answer it can't read, and raises `UnreadableAnswer` for one;
    - it raises `ProviderUnavailable` when the gateway can't be reached;
    - its test mode never touches the live system.

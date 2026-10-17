@@ -1,82 +1,172 @@
 {% extends "wagtailadmin/generic/inspect.html" %}
-{% load i18n %}
+{% load wagtailadmin_tags %}
 
 {% block fields_output %}
-    {{ block.super }}
+    {# A few rules on top of Wagtail's own styles, in its colours, so dark mode still works: fields as label and value side by side on a wide screen, long references wrapping on a phone, and the email and phone links and a payment's line big enough to tap. #}
+    <style>
+        .pledge-record dl { display: grid; align-items: baseline; gap: 0.25rem 1.5rem; margin: 0 0 1rem; }
+        .pledge-record dt { font-weight: 600; }
+        .pledge-record dd { margin: 0 0 0.5rem; overflow-wrap: anywhere; }
+        .pledge-record .contact-link { display: inline-flex; align-items: center; min-height: 2.75rem; }
+        .pledge-record summary { padding-block: 0.75rem; cursor: pointer; overflow-wrap: anywhere; }
+        {# Wagtail hides the browser's own arrow; a screen reader already says open or closed. #}
+        .pledge-record summary::before { content: "▸" / ""; display: inline-block; width: 1.25em; }
+        .pledge-record details[open] > summary::before { content: "▾" / ""; }
+        .pledge-record details { border-top: 1px solid var(--w-color-border-furniture); padding-block: 0.5rem; }
+        .pledge-record .payment-steps li { margin-bottom: 0.5rem; overflow-wrap: anywhere; }
+        .pledge-record .payment-steps small { display: block; }
+        .pledge-record form { margin-block: 1rem; }
+        .pledge-lead p { margin: 0 0 0.25rem; }
+        @media (min-width: 50rem) {
+            .pledge-record dl { grid-template-columns: max-content 1fr; }
+            .pledge-record dd { margin: 0; }
+        }
+    </style>
 
-    <h2>Payments</h2>
-    {% for payment in payments %}
-        <section class="payment-record">
-            <h3>{{ payment }}</h3>
+    <div class="pledge-record">
+        <div class="pledge-lead">
+            <p><strong>{{ pledge.display_amount }} · {{ pledge.get_frequency_display }} · {% if pledge.appeal %}{{ pledge.appeal.title }}{% else %}Wherever it's needed most{% endif %}</strong></p>
+            <p>Sent {{ pledge.created_at|date:"j M Y, g:i a" }} · Pledge number {{ pledge.display_number }}</p>
+        </div>
+        {# The answer to "is it paid?", as the list says it, and why. #}
+        <p class="pledge-answer">{% status payment_word classname=payment_word_class %} {{ payment_reason }}</p>
+
+        {% panel id="contact" heading="Contact" %}
             <dl>
-                <dt>Started</dt>
-                <dd>{{ payment.created_at }}</dd>
-                {% if payment.qr_name %}
-                    <dt>QR code</dt>
-                    <dd>{{ payment.qr_name }}</dd>
+                <dt>Email</dt>
+                <dd><a class="contact-link" href="mailto:{{ pledge.email }}">{{ pledge.email }}</a></dd>
+                {% if pledge.phone %}
+                    <dt>Mobile number</dt>
+                    <dd><a class="contact-link" href="tel:{{ pledge.phone }}">{{ pledge.phone }}</a></dd>
                 {% endif %}
-                {% if payment.supporters_reference %}
-                    <dt>Transaction ID from the supporter</dt>
-                    <dd>{{ payment.supporters_reference }}</dd>
+                {% if pledge.address %}
+                    <dt>Address</dt>
+                    <dd>{{ pledge.address|linebreaksbr }}</dd>
                 {% endif %}
-                {% if payment.receipt %}
-                    <dt>Screenshot of the receipt</dt>
-                    {# Deleted once the payment is marked paid or not found, or after 30 days. #}
-                    <dd>
-                        {% if can_confirm %}
-                            {% url 'pledges:receipt' object.pk payment.pk as receipt_url %}
-                            <a href="{{ receipt_url }}"><img src="{{ receipt_url }}" alt="The supporter's screenshot of their receipt" style="display: block; width: min(100%, 20rem); height: auto"></a>
-                            <p>Deleted once you mark the payment paid or not found.</p>
-                        {% else %}
-                            Sent. Only people who can confirm payments can see it.
-                        {% endif %}
-                    </dd>
+                {% if pledge.postcode %}
+                    <dt>Postcode</dt>
+                    <dd>{{ pledge.postcode }}</dd>
                 {% endif %}
-                {% if payment.provider_reference %}
-                    <dt>Reference</dt>
-                    <dd>{{ payment.provider_reference }}</dd>
-                {% endif %}
-                <dt>Steps</dt>
-                <dd>
-                    <ol>
-                        {% for step in payment.steps.all %}
-                            <li>{{ step.at }}: {{ step }}{% if step.by %} ({{ step.by }}){% endif %}</li>
-                        {% empty %}
-                            <li>None recorded.</li>
-                        {% endfor %}
-                    </ol>
-                </dd>
             </dl>
+        {% endpanel %}
 
-            {# Only payments the team confirms, and only for people who may: eSewa and Khalti payments are never marked by hand. #}
-            {% if can_confirm and payment.team_confirms and payment.status != "paid" %}
-                <form method="post" action="{% url 'pledges:mark_paid' object.pk payment.pk %}">
-                    {% csrf_token %}
-                    <h4>Mark as paid</h4>
-                    <p>Check the amount and reference in your wallet or bank statement first.</p>
-                    <p>
-                        <label for="received-on-{{ payment.pk }}">Date received</label>
-                        <input type="date" id="received-on-{{ payment.pk }}" name="received_on" value="{{ today|date:'Y-m-d' }}" min="{{ object.created_at|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}" required>
-                    </p>
-                    <p>
-                        <label for="amount-{{ payment.pk }}">Amount received</label>
-                        <input type="number" id="amount-{{ payment.pk }}" name="amount" min="1" max="{{ max_amount }}" value="{{ payment.amount }}" required>
-                    </p>
-                    <p>
-                        <label for="reference-{{ payment.pk }}">Reference from the statement</label>
-                        <input type="text" id="reference-{{ payment.pk }}" name="reference" maxlength="100" value="{{ payment.supporters_reference }}" required>
-                    </p>
-                    <button type="submit" class="button">Mark as paid</button>
-                </form>
-                {% if payment.status == "to-confirm" %}
-                    <form method="post" action="{% url 'pledges:not_found' object.pk payment.pk %}">
-                        {% csrf_token %}
-                        <button type="submit" class="button button-secondary">Not found</button>
-                    </form>
-                {% endif %}
+        {% panel id="message" heading="Message and consents" %}
+            {% if pledge.message %}
+                <blockquote>{{ pledge.message|linebreaks }}</blockquote>
+            {% else %}
+                <p>No message.</p>
             {% endif %}
-        </section>
-    {% empty %}
-        <p>No one has started paying this pledge.</p>
-    {% endfor %}
+            <p>Email updates: {{ pledge.email_updates|yesno:"Yes,No" }} · Show on website: {{ pledge.show_on_website|yesno:"Yes,No" }}</p>
+        {% endpanel %}
+
+        {% if payments %}{% fragment as payments_heading %}Payments ({{ payments|length }}){% endfragment %}{% else %}{% fragment as payments_heading %}Payments{% endfragment %}{% endif %}
+        {% panel id="payments" heading=payments_heading %}
+            {% if payments %}
+                <p>Times are {{ time_zone }}.</p>
+            {% else %}
+                <p>No online payment yet.</p>
+            {% endif %}
+            {% for payment in payments %}
+                {% with name=payment.get_method_display %}
+                    {# Newest first: the paid one, or else the latest, is open; every other one is a line that opens on tap. #}
+                    <details{% if payment == open_payment %} open{% endif %}>
+                        <summary>{% firstof payment.qr_name name %} · {{ payment.display_amount }} · {{ payment.get_status_display }}{% if not payment.live %} (test){% endif %} · {{ payment.created_at|date:"j M Y, g:i a" }}</summary>
+                        <dl>
+                            <dt>Started</dt>
+                            <dd>{{ payment.created_at|date:"j M Y, g:i a" }}</dd>
+                            {% if not payment.team_confirms %}
+                                <dt>System</dt>
+                                <dd>{% if payment.live %}Live: real money{% else %}Made in {{ name }}'s test system: no money moved.{% endif %}</dd>
+                                <dt>Our reference</dt>
+                                <dd>{{ payment.reference }}</dd>
+                                {% if payment.provider_id %}
+                                    <dt>{{ name }}'s ID</dt>
+                                    <dd>{{ payment.provider_id }}</dd>
+                                {% endif %}
+                                {% if payment.provider_reference %}
+                                    <dt>{{ name }}'s transaction ID</dt>
+                                    <dd>{{ payment.provider_reference }}</dd>
+                                {% endif %}
+                            {% else %}
+                                {% if payment.qr_name %}
+                                    <dt>QR code</dt>
+                                    <dd>{{ payment.qr_name }}</dd>
+                                {% endif %}
+                                {% if payment.supporters_reference %}
+                                    <dt>Transaction ID from the supporter</dt>
+                                    <dd>{{ payment.supporters_reference }}</dd>
+                                {% endif %}
+                                {% if payment.receipt %}
+                                    <dt>Screenshot of the receipt</dt>
+                                    {# Deleted once the payment is marked paid or not found, or after 30 days. #}
+                                    <dd>
+                                        {% if can_confirm %}
+                                            {% url 'pledges:receipt' pledge.pk payment.pk as receipt_url %}
+                                            <a href="{{ receipt_url }}"><img src="{{ receipt_url }}" alt="The supporter's screenshot of their receipt" style="display: block; width: min(100%, 20rem); height: auto"></a>
+                                            <p>Deleted once you mark the payment paid or not found.</p>
+                                        {% else %}
+                                            Sent. Only people who can confirm payments can see it.
+                                        {% endif %}
+                                    </dd>
+                                {% endif %}
+                                {% if payment.provider_reference %}
+                                    <dt>Reference from the statement</dt>
+                                    <dd>{{ payment.provider_reference }}</dd>
+                                {% endif %}
+                            {% endif %}
+                        </dl>
+
+                        <h3>What happened</h3>
+                        {% for step in payment.steps.all %}
+                            {% if forloop.first %}<ol class="payment-steps">{% endif %}
+                            <li>
+                                <time datetime="{{ step.at|date:'c' }}">{{ step.at|date:"j M Y, g:i:s a" }}</time>
+                                <span class="step-what">{{ step.sentence }}{% if step.word %} <small>{{ step.word }}</small>{% endif %}</span>
+                                {% if step.by %}<small class="step-by">by {% firstof step.by.get_full_name step.by.get_username %}</small>{% endif %}
+                            </li>
+                            {% if forloop.last %}</ol>{% endif %}
+                        {% empty %}
+                            <p>Steps weren't recorded for payments started before version 0.5.0.</p>
+                            <p>Updated {{ payment.updated_at|date:"j M Y, g:i a" }}</p>
+                        {% endfor %}
+
+                        {% if payment.can_be_checked %}
+                            <form method="post" action="{% url 'pledges:check' pledge.pk payment.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="button button-secondary">Check with {{ name }} now</button>
+                            </form>
+                        {% endif %}
+
+                        {# Only payments the team confirms, and only for people who may: eSewa and Khalti payments are never marked by hand. #}
+                        {% if can_confirm and payment.team_confirms and payment.status != "paid" %}
+                            <form method="post" action="{% url 'pledges:mark_paid' pledge.pk payment.pk %}">
+                                {% csrf_token %}
+                                <h4>Mark as paid</h4>
+                                <p>Check the amount and reference in your wallet or bank statement first.</p>
+                                <p>
+                                    <label for="received-on-{{ payment.pk }}">Date received</label>
+                                    <input type="date" id="received-on-{{ payment.pk }}" name="received_on" value="{{ today|date:'Y-m-d' }}" min="{{ pledge.created_at|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}" required>
+                                </p>
+                                <p>
+                                    <label for="amount-{{ payment.pk }}">Amount received</label>
+                                    <input type="number" id="amount-{{ payment.pk }}" name="amount" min="1" max="{{ max_amount }}" value="{{ payment.amount }}" required>
+                                </p>
+                                <p>
+                                    <label for="reference-{{ payment.pk }}">Reference from the statement</label>
+                                    <input type="text" id="reference-{{ payment.pk }}" name="reference" maxlength="100" value="{{ payment.supporters_reference }}" required>
+                                </p>
+                                <button type="submit" class="button">Mark as paid</button>
+                            </form>
+                            {% if payment.status == "to-confirm" %}
+                                <form method="post" action="{% url 'pledges:not_found' pledge.pk payment.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="button button-secondary">Not found</button>
+                                </form>
+                            {% endif %}
+                        {% endif %}
+                    </details>
+                {% endwith %}
+            {% endfor %}
+        {% endpanel %}
+    </div>
 {% endblock %}

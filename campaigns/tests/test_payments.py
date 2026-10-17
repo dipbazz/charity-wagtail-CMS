@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 from django.core import checks
 from django.db import IntegrityError
+from django.utils import timezone
 
 from campaigns.models import Payment, PaymentStatus, PaymentStep, Pledge, StepKind
 from campaigns.payments import (
@@ -380,6 +381,53 @@ class TestPayment:
         )
 
 
+class TestNeedsChecking:
+    """A pledge a person must look at, worked out from its payments: the list, the export and
+    the pledge's page say "Needs checking", with why."""
+
+    def test_money_received_for_an_amount_the_pledge_no_longer_asks(self, pledge):
+        payment = pledge.start_payment("esewa", live=False)
+        Pledge.objects.filter(pk=pledge.pk).update(amount=10000)
+        payment.record(Status.PAID, "000AWEO")
+
+        pledge = Pledge.objects.get(pk=pledge.pk)
+
+        assert pledge.payment_display() == "Needs checking"
+        assert pledge.needs_checking() == "Rs 2,500 was received, but the pledge is for Rs 10,000."
+
+    def test_the_team_received_another_amount(self, pledge):
+        payment = pledge.payments.create(
+            method="qr", amount=2500, currency="NPR", status=PaymentStatus.TO_CONFIRM, live=True
+        )
+        payment.mark_paid(None, timezone.localdate(), 2000, "RBB-77")
+
+        pledge = Pledge.objects.get(pk=pledge.pk)
+
+        assert pledge.payment_display() == "Needs checking"
+        assert pledge.needs_checking() == "Rs 2,000 was received, but the pledge is for Rs 2,500."
+
+    def test_the_provider_refunded_part_of_it(self, pledge, fake_provider):
+        fake_provider.outcome = Outcome(Status.WAITING, word="PART_REFUNDED")
+        pledge.start_payment("fakepay", live=False).ask()
+
+        pledge = Pledge.objects.get(pk=pledge.pk)
+
+        assert pledge.payment_display() == "Needs checking"
+        assert pledge.needs_checking() == "Fake Pay refunded part of it."
+
+    def test_not_a_pledge_paid_in_full(self, pledge):
+        pledge.start_payment("esewa", live=True).record(Status.PAID, "000AWEO")
+
+        pledge = Pledge.objects.get(pk=pledge.pk)
+
+        assert pledge.needs_checking() == ""
+        assert pledge.payment_display() == "Paid"
+
+    def test_not_a_pledge_nobody_has_paid(self, pledge):
+        assert pledge.needs_checking() == ""
+        assert pledge.payment_display() == "Waiting"
+
+
 def steps(payment):
     return [(step.kind, step.word, step.by) for step in payment.steps.all()]
 
@@ -465,6 +513,31 @@ class TestAskingTheProvider:
 
         assert fake_provider.checked == []
         assert steps(payment) == [(StepKind.NOT_ASKED, "", None)]
+
+    def test_keeps_the_providers_latest_word(self, payment, fake_provider):
+        """So the list of pledges can say one needs checking without reading every step."""
+        fake_provider.outcome = Outcome(Status.WAITING, word="PENDING")
+        payment.ask()
+        fake_provider.outcome = Outcome(Status.FAILED, word="CANCELLED")
+        payment.ask()
+
+        assert Payment.objects.get(pk=payment.pk).word == "CANCELLED"
+
+    def test_an_answer_with_an_unknown_word_forgets_the_last_one(self, payment, fake_provider):
+        fake_provider.outcome = Outcome(Status.WAITING, word="PART_REFUNDED")
+        payment.ask()
+        fake_provider.outcome = Outcome(Status.WAITING, word="Paid by 9841234567")
+        payment.ask()
+
+        assert Payment.objects.get(pk=payment.pk).word == ""
+
+    def test_no_answer_keeps_the_last_word(self, payment, fake_provider):
+        fake_provider.outcome = Outcome(Status.WAITING, word="PENDING")
+        payment.ask()
+        fake_provider.failure = ProviderUnavailable("Timed out")
+        payment.ask()
+
+        assert Payment.objects.get(pk=payment.pk).word == "PENDING"
 
     def test_steps_are_kept_in_the_order_they_happened(self, payment):
         payment.add_step(StepKind.SENT)

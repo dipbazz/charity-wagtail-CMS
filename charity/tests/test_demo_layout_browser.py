@@ -9,6 +9,7 @@ under "Check before merging" in the pull request. Run `uv run playwright install
 import re
 
 import pytest
+from django.urls import reverse
 
 from campaigns.models import DonatePage, Pledge, QRCode
 from conftest import SITE
@@ -43,26 +44,27 @@ TAP_TARGETS = (
 
 # The measurements the checks need, taken in the page in one go.
 MEASURE = """
-(selector) => ({
+([selector, smallest]) => ({
     scrollWidth: document.documentElement.scrollWidth,
     innerWidth: window.innerWidth,
     small: [...document.querySelectorAll(selector)]
         .filter((el) => el.offsetParent !== null)
         .map((el) => [el, el.getBoundingClientRect()])
-        .filter(([, box]) => box.width > 0 && box.height < 43.5)
+        .filter(([, box]) => box.width > 0 && box.height < smallest - 0.5)
         .map(([el, box]) => `${el.tagName.toLowerCase()}.${el.className}`.trim()
             + ` "${el.textContent.trim().slice(0, 30)}" is ${Math.round(box.height)}px tall`),
 })
 """
 
 
-def layout_problems(site_page, path):
-    """Where `path` scrolls sideways or has a control too small to tap, at each width."""
+def layout_problems(site_page, path, tap_targets=TAP_TARGETS, smallest=44):
+    """Where `path` scrolls sideways or has a control (`tap_targets`) under `smallest` pixels
+    tall, at each width."""
     problems = []
     for width in WIDTHS:
         site_page.set_viewport_size({"width": width, "height": 800})
         site_page.goto(SITE + path)
-        found = site_page.evaluate(MEASURE, TAP_TARGETS)
+        found = site_page.evaluate(MEASURE, [tap_targets, smallest])
         if found["scrollWidth"] > found["innerWidth"]:
             problems.append(f"{width}px: scrolls sideways ({found['scrollWidth']}px wide)")
         problems += [f"{width}px: {item}" for item in found["small"]]
@@ -109,6 +111,38 @@ def test_each_pay_page_fits_and_can_be_tapped_at_every_width(site_page, pay_page
     problems = []
     for path in pay_pages:
         problems += [f"{path} {item}" for item in layout_problems(site_page, path)]
+
+    assert not problems, "\n".join(problems)
+
+
+def test_a_pledges_page_in_the_admin_fits_and_can_be_tapped_at_every_width(
+    site_page, client, demo_site, moderator
+):
+    """The team reads pledges on their phones too: one with a payment of each kind, opened by a
+    moderator, who sees every action (#96). Wagtail's own controls keep their size, so the page
+    looks like the rest of the admin; the page's own are at least WCAG 2.2 AA's 24px."""
+    pledge = Pledge.objects.create(
+        page=DonatePage.objects.live().first(),
+        amount=2500,
+        currency="NPR",
+        name="Asha Gurung",
+        email="asha.gurung.with.a.long.address@example.org",
+        phone="+9779841234567",
+        address="Ward 4, Biratnagar",
+        message="Please use it for the school tap.",
+    )
+    pledge.start_payment("esewa", live=False).record("failed")
+    claimed = pledge.claim_paid(QRCode.objects.first(), "TXN-8841-0000000000000000000000")
+    claimed.mark_not_found(by=moderator)
+    pledge.claim_paid(QRCode.objects.first(), "TXN-8842")
+    client.force_login(moderator)
+
+    problems = layout_problems(
+        site_page,
+        reverse("pledges:inspect", args=[pledge.pk]),
+        tap_targets=".pledge-record :is(a, summary, button, input)",
+        smallest=24,
+    )
 
     assert not problems, "\n".join(problems)
 

@@ -17,7 +17,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from openpyxl import load_workbook
 
-from campaigns.models import CampaignPage, Frequency, Pledge
+from campaigns.models import CampaignPage, Frequency, Payment, Pledge
 from nepal_payments import Status
 
 pytestmark = pytest.mark.django_db
@@ -86,6 +86,58 @@ class TestTheTeam:
         html = client.get(reverse("pledges:index"), {"q": "sita@example"}).content.decode()
 
         assert "Sita Sharma" in html
+
+    def test_find_a_pledge_by_phone(self, client, request, member, sent_pledge):
+        """As the supporter says it on the phone, without the country code."""
+        client.force_login(request.getfixturevalue(member))
+
+        html = client.get(reverse("pledges:index"), {"q": "9841234567"}).content.decode()
+
+        assert "Sita Sharma" in html
+
+    @pytest.mark.parametrize(
+        "typed",
+        ["reference", "reference without hyphens", "provider's ID", "transaction ID"],
+    )
+    def test_find_a_pledge_from_a_line_in_a_providers_statement(
+        self, client, request, member, sent_pledge, typed
+    ):
+        payment = sent_pledge.start_payment("khalti", live=False)
+        Payment.objects.filter(pk=payment.pk).update(provider_id="HT6o6PEZRWFJ5ygavzHWd5")
+        payment.record(Status.PAID, "GFq9PFS7b2iYvL8Lir9oXe")
+        Pledge.objects.create(page=sent_pledge.page, amount=1500, currency="NPR", name="Ram")
+        query = {
+            "reference": str(payment.reference),
+            "reference without hyphens": payment.reference.hex.upper(),
+            "provider's ID": "HT6o6PEZRWFJ5ygavzHWd5",
+            "transaction ID": "gfq9pfs7b2iyvl8lir9oxe",
+        }[typed]
+        client.force_login(request.getfixturevalue(member))
+
+        html = client.get(reverse("pledges:index"), {"q": query}).content.decode()
+
+        assert "Sita Sharma" in html
+        assert "Ram" not in html
+
+    def test_find_a_pledge_by_the_transaction_id_the_supporter_gave(
+        self, client, request, member, sent_pledge
+    ):
+        sent_pledge.payments.create(
+            method="qr",
+            amount=2500,
+            currency="NPR",
+            status="to-confirm",
+            live=True,
+            supporters_reference="TXN-8841",
+        )
+        sent_pledge.payments.create(method="qr", amount=2500, currency="NPR", live=True)
+        client.force_login(request.getfixturevalue(member))
+
+        html = client.get(reverse("pledges:index"), {"q": "TXN-8841"}).content.decode()
+
+        assert "Sita Sharma" in html
+        # Listed once, though it has two payments.
+        assert re.search(r"\b1 pledge\b", html)
 
     def test_can_filter_to_monthly_pledges(self, client, request, member, sent_pledge):
         Pledge.objects.create(
@@ -226,7 +278,8 @@ class TestTheTeam:
         response = client.get(reverse("pledges:index"), {"export": "csv"})
 
         rows = list(csv.DictReader(b"".join(response.streaming_content).decode().splitlines()))
-        assert rows[0]["Payment"] == "Paid"
+        # As the list and the pledge's page say it.
+        assert rows[0]["Payment"] == "Paid (test)"
         assert rows[0]["Paid"]
         # A test payment says so: no money moved.
         assert rows[0]["Paid with"] == "eSewa 000AWEO (test)"
