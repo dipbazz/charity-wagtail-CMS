@@ -68,9 +68,9 @@ Before proposing a fix, feature or design, answer these in the proposal itself:
    change affects, or label the pull request `no changelog` if nobody would notice it
    ([Releases](releases.md#the-changelog)).
 6. **Run the checks for what you touched** before pushing: its tests
-   (`uv run pytest path/to/tests`), `uv run ruff check . && uv run ruff format --check .`, and
-   `uv run python manage.py makemigrations --check --dry-run` if models changed. CI runs the whole
-   suite on every push.
+   (`uv run pytest path/to/tests`), and `uv run python manage.py makemigrations --check --dry-run`
+   if models changed. ruff runs on every commit through pre-commit (`uv run pre-commit install`,
+   once per clone), and CI runs the whole suite on every push.
 7. **Open a pull request** against `main`, in the version's milestone. Its description is short
    and follows the template: what changed, what to check in the browser before merging, and
    anything the reviewer must act on; the why goes in the commit messages. Pull requests aren't
@@ -82,6 +82,7 @@ Before proposing a fix, feature or design, answer these in the proposal itself:
 ## Commits
 
 `type(scope): description`: lowercase, imperative, 72 characters or fewer, no trailing period.
+pre-commit refuses a longer subject (`.pre-commit-config.yaml`).
 
 - Types: `feat`, `fix`, `perf`, `refactor`, `test`, `chore`, `docs`, `style`, `ci`.
 - One logical change per commit; never bundle unrelated changes.

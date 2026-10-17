@@ -48,7 +48,7 @@ Two traps with versions this new:
 | App | Owns |
 |---|---|
 | `charity` | The project: settings, URLs, the API, the base templates, the stylesheet and scripts |
-| `core` | Everything shared: content blocks, the image model, site settings and the banner, partners and testimonials, languages, money and phone formatting, the mail backend, the sitemap, template tags, and the `update_site_url` and `backup_site` commands |
+| `core` | Everything shared: content blocks, the image model, site settings and the banner, partners and testimonials, languages, money and phone formatting, the mail backend, the sitemap, template tags, the `update_site_url` and `backup_site` commands, and `makemessages` and `compilemessages` with this repo's defaults ([Languages](languages.md)) |
 | `home` | The home page, standard pages and the demo content (`seed_demo`) |
 | `campaigns` | Appeals, the Donate page, pledges and paying them, and the admin's fundraising panel |
 | `nepal_payments` | The payment providers (eSewa, Khalti), one file each. Not a Django app: it imports nothing from Django or this site, so it can be published for any Python project (#196); `campaigns/payments.py` connects it to the site ([Paying a pledge](appeals-and-giving.md#paying-a-pledge)) |

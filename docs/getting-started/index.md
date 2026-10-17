@@ -6,7 +6,7 @@ From a fresh clone to the site running on your computer with demo content, then 
 
 - Python 3.13 or newer (the Docker image uses 3.14)
 - [uv](https://docs.astral.sh/uv/), which installs everything else
-- git
+- git 2.31 or newer (older versions break `pre-commit run --all-files`)
 
 There's no JavaScript build step and no database server to install: the site uses SQLite, one
 CSS file and two small scripts.
@@ -17,6 +17,7 @@ CSS file and two small scripts.
 git clone https://github.com/dipbazz/Charity-wagtail-CMS.git
 cd Charity-wagtail-CMS
 uv sync
+uv run pre-commit install                  # once: checks ruff and the commit subject on each commit
 uv run python manage.py migrate
 uv run python manage.py seed_demo          # fictional charity content, safe to re-run
 uv run python manage.py createsuperuser
