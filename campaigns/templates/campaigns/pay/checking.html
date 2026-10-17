@@ -7,7 +7,13 @@
 {% block pay %}
     <h1>{% translate "Checking your payment" %}</h1>
     <p class="lead" tabindex="-1" data-focus-on-load>{% blocktranslate with amount=claimed.display_amount name=paid_by date=claimed.created_at|date:"DATE_FORMAT" %}Thank you. You've told us you paid {{ amount }} by {{ name }} on {{ date }}. Our team will check it reaches us and mark your gift received.{% endblocktranslate %}</p>
-    {% if claimed.supporters_reference %}<p>{% blocktranslate with id=claimed.supporters_reference %}You sent us the transaction ID {{ id }}.{% endblocktranslate %}</p>{% endif %}
+    {% if claimed.supporters_reference and claimed.receipt %}
+        <p>{% blocktranslate with id=claimed.supporters_reference %}You sent us the transaction ID {{ id }} and a screenshot of the receipt.{% endblocktranslate %}</p>
+    {% elif claimed.supporters_reference %}
+        <p>{% blocktranslate with id=claimed.supporters_reference %}You sent us the transaction ID {{ id }}.{% endblocktranslate %}</p>
+    {% elif claimed.receipt %}
+        <p>{% translate "You sent us a screenshot of the receipt." %}</p>
+    {% endif %}
     {% if site_settings.phone %}
         <p>{% blocktranslate with number=pledge.display_number %}Questions? Call us and give your pledge number, {{ number }}:{% endblocktranslate %}</p>
         <p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>

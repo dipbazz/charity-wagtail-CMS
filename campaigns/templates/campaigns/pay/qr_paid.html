@@ -1,7 +1,7 @@
 {% extends "campaigns/pay/base.html" %}
 {% load i18n wagtailroutablepage_tags %}
 
-{# Step 2 of paying by QR, a page of its own: which app they paid with, and the transaction ID from its receipt. Once they've told us, the checking page says thank you. #}
+{# Step 2 of paying by QR, a page of its own: which app they paid with, and the transaction ID from its receipt, a screenshot of the receipt, or both. Once they've told us, the checking page says thank you. #}
 {% block pay_title %}{% translate "Paid? Tell us here" %}{% endblock %}
 
 {# A form page too, for its field and radio styles. #}
@@ -14,12 +14,13 @@
         <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
             {% if paid_form.code.errors %}<p><a href="#{% if qr_codes|length > 1 %}id_code_0{% else %}id_transaction_id{% endif %}">{% translate "Check which app you paid with below." %}</a></p>{% endif %}
             {% if paid_form.transaction_id.errors %}<p><a href="#id_transaction_id">{% translate "Check the transaction ID below." %}</a></p>{% endif %}
+            {% if paid_form.receipt.errors %}<p><a href="#id_receipt">{% translate "Check the screenshot below." %}</a></p>{% endif %}
         </div>
     {% endif %}
 
     {% include "campaigns/pay/includes/qr_steps.html" with current=2 %}
 
-    <form class="qr-paid" method="post" action="{% routablepageurl page 'qr_paid' pledge.reference %}">
+    <form class="qr-paid" method="post" action="{% routablepageurl page 'qr_paid' pledge.reference %}" enctype="multipart/form-data">
         {% csrf_token %}
         <section class="qr-step" aria-labelledby="step-2-title">
             <h2 id="step-2-title">{% translate "Step 2: Paid? Tell us here" %}</h2>
@@ -42,6 +43,7 @@
             {% else %}
                 <input type="hidden" name="code" value="{{ qr_codes.0.pk }}">
             {% endif %}
+            <p>{% translate "Give the transaction ID, a screenshot of the receipt, or both." %}</p>
             <div class="field">
                 <label for="id_transaction_id">{% translate "Transaction ID" %}</label>
                 <ol id="transaction-id-help" class="qr-help">
@@ -49,9 +51,18 @@
                     <li>{% translate "Copy the Transaction ID or Transaction code and paste it here." %}</li>
                 </ol>
                 {# The error is read with the field, and the alert at the top links here. #}
-                <input type="text" id="id_transaction_id" name="transaction_id" value="{{ paid_form.transaction_id.value|default:'' }}" maxlength="100" required autocomplete="off" aria-describedby="transaction-id-help{% if paid_form.transaction_id.errors %} id_transaction_id_error{% endif %}"{% if paid_form.transaction_id.errors %} aria-invalid="true"{% endif %}>
+                <input type="text" id="id_transaction_id" name="transaction_id" value="{{ paid_form.transaction_id.value|default:'' }}" maxlength="100" autocomplete="off" aria-describedby="transaction-id-help{% if paid_form.transaction_id.errors %} id_transaction_id_error{% endif %}"{% if paid_form.transaction_id.errors %} aria-invalid="true"{% endif %}>
                 {% if paid_form.transaction_id.errors %}
                     <ul class="errorlist" id="id_transaction_id_error">{% for error in paid_form.transaction_id.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+            <div class="field">
+                <label for="id_receipt">{% translate "Screenshot of the receipt" %}</label>
+                <p id="receipt-help" class="helptext">{% translate "A JPEG, PNG or WebP image of up to 5 MB." %}</p>
+                {# A file can't be kept after a mistake: the browser asks for it again. #}
+                <input type="file" id="id_receipt" name="receipt" accept="image/jpeg,image/png,image/webp" aria-describedby="receipt-help{% if paid_form.receipt.errors %} id_receipt_error{% endif %}"{% if paid_form.receipt.errors %} aria-invalid="true"{% endif %}>
+                {% if paid_form.receipt.errors %}
+                    <ul class="errorlist" id="id_receipt_error">{% for error in paid_form.receipt.errors %}<li>{{ error }}</li>{% endfor %}</ul>
                 {% endif %}
             </div>
             <button class="button button-large" type="submit" data-busy-text="{% translate 'Sending…' %}">{% translate "I've paid" %}</button>

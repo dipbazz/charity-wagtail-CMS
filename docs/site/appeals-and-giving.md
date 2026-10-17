@@ -261,12 +261,17 @@ circle and `aria-current="step"`, the other is a link to its page.
   to step 2" and **Go to step 2**, a GET form that sends the chosen app (`?code=`).
 - **Step 2** (`…/qr/paid/`, "Paid? Tell us here"). With two or more codes, "Which app did you pay
   with?", chosen only if step 1 sent one of the codes on the page (`chosen_code()`): a guess could
-  send the team to the wrong statement. Then the **transaction ID** with two numbered lines before
-  it (open the payment's receipt; copy the Transaction ID or Transaction code and paste it
-  here; in Nepali too the ID keeps its English name, as the wallets' receipts are in English), each error under its field (the
-  alert at the top links to each one), and **I've paid**, which says "Sending…" while it's sent.
-  Once they've told us, this address goes to the checking page (below). Receipt screenshots
-  come with #197's second part.
+  send the team to the wrong statement. Then "Give the transaction ID, a screenshot of the
+  receipt, or both": the **transaction ID** with two numbered lines before it (open the payment's
+  receipt; copy the Transaction ID or Transaction code and paste it here; in Nepali too the ID
+  keeps its English name, as the wallets' receipts are in English), and a **Screenshot of the
+  receipt** (a JPEG, PNG or WebP image of up to 5 MB). Sending neither says "Enter the transaction
+  ID, or add a screenshot of the receipt"; a file that isn't such a picture is refused, and so is
+  a screenshot of more than 13 million pixels ("This picture is too large"; a photo from any
+  phone camera passes, being decoded straight to a smaller size). Each error
+  is under its field (the alert at the top links to each one; a file must be chosen again after a
+  mistake), and **I've paid** says "Sending…" while it's sent. Once they've told us, this address
+  goes to the checking page (below).
 
 Once the QR code is folded away (Not found, below), the row folds away with it, so opening the
 fold shows step 1 as the current step and step 2 as a link, as on a new pledge.
@@ -285,7 +290,7 @@ your payment, say from a tab opened before it started) goes to the online page i
 
 | State | What it shows |
 |---|---|
-| To confirm | The **checking page** (`…/checking/`), which every pay address and **Pay with** go to (`HELD`): "Thank you. You've told us you paid Rs 2,500 by eSewa on 15 October …", the transaction ID they sent, "Questions? Call us and give your pledge number, 482 913:" with the charity's phone, "There's nothing more to do here" and the appeals link (or the home page). The thanks says the gift, so there's no summary, and nothing else can be paid until the team marks it paid or not found: no steps, no QR, no **Pay another way**. Title "Checking your payment". Opened in any other state, it goes to the pay page. A later way the team checks by hand gets this page too |
+| To confirm | The **checking page** (`…/checking/`), which every pay address and **Pay with** go to (`HELD`): "Thank you. You've told us you paid Rs 2,500 by eSewa on 15 October …", what they sent ("You sent us the transaction ID …", "… and a screenshot of the receipt", or "You sent us a screenshot of the receipt"), "Questions? Call us and give your pledge number, 482 913:" with the charity's phone, "There's nothing more to do here" and the appeals link (or the home page). The thanks says the gift, so there's no summary, and nothing else can be paid until the team marks it paid or not found: no steps, no QR, no **Pay another way**. Title "Checking your payment". Opened in any other state, it goes to the pay page. A later way the team checks by hand gets this page too |
 | Not found | A problem message: "We haven't found your payment yet. If money has left your account, don't pay again", with the phone. The QR and I've paid are folded under "I didn't pay: scan the QR code", and **Pay another way** is open |
 | Paid | Thanks, with the reference the team entered, on every pay address |
 | Received a different amount | "We received Rs 2,000 from you by eSewa." |
@@ -304,6 +309,14 @@ say it received that amount. **Not found** fails the payment; it can still be ma
 if it turns up. Each adds a step with who did it. eSewa and Khalti payments can't be marked by
 hand, and `Payment.ask()` returns nothing for a QR payment, so a scheduled check (#198) never
 touches one.
+
+**The receipt screenshot** shows on the payment, linked to full size, only to people with **Can
+confirm payments**; editors read "Sent. Only people who can confirm payments can see it." It's
+saved afresh at most 2000px on its longest side under a name of the site's own, kept in
+`STORAGES["receipts"]` where no address serves it, and deleted when the payment is marked paid or
+not found, with its pledge, or after 30 days if nobody has checked it (`delete_old_receipts`; the
+payment stays To confirm). It isn't backed up. The rules are in
+[Security](../contributing/security.md#a-supporters-upload-is-private-and-short-lived).
 
 ### How paying works, above the form
 
@@ -370,6 +383,8 @@ Each consent means exactly what its words say, and nothing more:
 - **Payment providers** get nothing about the supporter from the site: only the amount, our
   reference and what the gift is for. The supporter gives the provider their own details on its
   page.
+- **A receipt screenshot** can show the supporter's name, account and balance. Only people who
+  can confirm payments see it, and it's kept until the payment is checked, 30 days at most.
 
 ## Privacy notice
 

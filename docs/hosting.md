@@ -16,9 +16,13 @@ site on one Linux server (an AWS EC2 instance) with Docker Compose. Why one serv
   missing.
 - **`Caddyfile`**: Caddy answers on ports 80 and 443, gets and renews the HTTPS certificate itself
   (Let's Encrypt, falling back to ZeroSSL), redirects http to https, and sets `X-Forwarded-Proto`,
-  which Django trusts.
+  which Django trusts. It refuses a request over 12 MB (the admin's images and documents are up
+  to 10 MB, a receipt screenshot 5 MB): Django writes an upload to a temporary file before any
+  form checks its size, so without a limit one request could fill the disk. Any other host's web
+  server needs the same limit.
 - **Data** lives in `/srv/charity/data` on the server, mounted into the container at `/data`: the
-  SQLite database, uploads and the latest backup. It outlives the container, so rebuilding keeps
+  SQLite database, uploads, supporters' receipt screenshots (`receipts/`, readable by the
+  container's user only) and the latest backup. It outlives the container, so rebuilding keeps
   everything.
 - **Logs** are capped at 3 × 10 MB per container, because Docker keeps logs forever by default.
 - **Timers** (`systemd/`, copied to `/etc/systemd/system/` and enabled): `charity-publish.timer`
@@ -98,6 +102,7 @@ Run them with `uv run python manage.py <command>` locally, or
 |---|---|
 | `update_site_url` | Points the Wagtail Site at `SITE_URL`. Safe to run on every deploy; the image runs it on every start. Refuses a `SITE_URL` it can't store faithfully |
 | `backup_site <folder>` | Writes `db.sqlite3` (a consistent copy, made with SQLite's backup API, safe while the site serves requests) and `media.tar.gz` (the uploads, under `media/`) to a folder, overwriting an earlier backup there. Refuses a folder inside the uploads, or every backup would contain the previous ones. SQLite only |
+| `delete_old_receipts` | Deletes the receipt screenshots supporters sent with a QR payment more than 30 days ago that nobody has marked paid or not found (the payment stays To confirm), and any screenshot file that old that no payment points at. `backup.sh` runs it after the backup, every night |
 | `seed_demo` | Builds the demo charity ([Demo content](contributing/demo-content.md)). Safe to re-run: if appeals exist it adds nothing, but it always runs `update_site_url`. Refuses a Nepali-first site, because the demo is English-first |
 | `publish_scheduled` | Wagtail's: publishes and unpublishes pages with a go-live or expiry time |
 
@@ -108,10 +113,19 @@ Go-live and expiry times only take effect because `publish_scheduled` runs every
 
 ## Backups
 
-`backup.sh` runs `backup_site /data/backups/latest` inside the running container, then copies the
-database and uploads archive to S3 under `backups/<UTC time>/`. The server's IAM role can write and
-read `backups/` but not delete, so a compromised server can't wipe them; the bucket's lifecycle
-rule removes them after 30 days.
+`backup.sh` runs `backup_site /data/backups/latest` inside the running container, copies the
+database and uploads archive to S3 under `backups/<UTC time>/`, then runs `delete_old_receipts`.
+The clean-up comes last so a failure there can't stop the backup; it still fails the run, which
+`journalctl -u charity-backup.service` shows. The server's IAM role can write and read `backups/`
+but not delete, so a compromised server can't wipe them; the bucket's lifecycle rule removes them
+after 30 days.
+
+**Receipt screenshots aren't backed up.** They're kept in `receipts/` beside `media/` in the data
+directory, which no address serves and the uploads archive doesn't include, so a deleted
+screenshot is gone for good, as the privacy notice promises. A restore onto a new server, or after
+the data directory is lost, loses the screenshots nobody has checked yet. Their payments are still
+To confirm, with the transaction ID if the supporter gave one; for the rest, find the payment by
+its pledge number in your statement.
 
 ## Errors and logs
 
@@ -217,7 +231,9 @@ from GitHub with a backup and an approval each time.
    data, restore the backup (below).
 
 A changed file in `deploy/aws/systemd/` must be copied to `/etc/systemd/system/` again, followed
-by `sudo systemctl daemon-reload`. A new variable in `env.example` must be added to the server's
+by `sudo systemctl daemon-reload`. A changed `Caddyfile` takes effect only after
+`sudo docker compose exec -w /etc/caddy caddy caddy reload` (`up -d` leaves Caddy running with the
+old one). A new variable in `env.example` must be added to the server's
 `.env` by hand before `up -d`.
 
 ## Restore a backup
@@ -244,7 +260,9 @@ sudo docker compose start web
 
 Stopping `web` first means nothing writes to the database while it's replaced; Caddy shows an error
 page until it's back. Then check the logs, that the site loads and images display. Anything
-published or uploaded after the backup's time is gone.
+published or uploaded after the backup's time is gone. `receipts/` isn't in the backup: on the
+same server it's left as it was, and on a new one the screenshots nobody had checked are lost
+(see Backups).
 
 **To move the site to another host**, put `db.sqlite3` and the unpacked `media/` folder in the
 directory mounted as `/data`, then start the image with the environment variables above.

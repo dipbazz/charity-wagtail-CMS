@@ -1,8 +1,12 @@
 """Appeals and the pledge form in Nepali (#116): the words around the editors' content."""
 
+import io
+
 import pytest
 from bs4 import BeautifulSoup
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import translation
+from PIL import Image
 
 from campaigns.forms import PledgeForm
 from campaigns.models import Pledge
@@ -310,9 +314,9 @@ class TestTheQRPageInNepali:
     def test_step_2_is_in_nepali_with_no_english_left(self, client, qr_page):
         text = visible_text(client.get(qr_page.wsgi_request.path + "paid/"))
 
-        for nepali in ["मैले भुक्तानी गरें", "यहाँ हामीलाई बताउनुहोस्"]:
+        for nepali in ["मैले भुक्तानी गरें", "यहाँ हामीलाई बताउनुहोस्", "रसिदको स्क्रिनसट"]:
             assert nepali in text
-        for english in ["I've paid", "Tell us here"]:
+        for english in ["I've paid", "Tell us here", "Screenshot", "or both", "up to 5 MB"]:
             assert english not in text
 
     def test_step_2_names_the_transaction_id_as_the_receipt_does(self, client, qr_page):
@@ -324,7 +328,7 @@ class TestTheQRPageInNepali:
         assert "लेनदेन आईडी" not in text + errors
         assert "Transaction ID वा Transaction Code प्रतिलिपि गरेर यहाँ राख्नुहोस्।" in text
         assert "तल Transaction ID जाँच्नुहोस्।" in errors
-        assert "आफ्नो रसिदमा रहेको Transaction ID लेख्नुहोस्।" in errors
+        assert "Transaction ID लेख्नुहोस्, वा रसिदको स्क्रिनसट थप्नुहोस्।" in errors
 
     def test_the_checking_page_is_in_nepali_with_no_english_left(self, client, qr_page, site):
         from campaigns.models import QRCode
@@ -349,6 +353,35 @@ class TestTheQRPageInNepali:
             assert nepali in text
         for english in ["Thank you", "Questions?", "Call us"]:
             assert english not in text
+
+    @pytest.mark.parametrize(
+        ("transaction_id", "said"),
+        [
+            ("", "तपाईंले रसिदको स्क्रिनसट पठाउनुभएको छ।"),
+            ("TXN-8841", "तपाईंले Transaction ID TXN-8841 र रसिदको स्क्रिनसट पठाउनुभएको छ।"),
+        ],
+    )
+    def test_the_checking_page_says_a_screenshot_was_sent_in_nepali(
+        self, client, qr_page, transaction_id, said
+    ):
+        from campaigns.models import QRCode
+
+        saved = io.BytesIO()
+        Image.new("RGB", (100, 200), "white").save(saved, format="PNG")
+        step_2 = qr_page.wsgi_request.path + "paid/"
+        client.post(
+            step_2,
+            {
+                "code": QRCode.objects.get().pk,
+                "transaction_id": transaction_id,
+                "receipt": SimpleUploadedFile("receipt.png", saved.getvalue()),
+            },
+        )
+
+        text = visible_text(client.get(step_2, follow=True))
+
+        assert said in text
+        assert "screenshot" not in text
 
     def test_names_the_copy_buttons_in_nepali(self, qr_page):
         labels = [b["aria-label"] for b in soup(qr_page).select("button[data-copy-value]")]

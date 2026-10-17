@@ -81,6 +81,18 @@ class TestCleanImage:
 
         assert Image.open(io.BytesIO(files[0].read())).format == image_format
 
+    def test_saves_a_phone_cameras_jpeg_as_a_plain_jpeg(self):
+        # Many phone cameras add a second, smaller picture to each JPEG, which Pillow reads as MPO.
+        saved = io.BytesIO()
+        first, second = Image.new("RGB", (400, 300), "white"), Image.new("RGB", (40, 30))
+        first.save(saved, format="MPO", save_all=True, append_images=[second])
+        assert Image.open(io.BytesIO(saved.getvalue())).format == "MPO"
+
+        extension, files = clean_image(SimpleUploadedFile("photo.jpg", saved.getvalue()), (800,))
+
+        assert extension == "jpg"
+        assert Image.open(io.BytesIO(files[0].read())).format == "JPEG"
+
     def test_never_enlarges_a_small_image(self):
         _, files = clean_image(self.upload(size=(300, 300)), widths=(1600, 800))
 
@@ -97,6 +109,16 @@ class TestCleanImage:
 
         assert b"Camera Maker" not in files[0].read()
 
+    def test_drops_a_jpegs_comment(self):
+        # Free text anyone can write into the file, which Pillow would otherwise save again.
+        saved = io.BytesIO()
+        Image.new("RGB", (400, 200), "white").save(saved, format="JPEG", comment=b"hidden note")
+        photo = SimpleUploadedFile("photo.jpg", saved.getvalue())
+
+        _, files = clean_image(photo, widths=(800,))
+
+        assert b"hidden note" not in files[0].read()
+
     def test_turns_a_sideways_photo_upright(self):
         exif = Image.Exif()
         exif[0x0112] = 6  # rotated: displayed turned a quarter
@@ -105,6 +127,15 @@ class TestCleanImage:
         _, files = clean_image(photo, widths=(800,))
 
         assert Image.open(io.BytesIO(files[0].read())).size == (200, 400)
+
+    def test_turns_a_sideways_photo_upright_when_decoded_smaller(self):
+        exif = Image.Exif()
+        exif[0x0112] = 6
+        photo = self.upload("JPEG", size=(4000, 2000), exif=exif.tobytes())
+
+        _, files = clean_image(photo, widths=(1000,))
+
+        assert Image.open(io.BytesIO(files[0].read())).size == (500, 1000)
 
     @pytest.mark.parametrize(
         "upload",
@@ -139,3 +170,38 @@ class TestCleanImage:
 
         with pytest.raises(ValidationError):
             clean_image(huge, widths=(800,))
+
+    def test_refuses_more_pixels_than_the_caller_allows(self):
+        # A receipt allows far fewer than a QR card: a small file can decode to a picture that
+        # fills the server's memory.
+        upload = self.upload("PNG", size=(2000, 2000), mode="1")
+
+        with pytest.raises(ValidationError) as refused:
+            clean_image(upload, widths=(800,), max_pixels=3_000_000)
+
+        assert refused.value.messages == ["This picture is too large: upload a smaller one."]
+
+    def test_decodes_a_big_jpeg_straight_to_a_smaller_size(self):
+        # Only what's decoded counts: a JPEG is read at about the size it's saved at, a PNG whole.
+        photo = self.upload("JPEG", size=(4000, 4000), mode="L")
+        screenshot = self.upload("PNG", size=(4000, 4000), mode="L")
+
+        _, files = clean_image(photo, widths=(2000,), max_pixels=5_000_000)
+        with pytest.raises(ValidationError):
+            clean_image(screenshot, widths=(2000,), max_pixels=5_000_000)
+
+        assert Image.open(io.BytesIO(files[0].read())).size == (2000, 2000)
+
+    def test_refuses_a_jpeg_that_is_cut_off(self):
+        whole = self.upload("JPEG", size=(4000, 3000)).read()
+
+        with pytest.raises(ValidationError):
+            clean_image(SimpleUploadedFile("photo.jpg", whole[: len(whole) // 2]), (2000,))
+
+    def test_returns_each_width_in_the_order_asked(self):
+        _, files = clean_image(self.upload(size=(2400, 1200)), widths=(800, 1600))
+
+        assert [Image.open(io.BytesIO(file.read())).size for file in files] == [
+            (800, 400),
+            (1600, 800),
+        ]

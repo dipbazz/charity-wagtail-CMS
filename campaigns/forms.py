@@ -8,7 +8,8 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.translation import gettext, gettext_lazy
 
-from campaigns.models import Frequency, PaymentStatus, Pledge
+from campaigns.models import RECEIPT_MAX_PIXELS, RECEIPT_WIDTH, Frequency, PaymentStatus, Pledge
+from core.images import clean_image
 from core.money import CURRENCIES, format_money
 from core.phone import normalise_mobile, phone_country_choices
 
@@ -298,19 +299,18 @@ class PledgeForm(forms.ModelForm):
 
 class QRPaidForm(forms.Form):
     """ "I've paid", the QR way's step 2: which QR code they scanned, and the transaction ID from
-    their app's receipt. The code is picked from the ones on the page, so nothing else can be
-    named."""
+    their app's receipt, a screenshot of the receipt, or both. The code is picked from the ones on
+    the page, so nothing else can be named. A screenshot is saved afresh here, under a name of our
+    own, so an upload that isn't a picture is refused with the form's other mistakes."""
 
     code = forms.ChoiceField(
         label=gettext_lazy("Which app did you pay with?"),
         error_messages={"required": gettext_lazy("Choose the app you paid with.")},
     )
     transaction_id = forms.CharField(
-        label=gettext_lazy("Transaction ID"),
-        max_length=100,
-        strip=True,
-        error_messages={"required": gettext_lazy("Enter the transaction ID from your receipt.")},
+        label=gettext_lazy("Transaction ID"), max_length=100, strip=True, required=False
     )
+    receipt = forms.FileField(label=gettext_lazy("Screenshot of the receipt"), required=False)
 
     def __init__(self, *args, codes, **kwargs):
         super().__init__(*args, **kwargs)
@@ -322,6 +322,24 @@ class QRPaidForm(forms.Form):
 
     def clean_code(self):
         return self.codes[self.cleaned_data["code"]]
+
+    def clean_receipt(self):
+        upload = self.cleaned_data["receipt"]
+        if not upload:
+            return None
+        extension, (saved,) = clean_image(upload, (RECEIPT_WIDTH,), RECEIPT_MAX_PIXELS)
+        saved.name = f"{uuid.uuid4().hex}.{extension}"
+        return saved
+
+    def clean(self):
+        cleaned = super().clean()
+        sent = cleaned.get("transaction_id") or cleaned.get("receipt") or "receipt" in self.errors
+        if not sent:
+            self.add_error(
+                "transaction_id",
+                gettext_lazy("Enter the transaction ID, or add a screenshot of the receipt."),
+            )
+        return cleaned
 
 
 class MarkPaidForm(forms.Form):

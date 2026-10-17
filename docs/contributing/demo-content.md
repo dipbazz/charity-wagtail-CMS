@@ -21,7 +21,9 @@ the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is Eng
   No freely licensed photo of that flood exists, so the appeal uses a representative photo of a
   flooded camp, labelled as such in its caption and alt text.
 - A placeholder **Privacy notice** (`/privacy/`), chosen in Site settings, describes what the
-  site stores. It says it's example text to replace before going live.
+  site stores, including the receipt screenshot a QR payment can come with (seen only by the team
+  who check payments, kept until checked and 30 days at most, not backed up). It says it's example
+  text to replace before going live.
 - One **QR code**, "Sample Pay", with a card the script draws itself: it has none of a QR code's
   corner squares, so no app can scan it and the demo never sends a gift anywhere. It makes the
   QR page visible on the demo and in the layout checks.

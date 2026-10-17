@@ -203,6 +203,17 @@ def test_database_and_uploads_live_in_the_data_directory(monkeypatch, tmp_path):
     assert settings["MEDIA_ROOT"] == tmp_path / "media"
 
 
+def test_receipts_are_kept_beside_the_uploads_where_no_address_serves_them(monkeypatch, tmp_path):
+    # Outside media/, so neither /media/ nor the uploads' backup archive includes them.
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+    monkeypatch.setenv("DJANGO_DATA_DIR", str(tmp_path))
+
+    receipts = load_settings()["STORAGES"]["receipts"]
+
+    assert receipts["BACKEND"] == "core.storage.PrivateStorage"
+    assert receipts["OPTIONS"]["location"] == tmp_path / "receipts"
+
+
 def test_serving_uploads_from_django_is_opt_in(monkeypatch):
     monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
     monkeypatch.delenv("DJANGO_SERVE_MEDIA", raising=False)

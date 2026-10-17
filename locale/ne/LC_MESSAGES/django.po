@@ -1,11 +1,11 @@
 # Nepali text for the site's menus, buttons, forms and messages.
 # Same license as the project.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-16 11:11+0100\n"
+"POT-Creation-Date: 2026-10-16 23:24+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -112,8 +112,11 @@ msgstr "तपाईंले भुक्तानी गर्नुभएक�
 msgid "Transaction ID"
 msgstr "Transaction ID"
 
-msgid "Enter the transaction ID from your receipt."
-msgstr "आफ्नो रसिदमा रहेको Transaction ID लेख्नुहोस्।"
+msgid "Screenshot of the receipt"
+msgstr "रसिदको स्क्रिनसट"
+
+msgid "Enter the transaction ID, or add a screenshot of the receipt."
+msgstr "Transaction ID लेख्नुहोस्, वा रसिदको स्क्रिनसट थप्नुहोस्।"
 
 msgid "Open appeals"
 msgstr "खुला अपिलहरू"
@@ -282,8 +285,15 @@ msgid "Thank you. You've told us you paid %(amount)s by %(name)s on %(date)s. Ou
 msgstr "धन्यवाद। तपाईंले %(date)s मा %(name)s बाट %(amount)s भुक्तानी गरेको हामीलाई जानकारी गराउनुभएको छ। हाम्रो सदस्यले तपाईंको दान प्राप्त भए नभएको जाँचेर जनाउनेछन्।"
 
 #, python-format
+msgid "You sent us the transaction ID %(id)s and a screenshot of the receipt."
+msgstr "तपाईंले Transaction ID %(id)s र रसिदको स्क्रिनसट पठाउनुभएको छ।"
+
+#, python-format
 msgid "You sent us the transaction ID %(id)s."
 msgstr "तपाईंले पठाउनुभएको Transaction ID %(id)s हो।"
+
+msgid "You sent us a screenshot of the receipt."
+msgstr "तपाईंले रसिदको स्क्रिनसट पठाउनुभएको छ।"
 
 #, python-format
 msgid "Questions? Call us and give your pledge number, %(number)s:"
@@ -551,14 +561,23 @@ msgstr "तल तपाईंले कुन एपबाट भुक्त�
 msgid "Check the transaction ID below."
 msgstr "तल Transaction ID जाँच्नुहोस्।"
 
+msgid "Check the screenshot below."
+msgstr "तल स्क्रिनसट जाँच्नुहोस्।"
+
 msgid "Step 2: Paid? Tell us here"
 msgstr "चरण २: भुक्तानी गर्नुभयो? यहाँ हामीलाई बताउनुहोस्"
+
+msgid "Give the transaction ID, a screenshot of the receipt, or both."
+msgstr "Transaction ID, रसिदको स्क्रिनसट, वा दुवै दिनुहोस्।"
 
 msgid "In your app, open this payment's receipt."
 msgstr "आफ्नो एपमा यो भुक्तानीको रसिद खोल्नुहोस्।"
 
 msgid "Copy the Transaction ID or Transaction code and paste it here."
 msgstr "Transaction ID वा Transaction Code प्रतिलिपि गरेर यहाँ राख्नुहोस्।"
+
+msgid "A JPEG, PNG or WebP image of up to 5 MB."
+msgstr "५ MB सम्मको JPEG, PNG वा WebP तस्बिर।"
 
 msgid "Sending…"
 msgstr "पठाउँदै…"
@@ -630,6 +649,9 @@ msgstr "धन्यवाद, हामीले तपाईंको सन�
 
 msgid "Upload a JPEG, PNG or WebP image of up to 5 MB."
 msgstr "५ MB सम्मको JPEG, PNG वा WebP तस्बिर अपलोड गर्नुहोस्।"
+
+msgid "This picture is too large: upload a smaller one."
+msgstr "यो तस्बिर धेरै ठूलो छ: अझ सानो तस्बिर अपलोड गर्नुहोस्।"
 
 #, python-format
 msgid "Enter a mobile number, like %(example)s."

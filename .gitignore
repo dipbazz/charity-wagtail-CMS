@@ -15,6 +15,7 @@ htmlcov/
 # Django / Wagtail
 *.sqlite3
 /media/
+/receipts/
 /static/
 .env
 .env.local
