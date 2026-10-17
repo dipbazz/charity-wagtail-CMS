@@ -288,45 +288,82 @@ class TestTextInEachLanguageInTheAdmin:
         assert response.status_code == 200
         assert not AnnouncementBanner.for_site(site).texts.exists()
 
+    def save_site_settings(self, client, moderator, site, *texts):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+        form = {
+            "currency": "NPR",
+            "phone_country": "NP",
+            "main_colour": DEFAULT_MAIN,
+            "accent_colour": DEFAULT_ACCENT,
+            "name_bar_style": "dark",
+            "logo_size": DEFAULT_LOGO_SIZE,
+            "footer_style": "dark",
+            "font_style": "modern",
+            "texts": inline_formset([{"locale": locale.pk, **text} for locale, text in texts]),
+        }
+        return client.post(url, nested_form_data(form))
+
     def test_moderator_writes_the_name_and_address_in_each_language(
         self, client, moderator, site, nepali_locale
     ):
-        client.force_login(moderator)
-        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
-        form = nested_form_data(
-            {
-                "currency": "NPR",
-                "phone_country": "NP",
-                "main_colour": DEFAULT_MAIN,
-                "accent_colour": DEFAULT_ACCENT,
-                "name_bar_style": "dark",
-                "logo_size": DEFAULT_LOGO_SIZE,
-                "footer_style": "dark",
-                "font_style": "modern",
-                "texts": inline_formset(
-                    [
-                        {
-                            "locale": Locale.get_default().pk,
-                            "name": "Brightwell Water Trust",
-                            "address": "1 Example Street",
-                        },
-                        {
-                            "locale": nepali_locale.pk,
-                            "name": "ब्राइटवेल जल ट्रस्ट",
-                            "address": "1 एक्जाम्पल स्ट्रिट",
-                        },
-                    ]
-                ),
-            }
+        response = self.save_site_settings(
+            client,
+            moderator,
+            site,
+            (Locale.get_default(), {"name": "Brightwell Water Trust", "address": "1 Example St"}),
+            (nepali_locale, {"name": "ब्राइटवेल जल ट्रस्ट", "address": "1 एक्जाम्पल स्ट्रिट"}),
         )
-
-        response = client.post(url, form)
 
         assert response.status_code == 302
         assert sorted(SiteSettings.for_site(site).texts.values_list("name", "address")) == [
-            ("Brightwell Water Trust", "1 Example Street"),
+            ("Brightwell Water Trust", "1 Example St"),
             ("ब्राइटवेल जल ट्रस्ट", "1 एक्जाम्पल स्ट्रिट"),
         ]
+
+    def test_a_refund_policy_in_one_language_only_cant_be_saved(
+        self, client, moderator, site, nepali_locale
+    ):
+        """Readers of every language are told the same policy, not English readers alone."""
+        response = self.save_site_settings(
+            client,
+            moderator,
+            site,
+            (Locale.get_default(), {"refund_policy": "We refund a gift paid twice."}),
+            (nepali_locale, {"refund_policy": ""}),
+        )
+
+        assert response.status_code == 200
+        nepali_row = response.context["form"].formsets["texts"].forms[1]
+        assert nepali_row.errors["refund_policy"] == [
+            "Write this in Nepali too: it's filled in for English, and readers of every language "
+            "must be told the same."
+        ]
+        assert "Write this in Nepali too" in response.content.decode()
+        assert not SiteSettings.for_site(site).texts.exists()
+
+    def test_an_address_needs_a_row_for_every_language(
+        self, client, moderator, site, nepali_locale
+    ):
+        response = self.save_site_settings(
+            client, moderator, site, (nepali_locale, {"address": "1 एक्जाम्पल स्ट्रिट"})
+        )
+
+        assert response.status_code == 200
+        assert response.context["form"].non_field_errors() == [
+            "Add a row for English too, with its address: readers of every language must be "
+            "told the same."
+        ]
+        assert "Add a row for English too, with its address" in response.content.decode()
+        assert not SiteSettings.for_site(site).texts.exists()
+
+    def test_the_name_can_be_in_one_language_only(self, client, moderator, site, nepali_locale):
+        """A language without a name shows the main language's."""
+        response = self.save_site_settings(
+            client, moderator, site, (Locale.get_default(), {"name": "Brightwell Water Trust"})
+        )
+
+        assert response.status_code == 302
 
 
 class TestBrandColours:
@@ -958,8 +995,15 @@ class TestPreview:
         assert "--colour-primary" not in html
         assert '<div class="brand-bar">' in html
 
-    def test_the_unsaved_address_shows_in_the_footer(self, client, moderator, site, home_page):
-        texts = inline_formset([{"locale": Locale.get_default().pk, "address": "2 New Street"}])
+    def test_the_unsaved_address_shows_in_the_footer(
+        self, client, moderator, site, home_page, nepali_locale
+    ):
+        texts = inline_formset(
+            [
+                {"locale": Locale.get_default().pk, "address": "2 New Street"},
+                {"locale": nepali_locale.pk, "address": "2 न्यू स्ट्रिट"},
+            ]
+        )
 
         response = self.preview(client, moderator, site, texts=texts)
 

@@ -35,6 +35,7 @@ from core.brand import (
     validate_accent_colour,
     validate_main_colour,
 )
+from core.forms import TextInEachLanguageForm
 from core.languages import language_codes, main_language, reading_language
 from core.money import CURRENCY_CHOICES
 from core.panels import TabsOpeningOnErrors
@@ -95,6 +96,10 @@ class TextInEachLanguage(models.Model):
     locale = models.ForeignKey(
         "wagtailcore.Locale", on_delete=models.PROTECT, related_name="+", verbose_name="language"
     )
+
+    # Fields that, once filled in for one language, the admin requires in every language
+    # (`TextInEachLanguageForm`), because they must say the same to every reader.
+    in_every_language = ()
 
     class Meta:
         abstract = True
@@ -262,8 +267,9 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
             "texts",
             heading="Text in each language",
             label="Language",
-            help_text="Shown to readers of that language; the main language's is used until "
-            "another language has its own.",
+            help_text="Shown to readers of that language. The address and refund policy must be "
+            "written for every language or none; a language without a name shows the main "
+            "language's.",
         ),
     ]
     brand_panels = [
@@ -299,6 +305,7 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
             ObjectList(brand_panels, heading="Brand"),
         ]
     )
+    base_form_class = TextInEachLanguageForm
 
     class Meta:
         verbose_name = "Site settings"
@@ -388,12 +395,22 @@ class SiteSettingsText(TextInEachLanguage):
         help_text="Your charity's name in this language, at the top and bottom of every page. "
         "Until it's filled in, the site shows the name it was set up with.",
     )
-    address = models.TextField(blank=True, help_text="Shown in the footer of every page.")
+    address = models.TextField(
+        blank=True,
+        help_text="Shown in the footer of every page. Once it's written for one language, write "
+        "it for every language.",
+    )
     refund_policy = models.TextField(
         blank=True,
-        help_text="Whether and how you refund a gift, shown before someone pays a pledge. "
-        "Leave empty if you haven't decided one: the site then says nothing about refunds.",
+        help_text="Whether and how you refund a gift, shown before someone pays a pledge. Once "
+        "it's written for one language, write it for every language, saying the same. Leave it "
+        "empty in all of them if you haven't decided one: the site then says nothing about "
+        "refunds.",
     )
+
+    # A name may stay in the main language alone: a proper noun reads the same, and the Site's
+    # name stands in until one is written.
+    in_every_language = ("address", "refund_policy")
 
     panels = [
         FieldPanel("locale"),
