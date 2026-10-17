@@ -208,13 +208,17 @@ Nepali digits are a separate piece of work.
 **Adding or changing a word:**
 
 1. Mark it as above.
-2. `uv run python manage.py makemessages -l ne --ignore ".venv" --ignore "docs" --ignore "static" --ignore "media" --no-location --no-wrap`
-   adds the new text to the `.po` file with an empty `msgstr`.
+2. `uv run python manage.py makemessages -l ne` adds the new text to the `.po` file with an empty
+   `msgstr`.
 3. Write the Nepali in the `.po` file. Don't leave an entry empty or `fuzzy`: the tests fail. Keep
    `%(name)s` and `{name}` placeholders exactly as they are.
-4. `uv run python manage.py compilemessages --ignore ".venv" --ignore "docs" --ignore "node_modules"`
-   writes the `.mo` file the site reads.
+4. `uv run python manage.py compilemessages` writes the `.mo` file the site reads.
 5. Commit both files.
+
+Both commands need no flags: `core` replaces Django's two with versions that skip `.venv`, `docs`,
+`node_modules`, `static` and `media`, and write the `.po` file without line numbers or wrapping,
+as it's committed (`core/management/commands/makemessages.py`). Any `--ignore` you add is added
+to that list.
 
 **The compiled `.mo` file is committed,** so running the site, the tests and building the Docker
 image need no GNU gettext tools; only whoever edits the `.po` file does. A test compares the two
