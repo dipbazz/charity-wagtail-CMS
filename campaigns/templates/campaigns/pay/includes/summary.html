@@ -36,3 +36,10 @@
         {% endif %}
     </div>
 </dl>
+{# Before choosing to pay, and only once the charity has stated one (#202). #}
+{% if site_settings.refund_policy %}
+    <section class="refund-policy" aria-labelledby="refund-policy-title">
+        <h2 id="refund-policy-title">{% translate "Refunds" %}</h2>
+        <p>{{ site_settings.refund_policy|linebreaksbr }}</p>
+    </section>
+{% endif %}

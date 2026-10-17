@@ -80,8 +80,9 @@ main language ([Languages](languages.md#snippets-and-settings-text)).
 Settings that apply to every page, under **Settings** in the admin (`core/models.py`):
 
 - **Site settings** (moderators only, because they hold the charity's identity): the charity's
-  **name** (in the header, the footer and the tab title) and its address, each written in each
-  language; charity number, contact email and phone (shown in the footer); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
+  **name** (in the header, the footer and the tab title), its address and its **refund policy**
+  ([Appeals and giving](appeals-and-giving.md#paying-a-pledge)), each written in each
+  language (the address and refund policy in every language or none); charity number, contact email and phone (shown in the footer); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
   the **currency** every amount is shown in ([Money](appeals-and-giving.md#money)); the
   **default phone country** for mobile numbers on forms; Facebook, Instagram and LinkedIn
   links (each shown in the footer only when set); and, on the **Brand** tab, the charity's

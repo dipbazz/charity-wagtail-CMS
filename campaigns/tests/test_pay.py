@@ -174,6 +174,33 @@ class TestEveryPayPage:
         assert "sita@example.com" not in page
 
     @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_shows_the_refund_policy_under_the_gift(self, client, donate_page, pledge, office, way):
+        office.texts.update(refund_policy="We can't refund gifts.\nCall us if you paid twice.")
+
+        page = soup(client.get(pay_url(donate_page, pledge, way)))
+
+        policy = page.find(class_="refund-policy")
+        assert policy.h2.get_text(strip=True) == "Refunds"
+        assert "We can't refund gifts." in policy.get_text()
+        assert policy.br is not None
+        assert policy.find_previous("dl", class_="gift-summary") is not None
+
+    @pytest.mark.parametrize("way", EVERY_WAY)
+    def test_says_nothing_about_refunds_until_a_policy_is_set(
+        self, client, donate_page, pledge, way
+    ):
+        page = client.get(pay_url(donate_page, pledge, way))
+
+        assert soup(page).find(class_="refund-policy") is None
+        assert "Refunds" not in text(page)
+
+    def test_says_nothing_about_refunds_once_paid(self, client, donate_page, pledge, office):
+        office.texts.update(refund_policy="We can't refund gifts.")
+        pledge.start_payment("fakepay", live=False).record(Status.PAID, "FAKE-1")
+
+        assert "refund" not in text(client.get(pay_url(donate_page, pledge)))
+
+    @pytest.mark.parametrize("way", EVERY_WAY)
     def test_is_kept_out_of_search_engines(self, client, donate_page, pledge, way):
         robots = soup(client.get(pay_url(donate_page, pledge, way))).find(
             "meta", attrs={"name": "robots"}

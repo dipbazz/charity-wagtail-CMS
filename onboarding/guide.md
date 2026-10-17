@@ -294,6 +294,10 @@ The Donate page shows every way to give, what a gift does, and where the money g
 - **Tax relief.** If the Inland Revenue Department has approved your organisation for tax-exempt
   donations, the Donate page tells donors they can deduct their gift from their taxable income.
   Please tell us whether you are approved.
+- **Your refund policy** (optional): whether and how you give a gift back, for example if someone
+  pays twice by mistake. Supporters read it before they pay, so write it in Nepali and English,
+  saying the same in both. If you haven't decided one, leave it out: the website then says
+  nothing about refunds.
 
 ### 6.3 Online giving by eSewa and Khalti
 

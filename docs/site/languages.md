@@ -53,6 +53,8 @@ each language), settings in `charity/settings/base.py`, and the site's own Nepal
   each has a **Text in each language** section with one row per language. The banner is editors'
   to change; the name and address are in Site settings, which only moderators change. Until a
   name is written, the site shows the one in **Settings → Sites**, which only admins can change.
+  The address and the refund policy are written for every language or for none: Site settings
+  won't save one that's filled in for some languages only, so every reader is told the same.
 - **Promote a search result in each language**: a promoted page shows only in its own language,
   so add one promotion per language. A promoted link to another website shows in both.
 - **The admin stays in English**: Wagtail has no Nepali translation of its admin.
@@ -167,6 +169,11 @@ see the rows as a **Text in each language** section in the same settings form, s
 language needs no migration, only another row. In templates `site_settings.name`,
 `site_settings.address` and `banner.message` are properties that return the row in the language
 being read, else the main language's (`TextInEachLanguageMixin`); a blank field counts as missing.
+A row model's `in_every_language` names the fields that must say the same to every reader
+(`SiteSettingsText`: the address and the refund policy). The setting's form
+(`TextInEachLanguageForm`, `core/forms.py`) refuses one that's filled in for some languages
+and not others, or with no row at all for a language the site has. The fallback then only
+covers a language added after the text was written.
 Both settings are per Site, as all Wagtail settings are; each charity has its own installation
 ([Decisions](../decisions.md#one-installation-per-charity-on-a-shared-server)).
 
