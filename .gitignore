@@ -27,6 +27,7 @@ htmlcov/
 Thumbs.db
 
 # Local notes and personal guides (not part of the project)
+/local/
 *.local.md
 charity/settings/local.py
 

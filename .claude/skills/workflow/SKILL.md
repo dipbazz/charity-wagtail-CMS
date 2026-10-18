@@ -57,7 +57,7 @@ JavaScript. Add `needs: security review` yourself when `reviews.md` says so. The
    not with `--fix`, comment the result on the pull request, then remove the label.
 3. **QA:** `/qa-only`, never `/qa` or `/design-review`, which commit their own fixes, several per
    commit. Fix each bug it reports test-first, one per commit, putting back any earlier label
-   whose ground the fix changes. Write the user's `PR-<n>-checks.local.md`. **The user removes
+   whose ground the fix changes. Write the user's local checks file for the pull request. **The user removes
    `needs: qa`** after ticking the checks.
 
 ## When a milestone's last issue closes
