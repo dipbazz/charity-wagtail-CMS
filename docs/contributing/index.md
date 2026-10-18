@@ -121,5 +121,5 @@ The pull request title follows the same format.
 - **Accessible:** [Look and feel](../site/look-and-feel.md#accessibility).
 - **Secure:** read [Security](security.md) before touching listings, documents,
   images, workflows or deployment.
-- **Demo data is fictional:** `brightwell.example` for the charity, `example.org` /
-  `example.com` for third parties ([Demo content](demo-content.md)).
+- **Demo data is fictional,** and every address in it is a reserved domain
+  ([Demo content](demo-content.md#the-charity-is-fictional)).

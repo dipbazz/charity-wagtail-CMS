@@ -1,16 +1,14 @@
 ---
-paths: ["**/tests/**", "**/conftest.py"]
+paths: ["**/tests/**/*.py", "**/conftest.py"]
 ---
 
 # Tests
 
-Read `docs/contributing/testing.md` before writing or moving a test. The rules that are missed
-most:
+Read `docs/contributing/testing.md` before writing or moving a test. The rules missed most, each
+written once in the docs:
 
-- A module's own logic is tested in its own file (`test_mail.py` tests `core/mail.py`); a caller
-  tests its use of it in the caller's files, and a regression test goes with the behaviour it
-  tests.
-- Addresses are reserved domains, one per role: `brightwell.example` for the charity,
-  `example.org` / `example.com` for third parties, `localhost` only where the site runs locally.
-- Test editors' powers as `editor`, never `admin_client`.
-- Run tests by path, node id or `--lf`; CI runs the whole suite.
+- Where a test goes: testing.md, "Where tests live".
+- Addresses: the reserved domains in `docs/contributing/demo-content.md`, "The charity is
+  fictional".
+- Editors' powers are tested as `editor`, never `admin_client`: testing.md, "How to write them".
+- Run tests by path, node id or `--lf`: testing.md, "Running the tests".

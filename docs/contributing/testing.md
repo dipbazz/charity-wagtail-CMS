@@ -10,6 +10,8 @@ changed and those for the code you touched; CI runs the whole suite on every pus
 uv run pytest path/to/tests      # locally: the tests you wrote and those for code you touched
 uv run pytest                    # the whole suite: CI runs it; run it yourself only when you want to
 uv run pytest news               # one app
+uv run pytest path/to/test_file.py::test_name   # one test, by its node id
+uv run pytest --lf               # only the tests that failed last time
 uv run pytest --cov              # with coverage
 uv run pytest -m "not browser"   # without the browser tests (quicker)
 uv run ruff check . && uv run ruff format --check .
@@ -68,11 +70,8 @@ Some tests guard the whole project rather than one feature:
   eSewa's test login has a reCAPTCHA, so no script can finish an eSewa test payment: pay one by
   hand with the [test account](../site/appeals-and-giving.md#paying-a-pledge). Cancelling can be
   scripted.
-- **Addresses are reserved domains, one per role,** in tests, demo data, CI and examples:
-  `brightwell.example` for the charity (its site, email, mail server, and social links such as
-  `instagram.example/brightwell`), `example.org` or `example.com` for third parties, and
-  `localhost` only where the site really runs locally. Never a real-looking domain
-  (`brightwell.org`) or a real platform account, and never two placeholders for the same thing.
+- **Addresses are reserved domains,** as the demo's are
+  ([Demo content](demo-content.md#the-charity-is-fictional)).
 - If pytest can't catch a bug (something purely visual, such as spacing), say so in the pull
   request rather than skipping it silently.
 
