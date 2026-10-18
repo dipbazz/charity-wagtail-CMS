@@ -1,0 +1,56 @@
+name: Reviews
+
+# A pull request merges only once every review it, or an issue it closes, needs is done. A
+# "needs: …" label marks each review still owed (docs/contributing/reviews.md). A separate
+# workflow from CI, like Changelog, so adding or removing a label runs the check again.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  reviews:
+    # Dependabot's action updates need no review labels.
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      # Labels are read now, not from the event, so re-running the check sees a label that was
+      # removed from the issue after the pull request was opened.
+      - name: Check that no review is still needed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          outstanding=$(gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$PR" -f query='
+            query($owner: String!, $name: String!, $pr: Int!) {
+              repository(owner: $owner, name: $name) {
+                pullRequest(number: $pr) {
+                  labels(first: 50) { nodes { name } }
+                  closingIssuesReferences(first: 20) {
+                    nodes { number labels(first: 50) { nodes { name } } }
+                  }
+                }
+              }
+            }' --jq '
+              .data.repository.pullRequest
+              | [.labels.nodes[].name | select(startswith("needs: ")) | "\"\(.)\" on this pull request"]
+                + [.closingIssuesReferences.nodes[] | .number as $n | .labels.nodes[].name
+                   | select(startswith("needs: ")) | "\"\(.)\" on issue #\($n)"]
+              | .[]')
+          if [ -z "$outstanding" ]; then
+            echo "No review is still needed."
+            exit 0
+          fi
+          while IFS= read -r label; do
+            echo "::error::Review still needed: $label. Do the review, post its decisions on the issue, then remove the label. See docs/contributing/reviews.md."
+          done <<< "$outstanding"
+          exit 1
