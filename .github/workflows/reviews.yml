@@ -14,21 +14,33 @@ concurrency:
 permissions:
   contents: read
   issues: read
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   reviews:
-    # Dependabot's action updates need no review labels.
-    if: github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
     steps:
+      # Every pull request needs a code review, and one that changes what people see needs QA.
+      # Adding the labels here means forgetting them can't let a pull request through.
+      - name: Mark the reviews a new pull request needs
+        if: github.event.action == 'opened'
+        run: |
+          labels=("needs: code review")
+          if gh pr diff "$PR" --repo "$REPO" --name-only | grep --quiet --extended-regexp '(^|/)templates/|\.(css|js|html)$'; then
+            labels+=("needs: qa")
+          fi
+          for label in "${labels[@]}"; do
+            gh pr edit "$PR" --repo "$REPO" --add-label "$label" \
+              || echo "::warning::Couldn't add \"$label\"; add it by hand (pull requests from forks can't be labelled here)."
+          done
+
       # Labels are read now, not from the event, so re-running the check sees a label that was
       # removed from the issue after the pull request was opened.
       - name: Check that no review is still needed
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
         run: |
           outstanding=$(gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$PR" -f query='
             query($owner: String!, $name: String!, $pr: Int!) {
@@ -43,7 +55,8 @@ jobs:
             }' --jq '
               .data.repository.pullRequest
               | [.labels.nodes[].name | select(startswith("needs: ")) | "\"\(.)\" on this pull request"]
-                + [.closingIssuesReferences.nodes[] | .number as $n | .labels.nodes[].name
+                + [(.closingIssuesReferences.nodes // [])[] | select(. != null) | .number as $n
+                   | (.labels.nodes // [])[].name
                    | select(startswith("needs: ")) | "\"\(.)\" on issue #\($n)"]
               | .[]')
           if [ -z "$outstanding" ]; then
