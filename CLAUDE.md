@@ -34,8 +34,8 @@ install gstack (`docs/contributing/reviews.md#tools`); never skip the review.
 ## Where rules live
 
 Rules say what, when and where; memory says who, which and how. A rule for every contributor goes
-in `docs/`, with a short pointer in `.claude/rules/` (loaded by file path) or a skill (loaded by
-task). A rule for this maintainer alone goes in `CLAUDE.local.md`. Memory holds only current
+in `docs/`, with a short pointer in a skill (`.claude/skills/`, loaded by task) or a rule file
+(`.claude/rules/<topic>.md` with `paths:` frontmatter, loaded when a matching file is opened). A rule for this maintainer alone goes in `CLAUDE.local.md`. Memory holds only current
 state and how-to for this machine. When a workflow or decision comes up that none of these
 covers, first propose where it goes, get the user's yes, and write it there before relying on it.
 

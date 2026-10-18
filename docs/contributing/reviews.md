@@ -24,7 +24,9 @@ the same either way.
 
 ## Which reviews an issue or pull request needs
 
-When an issue is filed, or a pull request opened, give it a label for each review it needs.
+When an issue is filed, or a pull request opened, give it a label for each review it needs. The
+`Reviews` workflow adds `needs: code review` to every new pull request, and `needs: qa` when it
+changes templates, CSS or JavaScript; add `needs: security review` by hand.
 
 | Label | Decides | Needed when | Run with |
 |---|---|---|---|
@@ -33,12 +35,13 @@ When an issue is filed, or a pull request opened, give it a label for each revie
 | `needs: eng review` | Data, architecture, edge cases and the tests to write | Models or migrations, payments, personal data, permissions, a new dependency, or work spanning more than one pull request | `/plan-eng-review` |
 | `needs: investigation` | A bug's cause, before anyone fixes it | A bug whose cause isn't known | `/investigate` |
 | `needs: security review` | Whether the change opens a hole | A pull request touching forms, uploads, payments, permissions, settings or dependencies, or closing an issue labelled `security` | `/cso --diff --base main` |
-| `needs: code review` | Bugs that tests and CI don't catch | Every pull request | `/code-review high <pull request number>`, last, after every other fix |
+| `needs: code review` | Bugs that tests and CI don't catch | Every pull request | `/code-review high <pull request number>` |
 | `needs: qa` | Whether it works and looks right in the browser | A pull request that changes templates, CSS or JavaScript | `/qa-only`, then the person checks the pages its description lists |
 
 The first four go on issues and are done before coding; the last three go on pull requests and
-are done before merging. An issue can need several reviews; product comes first, design next and
-engineering last, since each builds on the one before.
+are done before merging. Each builds on the one before, so they run in the table's order:
+product, design, then engineering on an issue; security, code review, then QA on a pull request,
+with the person's QA check last.
 
 ## When a review is done
 
@@ -49,8 +52,10 @@ engineering last, since each builds on the one before.
 2. **Remove the label:** `gh issue edit <n> --remove-label "needs: design review"`.
 
 A pull request's labels come off when the review finds nothing left to fix: `needs: code review`
-once its findings are fixed and nothing changed after it, `needs: security review` once no finding
-is open, and `needs: qa` by the person who checked the pages.
+and `needs: security review` once their findings are fixed, and `needs: qa` by the person who
+checked the pages. Fixing a review's own findings doesn't need that review again. Any other
+change pushed after a review, such as a fix QA asked for, puts back the label of each earlier
+review whose ground it changes.
 
 Removing a label from an issue doesn't re-run the check on its open pull request. Re-run the
 `Reviews` check from the pull request's Checks tab, or push.

@@ -5,66 +5,60 @@ description: How this project runs its reviews with gstack and Claude Code, labe
 
 # Workflow: reviews and their labels
 
-`docs/contributing/reviews.md` says **which** reviews an issue or pull request needs and when;
-read it for the criteria. This skill says **how** to run each one here.
+`docs/contributing/reviews.md` is the source for **which** review an issue or pull request needs,
+the command that runs it, the order, and when a label comes off. Read it first. This skill adds
+only what's particular to running them here with Claude Code.
 
 ## Find what's waiting
 
-Never scan every issue to answer "what needs a review?". Ask for the label:
-
-```bash
-gh issue list -l "needs: design review" --json number,title,milestone
-gh pr list -l "needs: code review" --json number,title
-```
+Never scan every issue to answer "what needs a review?". Ask for the label, with the commands
+under "Find what's waiting" in `reviews.md`, and list titles only.
 
 ## Filing an issue
 
 Use the issue forms. Then add a label for each review the issue needs, by the criteria in
-`reviews.md`: `gh issue edit <n> --add-label "needs: design review"`. Say which labels you
-added and why, in one line each.
+`reviews.md` (`gh issue edit <n> --add-label "needs: design review"`), and say in one line each
+which labels you added and why.
 
 ## Starting an issue
 
 `gh issue view <n> --json labels`. If any `needs:` label is on it, run that review before
-branching: product first, then design, then eng. If the skill isn't installed, stop and tell the
+branching, with the command `reviews.md` names. If the skill isn't installed, stop and tell the
 user to install gstack (`reviews.md#tools`); never skip the review.
 
-| Label | Run | Here |
-|---|---|---|
-| `needs: product review` | `/plan-ceo-review` | Hold-scope or reduction mode, not expansion. `/office-hours` first only for a raw idea. |
-| `needs: design review` | `/plan-design-review` | The design system is the tokens in `charity.css` plus the `mobile-first` skill and `docs/site/standard.md`; there's no DESIGN.md. Skip AI image mockups. |
-| `needs: eng review` | `/plan-eng-review` | Its test plan feeds `/qa-only` later. |
-| `needs: investigation` | `/investigate` | It writes the fix and test together: commit the test that fails first, then the fix, per bug. |
+| Review | Particular to this project |
+|---|---|
+| product | Hold-scope or reduction mode, never expansion. |
+| design | The design system is the tokens in `charity.css`, the `mobile-first` skill and `docs/site/standard.md`; there's no DESIGN.md. Skip AI image mockups. |
+| eng | Its test plan feeds `/qa-only` later. |
+| investigation | It writes the fix and the test together: commit them as one bug per commit, having seen the test fail without the fix. |
 
-For every gstack review: decline its copy into `docs/designs/` and its TODOS.md entries (work
-that's deferred becomes a GitHub issue), and keep the full report in `~/.gstack`.
+For every gstack review: decline its copy into `docs/designs/` and its TODOS.md entries (deferred
+work becomes a GitHub issue), and keep the full report in `~/.gstack`.
 
 ## Finishing a review
 
 1. Post the decisions on the issue, in the format in `reviews.md` ("When a review is done").
-2. Remove the label.
+2. Remove the label. If a pull request already closes that issue, re-run its `Reviews` check
+   (`gh run rerun` on its latest `Reviews` run), since removing an issue's label doesn't.
 3. Suggest `/clear` before building: the comment carries the decisions.
 
 ## Opening a pull request
 
-Add `needs: code review` to every pull request, `needs: qa` when templates, CSS or JavaScript
-changed, and `needs: security review` when it touches forms, uploads, payments, permissions,
-settings or dependencies, or closes a `security` issue. The `Reviews` check stays red until
-they're gone.
+The `Reviews` workflow adds `needs: code review`, and `needs: qa` for templates, CSS or
+JavaScript. Add `needs: security review` yourself when `reviews.md` says so. Then, in the order
+`reviews.md` gives:
 
-Run them in this order, since an edit after a review makes it out of date:
-
-1. `needs: security review`: `/cso --diff --base main`. Fix open findings test-first, then remove
-   the label.
-2. `needs: qa`: `/qa-only` (never `/qa` or `/design-review`: they commit their own fixes, several
-   per commit). Fix each bug it reports test-first, one per commit. Write the user's
-   `PR-<n>-checks.local.md`. **The user removes this label** after ticking the checks.
-3. `needs: code review`: Claude Code's `/code-review high <pr>`, last. Fix findings test-first
-   (not `--fix`), push, and re-run it if the fixes were more than trivial. Remove the label when
-   nothing is left.
+1. **Security:** fix open findings test-first, then remove the label.
+2. **Code review:** Claude Code's `/code-review`, not gstack's `/review`. Fix findings test-first,
+   not with `--fix`, then remove the label.
+3. **QA:** `/qa-only`, never `/qa` or `/design-review`, which commit their own fixes, several per
+   commit. Fix each bug it reports test-first, one per commit, putting back any earlier label
+   whose ground the fix changes. Write the user's `PR-<n>-checks.local.md`. **The user removes
+   `needs: qa`** after ticking the checks.
 
 ## When a milestone's last issue closes
 
-Suggest cutting the release (`docs/contributing/releases.md`), including the release reviews in
-`reviews.md` ("At each release"): `/cso`, `/test-audit`, `/deslop-shared-libs`, and `/canary`
-on the live site after deploying (decline its rollback option; deploys go by tag).
+Suggest cutting the release (`docs/contributing/releases.md`), including the release reviews
+under "At each release" in `reviews.md`. With `/canary` on the live site, decline its rollback
+option: deploys go by tag.
