@@ -32,8 +32,8 @@ charity/settings/local.py
 
 # Local tool state (gstack: reports, /retro snapshots, /diagram output)
 .gstack/
-.context/
-diagrams/
+/.context/
+/diagrams/
 
 # Built docs
 docs/_build/
