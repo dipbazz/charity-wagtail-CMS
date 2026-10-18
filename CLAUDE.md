@@ -22,6 +22,23 @@ send or decide updates the onboarding pack in `onboarding/` in the same PR
 (`docs/contributing/onboarding.md`); a charity only ever gets links to its guide and form,
 never a file.
 
+## Reviews before code and before merge
+
+A `needs: …` label marks a review an issue or pull request still owes
+(`docs/contributing/reviews.md`); CI fails a pull request while one is left. Before branching
+for an issue, run `gh issue view <n> --json labels` and do any `needs:` review first. Load the
+`workflow` skill (`.claude/skills/workflow/`) to file an issue, start one, open a pull request or
+finish a review. If a gstack skill a review needs isn't installed, stop and ask the user to
+install gstack (`docs/contributing/reviews.md#tools`); never skip the review.
+
+## Where rules live
+
+Rules say what, when and where; memory says who, which and how. A rule for every contributor goes
+in `docs/`, with a short pointer in `.claude/rules/` (loaded by file path) or a skill (loaded by
+task). A rule for this maintainer alone goes in `CLAUDE.local.md`. Memory holds only current
+state and how-to for this machine. When a workflow or decision comes up that none of these
+covers, first propose where it goes, get the user's yes, and write it there before relying on it.
+
 ## Versions and changelog
 
 Every PR adds a file `changelog.d/<slug>.<group>.md` (the entry, written for the person the change
@@ -54,4 +71,5 @@ or a tap target under 44px. The rest is yours:
 3. **Say what a person must check.** The pull request description is short and follows
    `.github/pull_request_template.md`; its "Check before merging" section names the pages, widths
    and what to look for in the browser, or says nothing needs checking (a change with no templates
-   or CSS). Don't run `/qa` unless asked; the owner runs it when they want a full pass.
+   or CSS). A pull request labelled `needs: qa` gets a `/qa-only` pass; never run `/qa`, which
+   commits its own fixes.
