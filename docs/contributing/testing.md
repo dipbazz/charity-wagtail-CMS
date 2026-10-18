@@ -25,7 +25,8 @@ Each app has a `tests/` package. The one exception is the onboarding form script
 Google Sheets: its tests are JavaScript, in `onboarding/tests/`
 ([Changing the script](onboarding.md#changing-the-script)). A module's own logic is tested in its own test file
 (`core/tests/test_mail.py` tests `core/mail.py`); code that uses it tests that use in its own
-files.
+files. A regression test goes with the behaviour it tests, not with whichever caller happened to
+show the bug.
 
 Some tests guard the whole project rather than one feature:
 
@@ -64,6 +65,14 @@ Some tests guard the whole project rather than one feature:
   that does what the test says (the `fake_provider` fixture in `campaigns/tests/conftest.py`). A
   provider's own tests answer in place of its servers with the `provider_server` fixture
   (`nepal_payments/tests/conftest.py`), which replaces `nepal_payments.http.request_json`.
+  eSewa's test login has a reCAPTCHA, so no script can finish an eSewa test payment: pay one by
+  hand with the [test account](../site/appeals-and-giving.md#paying-a-pledge). Cancelling can be
+  scripted.
+- **Addresses are reserved domains, one per role,** in tests, demo data, CI and examples:
+  `brightwell.example` for the charity (its site, email, mail server, and social links such as
+  `instagram.example/brightwell`), `example.org` or `example.com` for third parties, and
+  `localhost` only where the site really runs locally. Never a real-looking domain
+  (`brightwell.org`) or a real platform account, and never two placeholders for the same thing.
 - If pytest can't catch a bug (something purely visual, such as spacing), say so in the pull
   request rather than skipping it silently.
 
