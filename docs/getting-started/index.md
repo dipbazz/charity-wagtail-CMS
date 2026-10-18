@@ -7,6 +7,8 @@ From a fresh clone to the site running on your computer with demo content, then 
 - Python 3.13 or newer (the Docker image uses 3.14)
 - [uv](https://docs.astral.sh/uv/), which installs everything else
 - git 2.31 or newer (older versions break `pre-commit run --all-files`)
+- to run the reviews as this project does: Claude Code and the gstack skills (optional; see
+  [Reviews: tools](../contributing/reviews.md#tools))
 
 There's no JavaScript build step and no database server to install: the site uses SQLite, one
 CSS file and two small scripts.

@@ -10,6 +10,8 @@ changed and those for the code you touched; CI runs the whole suite on every pus
 uv run pytest path/to/tests      # locally: the tests you wrote and those for code you touched
 uv run pytest                    # the whole suite: CI runs it; run it yourself only when you want to
 uv run pytest news               # one app
+uv run pytest path/to/test_file.py::test_name   # one test, by its node id
+uv run pytest --lf               # only the tests that failed last time
 uv run pytest --cov              # with coverage
 uv run pytest -m "not browser"   # without the browser tests (quicker)
 uv run ruff check . && uv run ruff format --check .
@@ -25,7 +27,8 @@ Each app has a `tests/` package. The one exception is the onboarding form script
 Google Sheets: its tests are JavaScript, in `onboarding/tests/`
 ([Changing the script](onboarding.md#changing-the-script)). A module's own logic is tested in its own test file
 (`core/tests/test_mail.py` tests `core/mail.py`); code that uses it tests that use in its own
-files.
+files. A regression test goes with the behaviour it tests, not with whichever caller happened to
+show the bug.
 
 Some tests guard the whole project rather than one feature:
 
@@ -64,6 +67,11 @@ Some tests guard the whole project rather than one feature:
   that does what the test says (the `fake_provider` fixture in `campaigns/tests/conftest.py`). A
   provider's own tests answer in place of its servers with the `provider_server` fixture
   (`nepal_payments/tests/conftest.py`), which replaces `nepal_payments.http.request_json`.
+  eSewa's test login has a reCAPTCHA, so no script can finish an eSewa test payment: pay one by
+  hand with the [test account](../site/appeals-and-giving.md#paying-a-pledge). Cancelling can be
+  scripted.
+- **Addresses are reserved domains,** as the demo's are
+  ([Demo content](demo-content.md#the-charity-is-fictional)).
 - If pytest can't catch a bug (something purely visual, such as spacing), say so in the pull
   request rather than skipping it silently.
 
@@ -82,7 +90,9 @@ A request under `/ne/` leaves Nepali active in the test's thread, and translated
 up when it's shown, so `conftest.py` puts English back after every test. Inside a test, read lazy
 text (a form's label) within `translation.override("ne")`. Tests of the site's own Nepali words
 are `charity/tests/test_nepali_interface.py` (header, footer, search, 404) and
-`campaigns/tests/test_nepali.py` (appeals and the pledge form).
+`campaigns/tests/test_nepali.py` (appeals and the pledge form). They check whole translated
+sentences, so a change to a translation's wording updates its test in the same commit
+([Decisions](../decisions.md#nepali-tests-check-whole-sentences)).
 
 ## Fixtures and factories
 
@@ -155,8 +165,9 @@ AA's 24px. Wagtail's own controls keep their size, so the page matches the rest 
 makes sense. Each pull request's **Check before merging** section names the pages, widths and
 what to look for, or says nothing needs checking (a backend or admin-only change). The
 `mobile-first` skill's checks are the checklist: no sideways scrolling, nothing overlapping or cut
-off, a visible focus outline, and a page that still reads in order with CSS off. For a fuller pass,
-AI sessions have `/qa`; run it when you want one.
+off, a visible focus outline, and a page that still reads in order with CSS off. A pull request
+labelled `needs: qa` also gets a `/qa-only` pass first, which reports without changing code
+([Reviews](reviews.md)).
 
 **A bug QA finds is fixed test-first**, one bug per commit: a test in the relevant app's `tests/`
 package that fails for the reason the bug describes, then the fix. If pytest can't catch it
@@ -173,3 +184,4 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and every
 | `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse |
 | `docs` | These docs build with warnings as errors; the built site is uploaded as the `docs-html` artifact |
 | `changelog` (its own workflow) | The pull request adds a `changelog.d/` file, unless it's labelled `no changelog` |
+| `reviews` (its own workflow) | Neither the pull request nor an issue it closes has a `needs:` label left ([Reviews](reviews.md)) |
