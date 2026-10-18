@@ -56,7 +56,8 @@ page reads one page, not six. Pages are grouped by who's reading:
 
 **Only what anyone using the project needs.** A guide to one person's own setup (their AWS
 account, region or server) or notes for their own learning isn't a docs page: it stays in the
-gitignored `local/` folder at the repository's root. Docs describe the project neutrally, for
+gitignored `local/` folder at the repository's root (the build also skips any `*.local.md`
+file). Docs describe the project neutrally, for
 whoever hosts it, wherever.
 
 A new page goes in its section's table of contents (the `toctree` in the section's `index.md`, or

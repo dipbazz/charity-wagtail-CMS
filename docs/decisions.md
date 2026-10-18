@@ -616,8 +616,8 @@ A Claude Code hook was the alternative: the same checks, but only for commits Cl
 **Context**
 
 The whole suite takes minutes. [pytest-xdist](https://pytest-xdist.readthedocs.io/) would run it
-in parallel, but adds a dependency and makes fixtures that build once per module (`demo_site`)
-build once per worker.
+in parallel, but adds a dependency and makes fixtures that build once per module (`demo_content`,
+the `seed_demo` charity) build once per worker.
 
 **Decision**
 
@@ -666,8 +666,8 @@ pulling a private image or cloning over HTTPS needs a credential on the server.
 **Decision**
 
 A proposal for tools, hosting or CI says what changes if the repository goes private, and
-prefers a choice that works either way (as publishing the docs does,
-[Writing docs](contributing/writing-docs.md#publishing)).
+prefers a choice that works either way. Where only a public-only choice fits, it waits for the
+decision, as publishing the docs does ([Writing docs](contributing/writing-docs.md#publishing)).
 
 **Consequences**
 
