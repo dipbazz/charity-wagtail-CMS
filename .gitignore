@@ -30,8 +30,10 @@ Thumbs.db
 *.local.md
 charity/settings/local.py
 
-# Local tool state
+# Local tool state (gstack: reports, /retro snapshots, /diagram output)
 .gstack/
+.context/
+diagrams/
 
 # Built docs
 docs/_build/
