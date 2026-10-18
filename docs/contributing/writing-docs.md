@@ -54,6 +54,12 @@ page reads one page, not six. Pages are grouped by who's reading:
 | [Decisions](../decisions.md) | Why a choice was made | SQLite, one server |
 | [Editor guide](../editor-guide.md) | The charity's team | (to come) |
 
+**Only what anyone using the project needs.** A guide to one person's own setup (their AWS
+account, region or server) or notes for their own learning isn't a docs page: it stays in the
+gitignored `local/` folder at the repository's root (the build also skips any `*.local.md`
+file). Docs describe the project neutrally, for
+whoever hosts it, wherever.
+
 A new page goes in its section's table of contents (the `toctree` in the section's `index.md`, or
 the home page's), or the build fails. Prefer a new section on an existing page to a new page.
 
@@ -81,8 +87,6 @@ settings, management commands and template tags.
   section with its anchor (`images.md#card-listings`).
 - One fact in one place. Link to it rather than repeating it, so pages can't disagree.
 - Short sentences, plain words, British spelling.
-- Personal notes and guides stay out of the docs, in the gitignored `local/` folder at the
-  repository's root (or a `*.local.md` file); the build ignores them too.
 
 ## Publishing
 

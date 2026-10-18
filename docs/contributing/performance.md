@@ -59,6 +59,13 @@ Each run's reports are attached as the `lighthouse-reports` artifact.
 Measure image savings this way, not in a desktop browser at pixel density 1, which picks smaller
 files.
 
+## Comparing with other sites
+
+Compare like with like: a live installation with a real charity's content, over the internet,
+against other live sites. The demo served from your own machine has few photos and no network in
+the way, so its numbers show only that the code starts light (how many scripts, no third
+parties), never that the site is faster than another.
+
 ## While developing
 
 `runserver` shows [django-debug-toolbar](https://django-debug-toolbar.readthedocs.io/) on every

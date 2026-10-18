@@ -12,8 +12,13 @@ the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is Eng
 
 - Brightwell Water Trust, its people, figures and charity number are fictional. Amounts are in
   Nepalese rupees (Site settings → Currency).
-- Use `brightwell.example` for the charity's own addresses, and `example.org` or `example.com`
-  for third parties. These are reserved domains that never reach a real inbox or site.
+- Every address in tests, demo data, CI and examples is a reserved domain that never reaches a
+  real inbox or site: `brightwell.example` for the charity's own addresses (its site, email and
+  mail server), a `.example` name for its accounts elsewhere (`instagram.example/brightwell`),
+  `example.org` or `example.com` for third parties, and `localhost` only where the site really
+  runs locally. Never a real-looking domain (`brightwell.org`) or a real platform account, and
+  the same thing always has the same placeholder: the charity's site has one address in every
+  setting.
 - The flood appeal describes the real flash flood in Nepal on 26 August 2026. The page says
   Brightwell takes no donations and links to the Government of Nepal's relief fund instead. The
   Donate page's pledge form works, but its notice says paying online uses the providers' test
