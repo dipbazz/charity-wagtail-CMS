@@ -56,6 +56,12 @@ Before proposing a fix, feature or design, answer these in the proposal itself:
 - What does it cost each charity, now and at every upgrade?
 - Which test stops it coming back?
 
+**No new toolchain without agreement first.** A new language, file type or runtime in the repo or
+CI (JavaScript tests run by Node, say) is one more thing every maintainer has to understand and
+keep working. Propose it on the issue before building it, with what it catches, what it costs,
+and the option of no new tooling ("pytest can't catch this", said in the pull request); never
+bundle it into a fix.
+
 ## The workflow
 
 1. **Start from an issue** on the [project board](releases.md#the-project-board) with no
@@ -107,6 +113,9 @@ The pull request title follows the same format.
 ## Design rules
 
 - **Mobile first** for every page, block and component: [Look and feel](../site/look-and-feel.md).
+- **Small visual choices are cheap to change:** for a detail such as a switcher's style, give one
+  recommendation with its reason and ship it; a charity's request can change it later. Options
+  and prototypes are for layout that's expensive to change.
 - **Fast from the start:** query counts, image weight and behaviour at 320–1440px are measured
   for every new feature: [Performance](performance.md).
 - **Accessible:** [Look and feel](../site/look-and-feel.md#accessibility).
