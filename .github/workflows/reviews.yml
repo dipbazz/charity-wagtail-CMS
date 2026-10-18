@@ -64,6 +64,6 @@ jobs:
             exit 0
           fi
           while IFS= read -r label; do
-            echo "::error::Review still needed: $label. Do the review, post its decisions on the issue, then remove the label. See docs/contributing/reviews.md."
+            echo "::error::Review still needed: $label. Do the review, post its result as a comment where the label is (that issue or this pull request), then remove the label. See docs/contributing/reviews.md."
           done <<< "$outstanding"
           exit 1

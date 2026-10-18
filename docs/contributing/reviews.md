@@ -45,17 +45,17 @@ with the person's QA check last.
 
 ## When a review is done
 
-1. **Post its decisions as one comment on the issue,** headed `## <Kind> review decisions
-   (<date>)`. Say that they win where they differ from the issue's text, then what changes,
-   what's newly needed, the order of work, and any issues filed. The next person to pick up the
-   issue starts from that comment, so nothing decided lives only in a local report.
-2. **Remove the label:** `gh issue edit <n> --remove-label "needs: design review"`.
+**The result goes where the label is,** as one comment, so nothing lives only in a local report.
+Then the label comes off the same place.
 
-A pull request's labels come off when the review finds nothing left to fix: `needs: code review`
-and `needs: security review` once their findings are fixed, and `needs: qa` by the person who
-checked the pages. Fixing a review's own findings doesn't need that review again. Any other
-change pushed after a review, such as a fix QA asked for, puts back the label of each earlier
-review whose ground it changes.
+| The label was on | Comment there | Label comes off |
+|---|---|---|
+| **An issue** (product, design, eng, investigation) | `## <Kind> review decisions (<date>)`: say that they win where they differ from the issue's text, then what changes, what's newly needed, the order of work, and any issues filed. The person who builds it starts from this comment. | Once the comment is posted: `gh issue edit <n> --remove-label "needs: design review"` |
+| **A pull request** (security, code review, QA) | `## <Kind> review (<date>)`: what was found, and for each finding the commit that fixed it or why it stays. If nothing was found, say so. | Once every finding is fixed or answered: `gh pr edit <n> --remove-label "needs: code review"`. The person who checked the pages removes `needs: qa`. |
+
+Fixing a review's own findings doesn't need that review again. Any other change pushed after a
+review, such as a fix QA asked for, puts back the label of each earlier review whose ground it
+changes.
 
 Removing a label from an issue doesn't re-run the check on its open pull request. Re-run the
 `Reviews` check from the pull request's Checks tab, or push.

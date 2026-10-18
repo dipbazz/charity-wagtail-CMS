@@ -38,10 +38,12 @@ work becomes a GitHub issue), and keep the full report in `~/.gstack`.
 
 ## Finishing a review
 
-1. Post the decisions on the issue, in the format in `reviews.md` ("When a review is done").
-2. Remove the label. If a pull request already closes that issue, re-run its `Reviews` check
-   (`gh run rerun` on its latest `Reviews` run), since removing an issue's label doesn't.
-3. Suggest `/clear` before building: the comment carries the decisions.
+1. Post the result as one comment where the label is: the issue for an issue's review, the pull
+   request for a pull request's, in the format in `reviews.md` ("When a review is done").
+2. Remove the label from that same place. If an open pull request closes the issue, re-run its
+   `Reviews` check (`gh run rerun` on its latest `Reviews` run), since removing an issue's label
+   doesn't.
+3. After an issue's review, suggest `/clear` before building: the comment carries the decisions.
 
 ## Opening a pull request
 
@@ -49,9 +51,10 @@ The `Reviews` workflow adds `needs: code review`, and `needs: qa` for templates,
 JavaScript. Add `needs: security review` yourself when `reviews.md` says so. Then, in the order
 `reviews.md` gives:
 
-1. **Security:** fix open findings test-first, then remove the label.
+1. **Security:** fix open findings test-first, comment the result on the pull request, then
+   remove the label.
 2. **Code review:** Claude Code's `/code-review`, not gstack's `/review`. Fix findings test-first,
-   not with `--fix`, then remove the label.
+   not with `--fix`, comment the result on the pull request, then remove the label.
 3. **QA:** `/qa-only`, never `/qa` or `/design-review`, which commit their own fixes, several per
    commit. Fix each bug it reports test-first, one per commit, putting back any earlier label
    whose ground the fix changes. Write the user's `PR-<n>-checks.local.md`. **The user removes
