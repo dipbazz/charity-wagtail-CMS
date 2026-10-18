@@ -81,8 +81,8 @@ settings, management commands and template tags.
   section with its anchor (`images.md#card-listings`).
 - One fact in one place. Link to it rather than repeating it, so pages can't disagree.
 - Short sentences, plain words, British spelling.
-- Personal notes and guides stay out of the docs, in gitignored `*.local.md` files; the build
-  ignores them too.
+- Personal notes and guides stay out of the docs, in the gitignored `local/` folder at the
+  repository's root (or a `*.local.md` file); the build ignores them too.
 
 ## Publishing
 

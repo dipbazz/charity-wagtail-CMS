@@ -1,0 +1,69 @@
+name: Reviews
+
+# A pull request merges only once every review it, or an issue it closes, needs is done. A
+# "needs: …" label marks each review still owed (docs/contributing/reviews.md). A separate
+# workflow from CI, like Changelog, so adding or removing a label runs the check again.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  reviews:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      # Every pull request needs a code review, and one that changes what people see needs QA.
+      # Adding the labels here means forgetting them can't let a pull request through.
+      - name: Mark the reviews a new pull request needs
+        if: github.event.action == 'opened'
+        run: |
+          labels=("needs: code review")
+          if gh pr diff "$PR" --repo "$REPO" --name-only | grep --quiet --extended-regexp '(^|/)templates/|\.(css|js|html)$'; then
+            labels+=("needs: qa")
+          fi
+          for label in "${labels[@]}"; do
+            gh pr edit "$PR" --repo "$REPO" --add-label "$label" \
+              || echo "::warning::Couldn't add \"$label\"; add it by hand (pull requests from forks can't be labelled here)."
+          done
+
+      # Labels are read now, not from the event, so re-running the check sees a label that was
+      # removed from the issue after the pull request was opened.
+      - name: Check that no review is still needed
+        run: |
+          outstanding=$(gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$PR" -f query='
+            query($owner: String!, $name: String!, $pr: Int!) {
+              repository(owner: $owner, name: $name) {
+                pullRequest(number: $pr) {
+                  labels(first: 50) { nodes { name } }
+                  closingIssuesReferences(first: 20) {
+                    nodes { number labels(first: 50) { nodes { name } } }
+                  }
+                }
+              }
+            }' --jq '
+              .data.repository.pullRequest
+              | [.labels.nodes[].name | select(startswith("needs: ")) | "\"\(.)\" on this pull request"]
+                + [(.closingIssuesReferences.nodes // [])[] | select(. != null) | .number as $n
+                   | (.labels.nodes // [])[].name
+                   | select(startswith("needs: ")) | "\"\(.)\" on issue #\($n)"]
+              | .[]')
+          if [ -z "$outstanding" ]; then
+            echo "No review is still needed."
+            exit 0
+          fi
+          while IFS= read -r label; do
+            echo "::error::Review still needed: $label. Do the review, post its result as a comment where the label is (that issue or this pull request), then remove the label. See docs/contributing/reviews.md."
+          done <<< "$outstanding"
+          exit 1

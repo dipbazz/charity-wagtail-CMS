@@ -53,6 +53,7 @@ compose.yaml
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+local/
 *.local.md
 
 # The documentation sources; the site doesn't serve them

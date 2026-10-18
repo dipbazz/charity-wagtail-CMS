@@ -17,3 +17,4 @@ Closes #
 - [ ] Tests written first; the ones I touched pass (CI runs the full suite)
 - [ ] A file in `changelog.d/`, or the `no changelog` label
 - [ ] Docs pages updated for anything they describe (`docs/`)
+- [ ] No `needs:` label left on this pull request or its issue (`docs/contributing/reviews.md`)

@@ -5,6 +5,7 @@ How a change gets from an issue to `main`, and the rules every change follows.
 ```{toctree}
 :maxdepth: 1
 
+reviews
 testing
 performance
 security
@@ -57,8 +58,8 @@ Before proposing a fix, feature or design, answer these in the proposal itself:
 
 ## The workflow
 
-1. **Start from an issue** on the [project board](releases.md#the-project-board), and move it to
-   *In progress*.
+1. **Start from an issue** on the [project board](releases.md#the-project-board) with no
+   `needs:` label left: its [reviews](reviews.md) come first. Move it to *In progress*.
 2. **Branch from `main`:** one feature or fix per branch, named `feat/…`, `fix/…`, `docs/…` or
    `chore/…`.
 3. **Work test-first** ([Testing](testing.md)): a failing test, then the code that makes it pass.
@@ -77,7 +78,10 @@ Before proposing a fix, feature or design, answer these in the proposal itself:
    stacked on each other.
 8. **QA:** CI checks every page layout at six widths; the pull request lists what a person must
    check in the browser ([QA](testing.md#qa)).
-9. **The maintainer reviews and merges.**
+9. **Reviews:** the pull request gets `needs: code review`, and `needs: qa` or
+   `needs: security review` when it needs them. Each comes off when its review is done
+   ([Reviews](reviews.md)).
+10. **The maintainer merges** once CI is green and no `needs:` label is left.
 
 ## Commits
 
