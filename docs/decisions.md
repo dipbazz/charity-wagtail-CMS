@@ -608,3 +608,68 @@ A Claude Code hook was the alternative: the same checks, but only for commits Cl
 - A commit takes a second or two longer, and a commit with a lint error is refused until it's
   fixed.
 - pre-commit needs git 2.31 or newer for `pre-commit run --all-files`.
+
+## Tests run one after another
+
+**Status:** in use (decided October 2026)
+
+**Context**
+
+The whole suite takes minutes. [pytest-xdist](https://pytest-xdist.readthedocs.io/) would run it
+in parallel, but adds a dependency and makes fixtures that build once per module (`demo_site`)
+build once per worker.
+
+**Decision**
+
+No pytest-xdist. Locally, run only the tests for what you touched, by path or node id, or
+`--lf` for the last failures ([Testing](contributing/testing.md)); CI runs the whole suite.
+
+**Consequences**
+
+- A full local run stays slow, which is why it's left to CI. Look again only if CI time becomes
+  a real problem.
+
+## Nepali tests check whole sentences
+
+**Status:** in use (decided October 2026)
+
+**Context**
+
+The tests of the site's Nepali words (`campaigns/tests/test_nepali.py`,
+`charity/tests/test_nepali_interface.py`) compare whole translated sentences, so rewording a
+translation breaks a test. Checking a key word, or comparing against the `.po` catalogue, would
+break less often.
+
+**Decision**
+
+Keep checking whole sentences. A change to a translation's wording updates its test in the same
+commit.
+
+**Consequences**
+
+- A test fails when a sentence is half translated, or when the catalogue and the template
+  disagree, which a key-word check would miss.
+- Every wording change touches a test too.
+
+## Choices that work whether the repo is public or private
+
+**Status:** in use (since October 2026)
+
+**Context**
+
+The repository is public. It may go private, as a free service for Nepali charities, or stay open
+source to invite developers; that isn't decided. Some tools are free only for public
+repositories: Read the Docs' free plan and GitHub Pages on GitHub Free. Others cost more when
+private: GitHub's arm64 runners use the plan's free minutes (2,000 a month on GitHub Free), and
+pulling a private image or cloning over HTTPS needs a credential on the server.
+
+**Decision**
+
+A proposal for tools, hosting or CI says what changes if the repository goes private, and
+prefers a choice that works either way (as publishing the docs does,
+[Writing docs](contributing/writing-docs.md#publishing)).
+
+**Consequences**
+
+- Some free public-only services are passed over, or wait for the decision.
+- Going private later doesn't break CI, deployment or the docs.

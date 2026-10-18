@@ -91,7 +91,9 @@ A request under `/ne/` leaves Nepali active in the test's thread, and translated
 up when it's shown, so `conftest.py` puts English back after every test. Inside a test, read lazy
 text (a form's label) within `translation.override("ne")`. Tests of the site's own Nepali words
 are `charity/tests/test_nepali_interface.py` (header, footer, search, 404) and
-`campaigns/tests/test_nepali.py` (appeals and the pledge form).
+`campaigns/tests/test_nepali.py` (appeals and the pledge form). They check whole translated
+sentences, so a change to a translation's wording updates its test in the same commit
+([Decisions](../decisions.md#nepali-tests-check-whole-sentences)).
 
 ## Fixtures and factories
 
