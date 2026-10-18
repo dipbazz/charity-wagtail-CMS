@@ -153,8 +153,9 @@ appeal and the Donate page in both languages with each
 makes sense. Each pull request's **Check before merging** section names the pages, widths and
 what to look for, or says nothing needs checking (a backend or admin-only change). The
 `mobile-first` skill's checks are the checklist: no sideways scrolling, nothing overlapping or cut
-off, a visible focus outline, and a page that still reads in order with CSS off. For a fuller pass,
-AI sessions have `/qa`; run it when you want one.
+off, a visible focus outline, and a page that still reads in order with CSS off. A pull request
+labelled `needs: qa` also gets a `/qa-only` pass first, which reports without changing code
+([Reviews](reviews.md)).
 
 **A bug QA finds is fixed test-first**, one bug per commit: a test in the relevant app's `tests/`
 package that fails for the reason the bug describes, then the fix. If pytest can't catch it
@@ -171,3 +172,4 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and every
 | `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse |
 | `docs` | These docs build with warnings as errors; the built site is uploaded as the `docs-html` artifact |
 | `changelog` (its own workflow) | The pull request adds a `changelog.d/` file, unless it's labelled `no changelog` |
+| `reviews` (its own workflow) | Neither the pull request nor an issue it closes has a `needs:` label left ([Reviews](reviews.md)) |

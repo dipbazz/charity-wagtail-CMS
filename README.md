@@ -28,7 +28,8 @@ uv run python manage.py runserver
 Site: <http://localhost:8000> · Admin: <http://localhost:8000/admin/> · API: <http://localhost:8000/api/v2/pages/>
 
 Run the tests with `uv run pytest`. [Getting started](docs/getting-started/index.md) explains
-each step and walks through a first change.
+each step and walks through a first change. Reviews are run with Claude Code and the
+[gstack](https://github.com/garrytan/gstack) skills ([Reviews](docs/contributing/reviews.md)).
 
 ## What it does
 
