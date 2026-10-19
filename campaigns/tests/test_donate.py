@@ -1,4 +1,5 @@
 import importlib
+import uuid
 
 import pytest
 from bs4 import BeautifulSoup
@@ -767,6 +768,38 @@ class TestChoices:
         assert saved.show_on_website is True
         assert saved.email_updates is False
 
+    def test_ticking_show_on_website_records_when(self, client, donate_page):
+        """The record of when they agreed to their gift being shown (#100)."""
+        pledge(client, donate_page, show_on_website="on")
+
+        assert stored(donate_page).show_on_website_changed_at is not None
+
+    def test_leaving_show_on_website_unticked_records_nothing(self, client, donate_page):
+        pledge(client, donate_page)
+
+        assert stored(donate_page).show_on_website_changed_at is None
+
+    def test_unticking_it_on_a_resent_copy_records_when(self, client, donate_page):
+        """Back from the pay page, the supporter changes their mind before paying."""
+        submission = str(uuid.uuid4())
+        pledge(client, donate_page, show_on_website="on", submission_id=submission)
+        ticked_at = stored(donate_page).show_on_website_changed_at
+
+        pledge(client, donate_page, submission_id=submission)
+
+        saved = stored(donate_page)
+        assert saved.show_on_website is False
+        assert saved.show_on_website_changed_at > ticked_at
+
+    def test_a_resent_copy_with_the_same_choice_keeps_when(self, client, donate_page):
+        submission = str(uuid.uuid4())
+        pledge(client, donate_page, show_on_website="on", submission_id=submission)
+        ticked_at = stored(donate_page).show_on_website_changed_at
+
+        pledge(client, donate_page, show_on_website="on", submission_id=submission, name="Ram")
+
+        assert stored(donate_page).show_on_website_changed_at == ticked_at
+
     def test_a_ticked_box_stays_ticked_when_the_form_has_errors(self, client, donate_page):
         response = pledge(client, donate_page, name="", show_on_website="on")
 
@@ -774,12 +807,15 @@ class TestChoices:
         assert box.has_attr("checked")
 
     def test_show_on_website_says_exactly_what_is_shown(self, client, donate_page):
-        """This help text is the consent to the recent supporters list (#99)."""
+        """This help text is the consent to the gift's page for friends (#100) and the recent
+        supporters list (#99): neither may show more than it says, or sooner."""
         help_text = PledgeForm.base_fields["show_on_website"].help_text
 
-        for shown in ("name", "amount", "appeal", "date"):
-            assert shown in help_text
-        assert "Nothing else about you is shown." in help_text
+        assert help_text == (
+            "Once you've told us you've paid, we'll show your name, the appeal and the date on a "
+            "page you can share, and in our list of recent supporters; the amount once your gift "
+            "reaches us. Nothing else about you is shown."
+        )
         box = soup(client.get(donate_page.url)).find("input", attrs={"name": "show_on_website"})
         assert box.find_next(class_="helptext").get_text(strip=True) == help_text
 

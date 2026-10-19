@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load i18n static wagtailcore_tags wagtailimages_tags %}
+
+{# A gift's public page (#100): who is supporting what, for the friends its supporter shares it with, and a way for them to give too. It shows only what the supporter agreed to (campaigns/sharing.py), and is laid out like the appeal page. #}
+{% block title %}{{ gift_title }}{% endblock %}
+
+{% block body_class %}template-donatepage gift-page{% endblock %}
+
+{% block social_meta %}
+    {% include "includes/social_meta.html" with share_url=gift_url share_title=gift_title share_description=summary share_image=social_image %}
+{% endblock %}
+
+{% block extra_meta %}
+    {# A supporter's name: theirs to share, never to turn up in search results. #}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/donate.css' %}">
+{% endblock %}
+
+{% block content %}
+    <article class="container">
+        {% if test_gift %}
+            <p class="payment-message">{% translate "Test gift: no money was taken" %}</p>
+        {% endif %}
+        <header class="campaign-header">
+            <div>
+                <h1>{{ gift_title }}</h1>
+                {# What they gave, once it's reached the charity; while a QR payment is checked, only that they've paid. #}
+                <p class="meta">
+                    {% if view == "checking" %}
+                        {% blocktranslate trimmed with date=given_on|date:"j F Y" %}Paid by QR on {{ date }}. Our team is checking it.{% endblocktranslate %}
+                    {% elif pledge.frequency == "monthly" %}
+                        {% blocktranslate trimmed with amount=gift_amount %}Gives {{ amount }} a month{% endblocktranslate %}
+                    {% else %}
+                        {% blocktranslate trimmed with amount=gift_amount date=given_on|date:"j F Y" %}Gave {{ amount }} on {{ date }}{% endblocktranslate %}
+                    {% endif %}
+                </p>
+                {% if summary %}<p class="lead">{{ summary }}</p>{% endif %}
+                {% if appeal %}
+                    {% include "campaigns/includes/progress.html" with campaign=appeal %}
+                    {% if not appeal.is_active %}
+                        <p class="meta">{% blocktranslate trimmed with closed=appeal.end_date|date:"j F Y" %}This appeal closed on {{ closed }}. Thank you to everyone who gave.{% endblocktranslate %}</p>
+                    {% endif %}
+                {% endif %}
+                {# Friends always have a way to give: to the appeal while it's open, else wherever it's needed most. #}
+                <p>
+                    {% if appeal and appeal.is_active %}
+                        <a class="button button-large" href="{% pageurl page %}?appeal={{ appeal.slug|urlencode }}">{% translate "Give to this appeal" %}</a>
+                    {% elif appeal %}
+                        <a class="button button-large" href="{% pageurl page %}">{% translate "Give where it's needed most" %}</a>
+                    {% else %}
+                        <a class="button button-large" href="{% pageurl page %}">{% translate "Give" %}</a>
+                    {% endif %}
+                </p>
+                {% if appeal %}
+                    <p><a href="{% pageurl appeal %}">{% translate "Read about this appeal" %} <span aria-hidden="true">→</span></a></p>
+                {% endif %}
+                {% if open_appeals %}
+                    {% with appeals=appeals_page %}{% if appeals %}
+                        <p><a href="{% pageurl appeals %}?status=active">{% translate "See our open appeals" %} <span aria-hidden="true">→</span></a></p>
+                    {% endif %}{% endwith %}
+                {% endif %}
+            </div>
+            {% if appeal.hero_image %}
+                <figure class="block-image">
+                    {% picture appeal.hero_image fill-{800x500,400x250} format-{avif,webp,jpeg} sizes="(min-width: 70rem) 33rem, (min-width: 44rem) calc(50vw - 2rem), calc(100vw - 2rem)" %}
+                    {% if appeal.hero_image.credit %}<figcaption><span class="credit">{{ appeal.hero_image.credit }}</span></figcaption>{% endif %}
+                </figure>
+            {% endif %}
+        </header>
+    </article>
+{% endblock %}

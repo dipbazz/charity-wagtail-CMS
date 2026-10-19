@@ -20,6 +20,15 @@ OTHER = "other"
 # any gift made through a form (a bigger one is arranged with the charity), so a typing slip
 # like an extra zero is refused.
 MAX_AMOUNT = 999_999
+# The supporter's consent to their gift being shown, in the same words on the pledge form and the
+# thank-you page's box. The gift's page (#100) and the recent supporters list (#99) must show no
+# more than it promises, and no sooner (campaigns/sharing.py).
+SHOW_GIFT_LABEL = gettext_lazy("Show my gift on this website")
+SHOW_GIFT_HELP = gettext_lazy(
+    "Once you've told us you've paid, we'll show your name, the appeal and the date on a page you "
+    "can share, and in our list of recent supporters; the amount once your gift reaches us. "
+    "Nothing else about you is shown."
+)
 
 
 @dataclass(frozen=True)
@@ -136,7 +145,7 @@ class PledgeForm(forms.ModelForm):
             "email_updates": gettext_lazy(
                 "Email me stories from our projects and appeals that need help"
             ),
-            "show_on_website": gettext_lazy("Show my gift on this website"),
+            "show_on_website": SHOW_GIFT_LABEL,
         }
         help_texts = {
             "message": gettext_lazy(
@@ -145,13 +154,9 @@ class PledgeForm(forms.ModelForm):
             "address": gettext_lazy(
                 "House or ward number, street or tole, town or municipality, district."
             ),
-            # The supporter's consents. Each says exactly what they agree to; the recent
-            # supporters list (#99) must show no more than show_on_website's text promises.
+            # The supporter's consents. Each says exactly what they agree to.
             "email_updates": gettext_lazy("You can ask us to stop at any time."),
-            "show_on_website": gettext_lazy(
-                "Once your gift reaches us, we'll list your name, the amount, the appeal and the "
-                "date. Nothing else about you is shown."
-            ),
+            "show_on_website": SHOW_GIFT_HELP,
             # The supporter's consent to the monthly reminder (#90): keep its purpose this clear.
             "phone": gettext_lazy(
                 "We'll only use this to send you a monthly reminder on WhatsApp, or by text "
@@ -212,6 +217,8 @@ class PledgeForm(forms.ModelForm):
             self.initial.update(self.initial_from_link(link))
         if self.is_bound:
             self.instance = self.pledge_sent_before() or self.instance
+        # What they'd agreed to before this copy was sent, so save() records when it changes.
+        self.shown_before = self.instance.show_on_website
 
     def pledge_sent_before(self):
         """The pledge already saved from this copy of the form, if it's being sent again and
@@ -287,6 +294,8 @@ class PledgeForm(forms.ModelForm):
         pledge.currency = self.currency
         pledge.page = self.page
         pledge.submission_id = self.cleaned_data["submission_id"]
+        if pledge.show_on_website != self.shown_before:
+            pledge.show_on_website_changed_at = timezone.now()
         if commit:
             try:
                 with transaction.atomic():
