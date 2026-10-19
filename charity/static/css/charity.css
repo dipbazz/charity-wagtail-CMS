@@ -82,6 +82,12 @@ picture > source {
     display: none;
 }
 
+/* The hidden attribute wins over a class's display (.button's inline-flex), so a control that
+   waits for JavaScript, such as Copy link, stays hidden until the script shows it. */
+[hidden] {
+    display: none !important;
+}
+
 a {
     color: var(--colour-primary);
 }
