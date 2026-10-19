@@ -306,6 +306,15 @@ class PledgeForm(forms.ModelForm):
         return pledge
 
 
+class ShowGiftForm(forms.Form):
+    """The thank-you and checking pages' box: the pledge form's consent to show the gift, in the
+    same words, to change once they've paid (#100)."""
+
+    show_on_website = forms.BooleanField(
+        required=False, label=SHOW_GIFT_LABEL, help_text=SHOW_GIFT_HELP
+    )
+
+
 class QRPaidForm(forms.Form):
     """ "I've paid", the QR way's step 2: which QR code they scanned, and the transaction ID from
     their app's receipt, a screenshot of the receipt, or both. The code is picked from the ones on

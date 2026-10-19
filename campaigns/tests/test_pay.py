@@ -86,7 +86,9 @@ def kinds(payment):
 
 
 def pay_buttons(response):
-    return [button.get_text(strip=True) for button in soup(response).select("form button")]
+    """The buttons that pay: not the thanks' Show my gift box (#100)."""
+    buttons = soup(response).select("form:not(.show-gift) button")
+    return [button.get_text(strip=True) for button in buttons]
 
 
 def pay_button(response, label):
@@ -1015,6 +1017,9 @@ class TestComingBack:
         assert "FAKE-123" in text(page)
         assert "test" not in text(page).lower()
         assert pay_buttons(page) == []
+        # Then sharing that they've given (#100), straight after the reference.
+        reference = soup(page).find("p", string="Fake Pay reference: FAKE-123")
+        assert reference.find_next_sibling()["class"] == ["share-gift"]
 
     def test_a_test_payment_says_first_that_no_money_was_taken(
         self, client, donate_page, pledge, payment
@@ -1048,7 +1053,10 @@ class TestComingBack:
 
         page = soup(client.get(online_url(donate_page, pledge)))
 
-        assert page.find("a", string="See all our appeals")["href"] == "/appeals/"
+        appeals = page.find("a", string="See all our appeals")
+        assert appeals["href"] == "/appeals/"
+        # A plain link since #100: Tell your friends is the main button.
+        assert "button" not in appeals.get("class", [])
 
     def test_thanks_lead_home_on_a_site_with_no_appeals_page(
         self, client, donate_page, pledge, payment

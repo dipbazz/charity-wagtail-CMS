@@ -2,8 +2,9 @@
 // Buttons stay hidden without JavaScript; visitors can still select the text themselves.
 // The words shown (in the reader's language) come from the button's data-copied,
 // data-copied-status and data-copy-failed-status.
-// A button with data-copy-value copies that value, not an input's: an icon-only button, shown
-// as copied by its tick (the .is-copied class), with the status line saying it for everyone.
+// A button with data-copy-value copies that value, not an input's. One with data-copied says
+// "Copied" on itself; an icon-only button (no data-copied) shows it by its tick (the .is-copied
+// class). Either way the status line says it for everyone.
 // Anything marked data-copy-hint is shown only once there is a button to press.
 document.querySelectorAll("[data-copy]").forEach((button) => {
     const input = document.getElementById(button.dataset.copy);
@@ -21,7 +22,7 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
         try {
             await navigator.clipboard.writeText(ownValue ?? input.value);
             clearTimeout(resetTimer);
-            if (ownValue === undefined) {
+            if (button.dataset.copied !== undefined) {
                 // Confirm on the button itself, where the visitor is looking. The tick is
                 // decorative; screen readers get the status message below instead.
                 button.textContent = `${button.dataset.copied} `;

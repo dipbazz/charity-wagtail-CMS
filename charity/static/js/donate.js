@@ -66,6 +66,26 @@ if (busyButtons.length) {
 // focused as the page opens, so a screen reader reads it before the rest of the page.
 document.querySelector("[data-focus-on-load]")?.focus();
 
+// Tell your friends (#100): the phone's own share sheet, so every app the supporter has
+// (WhatsApp, Viber, Messenger, Instagram) is there. Shown only where the browser has one (most
+// phones, few desktops); without it, the WhatsApp, Facebook and Copy link options are the way.
+document.querySelectorAll("button[data-share]").forEach((button) => {
+    const shared = {
+        title: button.dataset.shareTitle,
+        text: button.dataset.shareText,
+        url: button.dataset.shareUrl,
+    };
+    if (!navigator.share || (navigator.canShare && !navigator.canShare(shared))) return;
+    button.hidden = false;
+    button.addEventListener("click", async () => {
+        try {
+            await navigator.share(shared);
+        } catch {
+            // Closed without sharing, or the browser said no: the other options are still there.
+        }
+    });
+});
+
 // Paying with a provider that takes a posted form (eSewa): the page holds the form the server
 // signed, and this sends it at once. Not when the page is reached with Back or Forward, so the
 // payer can leave it; and without JavaScript, they press its button.

@@ -281,6 +281,7 @@
 
 /* A phone number to call is a 44px tap target, as is a link on a line of its own. */
 .pay-steps a[href^="tel:"],
+.share-gift a[href^="tel:"],
 .payment-message p > a:only-child:not(.button) {
     display: inline-flex;
     align-items: center;
@@ -492,4 +493,32 @@ ol.qr-help {
 .qr-pay:has(.qr-choice label:nth-of-type(7) input:checked) .qr-card:not(:nth-of-type(7)),
 .qr-pay:has(.qr-choice label:nth-of-type(8) input:checked) .qr-card:not(:nth-of-type(8)) {
     display: none;
+}
+
+/* Sharing that they've given (#100): the Show my gift box with Save under it, then Tell your
+   friends, then the other ways as a row of text links that wraps, each a 44px tap target. One
+   column at every width; a wider screen only lets the links sit on one line. */
+.show-gift {
+    margin-block: 1rem 1.5rem;
+}
+
+.show-gift .button {
+    margin-top: 0.5rem;
+}
+
+.share-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.share-links a,
+.share-links .link-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    font-weight: 700;
 }

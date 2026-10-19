@@ -254,6 +254,11 @@ REUSE_ATTEMPT_FOR = datetime.timedelta(minutes=10)
 PAYMENT_MESSAGE = "payment"
 
 
+# What saving the thank-you page's Show my gift box did ("shown" or "hidden"), for that page to
+# say once.
+GIFT_MESSAGE = "gift"
+
+
 def tell_pay_page(request, result):
     """Leave the online pay page a one-off result: "checked" (the provider hasn't confirmed the
     payment yet), "unreachable" (it couldn't be asked) or "not-started" (it couldn't start one).
@@ -261,18 +266,24 @@ def tell_pay_page(request, result):
     messages.info(request, result, extra_tags=PAYMENT_MESSAGE)
 
 
-def pay_page_result(request):
-    """The result tell_pay_page() left, if any. Any other message is kept for the page it's for."""
+def take_message(request, tag):
+    """The message with `tag` left for this page, if any. Any other message is kept for the page
+    it's for."""
     result = None
     others = []
     for message in messages.get_messages(request):
-        if PAYMENT_MESSAGE in (message.extra_tags or "").split():
+        if tag in (message.extra_tags or "").split():
             result = message.message
         else:
             others.append(message)
     for message in others:
         messages.add_message(request, message.level, message.message, message.extra_tags)
     return result
+
+
+def pay_page_result(request):
+    """The result tell_pay_page() left, if any."""
+    return take_message(request, PAYMENT_MESSAGE)
 
 
 # Not ready to pay yet: offered with the ways to pay, on every pledge's pay page, but not a way
@@ -576,8 +587,54 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "paid_by": claimed.paid_by(),
                 "site_settings": site_settings,
                 "phone_link": phone_link(site_settings),
+                **self.sharing_context(request, pledge, site_settings),
             },
         )
+
+    def sharing_context(self, request, pledge, site_settings):
+        """The share section (#100), for the thank-you and checking pages: what to say, where a
+        share sends friends, and the Show my gift box."""
+        from campaigns.forms import ShowGiftForm  # forms imports this module's Pledge
+
+        appeal = sharing.appeal_shown(pledge)
+        charity = site_settings.name
+        url = sharing.share_url(pledge, appeal, request)
+        text = sharing.share_text(pledge, appeal, charity)
+        if sharing.gift_view(pledge) != sharing.HIDDEN:
+            title = sharing.gift_title(pledge, appeal, charity)
+        else:
+            title = appeal.title if appeal else charity
+        return {
+            "share": {
+                "appeal": appeal,
+                "needs_help": appeal is not None and sharing.needs_help(appeal),
+                "url": url,
+                "text": text,
+                "title": title,
+                "whatsapp": sharing.whatsapp_link(text, url),
+                "facebook": sharing.facebook_link(url),
+                # Just saved: the page says so, and focus moves to the section.
+                "saved": take_message(request, GIFT_MESSAGE),
+            },
+            "show_gift_form": ShowGiftForm(initial={"show_on_website": pledge.show_on_website}),
+        }
+
+    @path("pay/<uuid:reference>/show-gift/", name="show_gift")
+    def show_gift(self, request, reference):
+        """The Show my gift box on the thank-you and checking pages: shows the gift on its page
+        for friends, or takes it down, and says which once back there. Only once the supporter
+        has told us they've paid, and never while the team has taken it down."""
+        if request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
+        pledge = self.get_pledge(reference=reference)
+        state = pledge.pay_page_state()
+        if sharing.offers_sharing(pledge) and not pledge.hidden_by_team:
+            shown = request.POST.get("show_on_website") == "on"
+            pledge.set_show_on_website(shown)
+            messages.info(request, "shown" if shown else "hidden", extra_tags=GIFT_MESSAGE)
+        route = STATE_ROUTES.get(state, "pay")
+        url = self.get_url(request) + self.reverse_subpage(route, args=[reference])
+        return HttpResponseRedirect(url + "#share", status=303)
 
     @path("gifts/<slug:code>/", name="gift")
     def gift(self, request, code):
@@ -694,6 +751,12 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         }
         # Named on the choices, and on the online page.
         context["pay_with"] = either([provider.name for provider in providers])
+        if state in THANKED:
+            context |= self.sharing_context(request, pledge, site_settings)
+            # What the gift does, unless only a test system took it: then it does nothing.
+            if received.live:
+                appeal = context["share"]["appeal"]
+                context["impact_line"] = sharing.impact_line(pledge, appeal)
         if way == ONLINE:
             latest = next(iter(pledge.payments.all()), None)  # newest first
             context |= {
@@ -1254,6 +1317,19 @@ class Pledge(models.Model):
                 return "not-found"
             return "failed" if latest and latest.reached_provider() else "not-started"
         return "ready"
+
+    def set_show_on_website(self, shown):
+        """The supporter's choice from the thank-you page's box, and when they made it. Not while
+        the team has taken the gift down. Returns whether it changed anything."""
+        now = timezone.now()
+        changed = (
+            Pledge.objects.filter(pk=self.pk, hidden_by_team=False)
+            .exclude(show_on_website=shown)
+            .update(show_on_website=shown, show_on_website_changed_at=now)
+        )
+        if changed:
+            self.show_on_website, self.show_on_website_changed_at = shown, now
+        return bool(changed)
 
     def has_paid_payment(self):
         """Whether any attempt has paid it, live or test, at any amount: it's never asked for

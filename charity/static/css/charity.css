@@ -181,6 +181,29 @@ body:lang(ne) {
     color: var(--colour-on-dark);
 }
 
+/* A lesser action near a page's main button (Save beside Tell your friends): outlined in the
+   brand colour, like the other language's button, so the main one still leads. */
+.button-outline {
+    border: 2px solid var(--colour-primary);
+    background: var(--colour-background);
+    color: var(--colour-primary);
+}
+
+.button-outline:hover {
+    background: var(--colour-surface);
+}
+
+/* A button that reads as a link, in a row of links (Copy link beside WhatsApp and Facebook). */
+.link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--colour-primary);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
 /* Header & navigation */
 .site-header {
     border-bottom: 1px solid var(--colour-border);
