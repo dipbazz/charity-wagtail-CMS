@@ -27,7 +27,7 @@
             <button type="submit" class="button button-outline">{% translate "Save" %}</button>
         </form>
     {% endif %}
-    <button type="button" class="button button-large" data-sharedata-share-title="{{ share.title }}" data-share-text="{{ share.text }}" data-share-url="{{ share.url }}" hidden>{% translate "Tell your friends" %}</button>
+    <button type="button" class="button button-large" data-share data-share-title="{{ share.title }}" data-share-text="{{ share.text }}" data-share-url="{{ share.url }}" hidden>{% translate "Tell your friends" %}</button>
     <ul class="share-links">
         <li><a href="{{ share.whatsapp }}">{% translate "WhatsApp" %}</a></li>
         <li><a href="{{ share.facebook }}">{% translate "Facebook" %}</a></li>
