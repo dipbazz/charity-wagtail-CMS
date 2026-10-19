@@ -50,6 +50,7 @@ class Khalti(PaymentProvider):
     test_login = {"id": "9800000000", "mpin": "1111", "otp": "987654"}
     order = 20
     statuses = STATUSES
+    needs_checking = frozenset({"Partially Refunded"})
 
     def post(self, path, data):
         """Khalti's (status, answer), refusing the call if Khalti doesn't accept the key."""

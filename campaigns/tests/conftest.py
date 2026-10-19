@@ -38,7 +38,9 @@ class FakePay(PaymentProvider):
         "DONE": (Status.PAID, "Fake Pay says it's paid."),
         "PENDING": (Status.WAITING, "Fake Pay hasn't finished the payment yet."),
         "CANCELLED": (Status.FAILED, "The payer cancelled at Fake Pay. Nothing was taken."),
+        "PART_REFUNDED": (Status.WAITING, "Fake Pay refunded part of it."),
     }
+    needs_checking = frozenset({"PART_REFUNDED"})
 
     @classmethod
     def reset(cls):

@@ -25,6 +25,7 @@ whoever hosts the site.
 | **Site settings** (the charity's details and its brand, [all listed here](pages-and-content.md#site-settings-and-the-banner)) | Change, and preview changes before saving | ❌ | ✅ |
 | **QR codes** (the charity's own, for supporters to pay by scanning) | Add, change and remove | ❌ | ✅ |
 | **Pledges** | View, filter and export | ✅ | ✅ |
+| | Check a payment with its provider (**Check with eSewa now**) | ✅ | ✅ |
 | | Mark a QR payment paid, or not found (**Can confirm payments**) | ❌ | ✅ |
 | | Add, change or delete | ❌ | ❌ |
 | **Form submissions** | View and export (comes with editing the form page) | ✅ | ✅ |

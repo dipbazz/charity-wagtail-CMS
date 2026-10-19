@@ -69,6 +69,13 @@ def test_explains_each_of_its_statuses(provider):
 
 
 @each_provider
+def test_the_words_a_person_must_look_at_are_its_own_and_never_paid(provider):
+    """Such as a partial refund: some money was kept, so it's neither paid in full nor failed."""
+    assert provider.needs_checking <= set(provider.statuses)
+    assert all(provider.statuses[word][0] is not Status.PAID for word in provider.needs_checking)
+
+
+@each_provider
 def test_brings_its_own_logo(provider):
     """Shown on its pay button, so a payer finds their app at a glance: a new provider can't
     ship as text alone."""

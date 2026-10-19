@@ -221,6 +221,9 @@ class TestCheck:
         assert outcome.status is status
         assert outcome.word == answer
 
+    def test_a_partial_refund_needs_a_person_to_look(self):
+        assert Khalti.needs_checking == {"Partially Refunded"}
+
     def test_a_refunded_payment_isnt_paid(self, provider_server):
         """Nor described as completed: its sentence would say it's paid."""
         provider_server.answer(200, lookup_answer("Completed", refunded=True))

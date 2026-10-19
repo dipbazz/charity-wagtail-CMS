@@ -60,7 +60,13 @@ from core.models import (
     TextInEachLanguageMixin,
 )
 from core.money import CURRENCY_CHOICES, format_money
-from nepal_payments import PaymentError, PaymentRequest, ProviderRefused, UnreadableAnswer
+from nepal_payments import (
+    PaymentError,
+    PaymentRequest,
+    ProviderRefused,
+    UnreadableAnswer,
+    get_provider,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1092,14 +1098,37 @@ class Pledge(models.Model):
 
     @admin.display(description="Payment")
     def payment_display(self):
-        """Waiting, paid or failed, with "(test)" after paid when only a provider's test system
-        took it: anyone can pay there with the provider's public test account, so it must never
-        pass for money received. Reads payments as fetched, so a list can prefetch them."""
+        """Waiting, to confirm, paid or failed, with "(test)" after paid when only a provider's
+        test system took it: anyone can pay there with the provider's public test account, so it
+        must never pass for money received. "Needs checking" when a person must look
+        (needs_checking()). The list, the export and the pledge's page all say this. Reads
+        payments as fetched, so a list can prefetch them."""
+        if self.needs_checking():
+            return "Needs checking"
         shown = self.get_payment_status_display()
         if self.payment_status != PaymentStatus.PAID:
             return shown
         paid = self.paid_payment()
         return f"{shown} (test)" if paid and not paid.live else shown
+
+    def needs_checking(self):
+        """Why a person must look at what was paid, or "": money received for an amount the
+        pledge doesn't ask for (the team received another amount, or the pledge was changed after
+        the payment started), or a provider saying it refunded part of a payment. Reads payments
+        as fetched, so a list can prefetch them."""
+        paid = self.paid_payment()
+        if paid and (
+            self.payment_status != PaymentStatus.PAID
+            or (paid.amount, paid.currency) != (self.amount, self.currency)
+        ):
+            return (
+                f"{paid.display_amount()} was received, but the pledge is for "
+                f"{self.display_amount()}."
+            )
+        for payment in self.payments.all():
+            if payment.needs_checking():
+                return payment.word_sentence()
+        return ""
 
     @admin.display(description="Paid with")
     def paid_with(self):
@@ -1216,6 +1245,9 @@ RECEIPT_WIDTH = 2000
 RECEIPT_MAX_PIXELS = 13_000_000
 # The longest a screenshot is kept when nobody has checked its payment (delete_old_receipts).
 RECEIPTS_KEPT_FOR = datetime.timedelta(days=30)
+# How soon the team's check may ask a provider about a payment again: each ask can wait up to
+# nepal_payments.http.TIMEOUT (10 seconds) for an answer.
+ASK_AGAIN_AFTER = datetime.timedelta(seconds=30)
 
 
 def receipts_storage():
@@ -1252,6 +1284,9 @@ class Payment(models.Model):
     live = models.BooleanField(
         default=False, help_text="Unticked: made in the provider's test system, so no money moved."
     )
+    # The provider's own word from its latest answer, only one in its `statuses` (as on the
+    # steps), so the list of pledges can say one needs checking without reading every step.
+    word = models.CharField("provider's latest word", max_length=50, blank=True, editable=False)
     # A QR payment: the code the supporter says they scanned, and its name as it was then, so "by
     # eSewa QR" is still said once the code is removed or renamed.
     qr_code = models.ForeignKey(
@@ -1318,6 +1353,35 @@ class Payment(models.Model):
         provider = provider_for(self.method)
         return provider if provider and provider.live == self.live else None
 
+    def needs_checking(self):
+        """Whether its provider's latest word means a person must look, such as a partial
+        refund."""
+        provider = get_provider(self.method)
+        return bool(provider and self.word in provider.needs_checking)
+
+    def word_sentence(self, word=None):
+        """The provider's sentence for its latest word (or `word`), for the team; "" without
+        one."""
+        provider = get_provider(self.method)
+        return provider.describe(self.word if word is None else word) if provider else ""
+
+    def can_be_checked(self):
+        """Whether the team can ask its provider about it now: it's waiting, or failed after
+        reaching the provider (so it may still turn out paid), and its provider is set up here
+        for the system it was made in. Never a payment the team confirms."""
+        if self.team_confirms:
+            return False
+        may_change = self.status == PaymentStatus.WAITING or (
+            self.status == PaymentStatus.FAILED and self.reached_provider()
+        )
+        return may_change and self.provider() is not None
+
+    def asked_recently(self):
+        """Whether its provider was asked about it in the last ASK_AGAIN_AFTER, by anyone: each
+        ask can wait for the provider, so the team's check isn't pressed again and again."""
+        since = timezone.now() - ASK_AGAIN_AFTER
+        return self.steps.filter(kind__in=ASKS, at__gt=since).exists()
+
     def ask(self, by=None):
         """Ask the provider what became of this payment, record what it says, and add a step for
         every outcome: the answer, or why there wasn't one. The return page, the team's check and
@@ -1341,6 +1405,8 @@ class Payment(models.Model):
             return None
         word = outcome.word if outcome.word in provider.statuses else ""
         self.add_step(StepKind.ASKED, word=word, by=by)
+        Payment.objects.filter(pk=self.pk).update(word=word)
+        self.word = word
         self.record(outcome.status, outcome.provider_reference)
         return outcome
 
@@ -1472,6 +1538,31 @@ class StepKind(models.TextChoices):
     NOT_FOUND = "not-found", "Marked not found by the team"
 
 
+# The steps that asked a provider, whatever it answered.
+ASKS = [
+    StepKind.ASKED,
+    StepKind.UNREACHABLE,
+    StepKind.UNREADABLE,
+    StepKind.REFUSED,
+    StepKind.NOT_ASKED,
+]
+
+# What each step says on the pledge's page, naming the payment's provider. An answer with one of
+# the provider's own words says that word's sentence instead.
+STEP_SENTENCES = {
+    StepKind.SENT: "Sent to {provider}.",
+    StepKind.CAME_BACK: "Came back to the site.",
+    StepKind.ASKED: "{provider} answered.",
+    StepKind.UNREACHABLE: "Couldn't reach {provider}.",
+    StepKind.UNREADABLE: "{provider} answered, but the answer wasn't understood.",
+    StepKind.REFUSED: "{provider} refused to answer.",
+    StepKind.NOT_ASKED: "Couldn't ask {provider}.",
+    StepKind.CLAIMED: "The supporter said they paid.",
+    StepKind.MARKED_PAID: "Marked paid.",
+    StepKind.NOT_FOUND: "Marked not found.",
+}
+
+
 def step_for_error(error):
     """The step for an error starting or checking a payment."""
     if isinstance(error, UnreadableAnswer):
@@ -1508,3 +1599,10 @@ class PaymentStep(models.Model):
 
     def __str__(self):
         return f"{self.get_kind_display()} {self.word}".strip()
+
+    def sentence(self):
+        """What happened, in plain words for the team: "Sent to eSewa.", or for an answer the
+        provider's sentence for its word ("The payer cancelled at eSewa. Nothing was taken.")."""
+        if self.kind == StepKind.ASKED and (said := self.payment.word_sentence(self.word)):
+            return said
+        return STEP_SENTENCES[self.kind].format(provider=self.payment.get_method_display())

@@ -190,7 +190,8 @@ the last two straight there, where the check is):
   `later/`) goes to the online page. Just after a check, the page says once what it found ("We
   asked Khalti just now, and it hasn't confirmed your payment yet", or "We couldn't reach Khalti
   just now"), with "If money has left your account, don't pay again" and the charity's phone. A
-  payment whose supporter never came back stays *waiting* until the scheduled check in #198.
+  payment whose supporter never came back stays *waiting* until someone on the team presses
+  **Check with eSewa now** on the pledge, or the scheduled check in #198 runs.
 
 Each attempt is a `Payment`: the provider, the amount, our reference (sent to the provider), the
 provider's own IDs, and whether it ran in the provider's test system. A pledge's **payment status**
@@ -209,8 +210,11 @@ answer or why there wasn't one (couldn't reach it, answer not understood, refuse
 An answer keeps the provider's own word, such as eSewa's `CANCELED`; each provider's `statuses`
 give that word a sentence for the team ("The payer cancelled at eSewa. Nothing was taken.").
 Every check adds a step, even with the same answer. `Payment.ask()` is the one place the site asks
-a provider: the return page uses it, and so will the team's check and the scheduled one (#198).
-The admin shows the history from #96's second part.
+a provider: the return page and the team's check on the pledge (below) use it, and so will the
+scheduled one (#198). It also keeps the provider's latest word on the payment (`Payment.word`), so
+the list of pledges can say one **needs checking** without reading every step: a provider's
+`needs_checking` names its words that mean a person must look, such as eSewa's `PARTIAL_REFUND`.
+The pledge's page in the admin shows the history (Pledges in the admin, below).
 
 **Which providers are offered** is each installation's own setting: a provider is offered once all
 its keys are set ([Running the live site](../hosting.md#paying-pledges-online)), and only for the
@@ -345,9 +349,15 @@ taken; a migration removed it wherever it hadn't been changed.
 **Pledges** in the admin menu lists every pledge: when it was sent, the name, amount, how often,
 the appeal and its **payment** (waiting, **to confirm** for a QR payment the supporter says they
 made, paid or failed; **Paid (test)** when a provider's test
-system took it, which anyone can do with a public test account, so no money moved). The team can
-filter (by how often, appeal, payment, each consent and date), search by name or email, open one
-to read it, and export the list to CSV or Excel. Each pledge has a six-digit **pledge number**
+system took it, which anyone can do with a public test account, so no money moved; **Needs
+checking** when a person must look: money received for an amount the pledge doesn't ask for, or a
+provider saying it refunded part of a payment, `Pledge.needs_checking()`). The list, the export
+and the pledge's page say the same. The team can
+filter (by how often, appeal, payment, each consent and date), open one
+to read it, and export the list to CSV or Excel. **Search** finds a pledge by name, email or
+mobile number, and by anything on a line of a provider's or bank's statement: a payment's
+reference (with or without its hyphens), the provider's ID for it, its transaction ID or the one
+the supporter gave. Each pledge has a six-digit **pledge number**
 (shown "482 913"), picked at random when it's saved, which the supporter gives when paying in person
 and the team can search for with or without its space. It's never a way in: the pay page stays at
 the pledge's reference. The list and the export show it. The export adds when each pledge was paid and
@@ -356,6 +366,44 @@ statements, marked "(test)" when it ran in a provider's test system and no money
 supporter typed that a spreadsheet would run as a formula (it starts with `=`) is exported as
 text, with a `'` in front in a CSV file
 ([Security](../contributing/security.md#exports-show-what-visitors-typed-as-text)).
+
+**A pledge's page** (`PledgeInspectView`, `campaigns/admin/pledge_inspect.html`) leads with what
+the team acts on, in Wagtail's own panels and status tags so it looks like the rest of the admin:
+
+- **At the top:** the amount, how often and the appeal ("Wherever it's needed most" for none),
+  when it was sent and its pledge number, then its payment status with one sentence on how or why
+  not: "Paid with eSewa on 14 Oct 2026, 3:42 p.m., transaction 000AWEO" (adding "Made in eSewa's
+  test system: no money moved." for a test), what the supporter sent for one to confirm, when an
+  unfinished payment started, the provider's sentence for a failed one ("The payer cancelled at
+  eSewa. Nothing was taken."), "Not paid online yet.", or why it needs checking.
+- **Contact:** email and mobile number as `mailto:` and `tel:` links, the address and postcode;
+  an empty one isn't shown.
+- **Message and consents:** the supporter's message, marked as a quote, then each consent on its
+  own line with a tick or a cross after "Email updates: Yes" or "Show on website: No". The tick
+  and cross are in the text colour, not green and red: "No" is the supporter's choice, not an
+  error.
+- **Payments**, newest first, with the site's time zone named once ("Times are Asia/Kathmandu
+  time (UTC+5:45)"), as a timeline: a line down the left with each payment a circle on it,
+  holding Wagtail's arrow, and its details under the line beside it. The paid one, or else the
+  latest, is open; every other one is a line that opens on tap. Each shows when it started; for a provider's, whether it was live or in the test
+  system, our reference, the provider's ID and its transaction ID; for a QR payment, the code, the
+  supporter's transaction ID and screenshot, and the reference from the statement. Then **What
+  happened**, its steps in order with seconds, each in plain words ("Sent to eSewa.", "Came back
+  to the site.", the provider's sentence for its answer) with the provider's own word and who did
+  it beneath. A payment from before steps were recorded says "Steps weren't recorded for payments
+  started before version 0.5.0", with when it was last updated.
+
+Left out, as nobody acts on them: the internal ID, the Donate page, the submission ID and the pay
+page's address, which would let whoever reads it pay the pledge. The page fetches the pledge, its
+payments, their steps and who did them in a fixed number of queries, however many there are.
+
+**Check with eSewa now** (or Khalti, or any provider) shows under a payment that's waiting, or
+failed after reaching the provider (it may still turn out paid), when the provider is set up for
+the system the payment was made in. Anyone who can read pledges can press it: it asks the provider
+through `Payment.ask()`, just as the pay page does, adds the answer as a step with their name, and
+says what the provider answered. It never marks a payment by hand, and it's refused within 30
+seconds of the last time anyone asked about that payment, as each ask can wait up to 10 seconds for
+the provider ([Security](../contributing/security.md#a-payment-is-paid-only-when-its-provider-says-so)).
 
 Nobody adds or edits a pledge (they come from supporters), and only a superuser can delete one:
 it holds personal details, and a pledge deleted by accident loses the record of a donation. Not

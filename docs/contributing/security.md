@@ -65,6 +65,17 @@ anyone can type it; a test sends a forged return and checks that nothing changes
   error's text can quote the provider's reply, which can hold the payer's ID or phone number, so it
   goes only to the log. `Payment.ask()` is the one place the site asks a provider and records
   what it said, so this rule lives in one place; tests check an error's text is never stored.
+  The payment keeps only the latest of those words (`Payment.word`), so the list of pledges can
+  say one needs checking without reading every step.
+- **The team's check asks the provider, never decides.** **Check with eSewa now** on a pledge
+  is a POST (with Django's CSRF token) for anyone who can read pledges. It goes through
+  `Payment.ask()` like the return page, and only for a payment of that pledge (another pledge's
+  number in the address is a 404). It's refused within 30 seconds of the last time anyone asked
+  about that payment (`ASK_AGAIN_AFTER`, read from its steps, so no shared cache is needed): each
+  ask can hold a server worker for up to 10 seconds while the provider answers.
+- **The pay page's address never shows in the admin.** A pledge's `reference` lets whoever holds
+  it pay the pledge and read its summary, so the pledge's page leaves it out; a payment's own
+  reference, which the provider already has, is shown and can be searched for.
 - **Merchant keys live in the environment** (`DJANGO_PAYMENT_*`), never in git, the admin or the
   database. Providers keep them out of their `repr()` and logs.
 - **A provider's answer comes only from the provider.** `nepal_payments.http` never follows a

@@ -173,6 +173,9 @@ class TestCheck:
         assert outcome.status is status
         assert outcome.word == answer
 
+    def test_a_partial_refund_needs_a_person_to_look(self):
+        assert ESewa.needs_checking == {"PARTIAL_REFUND"}
+
     @pytest.mark.parametrize("total", [2500, "2500.0", "2,500.0"])
     def test_reads_the_amount_however_esewa_writes_it(self, provider_server, total):
         provider_server.answer(200, status_answer(total_amount=total))
