@@ -5,6 +5,7 @@ How a change gets from an issue to `main`, and the rules every change follows.
 ```{toctree}
 :maxdepth: 1
 
+reviews
 testing
 performance
 security
@@ -55,10 +56,16 @@ Before proposing a fix, feature or design, answer these in the proposal itself:
 - What does it cost each charity, now and at every upgrade?
 - Which test stops it coming back?
 
+**No new toolchain without agreement first.** A new language, file type or runtime in the repo or
+CI (JavaScript tests run by Node, say) is one more thing every maintainer has to understand and
+keep working. Propose it on the issue before building it, with what it catches, what it costs,
+and the option of no new tooling ("pytest can't catch this", said in the pull request); never
+bundle it into a fix.
+
 ## The workflow
 
-1. **Start from an issue** on the [project board](releases.md#the-project-board), and move it to
-   *In progress*.
+1. **Start from an issue** on the [project board](releases.md#the-project-board) with no
+   `needs:` label left: its [reviews](reviews.md) come first. Move it to *In progress*.
 2. **Branch from `main`:** one feature or fix per branch, named `feat/…`, `fix/…`, `docs/…` or
    `chore/…`.
 3. **Work test-first** ([Testing](testing.md)): a failing test, then the code that makes it pass.
@@ -77,7 +84,10 @@ Before proposing a fix, feature or design, answer these in the proposal itself:
    stacked on each other.
 8. **QA:** CI checks every page layout at six widths; the pull request lists what a person must
    check in the browser ([QA](testing.md#qa)).
-9. **The maintainer reviews and merges.**
+9. **Reviews:** the pull request gets `needs: code review`, and `needs: qa` or
+   `needs: security review` when it needs them. Each comes off when its review is done
+   ([Reviews](reviews.md)).
+10. **The maintainer merges** once CI is green and no `needs:` label is left.
 
 ## Commits
 
@@ -103,10 +113,13 @@ The pull request title follows the same format.
 ## Design rules
 
 - **Mobile first** for every page, block and component: [Look and feel](../site/look-and-feel.md).
+- **Small visual choices are cheap to change:** for a detail such as a switcher's style, give one
+  recommendation with its reason and ship it; a charity's request can change it later. Options
+  and prototypes are for layout that's expensive to change.
 - **Fast from the start:** query counts, image weight and behaviour at 320–1440px are measured
   for every new feature: [Performance](performance.md).
 - **Accessible:** [Look and feel](../site/look-and-feel.md#accessibility).
 - **Secure:** read [Security](security.md) before touching listings, documents,
   images, workflows or deployment.
-- **Demo data is fictional:** `brightwell.example` for the charity, `example.org` /
-  `example.com` for third parties ([Demo content](demo-content.md)).
+- **Demo data is fictional,** and every address in it is a reserved domain
+  ([Demo content](demo-content.md#the-charity-is-fictional)).

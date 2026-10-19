@@ -18,6 +18,7 @@ Labels:
 | `bug`, `enhancement`, `documentation` | Kind of change |
 | `accessibility`, `security` | Areas that need extra care in review |
 | `epic` | A feature track (below) |
+| `needs: …` | A review the issue or pull request still needs before work starts or it merges ([Reviews](reviews.md)) |
 
 ## Epics
 
@@ -139,6 +140,8 @@ Release a version as soon as the last issue in its milestone is closed.
      looks like. Fix what has drifted in this pull request, in a `docs:` commit of its own, and
      retake a screenshot when the page it shows has changed. Then set "Last verified against"
      in the [project map](../project-context.md) to `vX.Y.Z`.
+   - **run the release reviews** over the whole code ([Reviews](reviews.md#at-each-release)):
+     what they find becomes issues, like the docs check below;
    - **A bug the check finds in the code** (the code is wrong, not the page) becomes an issue.
      If it blocks the release, put the issue in this version's milestone and fix it before
      releasing: in a pull request of its own, test-first and with its `changelog.d/` file, then
@@ -161,7 +164,8 @@ Release a version as soon as the last issue in its milestone is closed.
    On the board, change the filters of the **Current version** and **Next version** views to the
    new milestones.
 6. **Deploy it** ([Deploy a change](../hosting.md#deploy-a-version)). The tag says exactly which
-   code is live.
+   code is live. Then check the live site against the version before it
+   ([Reviews](reviews.md#at-each-release)).
 7. **Update each charity still sending content** to this version's onboarding pack
    ([Onboarding a charity](onboarding.md#updating-a-charitys-guide-and-form)).
 
