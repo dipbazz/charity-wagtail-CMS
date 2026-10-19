@@ -111,6 +111,9 @@ class PaymentProvider(ABC):
     # who follow payments up, e.g. {"CANCELED": (Status.FAILED, "The payer cancelled at eSewa.")}.
     # A word not in here is an answer that can't be read.
     statuses: ClassVar[dict[str, tuple[Status, str]]] = {}
+    # The words in `statuses` that mean a person must look, such as a partial refund: some money
+    # was kept, so the payment is neither paid in full nor failed.
+    needs_checking: ClassVar[frozenset[str]] = frozenset()
 
     def __init__(self, *, live=False, **keys):
         """`live=True` takes real money; otherwise the provider's test system is used."""

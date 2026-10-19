@@ -1,13 +1,17 @@
+import datetime
 import re
+import uuid
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.db.models import Prefetch, Q
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.cache import add_never_cache_headers
 from django.utils.decorators import method_decorator
+from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
 from wagtail.admin.ui.tables import Column
 from wagtail.admin.views.generic import DeleteView, EditView, IndexView, InspectView
@@ -16,7 +20,7 @@ from wagtail.snippets.views.snippets import IndexView as SnippetIndexView
 from wagtail.snippets.views.snippets import SnippetViewSet
 
 from campaigns.forms import MAX_AMOUNT, MarkPaidForm
-from campaigns.models import Payment, Pledge, QRCode
+from campaigns.models import ASK_AGAIN_AFTER, Payment, PaymentStatus, Pledge, QRCode
 from core.exports import VisitorTextExportMixin
 from core.images import UPLOAD_CONTENT_TYPES
 
@@ -27,14 +31,26 @@ class PledgeIndexView(VisitorTextExportMixin, IndexView):
         return super().get_base_queryset().prefetch_related("payments")
 
     def search_queryset(self, queryset):
-        """Names and emails as typed, and a pledge number with or without its space ("482 913"
-        as it's shown and read out, "482913" as it's written in a payment's remarks)."""
+        """Names, emails and phone numbers as typed, a pledge number with or without its space
+        ("482 913" as it's shown and read out, "482913" as it's written in a payment's remarks),
+        and anything on a line of a provider's or bank's statement: a payment's reference (with
+        or without its hyphens), the provider's ID, or a transaction ID."""
         found = super().search_queryset(queryset)
-        if self.is_searching:
-            digits = re.sub(r"\s", "", self.search_query)
-            if re.fullmatch(r"\d{6}", digits):
-                found = found | queryset.filter(number=digits)
-        return found
+        if not self.is_searching:
+            return found
+        typed = self.search_query.strip()
+        digits = re.sub(r"\s", "", typed)
+        if re.fullmatch(r"\d{6}", digits):
+            found = found | queryset.filter(number=digits)
+        payments = (
+            Q(provider_id=typed)
+            | Q(provider_reference__iexact=typed)
+            | Q(supporters_reference__iexact=typed)
+        )
+        if re.fullmatch(r"[0-9a-fA-F]{32}", typed.replace("-", "")):
+            payments |= Q(reference=uuid.UUID(typed.replace("-", "")))
+        paid = Payment.objects.filter(payments).values("pledge_id")
+        return found | queryset.filter(pk__in=paid)
 
 
 class PledgeEditView(EditView):
@@ -79,18 +95,90 @@ class PledgeDeleteView(DeleteView):
 CONFIRM_PERMISSION = "campaigns.confirm_payment"
 
 
+def when(moment):
+    """A time as the pledge's page shows it, in the site's time zone: "14 Oct 2026, 3:38 p.m."."""
+    return date_format(timezone.localtime(moment), "j M Y, g:i a")
+
+
+def time_zone_name():
+    """The site's time zone, named once on the pledge's page: "Asia/Kathmandu time (UTC+5:45)"."""
+    offset = timezone.localtime().utcoffset()
+    sign = "-" if offset < datetime.timedelta(0) else "+"
+    hours, seconds = divmod(abs(int(offset.total_seconds())), 3600)
+    return f"{timezone.get_current_timezone_name()} time (UTC{sign}{hours}:{seconds // 60:02d})"
+
+
+def paid_how(payment):
+    """The provider or QR code a payment was made with."""
+    return payment.qr_name or payment.get_method_display()
+
+
+def payment_reason(pledge, payments):
+    """The sentence after the pledge's payment status (Pledge.payment_display()) at the top of
+    its page: how it was paid, or why it isn't. `payments` are its payments, newest first."""
+    if reason := pledge.needs_checking():
+        return reason
+    if paid := pledge.paid_payment():
+        made = f"with {paid_how(paid)} on {when(pledge.paid_at or paid.updated_at)}"
+        if paid.provider_reference:
+            made += f", transaction {paid.provider_reference}"
+        if not paid.live:
+            made += f". Made in {paid.get_method_display()}'s test system: no money moved."
+        return made
+    if claimed := next((p for p in payments if p.status == PaymentStatus.TO_CONFIRM), None):
+        sent = f"The supporter says they paid by {paid_how(claimed)}"
+        if claimed.supporters_reference:
+            sent += f", transaction {claimed.supporters_reference}"
+        if claimed.receipt:
+            sent += ", and sent a screenshot of the receipt"
+        return f"{sent}. Find it in your statement, then mark it paid or not found."
+    if not payments:
+        return "Not paid online yet."
+    latest = payments[0]
+    if latest.status == PaymentStatus.WAITING:
+        return f"Started with {paid_how(latest)} on {when(latest.created_at)}, not confirmed yet."
+    if latest.team_confirms:
+        return f"Your team couldn't find the payment by {paid_how(latest)} in its statement."
+    if not latest.reached_provider():
+        return f"The payment couldn't start at {paid_how(latest)}, so no money was taken."
+    return latest.word_sentence() or f"{paid_how(latest)} didn't confirm the payment."
+
+
 class PledgeInspectView(InspectView):
-    """The pledge, then its payments with what happened to each. A payment the team confirms (a
-    QR payment) is marked paid or not found here, by people who may confirm payments."""
+    """The pledge as the team acts on it: who, how much and whether it's paid; the contact
+    details; the message and consents; then its payments with what happened to each. A payment
+    the team confirms (a QR payment) is marked paid or not found here, by people who may confirm
+    payments; one a provider answers for can be checked with the provider."""
 
     template_name = "campaigns/admin/pledge_inspect.html"
 
+    def get_page_subtitle(self):
+        return self.object.name  # the amount and how often lead the page
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["payments"] = self.object.payments.prefetch_related("steps__by")
-        context["can_confirm"] = self.request.user.has_perm(CONFIRM_PERMISSION)
-        context["today"] = timezone.localdate()
-        context["max_amount"] = MAX_AMOUNT
+        # Fetched once and shared, so the answer, the payments and their steps make no more
+        # queries however many there are.
+        pledge = Pledge.objects.prefetch_related(
+            Prefetch("payments", Payment.objects.prefetch_related("steps__by"))
+        ).get(pk=self.object.pk)
+        payments = list(pledge.payments.all())
+        paid = pledge.paid_payment()
+        word = pledge.payment_display()
+        context.update(
+            pledge=pledge,
+            payments=payments,
+            # The paid one is open, or else the latest; every other one is folded.
+            open_payment=paid or (payments[0] if payments else None),
+            payment_word=word,
+            # Filled in for paid, so it stands out from the states that need something done.
+            payment_word_class="w-status--primary" if word.startswith("Paid") else "",
+            payment_reason=payment_reason(pledge, payments),
+            time_zone=time_zone_name(),
+            can_confirm=self.request.user.has_perm(CONFIRM_PERMISSION),
+            today=timezone.localdate(),
+            max_amount=MAX_AMOUNT,
+        )
         return context
 
 
@@ -134,7 +222,39 @@ class PledgeViewSet(ModelViewSet):
                 self.receipt_view,
                 name="receipt",
             ),
+            path(
+                "<int:pk>/payments/<int:payment_pk>/check/",
+                self.check_view,
+                name="check",
+            ),
         ]
+
+    @method_decorator(require_POST)
+    def check_view(self, request, pk, payment_pk):
+        """Check with <provider> now: asks the provider about the payment as the pay page does,
+        for anyone who can read pledges, and adds the answer to its steps with their name. Not
+        again within ASK_AGAIN_AFTER: each ask can wait for the provider."""
+        if not request.user.has_perm("campaigns.view_pledge"):
+            raise PermissionDenied
+        payment = get_object_or_404(Payment, pk=payment_pk, pledge_id=pk)
+        name = payment.get_method_display()
+        if not payment.can_be_checked():
+            messages.error(request, f"This payment can't be checked with {name}.")
+        elif payment.asked_recently():
+            messages.warning(
+                request,
+                f"{name} was asked less than {ASK_AGAIN_AFTER.seconds} seconds ago. Wait a "
+                "moment, then check again.",
+            )
+        elif outcome := payment.ask(by=request.user):
+            said = payment.word_sentence()
+            messages.success(request, said or f"{name} says it's {outcome.status}.")
+        else:
+            messages.error(
+                request,
+                f"{payment.steps.last().sentence()} Try again in a few minutes.",
+            )
+        return redirect(reverse("pledges:inspect", args=[pk]))
 
     @staticmethod
     def confirmable_payment(request, pk, payment_pk):
@@ -222,7 +342,7 @@ class PledgeViewSet(ModelViewSet):
         "show_on_website",
         "created_at",
     ]
-    search_fields = ["name", "email", "number"]
+    search_fields = ["name", "email", "phone", "number"]
     search_backend_name = None  # plain database search; pledges aren't in the site search index
 
     list_export = [
@@ -240,7 +360,7 @@ class PledgeViewSet(ModelViewSet):
         "message",
         "email_updates",
         "show_on_website",
-        "get_payment_status_display",
+        "payment_display",
         "paid_at",
         "paid_with",
     ]
@@ -250,7 +370,7 @@ class PledgeViewSet(ModelViewSet):
         "get_frequency_display": "How often",
         "email_updates": "Email updates",
         "show_on_website": "Show on website",
-        "get_payment_status_display": "Payment",
+        "payment_display": "Payment",
         "paid_at": "Paid",
         "paid_with": "Paid with",
     }

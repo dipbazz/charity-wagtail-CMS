@@ -64,6 +64,7 @@ class ESewa(PaymentProvider):
     test_login = {"id": "9711111111", "password": "Nepal@123", "otp": "123456"}
     order = 10
     statuses = STATUSES
+    needs_checking = frozenset({"PARTIAL_REFUND"})
     # eSewa refuses a transaction_uuid it has seen: "Duplicate transaction UUID."
     opens_once = True
 
