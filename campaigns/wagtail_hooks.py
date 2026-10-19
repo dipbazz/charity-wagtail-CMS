@@ -48,4 +48,16 @@ def register_pledge_viewset():
     return PledgeViewSet()
 
 
+@hooks.register("register_log_actions")
+def register_gift_actions(actions):
+    """The team taking a gift's page for friends down and putting it back (#100), as the pledge's
+    history names them."""
+    actions.register_action(
+        "campaigns.stop_showing", "Stop showing on the website", "Stopped showing on the website"
+    )
+    actions.register_action(
+        "campaigns.show_again", "Show again on the website", "Shown again on the website"
+    )
+
+
 register_snippet(QRCodeViewSet)

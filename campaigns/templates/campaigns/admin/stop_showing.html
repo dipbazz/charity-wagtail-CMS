@@ -1,0 +1,14 @@
+{% extends "wagtailadmin/generic/base.html" %}
+
+{# Asked first: the supporter can't put their page back themselves (#100). #}
+{% block titletag %}Stop showing {{ pledge.name }}'s gift on the website{% endblock %}
+
+{% block main_content %}
+    <p>Their page for friends will say "page not found" at once, and their name won't be shown anywhere on the website. Anyone they've shared it with is sent to the appeal instead.</p>
+    <p>They won't be able to show it again themselves: their thank-you page will ask them to call you. Only your team can show it again, from this pledge.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="button serious">Yes, stop showing it</button>
+        <a href="{% url 'pledges:inspect' pledge.pk %}" class="button button-secondary">No, keep showing it</a>
+    </form>
+{% endblock %}

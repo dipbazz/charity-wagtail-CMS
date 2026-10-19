@@ -49,6 +49,8 @@ def assert_denied(response):
         ("core.unlock_testimonial", False, True),
         ("core.change_sitesettings", False, True),
         ("simple_translation.submit_translation", True, True),
+        # Taking a gift's page for friends down, and putting it back (#100).
+        ("campaigns.stop_showing_gift", True, True),
     ],
 )
 def test_groups_have_the_agreed_permissions(editor, moderator, permission, editors, moderators):
@@ -169,3 +171,17 @@ def test_translation_migration_reuses_the_permission_an_existing_database_alread
     assert Permission.objects.count() == permission_count
     editor = django_user_model.objects.get(pk=editor.pk)
     assert editor.has_perm("simple_translation.submit_translation")
+
+
+def test_gift_migration_reuses_the_permission_an_existing_database_already_has(
+    django_user_model, editor
+):
+    migration = importlib.import_module("campaigns.migrations.0017_gift_sharing")
+    Group.objects.get(name="Editors").permissions.clear()
+    permission_count = Permission.objects.count()
+
+    migration.grant_permissions(apps, schema_editor=None)
+
+    assert Permission.objects.count() == permission_count
+    editor = django_user_model.objects.get(pk=editor.pk)
+    assert editor.has_perm("campaigns.stop_showing_gift")
