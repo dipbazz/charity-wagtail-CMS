@@ -193,6 +193,18 @@ class TestMessageAndConsents:
         assert "Email updates: Yes" in shown
         assert "Show on website: No" in shown
 
+    def test_each_consent_on_its_own_line_with_a_tick_or_a_cross(self, client, team, pledge):
+        """A shape to scan by as well as the word, never colour alone (WCAG 1.4.1): "No" is the
+        supporter's choice, not an error, so it isn't red."""
+        consents = section(open_page(client, pledge), "Message and consents").select(
+            ".pledge-consents li"
+        )
+
+        assert [(text(c), c.svg.use["href"]) for c in consents] == [
+            ("Email updates: Yes", "#icon-check"),
+            ("Show on website: No", "#icon-cross"),
+        ]
+
     def test_a_message_is_shown_as_text(self, client, team, pledge):
         """Anyone can send a pledge, so what they type never runs on the team's page."""
         Pledge.objects.filter(pk=pledge.pk).update(message="<script>alert(1)</script>")
@@ -251,6 +263,14 @@ class TestPayments:
         attempts = section(open_page(client, pledge), "Payments").select("details")
 
         assert [a.has_attr("open") for a in attempts] == [False, True]
+
+    def test_each_payments_line_shows_it_opens(self, client, team, pledge):
+        """Wagtail's own arrow, as on everything else that folds in the admin."""
+        pledge.start_payment("esewa", live=False)
+
+        line = section(open_page(client, pledge), "Payments").select_one("details summary")
+
+        assert line.svg.use["href"] == "#icon-arrow-right"
 
     def test_the_latest_is_open_when_none_is_paid(self, client, team, pledge):
         pledge.start_payment("esewa", live=False).record(Status.FAILED)

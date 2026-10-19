@@ -4,29 +4,42 @@
 {% block fields_output %}
     {# A few rules on top of Wagtail's own styles, in its colours, so dark mode still works: fields as label and value side by side on a wide screen, long references wrapping on a phone, and the email and phone links and a payment's line big enough to tap. #}
     <style>
-        .pledge-record dl { display: grid; align-items: baseline; gap: 0.25rem 1.5rem; margin: 0 0 1rem; }
+        .pledge-record { margin-top: 1.5rem; }
+        .pledge-record dl { display: grid; align-items: baseline; gap: 0 1.5rem; margin: 0 0 1rem; }
         .pledge-record dt { font-weight: 600; }
-        .pledge-record dd { margin: 0 0 0.5rem; overflow-wrap: anywhere; }
-        .pledge-record .contact-link { display: inline-flex; align-items: center; min-height: 2.75rem; }
-        .pledge-record summary { padding-block: 0.75rem; cursor: pointer; overflow-wrap: anywhere; }
-        {# Wagtail hides the browser's own arrow; a screen reader already says open or closed. #}
-        .pledge-record summary::before { content: "▸" / ""; display: inline-block; width: 1.25em; }
-        .pledge-record details[open] > summary::before { content: "▾" / ""; }
+        .pledge-record dt:not(:first-child) { margin-top: 1rem; }
+        .pledge-record dd { margin: 0; overflow-wrap: anywhere; }
+        {# A 44px tap area that takes no more room than a line of text, so a link's row is spaced like the address's: the negative margin gives back what the height adds. #}
+        .pledge-record .contact-link { display: inline-flex; align-items: center; min-height: 2.75rem; margin-block: calc((1lh - 2.75rem) / 2); }
+        .pledge-record blockquote { margin: 0 0 1rem 0.25rem; padding: 0.5rem 0.75rem; border-inline-start: 4px solid var(--w-color-border-furniture); background: var(--w-color-surface-field-inactive); }
+        .pledge-record blockquote p { margin: 0 0 0.5rem; }
+        .pledge-record blockquote p:last-child { margin: 0; }
+        .pledge-consents { list-style: none; margin: 0; padding: 0; }
+        .pledge-consents li { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
+        .pledge-record .icon { width: 1rem; height: 1rem; flex: none; }
+        .pledge-record summary { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.75rem 0.5rem; cursor: pointer; overflow-wrap: anywhere; }
+        .pledge-record summary:hover, .pledge-record summary:focus-visible { background: var(--w-color-surface-field-inactive); }
+        .pledge-record summary .icon { align-self: center; color: var(--w-color-text-link-default); }
+        {# Wagtail hides the browser's own arrow; its icon turns down when open, and a screen reader already says open or closed. #}
+        .pledge-record details[open] > summary .icon { transform: rotate(90deg); }
         .pledge-record details { border-top: 1px solid var(--w-color-border-furniture); padding-block: 0.5rem; }
         .pledge-record .payment-steps li { margin-bottom: 0.5rem; overflow-wrap: anywhere; }
         .pledge-record .payment-steps small { display: block; }
         .pledge-record form { margin-block: 1rem; }
         .pledge-lead p { margin: 0 0 0.25rem; }
+        .pledge-lead .pledge-amount { font-size: 1.25rem; font-weight: 700; }
+        .pledge-lead .pledge-sent { color: var(--w-color-text-meta); font-size: 0.875rem; }
+        {# Wide enough for a label beside its value. The rows are spaced so one 44px link doesn't reach into the next. #}
         @media (min-width: 50rem) {
-            .pledge-record dl { grid-template-columns: max-content 1fr; }
-            .pledge-record dd { margin: 0; }
+            .pledge-record dl { grid-template-columns: max-content 1fr; row-gap: 1.25rem; }
+            .pledge-record dt:not(:first-child) { margin-top: 0; }
         }
     </style>
 
     <div class="pledge-record">
         <div class="pledge-lead">
-            <p><strong>{{ pledge.display_amount }} · {{ pledge.get_frequency_display }} · {% if pledge.appeal %}{{ pledge.appeal.title }}{% else %}Wherever it's needed most{% endif %}</strong></p>
-            <p>Sent {{ pledge.created_at|date:"j M Y, g:i a" }} · Pledge number {{ pledge.display_number }}</p>
+            <p class="pledge-amount">{{ pledge.display_amount }} · {{ pledge.get_frequency_display }} · {% if pledge.appeal %}{{ pledge.appeal.title }}{% else %}Wherever it's needed most{% endif %}</p>
+            <p class="pledge-sent">Sent {{ pledge.created_at|date:"j M Y, g:i a" }} · Pledge number {{ pledge.display_number }}</p>
         </div>
         {# The answer to "is it paid?", as the list says it, and why. #}
         <p class="pledge-answer">{% status payment_word classname=payment_word_class %} {{ payment_reason }}</p>
@@ -56,7 +69,11 @@
             {% else %}
                 <p>No message.</p>
             {% endif %}
-            <p>Email updates: {{ pledge.email_updates|yesno:"Yes,No" }} · Show on website: {{ pledge.show_on_website|yesno:"Yes,No" }}</p>
+            {# A tick or a cross beside the word, in the text colour: "No" is the supporter's choice, not an error. #}
+            <ul class="pledge-consents">
+                <li>{% icon name=pledge.email_updates|yesno:"check,cross" %} Email updates: {{ pledge.email_updates|yesno:"Yes,No" }}</li>
+                <li>{% icon name=pledge.show_on_website|yesno:"check,cross" %} Show on website: {{ pledge.show_on_website|yesno:"Yes,No" }}</li>
+            </ul>
         {% endpanel %}
 
         {% if payments %}{% fragment as payments_heading %}Payments ({{ payments|length }}){% endfragment %}{% else %}{% fragment as payments_heading %}Payments{% endfragment %}{% endif %}
@@ -70,7 +87,7 @@
                 {% with name=payment.get_method_display %}
                     {# Newest first: the paid one, or else the latest, is open; every other one is a line that opens on tap. #}
                     <details{% if payment == open_payment %} open{% endif %}>
-                        <summary>{% firstof payment.qr_name name %} · {{ payment.display_amount }} · {{ payment.get_status_display }}{% if not payment.live %} (test){% endif %} · {{ payment.created_at|date:"j M Y, g:i a" }}</summary>
+                        <summary>{% icon name="arrow-right" %}<span>{% firstof payment.qr_name name %} · {{ payment.display_amount }} · {{ payment.get_status_display }}{% if not payment.live %} (test){% endif %} · {{ payment.created_at|date:"j M Y, g:i a" }}</span></summary>
                         <dl>
                             <dt>Started</dt>
                             <dd>{{ payment.created_at|date:"j M Y, g:i a" }}</dd>
