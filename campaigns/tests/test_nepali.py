@@ -387,3 +387,67 @@ class TestTheQRPageInNepali:
         labels = [b["aria-label"] for b in soup(qr_page).select("button[data-copy-value]")]
 
         assert labels[0] == "रकम प्रतिलिपि गर्नुहोस्"
+
+
+# The consent to show a gift (#100), in Nepali as a whole sentence: the gift's page and the recent
+# supporters list may show no more than it says.
+SHOW_GIFT_HELP_NE = (
+    "तपाईंले भुक्तानी गरेको कुरा हामीलाई बताएपछि, हामी तपाईंको नाम, अपिल र मिति तपाईंले साझा गर्न "
+    "सक्ने एउटा पृष्ठमा र हालका सहयोगीहरूको सूचीमा देखाउनेछौं; रकम भने तपाईंको दान हामीले पाएपछि "
+    "मात्र देखाइनेछ। तपाईंको अरू कुनै जानकारी देखाइने छैन।"
+)
+
+
+class TestSharingInNepali:
+    """The consent, the share section and the gift's page for friends (#100)."""
+
+    @pytest.fixture(autouse=True)
+    def charity(self, site):
+        site.site_name = "Brightwell"
+        site.save()
+
+    @pytest.fixture
+    def gift(self, nepali_donate_page):
+        from campaigns.tests.test_sharing import pledge_in
+
+        return pledge_in("paid", nepali_donate_page)
+
+    def test_the_pledge_forms_consent(self, client, nepali_donate_page):
+        assert SHOW_GIFT_HELP_NE in visible_text(client.get(nepali_donate_page.url))
+
+    def test_the_share_section_with_no_english_left(self, client, nepali_donate_page, gift):
+        response = client.get(f"{nepali_donate_page.url}pay/{gift.reference}/")
+        text = visible_text(response)
+
+        for nepali in [
+            "अरूले पनि सहयोग गर्न सक्छन्",
+            "हाम्रो कामलाई अझै सहयोग चाहिएको छ। तपाईंले साथीहरूलाई भन्नुभयो भने, उनीहरूको दानले "
+            "पनि सहयोग गर्न सक्छ।",
+            "मेरो दान यस वेबसाइटमा देखाउनुहोस्",
+            SHOW_GIFT_HELP_NE,
+            "सुरक्षित गर्नुहोस्",
+            "साथीहरूलाई भन्नुहोस्",
+            "व्हाट्सएप",
+            "फेसबुक",
+        ]:
+            assert nepali in text
+        for english in ["Others can help too", "Tell your friends", "Save", "Show my gift"]:
+            assert english not in text
+
+    def test_the_message_friends_get(self, client, nepali_donate_page, gift):
+        response = client.get(f"{nepali_donate_page.url}pay/{gift.reference}/")
+
+        share = soup(response).find("button", attrs={"data-share": True})
+        assert share["data-share-text"] == (
+            "मैले भर्खरै Brightwell लाई दान दिएँ। उनीहरूलाई अझै सहयोग चाहिएको छ। सक्नुहुन्छ भने, "
+            "तपाईं पनि दान दिन सक्नुहुन्छ:"
+        )
+
+    def test_the_gifts_page_with_no_english_left(self, client, nepali_donate_page, gift):
+        text = visible_text(client.get(f"{nepali_donate_page.url}gifts/{gift.gift_code}/"))
+
+        assert "Asha Gurung ले Brightwell लाई सहयोग गर्दै हुनुहुन्छ" in text
+        assert "मा Rs 2,500 दान दिनुभयो" in text
+        assert "दान दिनुहोस्" in text
+        for english in ["is supporting", "Gave", "Give"]:
+            assert english not in text
