@@ -308,8 +308,10 @@ chat;** we will show you a safe way.
 
 ### 6.4 Thanking supporters
 
-Later, the home page can thank recent supporters by name. Only supporters who tick "show my name"
-when they give are ever shown.
+After paying, a supporter can share a page about their gift with their friends, with a button for
+the friends to give too. Later, the home page can also thank recent supporters by name. Only
+supporters who tick "Show my gift on this website" are ever shown, and your team can take any gift's
+page down from the pledge in the admin.
 
 ---
 

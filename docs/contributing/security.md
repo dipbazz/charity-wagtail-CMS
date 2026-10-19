@@ -159,6 +159,14 @@ form submissions) goes through `core.exports.VisitorTextExportMixin`: an Excel f
 in a text cell, shown as typed, and a CSV file puts `'` in front of it. A new export of visitors'
 text puts the mixin first among its view's bases.
 
+## A pay page's address is never shown or shared
+
+A pledge's pay page is at its reference, and whoever has that address can pay the pledge and change
+whether the gift is shown. So it never leaves the supporter's own browser: the admin leaves it out,
+and every share goes to the gift's own page, at a separate random gift code, or to the appeal
+(`campaigns/sharing.py`, [Sharing a gift](../site/appeals-and-giving.md#sharing-a-gift)). Tests
+check that no share link, and nothing on the gift's page, carries it.
+
 ## Supporters' personal data stays with the team
 
 Pledges and form submissions hold names, contact details and consents. Who can see them, what each

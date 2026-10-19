@@ -29,6 +29,10 @@ the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is Eng
   site stores, including the receipt screenshot a QR payment can come with (seen only by the team
   who check payments, kept until checked and 30 days at most, not backed up). It says it's example
   text to replace before going live.
+- One **shared gift**: Asha Gurung's Rs 1,500 to Clean water for Kisumu, paid in eSewa's test
+  system, with her (fictional) agreement to show it, so the thank-you page and the gift's page for
+  friends can be seen, and are in the layout and query budget checks. Its page says "Test gift: no
+  money was taken".
 - One **QR code**, "Sample Pay", with a card the script draws itself: it has none of a QR code's
   corner squares, so no app can scan it and the demo never sends a gift anywhere. It makes the
   QR page visible on the demo and in the layout checks.

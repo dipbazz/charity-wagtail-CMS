@@ -173,10 +173,12 @@ own reference and amount. What the browser brings back is never read, because an
 change it. Then the **online page** shows one of three things (the choices send a pledge in one of
 the last two straight there, where the check is):
 
-- **Paid:** thanks ("Your gift of Rs 2,500 has reached us") with the provider's reference. A
-  monthly gift says "This month's gift … has reached us. We'll be in touch about next month.",
-  and a test payment says first "Test payment completed. No money was taken." It leads to the
-  appeals page, or to the home page on a site without one.
+- **Paid:** thanks ("Your gift of Rs 2,500 has reached us"), then what the gift does ("It pays
+  for a hygiene kit for a family.", [Sharing a gift](#sharing-a-gift)), then the provider's
+  reference. A monthly gift says "This month's gift … has reached us. We'll be in touch about next
+  month.", and a test payment says first "Test payment completed. No money was taken." and nothing
+  about what it pays for. Then **Others can help too**, the invitation to share, and a plain link
+  to the appeals page, or to the home page on a site without one.
 - **Failed or cancelled:** "eSewa says your payment didn't go through.", with "If money has left
   your account, don't pay again", the charity's phone, a **Check my eSewa payment** button and the
   pay buttons again. It doesn't say no money was taken: eSewa can say "not found" before it says
@@ -305,10 +307,10 @@ your payment, say from a tab opened before it started) goes to the online page i
 
 | State | What it shows |
 |---|---|
-| To confirm | The **checking page** (`…/checking/`), which every pay address and **Pay with** go to (`HELD`): "Thank you. You've told us you paid Rs 2,500 by eSewa on 15 October …", what they sent ("You sent us the transaction ID …", "… and a screenshot of the receipt", or "You sent us a screenshot of the receipt"), "Questions? Call us and give your pledge number, 482 913:" with the charity's phone, "There's nothing more to do here" and the appeals link (or the home page). The thanks says the gift, so there's no summary, and nothing else can be paid until the team marks it paid or not found: no steps, no QR, no **Pay another way**. Title "Checking your payment". Opened in any other state, it goes to the pay page. A later way the team checks by hand gets this page too |
+| To confirm | The **checking page** (`…/checking/`), which every pay address and **Pay with** go to (`HELD`): "Thank you. You've told us you paid Rs 2,500 by eSewa on 15 October …", what they sent ("You sent us the transaction ID …", "… and a screenshot of the receipt", or "You sent us a screenshot of the receipt"), then **Others can help too** ([Sharing a gift](#sharing-a-gift)), "Questions? Call us and give your pledge number, 482 913:" with the charity's phone, "There's nothing more to do here" and a plain link to the appeals (or the home page). The thanks says the gift, so there's no summary, and nothing else can be paid until the team marks it paid or not found: no steps, no QR, no **Pay another way**. Title "Checking your payment". Opened in any other state, it goes to the pay page. A later way the team checks by hand gets this page too |
 | Not found | A problem message: "We haven't found your payment yet. If money has left your account, don't pay again", with the phone. The QR and I've paid are folded under "I didn't pay: scan the QR code", and **Pay another way** is open |
-| Paid | Thanks, with the reference the team entered, on every pay address |
-| Received a different amount | "We received Rs 2,000 from you by eSewa." |
+| Paid | Thanks, with the reference the team entered, and the invitation to share, on every pay address |
+| Received a different amount | "We received Rs 2,000 from you by eSewa.", and the invitation to share |
 
 The choices send a pledge in To confirm to the checking page, and one in Not found to the QR
 page (`STATE_ROUTES`).
@@ -343,6 +345,71 @@ charity has QR codes; "you can pay in person." with no provider; or, with no way
 taken on the website yet and the charity will be in touch. The editors' **payment notice** follows it, for anything a charity wants to add, such as
 bank details for a transfer. Until #93 every Donate page had a default notice saying no payment was
 taken; a migration removed it wherever it hadn't been changed.
+
+## Sharing a gift
+
+Supporters sharing their own gift is how a charity reaches new people: friends see someone they
+know give, and give too (#100). So once a supporter has told us they've paid, the thanks (and the
+checking page, while the team checks a QR payment) end with **Others can help too**
+(`pay/includes/share.html`). A pledge that's waiting, failed or not found offers nothing: it isn't a
+gift yet. One rule decides what's shown and shared, `campaigns/sharing.py`, which the recent
+supporters list (#99) will use too.
+
+**What the thanks say the gift does** comes from what editors already wrote, so there's nothing new
+to fill in: the appeal's suggested amount that matches what was received ("It pays for a hygiene kit
+for a family.", the editor's words starting lower case unless the first word is in capitals), else
+the appeal's summary. For wherever it's needed most, the Donate page's matching amount, else "It
+helps wherever the need is greatest." A test payment says nothing of it: no money moved.
+
+**Others can help too** is an invitation, not showing off. In order:
+
+- One sentence about the cause: "Clean water for Kisumu still needs support. If you tell your
+  friends, their gifts can help as well."; once the appeal has reached its target, "… has reached
+  its target. Your friends can still help: every gift goes further."; for wherever it's needed most
+  or a closed appeal, "Our work still needs support. …".
+- The pledge form's own consent, **Show my gift on this website**, with the same help text, ticked
+  if they agreed on the form, and **Save** (outlined). Saving (`…/show-gift/`) reloads the page at
+  the section, moves focus to its heading and says "Your page for friends is ready" (or "… has been
+  taken down"). It's refused, changing nothing, before they've told us they've paid and while the
+  team has taken the page down; the box is then replaced by "Our team has taken your page down. If
+  you'd like it back, call us:" and the charity's phone. When they ticked or unticked it, on the
+  form or here, is kept (`show_on_website_changed_at`).
+- **Tell your friends**: the phone's own share sheet (Web Share), so WhatsApp, Viber, Messenger and
+  Instagram are all there. It's shown only where the browser has one (most phones, few desktops).
+- **WhatsApp**, **Facebook** and **Copy link**, a row of text links at least 44px tall, which work
+  without the share sheet; Copy link needs JavaScript, and says "Copied" or, if the browser won't
+  copy, gives the link to copy by hand. Links open in the same tab. No third-party scripts.
+
+**What's shared:** with consent, the gift's page (below); without it, or once it's down, the appeal,
+or the Donate page for wherever it's needed most (a private or unpublished appeal counts as that),
+with no name. Never the pay page: its address pays the pledge. The message names the appeal and the
+charity and never the amount: "I've just given to Clean water for Kisumu with Brightwell. They still
+need help. If you can, you could give too:", without "They still need help." once the target is
+reached or the appeal has closed.
+
+**The gift's page** (`/donate/gifts/<code>/`) is under the Donate page the pledge was sent from, at
+the pledge's **gift code**: 72 random bits, never the reference and never a number to count up from.
+It's laid out like an appeal: "Asha is supporting Clean water for Kisumu" (or "… is supporting
+Brightwell"), "Gave Rs 1,500 on 18 October 2026" ("Gives Rs 500 a month"), the appeal's summary,
+progress and photo, **Give to this appeal** (the Donate page with the appeal chosen) and "Read about
+this appeal". It's kept out of search (`noindex`) and has its own link preview: base.html's
+`social_meta` block, which the page fills with its own address, title, the summary and the appeal's
+social image (else the Donate page's). It shows nothing else about the supporter.
+
+| State | Thanks or checking page | The gift's page |
+|---|---|---|
+| Paid, appeal open | As above | As above |
+| Appeal closed | No change | "This appeal closed on …", **Give where it's needed most**, and "See our open appeals" when any are open: a friend always has a way to give |
+| No appeal, or a private or unpublished one | Wherever it's needed most | "… is supporting Brightwell", **Give** |
+| Test payment | As usual | "Test gift: no money was taken" first |
+| QR payment being checked | The share section on the checking page | The name, no amount: "Paid by QR on 18 October 2026. Our team is checking it." |
+| Received a different amount | As usual | The amount received |
+| QR not found; waiting, failed or not confirmed | Nothing to share | Page not found |
+| Consent withdrawn, or taken down by the team | Box unticked, or the note to call | Page not found; shares go to the appeal |
+
+**Accepted risk:** while a QR payment is being checked, the name typed on the form is public, so
+until spam protection (#104) someone could put any name on a page under the charity's name. The
+team's **Stop showing on the website** (below) takes it down at once.
 
 ## Pledges in the admin
 
@@ -381,7 +448,8 @@ the team acts on, in Wagtail's own panels and status tags so it looks like the r
 - **Message and consents:** the supporter's message, marked as a quote, then each consent on its
   own line with a tick or a cross after "Email updates: Yes" or "Show on website: No". The tick
   and cross are in the text colour, not green and red: "No" is the supporter's choice, not an
-  error.
+  error. With "Show on website: Yes", a link to **Their page for friends** while it's up, and
+  **Stop showing on the website** (below).
 - **Payments**, newest first, with the site's time zone named once ("Times are Asia/Kathmandu
   time (UTC+5:45)"), as a timeline: a line down the left with each payment a circle on it,
   holding Wagtail's arrow, and its details under the line beside it. The paid one, or else the
@@ -404,6 +472,14 @@ through `Payment.ask()`, just as the pay page does, adds the answer as a step wi
 says what the provider answered. It never marks a payment by hand, and it's refused within 30
 seconds of the last time anyone asked about that payment, as each ask can wait up to 10 seconds for
 the provider ([Security](../contributing/security.md#a-payment-is-paid-only-when-its-provider-says-so)).
+
+**Stop showing on the website** takes a gift's page for friends down at once, for a made-up name,
+say ([Sharing a gift](#sharing-a-gift)). Editors and moderators can press it (**Can stop showing a
+gift on the website**, `campaigns/migrations/0017_gift_sharing.py`), after a page that asks first.
+It sticks: the supporter's box is replaced by a note to call, and only the team's **Show again**
+puts it back, if the supporter still agrees. Both are logged in the pledge's history, which opens
+for anyone who can read pledges (`PledgeHistoryView`), and the pledge's page links to it as "Who
+took it down, and when".
 
 Nobody adds or edits a pledge (they come from supporters), and only a superuser can delete one:
 it holds personal details, and a pledge deleted by accident loses the record of a donation. Not
@@ -435,8 +511,12 @@ Each consent means exactly what its words say, and nothing more:
   nothing else.
 - **Email updates** (`email_updates`): only email supporters who ticked it, and give every email
   a way to stop (sending is planned under #81).
-- **Show my gift on this website** (`show_on_website`): the only consent to list a supporter in
-  public, and then only their name, amount, appeal and date, once the gift has arrived (#99).
+- **Show my gift on this website** (`show_on_website`): the only consent to show a supporter in
+  public, on their gift's page for friends (#100) and in the recent supporters list (#99), in its
+  own words: "Once you've told us you've paid, we'll show your name, the appeal and the date on a
+  page you can share, and in our list of recent supporters; the amount once your gift reaches us.
+  Nothing else about you is shown." `campaigns/sharing.py` holds that rule, and the team can take
+  a gift down whatever was ticked.
 - **The message** may hold personal details (who a gift is in memory of). It's for the team only
   and is never shown on the site.
 - **Payment providers** get nothing about the supporter from the site: only the amount, our

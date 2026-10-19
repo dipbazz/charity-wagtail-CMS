@@ -169,6 +169,7 @@ Every full URL (feed, sitemap, canonical, API) comes from the Wagtail Site recor
 | `/donate/?appeal=<slug>&amount=<n>` | The Donate page with an appeal and amount preselected ([Appeals and giving](appeals-and-giving.md#donate-page)) |
 | `/donate/thank-you/` | Where a sent pledge lands when the site has no way to pay; opening or reloading it saves nothing |
 | `/donate/pay/<reference>/` | A pledge's pay page: the ways to pay, each on its own page under it ([Appeals and giving](appeals-and-giving.md#paying-a-pledge)) |
+| `/donate/gifts/<code>/` | A paid gift's page for friends, while its supporter agrees to show it ([Appeals and giving](appeals-and-giving.md#sharing-a-gift)) |
 | `/stories/tag/…`, `/stories/category/…`, `/stories/feed/` | News listings and the RSS feed, under the news page's address |
 | `/documents/<id>/<filename>` | Document downloads, through Wagtail's view, which checks a private collection's password or login |
 | `/media/<path>` | Uploads, when Django serves them; never documents ([Security](../contributing/security.md)) |
