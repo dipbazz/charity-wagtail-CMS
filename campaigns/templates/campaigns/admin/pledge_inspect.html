@@ -17,12 +17,15 @@
         .pledge-consents { list-style: none; margin: 0; padding: 0; }
         .pledge-consents li { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
         .pledge-record .icon { width: 1rem; height: 1rem; flex: none; }
-        .pledge-record summary { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.75rem 0.5rem; cursor: pointer; overflow-wrap: anywhere; }
+        {# The payments as a timeline: a line down the left, each payment a circle on it, and its details under the line beside its own, so an open payment's details read as part of it. #}
+        .payment-timeline { margin-inline-start: 0.75rem; padding-inline-start: 1.25rem; border-inline-start: 2px solid var(--w-color-border-furniture); }
+        .payment-timeline details { padding-block: 0.25rem 0.75rem; }
+        .pledge-record summary { position: relative; display: flex; padding: 0.75rem 0.5rem; cursor: pointer; overflow-wrap: anywhere; }
         .pledge-record summary:hover, .pledge-record summary:focus-visible { background: var(--w-color-surface-field-inactive); }
-        .pledge-record summary .icon { align-self: center; color: var(--w-color-text-link-default); }
+        {# Centred on the line (its padding, then half the circle and half the line) and on the summary's first line of text. #}
+        .payment-node { position: absolute; inset-inline-start: calc(-2rem - 1px); top: calc(0.75rem + 0.5lh - 0.75rem); display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border: 2px solid var(--w-color-border-furniture); border-radius: 50%; background: var(--w-color-surface-page); color: var(--w-color-text-link-default); }
         {# Wagtail hides the browser's own arrow; its icon turns down when open, and a screen reader already says open or closed. #}
         .pledge-record details[open] > summary .icon { transform: rotate(90deg); }
-        .pledge-record details { border-top: 1px solid var(--w-color-border-furniture); padding-block: 0.5rem; }
         .pledge-record .payment-steps li { margin-bottom: 0.5rem; overflow-wrap: anywhere; }
         .pledge-record .payment-steps small { display: block; }
         .pledge-record form { margin-block: 1rem; }
@@ -69,10 +72,10 @@
             {% else %}
                 <p>No message.</p>
             {% endif %}
-            {# A tick or a cross beside the word, in the text colour: "No" is the supporter's choice, not an error. #}
+            {# A tick or a cross after the word, in the text colour: "No" is the supporter's choice, not an error. #}
             <ul class="pledge-consents">
-                <li>{% icon name=pledge.email_updates|yesno:"check,cross" %} Email updates: {{ pledge.email_updates|yesno:"Yes,No" }}</li>
-                <li>{% icon name=pledge.show_on_website|yesno:"check,cross" %} Show on website: {{ pledge.show_on_website|yesno:"Yes,No" }}</li>
+                <li>Email updates: {{ pledge.email_updates|yesno:"Yes,No" }} {% icon name=pledge.email_updates|yesno:"check,cross" %}</li>
+                <li>Show on website: {{ pledge.show_on_website|yesno:"Yes,No" }} {% icon name=pledge.show_on_website|yesno:"check,cross" %}</li>
             </ul>
         {% endpanel %}
 
@@ -83,11 +86,12 @@
             {% else %}
                 <p>No online payment yet.</p>
             {% endif %}
+            <div class="payment-timeline">
             {% for payment in payments %}
                 {% with name=payment.get_method_display %}
                     {# Newest first: the paid one, or else the latest, is open; every other one is a line that opens on tap. #}
                     <details{% if payment == open_payment %} open{% endif %}>
-                        <summary>{% icon name="arrow-right" %}<span>{% firstof payment.qr_name name %} · {{ payment.display_amount }} · {{ payment.get_status_display }}{% if not payment.live %} (test){% endif %} · {{ payment.created_at|date:"j M Y, g:i a" }}</span></summary>
+                        <summary><span class="payment-node">{% icon name="arrow-right" %}</span><span>{% firstof payment.qr_name name %} · {{ payment.display_amount }} · {{ payment.get_status_display }}{% if not payment.live %} (test){% endif %} · {{ payment.created_at|date:"j M Y, g:i a" }}</span></summary>
                         <dl>
                             <dt>Started</dt>
                             <dd>{{ payment.created_at|date:"j M Y, g:i a" }}</dd>
@@ -184,6 +188,7 @@
                     </details>
                 {% endwith %}
             {% endfor %}
+            </div>
         {% endpanel %}
     </div>
 {% endblock %}

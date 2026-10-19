@@ -372,12 +372,13 @@ the team acts on, in Wagtail's own panels and status tags so it looks like the r
 - **Contact:** email and mobile number as `mailto:` and `tel:` links, the address and postcode;
   an empty one isn't shown.
 - **Message and consents:** the supporter's message, marked as a quote, then each consent on its
-  own line with a tick or a cross beside "Email updates: Yes" or "Show on website: No". The tick
+  own line with a tick or a cross after "Email updates: Yes" or "Show on website: No". The tick
   and cross are in the text colour, not green and red: "No" is the supporter's choice, not an
   error.
 - **Payments**, newest first, with the site's time zone named once ("Times are Asia/Kathmandu
-  time (UTC+5:45)"). The paid one, or else the latest, is open; every other one is a line with
-  Wagtail's arrow that opens on tap. Each shows when it started; for a provider's, whether it was live or in the test
+  time (UTC+5:45)"), as a timeline: a line down the left with each payment a circle on it,
+  holding Wagtail's arrow, and its details under the line beside it. The paid one, or else the
+  latest, is open; every other one is a line that opens on tap. Each shows when it started; for a provider's, whether it was live or in the test
   system, our reference, the provider's ID and its transaction ID; for a QR payment, the code, the
   supporter's transaction ID and screenshot, and the reference from the statement. Then **What
   happened**, its steps in order with seconds, each in plain words ("Sent to eSewa.", "Came back
