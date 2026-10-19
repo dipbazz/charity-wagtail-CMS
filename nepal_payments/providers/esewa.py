@@ -56,6 +56,7 @@ SIGNED_FIELDS = ("total_amount", "transaction_uuid", "product_code")
 class ESewa(PaymentProvider):
     code = "esewa"
     name = "eSewa"
+    logo = "esewa.png"  # from eSewa's developer site, for use on white (Logomark Guidelines)
     currencies = frozenset({"NPR"})
     keys = ("PRODUCT_CODE", "SECRET_KEY")
     # eSewa publishes these for its test system ("UAT"). A form signed with them is accepted

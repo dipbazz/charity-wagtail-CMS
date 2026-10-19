@@ -6,6 +6,7 @@ README.md.
 """
 
 from nepal_payments.base import (
+    LOGOS,
     Outcome,
     PaymentError,
     PaymentProvider,
@@ -20,6 +21,7 @@ from nepal_payments.base import (
 from nepal_payments.registry import all_providers, get_provider, register
 
 __all__ = [
+    "LOGOS",
     "Outcome",
     "PaymentError",
     "PaymentProvider",

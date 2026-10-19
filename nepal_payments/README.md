@@ -75,6 +75,35 @@ it to anyone.
 Every provider can say which payments it takes, so a page can offer only those that apply:
 `Khalti.accepts("NPR", Decimal(5))` is `False` (Khalti's minimum is Rs 10).
 
+## Logos
+
+Every provider brings its own logo, so a page can show it on the provider's button and a payer
+finds their app at a glance. `ESewa.logo_file()` is its path. The files are in
+`static/payment-logos/` (`LOGOS`), a folder holding nothing else, so a web framework can serve it
+as it is: in Django, add `LOGOS.parent` to `STATICFILES_DIRS` and the logo is at
+`payment-logos/<file>`.
+
+Each is the provider's own, unchanged. Use them only to say a payment can be made with that
+provider, never recolour, stretch, crop, outline or add effects to them, and replace a file only
+with a newer one from the same source.
+
+| File | Source | Taken |
+|---|---|---|
+| `esewa.png` | `https://developer.esewa.com.np/assets/img/esewa-logo-dark.png`, the logo on eSewa's developer site (597 × 228, transparent) | 17 Oct 2026 |
+| `khalti.svg` | `https://khalti-static.s3.ap-south-1.amazonaws.com/cloudfront-cdn/jamara/web19/images/khalti-logo.svg`, the logo at the top of khalti.com (red, since the merger with IME Pay in 2025) | 17 Oct 2026 |
+
+**eSewa's rules** ([Logomark Guidelines](https://cdn.esewa.com.np/ui/notice/Logo_Guidelines.pdf)):
+the full-colour logo on white or a light background (green `#3cc850`, off-black `#111111`, the
+inside of the "e" always white), white only on a photo, never all black; clear space of about two
+small "e"s around it; never skewed, stretched, rotated, recoloured, outlined, shadowed or
+rearranged. In text the name is **eSewa** (**इसेवा** in Nepali), never "Esewa", "e-Sewa" or
+"ESEWA".
+
+**Khalti** publishes no logo guide since the merger, so the same care applies: unchanged, on
+white, with space around it. Its merchant terms ask merchants to show its logo. The "Khalti by
+IME" wordmark linked from khalti.com wasn't available (403) on 17 Oct 2026: take it when Khalti
+publishes brand assets.
+
 ## Add a provider
 
 1. **Create `providers/<code>.py`** with one `PaymentProvider` subclass:
@@ -94,6 +123,7 @@ Every provider can say which payments it takes, so a page can offer only those t
            "CANCELLED": (Status.FAILED, "The payer cancelled at IME Pay. Nothing was taken."),
        }
        needs_checking = frozenset()  # its words that mean a person must look, if any
+       logo = "imepay.svg"  # its own logo, unchanged, in static/payment-logos/ (see Logos)
 
        def start(self, request): ...  # return Started(Redirect(...), provider_id=...)
        def check(self, reference, amount, provider_id=""): ...  # return Outcome(...)
@@ -110,6 +140,7 @@ Every provider can say which payments it takes, so a page can offer only those t
    - it sends the payer only to an `https` page;
    - it gives every word in `statuses` a meaning and a sentence, and every word in
      `needs_checking` is one of them and never means paid;
+   - it brings its own logo, an SVG or PNG in `static/payment-logos/`;
    - it never says *paid* for an answer it can't read, and raises `UnreadableAnswer` for one;
    - it raises `ProviderUnavailable` when the gateway can't be reached;
    - its test mode never touches the live system.

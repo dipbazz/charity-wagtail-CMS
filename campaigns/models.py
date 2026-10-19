@@ -44,6 +44,7 @@ from campaigns.payments import (
     QR,
     QR_CURRENCIES,
     is_team_confirmed,
+    logo_for,
     method_choices,
     provider_for,
     providers_for,
@@ -646,8 +647,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         if way == ONLINE:
             latest = next(iter(pledge.payments.all()), None)  # newest first
             context |= {
-                # Codes and names, not the classes, which templates would try to call.
-                "providers": [(provider.code, provider.name) for provider in providers],
+                # Codes, names and logos, not the classes, which templates would try to call.
+                "providers": [
+                    (provider.code, provider.name, logo_for(provider)) for provider in providers
+                ],
                 # Before a charity goes live its real supporters can still get here.
                 "test_mode": not settings.LIVE_PAYMENTS,
                 "latest": latest,

@@ -89,6 +89,15 @@ def pay_buttons(response):
     return [button.get_text(strip=True) for button in soup(response).select("form button")]
 
 
+def pay_button(response, label):
+    """The button that reads `label`, logo and all."""
+    return next(
+        button
+        for button in soup(response).select("form button")
+        if button.get_text(strip=True) == label
+    )
+
+
 @pytest.fixture
 def office(site):
     """An office to pay at, from Site settings: paying in person is offered."""
@@ -544,10 +553,35 @@ class TestPayPage:
     def test_offers_each_provider_set_up_here(self, client, donate_page, pledge):
         response = client.get(online_url(donate_page, pledge))
 
-        form = soup(response).find("button", string="Pay with Fake Pay").find_parent("form")
+        form = pay_button(response, "Pay with Fake Pay").find_parent("form")
         assert form["method"] == "post"
         assert form["action"] == f"{online_url(donate_page, pledge)}fakepay/"
         assert form.find("input", attrs={"name": "csrfmiddlewaretoken"})
+
+    def test_each_pay_button_shows_its_providers_logo(self, client, donate_page, settings):
+        """So a supporter finds their app at a glance, not by reading each button (#201)."""
+        settings.PAYMENT_KEYS = {
+            "ESEWA_PRODUCT_CODE": "EPAYTEST",
+            "ESEWA_SECRET_KEY": "test-secret",
+            "KHALTI_SECRET_KEY": "test-key",
+        }
+        send_pledge(client, donate_page)
+        response = client.get(online_url(donate_page, Pledge.objects.get()))
+
+        logos = {name: pay_button(response, f"Pay with {name}").img for name in ("eSewa", "Khalti")}
+
+        assert logos["eSewa"]["src"] == "/static/payment-logos/esewa.png"
+        assert (logos["eSewa"]["width"], logos["eSewa"]["height"]) == ("597", "228")
+        assert logos["Khalti"]["src"] == "/static/payment-logos/khalti.svg"
+
+    def test_a_screen_reader_hears_the_name_once(self, client, donate_page, pledge):
+        """The words name the button, so the logo says nothing: "Pay with Fake Pay", not "Fake
+        Pay, Pay with Fake Pay"."""
+        button = pay_button(client.get(online_url(donate_page, pledge)), "Pay with Fake Pay")
+
+        assert button.img["alt"] == ""
+        # The label is apart from the logo, so the busy text replaces it and keeps the logo.
+        assert button.select_one("[data-busy-label]").get_text(strip=True) == "Pay with Fake Pay"
 
     def test_names_whose_page_the_payer_will_pay_on(self, client, donate_page, pledge, settings):
         settings.PAYMENT_KEYS = {**settings.PAYMENT_KEYS, "KHALTI_SECRET_KEY": "test-key"}
@@ -1270,14 +1304,14 @@ class TestComingBack:
         assert "button-large" in check["class"]
         assert folded.find("summary").get_text(strip=True) == "I didn't pay: choose a way to pay"
         assert not folded.has_attr("open")
-        assert folded.find("button", string="Pay with Fake Pay")
+        assert folded.find(string="Pay with Fake Pay").find_parent("button")
         assert check in folded.find_all_previous("a")
 
     def test_with_nothing_to_check_the_pay_buttons_are_open(self, client, donate_page, pledge):
         page = soup(client.get(online_url(donate_page, pledge)))
 
         assert page.find("details") is None
-        assert page.find("button", string="Pay with Fake Pay")
+        assert page.find(string="Pay with Fake Pay").find_parent("button")
 
     def test_once_paid_the_provider_isnt_asked_again(
         self, client, donate_page, payment, fake_provider

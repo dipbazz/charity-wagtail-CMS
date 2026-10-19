@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from pathlib import Path
 
+from nepal_payments import LOGOS
+
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = PROJECT_DIR.parent
 
@@ -180,6 +182,9 @@ STATICFILES_FINDERS = [
 
 STATICFILES_DIRS = [
     PROJECT_DIR / "static",
+    # Each payment provider's logo, from the providers' own package, as payment-logos/<file>
+    # (#201). Its parent, not a prefix: Django's prefixes don't match on Windows.
+    LOGOS.parent,
 ]
 
 STATIC_ROOT = BASE_DIR / "static"

@@ -129,7 +129,14 @@ When Site settings give a **refund policy**, every unpaid pay page shows it unde
 headed "Refunds", so a supporter reads it before choosing to pay. With none set, the pages say
 nothing about refunds: no site states a policy its charity hasn't.
 
-- **Pay online:** a button for each provider set up here, in their order (eSewa, then Khalti). The
+- **Pay online:** a button for each provider set up here, in their order (eSewa, then Khalti), one
+  under another: full width on a phone, then no wider than 24rem. Each shows the provider's own
+  logo before "Pay with eSewa" (#201), so a supporter finds their app at a glance. The buttons are
+  white with a border in the brand colour and the page's text colour, so the logos sit on the
+  white they were drawn for (eSewa's guidelines ask for it) and the text reads on every charity's
+  site; every logo has the same 5.25rem × 2rem box, so the words line up. The logo is decorative
+  (`alt=""`), so a screen reader hears "Pay with eSewa" once. Logos come with the providers
+  (`nepal_payments`, Logos), so a charity sets nothing up. The
   supporter pays on the provider's own page and is sent back here. Khalti's page is a link;
   eSewa's takes a signed form, which the site keeps on the payment and sends from its own page
   (`/donate/payment/<reference>/go/`), reached by a redirect after the button's POST. Back from

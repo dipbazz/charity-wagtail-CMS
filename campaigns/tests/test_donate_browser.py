@@ -241,7 +241,7 @@ class TestPayPage:
     ):
         """On a slow connection the provider's page can take seconds: the buttons say so, and
         tapping again doesn't start a second payment. Back from the provider (a page restored
-        from the browser's cache) gives working buttons again."""
+        from the browser's cache) gives working buttons again. The logo stays throughout."""
         site_page.route(
             "https://pay.example.com/**",
             lambda route: route.fulfill(status=200, content_type="text/html", body="Fake Pay"),
@@ -252,7 +252,11 @@ class TestPayPage:
             """() => {
                 const read = () => ({
                     labels: [...document.querySelectorAll(".payment-options button")].map(
-                        (button) => [button.textContent.trim(), button.disabled],
+                        (button) => [
+                            button.textContent.trim(),
+                            button.disabled,
+                            button.querySelector("img") !== null,
+                        ],
                     ),
                     busy: document.querySelector(".payment-options").ariaBusy,
                     status: document.querySelector("[data-busy-status]").textContent.trim(),
@@ -266,12 +270,17 @@ class TestPayPage:
             }"""
         )
 
+        # The logo stays while it's opening, and after Back (#201).
         assert busy == {
-            "labels": [["Opening Fake Pay…", True]],
+            "labels": [["Opening Fake Pay…", True, True]],
             "busy": "true",
             "status": "Opening Fake Pay…",
         }
-        assert restored == {"labels": [["Pay with Fake Pay", False]], "busy": None, "status": ""}
+        assert restored == {
+            "labels": [["Pay with Fake Pay", False, True]],
+            "busy": None,
+            "status": "",
+        }
         site_page.wait_for_url("https://pay.example.com/fakepay/")
         assert Pledge.objects.get().payments.count() == 1
 

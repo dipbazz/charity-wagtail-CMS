@@ -33,6 +33,7 @@ class FakePay(PaymentProvider):
     name = "Fake Pay"
     keys = ("SECRET_KEY",)
     min_amount = Decimal(10)
+    logo = "esewa.png"  # any real logo, so its pay button draws one
     statuses = {
         "DONE": (Status.PAID, "Fake Pay says it's paid."),
         "PENDING": (Status.WAITING, "Fake Pay hasn't finished the payment yet."),

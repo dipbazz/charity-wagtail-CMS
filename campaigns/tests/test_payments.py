@@ -3,9 +3,11 @@
 import re
 import uuid
 from decimal import Decimal
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from django.contrib.staticfiles import finders
 from django.core import checks
 from django.db import IntegrityError
 from django.utils import timezone
@@ -14,6 +16,7 @@ from campaigns.models import Payment, PaymentStatus, PaymentStep, Pledge, StepKi
 from campaigns.payments import (
     check_payment_keys,
     is_team_confirmed,
+    logo_for,
     method_choices,
     provider_for,
     providers_for,
@@ -92,6 +95,38 @@ class TestProvidersOffered:
     def test_a_methods_name_isnt_a_provider(self):
         """Nothing can be asked about a QR payment, and nobody can start one with a provider."""
         assert provider_for("qr") is None
+
+
+class TestLogos:
+    """Each provider's logo, as its pay button shows it (#201)."""
+
+    @pytest.mark.parametrize(
+        ("provider", "address", "size"),
+        [
+            (ESewa, "/static/payment-logos/esewa.png", (597, 228)),
+            (Khalti, "/static/payment-logos/khalti.svg", (412, 206)),
+        ],
+    )
+    def test_its_address_and_size(self, provider, address, size):
+        """The size goes on the <img>, so nothing on the page moves while it loads."""
+        logo = logo_for(provider)
+
+        assert logo["url"] == address
+        assert (logo["width"], logo["height"]) == size
+
+    def test_is_served_as_a_static_file(self):
+        """From the provider's own folder, so a new provider's logo needs no copy anywhere."""
+        found = finders.find("payment-logos/esewa.png")
+
+        assert found and Path(found) == ESewa.logo_file()
+
+    def test_an_svg_without_a_size_is_measured_by_its_view_box(self, tmp_path, monkeypatch):
+        logo = tmp_path / "plain.svg"
+        logo.write_text('<svg viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg"></svg>')
+        plain = type("Plain", (ESewa,), {"logo": "plain.svg"})
+        monkeypatch.setattr(plain, "logo_file", classmethod(lambda cls: logo))
+
+        assert (logo_for(plain)["width"], logo_for(plain)["height"]) == (300, 100)
 
 
 def office(address="", phone="", takes_gifts_in_person=True):

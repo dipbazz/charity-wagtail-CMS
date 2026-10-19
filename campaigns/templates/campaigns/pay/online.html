@@ -50,10 +50,11 @@
             {# One sentence, not a box: the buttons stay where they are, and no test account is given away. #}
             <p>{% blocktranslate %}You'll pay on the secure page of {{ pay_with }}, then come back here.{% endblocktranslate %}{% if test_mode %} {% translate "Online payments are in test mode here: no money will be taken." %}{% endif %}</p>
             <div class="payment-options">
-                {% for code, name in providers %}
+                {% for code, name, logo in providers %}
                     <form method="post" action="{% routablepageurl page 'start_payment' pledge.reference code %}">
                         {% csrf_token %}
-                        <button class="button button-large" type="submit" data-busy-text="{% blocktranslate with provider=name %}Opening {{ provider }}…{% endblocktranslate %}">{% blocktranslate with provider=name %}Pay with {{ provider }}{% endblocktranslate %}</button>
+                        {# The provider's own logo, so a supporter finds their app at a glance; silent, as the words name the button. The words in their own element, so the busy text keeps the logo (donate.js). #}
+                        <button class="button button-large pay-provider" type="submit" data-busy-text="{% blocktranslate with provider=name %}Opening {{ provider }}…{% endblocktranslate %}"><img src="{{ logo.url }}" alt="" width="{{ logo.width }}" height="{{ logo.height }}"><span data-busy-label>{% blocktranslate with provider=name %}Pay with {{ provider }}{% endblocktranslate %}</span></button>
                     </form>
                 {% endfor %}
             </div>

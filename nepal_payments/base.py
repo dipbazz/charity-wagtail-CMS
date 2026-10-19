@@ -9,7 +9,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import StrEnum
+from pathlib import Path
 from typing import ClassVar
+
+# Every provider's logo, one file each, as the provider publishes it: a folder holding nothing
+# else, so a web framework can serve it as it is (README.md, Logos).
+LOGOS = Path(__file__).parent / "static" / "payment-logos"
 
 
 class Status(StrEnum):
@@ -114,6 +119,9 @@ class PaymentProvider(ABC):
     # The words in `statuses` that mean a person must look, such as a partial refund: some money
     # was kept, so the payment is neither paid in full nor failed.
     needs_checking: ClassVar[frozenset[str]] = frozenset()
+    # Its logo, unchanged from the provider's own: the name of an SVG or PNG file in LOGOS, so a
+    # payer can pick it out at a glance.
+    logo: ClassVar[str] = ""
 
     def __init__(self, *, live=False, **keys):
         """`live=True` takes real money; otherwise the provider's test system is used."""
@@ -128,6 +136,11 @@ class PaymentProvider(ABC):
 
     def __repr__(self):
         return f"<{type(self).__name__} {'live' if self.live else 'test'}>"
+
+    @classmethod
+    def logo_file(cls):
+        """The path of its logo."""
+        return LOGOS / cls.logo
 
     @classmethod
     def describe(cls, word):
