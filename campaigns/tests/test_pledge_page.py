@@ -502,7 +502,13 @@ class TestStopShowingOnTheWebsite:
         assert response.status_code == 302
         assert response.url == inspect_url(gift)
         assert Pledge.objects.get(pk=gift.pk).hidden_by_team
-        assert self.gift_page(client, gift).status_code == 404
+        assert self.gift_page(client, gift).status_code == 302  # to the appeal
+
+    def test_says_where_friends_go_now(self, client, team, gift):
+        response = client.get(reverse("pledges:stop_showing", args=[gift.pk]))
+
+        assert "page not found" not in response.content.decode()
+        assert "goes to the appeal" in text(BeautifulSoup(response.content, "html.parser"))
 
     def test_says_so_on_the_pledge(self, client, team, gift):
         client.post(reverse("pledges:stop_showing", args=[gift.pk]))

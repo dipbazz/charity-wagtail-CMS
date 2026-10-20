@@ -275,28 +275,44 @@ class TestTheAppealsState:
 
 
 class TestAGiftNotShown:
-    """Page not found, so a name is never left up once it shouldn't be."""
+    """Its address goes to the appeal, else the Donate page, so a name is never left up once it
+    shouldn't be, and a friend with a link shared before can still give. Not for good: it may
+    be shown again."""
 
     @pytest.mark.parametrize("state", ["ready", "check-first", "failed", "not-found"])
-    def test_until_theyve_told_us_theyve_paid(self, client, donate_page, state):
-        gift = pledge_in(state, donate_page)
+    def test_until_theyve_told_us_theyve_paid(self, client, donate_page, appeal, state):
+        gift = pledge_in(state, donate_page, appeal)
 
-        assert client.get(gift_path(donate_page, gift)).status_code == 404
+        response = client.get(gift_path(donate_page, gift))
 
-    def test_without_consent(self, client, donate_page):
-        gift = pledge_in("paid", donate_page, show=False)
+        assert response.status_code == 302
+        assert response["Location"] == "/appeals/flood-relief/"
 
-        assert client.get(gift_path(donate_page, gift)).status_code == 404
+    def test_without_consent(self, client, donate_page, appeal):
+        gift = pledge_in("paid", donate_page, appeal, show=False)
+
+        assert client.get(gift_path(donate_page, gift))["Location"] == "/appeals/flood-relief/"
 
     def test_once_the_supporter_withdraws_it(self, client, donate_page, gift):
         Pledge.objects.filter(pk=gift.pk).update(show_on_website=False)
 
-        assert client.get(gift_path(donate_page, gift)).status_code == 404
+        assert client.get(gift_path(donate_page, gift))["Location"] == "/appeals/flood-relief/"
 
     def test_once_the_team_takes_it_down(self, client, donate_page, gift):
         Pledge.objects.filter(pk=gift.pk).update(hidden_by_team=True)
 
-        assert client.get(gift_path(donate_page, gift)).status_code == 404
+        response = client.get(gift_path(donate_page, gift))
+
+        assert response.status_code == 302
+        assert response["Location"] == "/appeals/flood-relief/"
+        assert "Asha" not in client.get(response["Location"]).content.decode()
+
+    @pytest.mark.parametrize("how", ["private", "none"])
+    def test_without_an_appeal_to_show_the_donate_page(self, client, donate_page, appeals, how):
+        appeal = CampaignPage.objects.get(slug="trustees") if how == "private" else None
+        gift = pledge_in("paid", donate_page, appeal, hidden_by_team=True)
+
+        assert client.get(gift_path(donate_page, gift))["Location"] == "/donate/"
 
     def test_for_an_unknown_code(self, client, donate_page):
         assert client.get(f"{donate_page.url}gifts/not-a-gift-code/").status_code == 404

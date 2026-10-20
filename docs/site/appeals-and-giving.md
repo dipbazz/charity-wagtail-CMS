@@ -406,8 +406,12 @@ social image (else the Donate page's). It shows nothing else about the supporter
 | Test payment | As usual | "Test gift: no money was taken" first |
 | QR payment being checked | The share section on the checking page | The name, no amount: "Paid by QR on 18 October 2026. Our team is checking it." |
 | Received a different amount | As usual | The amount received |
-| QR not found; waiting, failed or not confirmed | Nothing to share | Page not found |
-| Consent withdrawn, or taken down by the team | Box unticked, or the note to call | Page not found; shares go to the appeal |
+| QR not found; waiting, failed or not confirmed | Nothing to share | Goes to the appeal |
+| Consent withdrawn, or taken down by the team | Box unticked, or the note to call | Goes to the appeal, as shares do |
+
+A gift's page that isn't shown goes (302, as it may be shown again) to the appeal, or the Donate
+page for wherever it's needed most: a friend with a link shared before can still give, and sees no
+name. An unknown code is page not found.
 
 **Accepted risk:** while a QR payment is being checked, the name typed on the form is public, so
 until spam protection (#104) someone could put any name on a page under the charity's name. The

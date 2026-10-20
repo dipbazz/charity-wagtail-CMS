@@ -650,12 +650,14 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         """A gift's public page, which its supporter shares with friends (#100): their name, the
         appeal and what they gave, and a way for friends to give too. Its address is the
         pledge's gift code, never its reference, which pays it. It shows only what
-        campaigns/sharing.py allows, and isn't found otherwise."""
+        campaigns/sharing.py allows. Otherwise it goes where a share would now send friends (the
+        appeal, else this page), so a link shared before still leads somewhere to give: not for
+        good, as it may be shown again."""
         pledge = self.get_pledge(gift_code=code)
         view = sharing.gift_view(pledge)
-        if view == sharing.HIDDEN:
-            raise Http404("No gift to show here.")
         appeal = sharing.appeal_shown(pledge)
+        if view == sharing.HIDDEN:
+            return HttpResponseRedirect((appeal or self).get_url(request))
         paid = pledge.paid_payment()
         if paid:
             given_on = pledge.paid_at or paid.updated_at

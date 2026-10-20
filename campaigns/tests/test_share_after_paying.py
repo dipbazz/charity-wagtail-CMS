@@ -292,7 +292,7 @@ class TestSavingIt:
 
         assert Pledge.objects.get(pk=pledge.pk).show_on_website is False
         assert "Your page for friends has been taken down." in page.get_text()
-        assert client.get(f"{donate_page.url}gifts/{pledge.gift_code}/").status_code == 404
+        assert client.get(f"{donate_page.url}gifts/{pledge.gift_code}/").status_code == 302
 
     def test_saving_the_same_choice_keeps_when_it_was_made(self, client, donate_page):
         pledge = pledge_in("paid", donate_page)
@@ -344,7 +344,7 @@ class TestSavingIt:
 
         pledge.refresh_from_db()
         assert pledge.hidden_by_team is True
-        assert client.get(f"{donate_page.url}gifts/{pledge.gift_code}/").status_code == 404
+        assert client.get(f"{donate_page.url}gifts/{pledge.gift_code}/").status_code == 302
 
     def test_only_by_sending_the_form(self, client, donate_page):
         pledge = pledge_in("paid", donate_page, show=False)
