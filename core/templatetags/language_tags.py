@@ -49,6 +49,8 @@ def language_versions(context):
     page = context.get("page")
     if not isinstance(page, Page):
         page = None
+    # A route under the page, such as a gift's page under the Donate page: kept in each language.
+    subpath = context.get("language_subpath", "")
     home_key = site.root_page.translation_key
     keys = {home_key} if page is None else {home_key, page.translation_key}
     # One query for the home pages and the page's translations, in every language.
@@ -62,7 +64,7 @@ def language_versions(context):
 
     codes = [code for code in language_codes() if code in homes]
     if len(codes) < 2:
-        return LanguageVersions(alternates=hreflang_alternates(translations, request))
+        return LanguageVersions(alternates=hreflang_alternates(translations, request, subpath))
 
     names = dict(settings.LANGUAGES)
     current_language = translation.get_language()
@@ -74,10 +76,10 @@ def language_versions(context):
         if code == current_language:
             url = current_path
         elif code in translations:
-            url = translations[code].get_url(request)
+            url = translations[code].get_url(request) + subpath
         elif serves_a_view:
             url = translate_url(current_path, code)
         else:
             url = homes[code].get_url(request)
         links.append(LanguageLink(code, names[code], url, code == current_language))
-    return LanguageVersions(links, hreflang_alternates(translations, request))
+    return LanguageVersions(links, hreflang_alternates(translations, request, subpath))

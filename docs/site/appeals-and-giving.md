@@ -391,6 +391,8 @@ reached or the appeal has closed.
 
 **The gift's page** (`/donate/gifts/<code>/`) is under the Donate page the pledge was sent from, at
 the pledge's **gift code**: 72 random bits, never the reference and never a number to count up from.
+It reads in each language under that page's translation (`/ne/donate/gifts/<code>/`), with the
+appeal's translation, and the language switcher and `hreflang` links keep the gift.
 It's laid out like an appeal: "Asha is supporting Clean water for Kisumu" (or "… is supporting
 Brightwell"), "Gave Rs 1,500 on 18 October 2026" ("Gives Rs 500 a month"), the appeal's summary,
 progress and photo, **Give to this appeal** (the Donate page with the appeal chosen) and "Read about

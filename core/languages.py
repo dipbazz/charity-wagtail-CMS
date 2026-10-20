@@ -38,20 +38,23 @@ def in_reading_language(snippets):
     ]
 
 
-def hreflang_alternates(translations, request=None):
+def hreflang_alternates(translations, request=None, subpath=""):
     """The `hreflang` links for one page, given its live translations as {language code: page}.
 
     Each language's version, then `x-default` for the main language's, so search engines know the
     pages are one page in several languages. Empty for a page in one language only (#115).
+    `subpath` is a route under the page (a gift's page under the Donate page), the same in each.
     """
     if len(translations) < 2:
         return []
     alternates = [
-        (code, translations[code].get_full_url(request))
+        (code, translations[code].get_full_url(request) + subpath)
         for code in language_codes()
         if code in translations
     ]
     main_language = get_supported_content_language_variant(settings.LANGUAGE_CODE)
     if main_language in translations:
-        alternates.append(("x-default", translations[main_language].get_full_url(request)))
+        alternates.append(
+            ("x-default", translations[main_language].get_full_url(request) + subpath)
+        )
     return alternates

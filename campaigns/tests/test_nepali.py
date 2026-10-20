@@ -451,3 +451,36 @@ class TestSharingInNepali:
         assert "दान दिनुहोस्" in text
         for english in ["is supporting", "Gave", "Give"]:
             assert english not in text
+
+    def test_a_gift_given_in_english_reads_in_nepali(
+        self, client, donate_page, nepali_donate_page, nepali_appeal
+    ):
+        """Friends who switch language keep the gift, and read its appeal in their language."""
+        from campaigns.tests.test_sharing import pledge_in
+
+        nepali_appeal.title = "बाढी राहत"
+        nepali_appeal.save_revision().publish()
+        gift = pledge_in("paid", donate_page, nepali_appeal.get_translation(donate_page.locale))
+
+        page = soup(client.get(f"{nepali_donate_page.url}gifts/{gift.gift_code}/"))
+
+        assert page.h1.get_text(strip=True) == "Asha Gurung ले बाढी राहत मा सहयोग गर्दै हुनुहुन्छ"
+
+    def test_the_language_switcher_keeps_the_gift(self, client, donate_page, nepali_donate_page):
+        from campaigns.tests.test_sharing import pledge_in
+
+        gift = pledge_in("paid", donate_page)
+        path = f"gifts/{gift.gift_code}/"
+
+        page = soup(client.get(f"{donate_page.url}{path}"))
+
+        switcher = {a["hreflang"]: a["href"] for a in page.select(".language-switcher a")}
+        assert switcher == {
+            "en": f"{donate_page.url}{path}",
+            "ne": f"{nepali_donate_page.url}{path}",
+        }
+        alternates = {
+            link["hreflang"]: link["href"] for link in page.find_all("link", hreflang=True)
+        }
+        assert alternates["ne"] == f"http://localhost{nepali_donate_page.url}{path}"
+        assert alternates["x-default"] == f"http://localhost{donate_page.url}{path}"

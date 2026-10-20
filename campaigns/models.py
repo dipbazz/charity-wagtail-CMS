@@ -482,13 +482,16 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         qr_codes = self.qr_codes_for(pledge.currency, names)
         return providers, ways_to_pay(providers, site_settings, qr_codes), qr_codes
 
-    def get_pledge(self, **lookup):
+    def get_pledge(self, in_any_language=False, **lookup):
         """One of this page's pledges, by its reference (its pay page) or gift code (its gift's
-        page), with its appeal and payments."""
+        page), with its appeal and payments. `in_any_language`: sent from this page in any
+        language, as a gift's page reads in each."""
+        if in_any_language:
+            lookup["page__translation_key"] = self.translation_key
+        else:
+            lookup["page"] = self
         pledge = get_object_or_404(
-            Pledge.objects.select_related("appeal").prefetch_related("payments"),
-            page=self,
-            **lookup,
+            Pledge.objects.select_related("appeal").prefetch_related("payments"), **lookup
         )
         pledge.page = self  # it's this page: sharing reads it without fetching it again
         return pledge
@@ -652,8 +655,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         pledge's gift code, never its reference, which pays it. It shows only what
         campaigns/sharing.py allows. Otherwise it goes where a share would now send friends (the
         appeal, else this page), so a link shared before still leads somewhere to give: not for
-        good, as it may be shown again."""
-        pledge = self.get_pledge(gift_code=code)
+        good, as it may be shown again. It reads in each language, the appeal too, so a friend
+        who switches language keeps the gift."""
+        pledge = self.get_pledge(in_any_language=True, gift_code=code)
+        if pledge.appeal and pledge.appeal.locale_id != self.locale_id:
+            pledge.appeal = pledge.appeal.localized  # its live translation, else as it is
         view = sharing.gift_view(pledge)
         appeal = sharing.appeal_shown(pledge)
         if view == sharing.HIDDEN:
@@ -678,6 +684,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "given_on": given_on,
                 "test_gift": sharing.is_test(pledge),
                 "gift_url": sharing.gift_url(pledge, request),
+                # The language switcher and hreflang links go to the gift in each language.
+                "language_subpath": self.reverse_subpage("gift", args=[code]),
                 # The appeal's preview picture, else the Donate page's.
                 "social_image": (appeal and appeal.get_social_image()) or self.get_social_image(),
                 # A closed appeal points friends to the open ones, if there are any.
