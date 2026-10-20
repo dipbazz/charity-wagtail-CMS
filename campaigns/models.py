@@ -622,7 +622,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 # Just saved: the page says so, and focus moves to the section.
                 "saved": take_message(request, GIFT_MESSAGE),
             },
-            "show_gift_form": ShowGiftForm(initial={"show_on_website": pledge.show_on_website}),
+            # Ticked while it's shown: not for a QR payment being checked, agreed in the old words.
+            "show_gift_form": ShowGiftForm(
+                initial={"show_on_website": sharing.gift_view(pledge) != sharing.HIDDEN}
+            ),
         }
 
     @path("pay/<uuid:reference>/show-gift/", name="show_gift")
@@ -1188,7 +1191,8 @@ class Pledge(models.Model):
     # nobody can guess one or count up to the next, and never the reference, which pays it.
     gift_code = models.CharField(max_length=12, unique=True, editable=False)
     # When the supporter last ticked or unticked show_on_website: on the form, or on the
-    # thank-you page.
+    # thank-you page. Empty when they agreed before gift pages, in the old words: "Once your gift
+    # reaches us" (campaigns/sharing.py).
     show_on_website_changed_at = models.DateTimeField(
         "show on website changed", null=True, blank=True, editable=False
     )
@@ -1213,6 +1217,9 @@ class Pledge(models.Model):
     def save(self, *args, **kwargs):
         if self.reference is None:
             self.reference = uuid.uuid4()
+        # Made with the box ticked (in the admin, tests or the demo too): agreed in today's words.
+        if self._state.adding and self.show_on_website and not self.show_on_website_changed_at:
+            self.show_on_website_changed_at = timezone.now()
         if self.number and self.gift_code:
             return super().save(*args, **kwargs)
         # Pick the number and gift code here, not in the form, so pledges made in the admin, in
@@ -1326,11 +1333,12 @@ class Pledge(models.Model):
 
     def set_show_on_website(self, shown):
         """The supporter's choice from the thank-you page's box, and when they made it. Not while
-        the team has taken the gift down. Returns whether it changed anything."""
+        the team has taken the gift down. Returns whether it changed anything. Ticked again after
+        agreeing in the old words, it records that they agree in today's."""
         now = timezone.now()
         changed = (
             Pledge.objects.filter(pk=self.pk, hidden_by_team=False)
-            .exclude(show_on_website=shown)
+            .exclude(show_on_website=shown, show_on_website_changed_at__isnull=False)
             .update(show_on_website=shown, show_on_website_changed_at=now)
         )
         if changed:

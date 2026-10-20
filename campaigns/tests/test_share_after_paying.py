@@ -296,11 +296,29 @@ class TestSavingIt:
 
     def test_saving_the_same_choice_keeps_when_it_was_made(self, client, donate_page):
         pledge = pledge_in("paid", donate_page)
+        agreed_at = pledge.show_on_website_changed_at
+
+        show_gift(client, donate_page, pledge)
+
+        assert Pledge.objects.get(pk=pledge.pk).show_on_website_changed_at == agreed_at
+
+    def test_agreed_in_the_old_words_the_box_starts_unticked(self, client, donate_page):
+        """They agreed to their name once the gift reaches us, not while it's checked."""
+        pledge = pledge_in("to-confirm", donate_page)
+        Pledge.objects.filter(pk=pledge.pk).update(show_on_website_changed_at=None)
+
+        box = page_for(client, donate_page, pledge).find("input", attrs={"name": "show_on_website"})
+
+        assert not box.has_attr("checked")
+
+    def test_ticking_it_again_agrees_in_the_new_words(self, client, donate_page):
+        pledge = pledge_in("to-confirm", donate_page)
         Pledge.objects.filter(pk=pledge.pk).update(show_on_website_changed_at=None)
 
         show_gift(client, donate_page, pledge)
 
-        assert Pledge.objects.get(pk=pledge.pk).show_on_website_changed_at is None
+        assert Pledge.objects.get(pk=pledge.pk).show_on_website_changed_at is not None
+        assert client.get(f"{donate_page.url}gifts/{pledge.gift_code}/").status_code == 200
 
     def test_from_the_checking_page_goes_back_there(self, client, donate_page):
         pledge = pledge_in("to-confirm", donate_page, show=False)

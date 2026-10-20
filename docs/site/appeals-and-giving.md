@@ -373,7 +373,9 @@ helps wherever the need is greatest." A test payment says nothing of it: no mone
   taken down"). It's refused, changing nothing, before they've told us they've paid and while the
   team has taken the page down; the box is then replaced by "Our team has taken your page down. If
   you'd like it back, call us:" and the charity's phone. When they ticked or unticked it, on the
-  form or here, is kept (`show_on_website_changed_at`).
+  form or here, is kept (`show_on_website_changed_at`). A pledge ticked before gift pages has no
+  time kept: it agreed to "Once your gift reaches us", so nothing is shown while a QR payment is
+  checked and the box starts unticked there; ticking it agrees in today's words.
 - **Tell your friends**: the phone's own share sheet (Web Share), so WhatsApp, Viber, Messenger and
   Instagram are all there. It's shown only where the browser has one (most phones, few desktops).
 - **WhatsApp**, **Facebook** and **Copy link**, a row of text links at least 44px tall, which work

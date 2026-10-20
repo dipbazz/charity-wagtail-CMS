@@ -2,9 +2,10 @@
 
 One rule decides what's shown of a gift, here and in the recent supporters list (#99): only what
 the supporter agreed to (Pledge.show_on_website, in the words of forms.SHOW_GIFT_HELP), only once
-they've told us they've paid, the amount only once it's reached us, and nothing while the team
-has taken it down. A share never carries the pay page's reference, which pays the pledge: friends
-get the gift's own page, or else the appeal or the Donate page.
+they've told us they've paid (once it's reached us, if they agreed in the words used before gift
+pages), the amount only once it's reached us, and nothing while the team has taken it down. A
+share never carries the pay page's reference, which pays the pledge: friends get the gift's own
+page, or else the appeal or the Donate page.
 """
 
 from urllib.parse import urlencode
@@ -28,7 +29,8 @@ def gift_view(pledge):
     state = pledge.pay_page_state()
     if state in ("paid", "received"):
         return SHOWN
-    if state == "to-confirm":
+    # Agreed before gift pages (no time recorded), the box said "Once your gift reaches us".
+    if state == "to-confirm" and pledge.show_on_website_changed_at is not None:
         return CHECKING
     return HIDDEN
 

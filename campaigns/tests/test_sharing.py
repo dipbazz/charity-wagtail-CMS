@@ -118,12 +118,35 @@ class TestGiftView:
         offered = state in ("paid", "paid (test)", "received", "to-confirm")
         assert sharing.offers_sharing(pledge) is offered
 
+    @pytest.mark.parametrize(
+        ("state", "view"),
+        [("to-confirm", sharing.HIDDEN), ("paid", sharing.SHOWN), ("received", sharing.SHOWN)],
+    )
+    def test_agreed_in_the_old_words_only_once_the_gift_reaches_us(self, donate_page, state, view):
+        """Before #100 the box said "Once your gift reaches us": those pledges have no time of
+        agreeing, and show nothing while a QR payment is checked."""
+        pledge = pledge_in(state, donate_page)
+        pledge.show_on_website_changed_at = None
+
+        assert sharing.gift_view(pledge) == view
+
     def test_reads_payments_as_fetched(self, donate_page, django_assert_num_queries):
         """So #99's list can prefetch them."""
         pledge = pledge_in("paid", donate_page)
 
         with django_assert_num_queries(0):
             sharing.gift_view(pledge)
+
+
+class TestWhenTheyAgreed:
+    """A pledge made with the box ticked anywhere (the form, the admin, the demo) records when,
+    so it's never taken for one agreed in the old words."""
+
+    def test_a_pledge_made_with_consent_records_when(self, donate_page):
+        assert pledge_in("ready", donate_page).show_on_website_changed_at is not None
+
+    def test_a_pledge_made_without_it_doesnt(self, donate_page):
+        assert pledge_in("ready", donate_page, show=False).show_on_website_changed_at is None
 
 
 class TestTheAppealShown:
