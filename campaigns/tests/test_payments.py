@@ -295,6 +295,22 @@ class TestPledgeNumber:
         with pytest.raises(IntegrityError):
             Pledge.objects.create(page=donate_page, amount=1500, currency="NPR", name="Ram")
 
+    def test_a_number_given_already_taken_is_passed_on_at_once(
+        self, pledge, donate_page, monkeypatch
+    ):
+        """Only a number or code it picks is tried again: a number given clashes every time."""
+        tried = []
+        monkeypatch.setattr(
+            "campaigns.models.new_gift_code", lambda: tried.append(1) or f"gift-code-{len(tried)}"
+        )
+        twin = Pledge(page=donate_page, amount=1500, currency="NPR", name="Ram")
+        twin.number = pledge.number
+
+        with pytest.raises(IntegrityError):
+            twin.save()
+
+        assert len(tried) == 1
+
     def test_any_other_clash_is_passed_on_without_trying_again(
         self, pledge, donate_page, monkeypatch
     ):

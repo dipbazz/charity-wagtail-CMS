@@ -1233,8 +1233,9 @@ class Pledge(models.Model):
         if self.number and self.gift_code:
             return super().save(*args, **kwargs)
         # Pick the number and gift code here, not in the form, so pledges made in the admin, in
-        # tests or in the demo get them too. One already taken (a number is one in 900,000 per
-        # pledge) is tried again; any other clash, such as the form's double click, is passed on.
+        # tests or in the demo get them too. One picked already taken (a number is one in 900,000
+        # per pledge) is tried again; any other clash, such as the form's double click or a
+        # number given already taken, is passed on.
         number, gift_code = self.number, self.gift_code
         for attempt in range(10):
             self.number = number or new_pledge_number()
@@ -1243,9 +1244,12 @@ class Pledge(models.Model):
                 with transaction.atomic():
                     return super().save(*args, **kwargs)
             except IntegrityError:
-                taken = Pledge.objects.filter(
-                    Q(number=self.number) | Q(gift_code=self.gift_code)
-                ).exists()
+                picked_taken = Q()
+                if not number:
+                    picked_taken |= Q(number=self.number)
+                if not gift_code:
+                    picked_taken |= Q(gift_code=self.gift_code)
+                taken = Pledge.objects.filter(picked_taken).exists()
                 if not taken or attempt == 9:
                     self.number, self.gift_code = number, gift_code
                     raise
