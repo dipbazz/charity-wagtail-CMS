@@ -96,6 +96,16 @@ class TestAGiftShown:
         assert "Gave Rs 2,500 on" in page
         assert "5,000" not in page
 
+    def test_money_received_in_another_currency_says_which(self, client, donate_page, appeal):
+        """The site's currency changed after the pledge was sent, say."""
+        gift = pledge_in("paid", donate_page, appeal)
+        gift.payments.update(amount=20, currency="GBP")
+
+        page = text(client.get(gift_path(donate_page, gift)))
+
+        assert "Gave £20 on" in page
+        assert "Rs 20" not in page
+
     def test_shows_the_appeal_and_its_progress(self, client, donate_page, gift, appeal):
         page = soup(client.get(gift_path(donate_page, gift)))
 

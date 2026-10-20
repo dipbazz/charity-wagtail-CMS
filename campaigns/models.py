@@ -674,7 +674,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "appeal": appeal,
                 "gift_title": title,
                 "summary": appeal.summary if appeal else self.introduction,
-                "gift_amount": format_money(sharing.gift_amount(pledge), pledge.currency),
+                "gift_amount": format_money(*sharing.gift_amount(pledge)),
                 "given_on": given_on,
                 "test_gift": sharing.is_test(pledge),
                 "gift_url": sharing.gift_url(pledge, request),

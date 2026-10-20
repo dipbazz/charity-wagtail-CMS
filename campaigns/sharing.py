@@ -52,10 +52,11 @@ def appeal_shown(pledge):
 
 
 def gift_amount(pledge):
-    """What the gift is for: the amount received, which can differ from the pledge's (the team
-    received another amount, or the pledge was changed after the payment started)."""
-    paid = pledge.paid_payment()
-    return paid.amount if paid else pledge.amount
+    """What the gift is for, as (amount, currency): what was received, which can differ from the
+    pledge's (the team received another amount, or the pledge was changed after the payment
+    started)."""
+    paid = pledge.paid_payment() or pledge
+    return paid.amount, paid.currency
 
 
 def is_test(pledge):
@@ -78,7 +79,7 @@ def impact_line(pledge, appeal):
     it matches (on the appeal, or the Donate page for wherever it's needed most), else the
     appeal's summary, else a sentence about the need. `appeal` is appeal_shown()."""
     page = appeal or pledge.page
-    amount = gift_amount(pledge)
+    amount, _ = gift_amount(pledge)
     options = page.donation_amounts.all() if page else []
     impact = next((option.impact for option in options if option.amount == amount), "")
     if impact:
