@@ -264,8 +264,9 @@ class PledgeViewSet(ModelViewSet):
         a note to call, and only Show again puts it back. Logged in the pledge's history."""
         pledge = self.gift_to_show_or_not(request, pk)
         if request.method == "POST":
-            Pledge.objects.filter(pk=pk).update(hidden_by_team=True)
-            log(instance=pledge, action="campaigns.stop_showing", user=request.user)
+            # Logged only if it changed: sent twice, or from a tab left open, it's one entry.
+            if Pledge.objects.filter(pk=pk, hidden_by_team=False).update(hidden_by_team=True):
+                log(instance=pledge, action="campaigns.stop_showing", user=request.user)
             messages.success(request, f"{pledge.name}'s gift isn't shown on the website now.")
             return redirect("pledges:inspect", pk)
         return TemplateResponse(
@@ -284,8 +285,8 @@ class PledgeViewSet(ModelViewSet):
         """Show again: undoes Stop showing on the website. The page is up again if the supporter
         still agrees to it. Logged in the pledge's history."""
         pledge = self.gift_to_show_or_not(request, pk)
-        Pledge.objects.filter(pk=pk).update(hidden_by_team=False)
-        log(instance=pledge, action="campaigns.show_again", user=request.user)
+        if Pledge.objects.filter(pk=pk, hidden_by_team=True).update(hidden_by_team=False):
+            log(instance=pledge, action="campaigns.show_again", user=request.user)
         messages.success(request, f"{pledge.name}'s gift can be shown on the website again.")
         return redirect("pledges:inspect", pk)
 

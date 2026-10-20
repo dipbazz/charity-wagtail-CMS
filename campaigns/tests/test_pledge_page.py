@@ -14,6 +14,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
+from wagtail.models import ModelLogEntry
 
 from campaigns.models import CampaignPage, Frequency, Payment, PaymentStatus, Pledge, StepKind
 from nepal_payments import Outcome, ProviderUnavailable, Status
@@ -530,6 +531,16 @@ class TestStopShowingOnTheWebsite:
         assert "Stopped showing on the website" in history
         assert "Shown again on the website" in history
         assert team.get_username() in history
+
+    def test_sent_twice_is_logged_once(self, client, team, gift):
+        """A confirm sent twice, or from a tab left open: the history is the team's record of
+        who took it down."""
+        for action in ("stop_showing", "stop_showing", "show_again", "show_again"):
+            client.post(reverse(f"pledges:{action}", args=[gift.pk]))
+
+        logged = ModelLogEntry.objects.filter(object_id=str(gift.pk))
+        assert logged.filter(action="campaigns.stop_showing").count() == 1
+        assert logged.filter(action="campaigns.show_again").count() == 1
 
     def test_show_again_puts_it_back(self, client, team, gift):
         client.post(reverse("pledges:stop_showing", args=[gift.pk]))
