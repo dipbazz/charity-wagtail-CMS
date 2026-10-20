@@ -636,17 +636,19 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         """The Show my gift box on the thank-you and checking pages: shows the gift on its page
         for friends, or takes it down, and says which once back there. Only once the supporter
         has told us they've paid, and never while the team has taken it down."""
+        from campaigns.forms import ShowGiftForm  # forms imports this module's Pledge
+
         if request.method != "POST":
             return HttpResponseNotAllowed(["POST"])
         pledge = self.get_pledge(reference=reference)
         state = pledge.pay_page_state()
-        if sharing.offers_sharing(pledge) and not pledge.hidden_by_team:
-            shown = request.POST.get("show_on_website") == "on"
+        form = ShowGiftForm(request.POST)
+        if sharing.offers_sharing(pledge) and not pledge.hidden_by_team and form.is_valid():
+            shown = form.cleaned_data["show_on_website"]
             pledge.set_show_on_website(shown)
             messages.info(request, "shown" if shown else "hidden", extra_tags=GIFT_MESSAGE)
         route = STATE_ROUTES.get(state, "pay")
-        url = self.get_url(request) + self.reverse_subpage(route, args=[reference])
-        return HttpResponseRedirect(url + "#share", status=303)
+        return self.redirect_to(request, route, reference, fragment="share")
 
     @path("gifts/<slug:code>/", name="gift")
     def gift(self, request, code):
@@ -938,10 +940,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 tell_pay_page(request, "checked")
         return self.redirect_to(request, "pay_online", payment.pledge.reference)
 
-    def redirect_to(self, request, name, *args):
-        """303 to one of this page's routes."""
+    def redirect_to(self, request, name, *args, fragment=""):
+        """303 to one of this page's routes, at `fragment` if given (a section's id)."""
         url = self.get_url(request) + self.reverse_subpage(name, args=args)
-        return HttpResponseRedirect(url, status=303)
+        return HttpResponseRedirect(f"{url}#{fragment}" if fragment else url, status=303)
 
     def serve_preview(self, request, mode_name):
         if mode_name == "thank-you":
