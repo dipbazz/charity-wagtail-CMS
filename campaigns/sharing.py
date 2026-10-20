@@ -74,13 +74,14 @@ def as_phrase(text):
     return text[:1].lower() + text[1:]
 
 
-def impact_line(pledge, appeal):
+def impact_line(pledge, appeal, site_currency):
     """What the gift does, in a sentence, from what editors already wrote: the suggested amount
     it matches (on the appeal, or the Donate page for wherever it's needed most), else the
-    appeal's summary, else a sentence about the need. `appeal` is appeal_shown()."""
+    appeal's summary, else a sentence about the need. `appeal` is appeal_shown(). Suggested
+    amounts are in the site's currency, so money received in another matches none."""
     page = appeal or pledge.page
-    amount, _ = gift_amount(pledge)
-    options = page.donation_amounts.all() if page else []
+    amount, currency = gift_amount(pledge)
+    options = page.donation_amounts.all() if page and currency == site_currency else []
     impact = next((option.impact for option in options if option.amount == amount), "")
     if impact:
         return gettext("It pays for %(impact)s.") % {"impact": as_phrase(impact)}

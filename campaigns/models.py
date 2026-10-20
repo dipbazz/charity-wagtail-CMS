@@ -767,7 +767,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             # What the gift does, unless only a test system took it: then it does nothing.
             if received.live:
                 appeal = context["share"]["appeal"]
-                context["impact_line"] = sharing.impact_line(pledge, appeal)
+                context["impact_line"] = sharing.impact_line(pledge, appeal, site_settings.currency)
         if way == ONLINE:
             latest = next(iter(pledge.payments.all()), None)  # newest first
             context |= {

@@ -179,19 +179,21 @@ class TestImpactLine:
         appeal.donation_amounts.create(amount=2500, impact="A hygiene kit for a family")
         pledge = pledge_in("paid", donate_page, appeal)
 
-        assert sharing.impact_line(pledge, appeal) == "It pays for a hygiene kit for a family."
+        assert (
+            sharing.impact_line(pledge, appeal, "NPR") == "It pays for a hygiene kit for a family."
+        )
 
     def test_keeps_a_first_word_in_capitals(self, donate_page, appeal):
         appeal.donation_amounts.create(amount=2500, impact="UV filters for a school")
         pledge = pledge_in("paid", donate_page, appeal)
 
-        assert sharing.impact_line(pledge, appeal) == "It pays for UV filters for a school."
+        assert sharing.impact_line(pledge, appeal, "NPR") == "It pays for UV filters for a school."
 
     def test_else_the_appeals_summary(self, donate_page, appeal):
         appeal.donation_amounts.create(amount=6000, impact="A handwashing station")
         pledge = pledge_in("paid", donate_page, appeal)
 
-        assert sharing.impact_line(pledge, appeal) == appeal.summary
+        assert sharing.impact_line(pledge, appeal, "NPR") == appeal.summary
 
     def test_matches_the_amount_received(self, donate_page, appeal):
         """Paid for what the pledge asked before it was changed: what arrived is what it does."""
@@ -199,12 +201,23 @@ class TestImpactLine:
         appeal.donation_amounts.create(amount=2500, impact="A hygiene kit for a family")
         pledge = pledge_in("received", donate_page, appeal)
 
-        assert sharing.impact_line(pledge, appeal) == "It pays for a hygiene kit for a family."
+        assert (
+            sharing.impact_line(pledge, appeal, "NPR") == "It pays for a hygiene kit for a family."
+        )
+
+    def test_only_in_the_sites_currency(self, donate_page, appeal):
+        """Suggested amounts are in the site's currency: £2,500 received isn't Rs 2,500."""
+        appeal.donation_amounts.create(amount=2500, impact="A hygiene kit for a family")
+        pledge = pledge_in("paid", donate_page, appeal)
+        pledge.payments.update(currency="GBP")
+        pledge = Pledge.objects.prefetch_related("payments").get(pk=pledge.pk)
+
+        assert sharing.impact_line(pledge, appeal, "NPR") == appeal.summary
 
     def test_wherever_its_needed_most_uses_the_donate_pages_amounts(self, donate_page):
         pledge = pledge_in("paid", donate_page)
 
-        assert sharing.impact_line(pledge, None) == "It pays for a hygiene kit for a family."
+        assert sharing.impact_line(pledge, None, "NPR") == "It pays for a hygiene kit for a family."
 
     def test_else_a_sentence_about_the_need(self, donate_page):
         pledge = pledge_in("paid", donate_page)
@@ -212,14 +225,14 @@ class TestImpactLine:
         pledge.payments.update(amount=3000)
         pledge = Pledge.objects.prefetch_related("payments").get(pk=pledge.pk)
 
-        assert sharing.impact_line(pledge, None) == "It helps wherever the need is greatest."
+        assert sharing.impact_line(pledge, None, "NPR") == "It helps wherever the need is greatest."
 
     def test_a_private_appeal_counts_as_wherever_its_needed_most(self, donate_page, appeals):
         private = CampaignPage.objects.get(slug="trustees")
         private.donation_amounts.create(amount=2500, impact="Something for the trustees")
         pledge = pledge_in("paid", donate_page, private)
 
-        line = sharing.impact_line(pledge, sharing.appeal_shown(pledge))
+        line = sharing.impact_line(pledge, sharing.appeal_shown(pledge), "NPR")
 
         assert line == "It pays for a hygiene kit for a family."
 
