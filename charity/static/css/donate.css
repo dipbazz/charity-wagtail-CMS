@@ -344,10 +344,6 @@
     cursor: pointer;
 }
 
-.copy-icon-button[hidden] {
-    display: none;
-}
-
 .copy-icon-button .copy-tick,
 .copy-icon-button.is-copied .copy-icon {
     display: none;
