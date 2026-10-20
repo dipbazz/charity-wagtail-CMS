@@ -268,17 +268,23 @@ def tell_pay_page(request, result):
 
 def take_message(request, tag):
     """The message with `tag` left for this page, if any. Any other message is kept for the page
-    it's for."""
-    result = None
-    others = []
-    for message in messages.get_messages(request):
-        if tag in (message.extra_tags or "").split():
-            result = message.message
-        else:
-            others.append(message)
-    for message in others:
-        messages.add_message(request, message.level, message.message, message.extra_tags)
-    return result
+    it's for.
+
+    The pay page's messages are all taken on the first call, once per request: reading the
+    messages again would bring back the ones already taken, and add the others twice."""
+    if not hasattr(request, "pay_page_messages"):
+        request.pay_page_messages = {}
+        others = []
+        for message in messages.get_messages(request):
+            tags = (message.extra_tags or "").split()
+            mine = next((tag for tag in (PAYMENT_MESSAGE, GIFT_MESSAGE) if tag in tags), None)
+            if mine:
+                request.pay_page_messages[mine] = message.message
+            else:
+                others.append(message)
+        for message in others:
+            messages.add_message(request, message.level, message.message, message.extra_tags)
+    return request.pay_page_messages.get(tag)
 
 
 def pay_page_result(request):
