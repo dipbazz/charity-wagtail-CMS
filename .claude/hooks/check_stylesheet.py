@@ -20,13 +20,18 @@ TEST = "uv run --no-sync pytest core/tests/test_stylesheet.py -q -p no:cacheprov
 def main():
     tool_input = json.load(sys.stdin).get("tool_input", {})
     path = Path(tool_input.get("file_path", ""))
-    if path.suffix != ".css" or not path.resolve().is_relative_to(CSS):
+    # The test checks only the stylesheets directly in the folder.
+    if path.suffix != ".css" or path.resolve().parent != CSS:
         return 0
     result = subprocess.run(TEST, cwd=ROOT, capture_output=True, text=True)
     if result.returncode == 0:
         return 0
-    print(f"{TEST[4]} fails after this change:\n{result.stdout[-3000:]}", file=sys.stderr)
-    return 2
+    if result.returncode == 1:  # pytest's code for failing tests
+        print(f"{TEST[4]} fails after this change:\n{result.stdout[-3000:]}", file=sys.stderr)
+        return 2
+    # uv or pytest couldn't run it: tell the person, without waking Claude to "fix" the CSS.
+    print(f"Couldn't run {TEST[4]}:\n{(result.stderr or result.stdout)[-3000:]}", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":
