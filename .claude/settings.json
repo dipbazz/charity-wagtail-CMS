@@ -19,6 +19,14 @@
         "hooks": [
           {
             "type": "command",
+            "if": "Edit(*.css)",
+            "command": "uv run --no-sync python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check_stylesheet.py\"",
+            "asyncRewake": true,
+            "statusMessage": "Checking the stylesheet"
+          },
+          {
+            "type": "command",
+            "if": "Write(*.css)",
             "command": "uv run --no-sync python \"$CLAUDE_PROJECT_DIR/.claude/hooks/check_stylesheet.py\"",
             "asyncRewake": true,
             "statusMessage": "Checking the stylesheet"
