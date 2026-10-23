@@ -21,6 +21,10 @@ node --test onboarding/tests/form-script.test.js   # the onboarding form script 
 
 pytest uses `charity.settings.test` (set in `pyproject.toml`).
 
+Claude Code can't run the whole suite: a hook blocks a run that names no path, node id or `-k`
+filter, such as a bare `uv run pytest`, `--cov` or `-m "not browser"`, and `--lf` when nothing
+failed last time ([Decisions](../decisions.md#claude-code-hooks-for-rules-a-machine-can-check)).
+
 ## Where tests live
 
 Each app has a `tests/` package. The one exception is the onboarding form script, which runs in
@@ -36,6 +40,7 @@ Some tests guard the whole project rather than one feature:
 |---|---|
 | `core/tests/test_dependencies.py` | `core` never imports a feature app |
 | `core/tests/test_stylesheet.py` | In every stylesheet, width queries are `min-width` in `rem`, and every colour outside `:root` is a `var(--…)` token that `charity.css`'s `:root` defines |
+| `core/tests/test_claude_hooks.py` | The Claude Code hooks block a whole-suite run and report a failing stylesheet, and nothing else |
 | `nepal_payments/tests/test_independence.py` | The payment package imports only the standard library and itself, so it can be published unchanged |
 | `nepal_payments/tests/test_contract.py` | Every payment provider found meets the contract: it needs its keys, sends the payer only to `https`, never says *paid* for an answer it can't read, and keeps its test mode off the live system |
 | `charity/tests/test_translations.py` | No visible template text is unmarked for translation; no Nepali entry is empty or fuzzy; the `.mo` matches the `.po` |

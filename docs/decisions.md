@@ -690,9 +690,13 @@ were missed. Both rules can be checked by a program.
 in `.claude/hooks/`:
 
 - Before a shell command, `pytest_scope.py` blocks a pytest run that names no path, node id or
-  `-k` filter and isn't `--lf` or `--sw` ([Testing](contributing/testing.md#running-the-tests)).
-- After a change to a file in `charity/static/css/`, `check_stylesheet.py` runs
-  `core/tests/test_stylesheet.py` in the background and reports a failure to Claude.
+  `-k` filter, unless it's `--lf` with failures recorded or only lists tests
+  ([Testing](contributing/testing.md#running-the-tests)).
+- After a change to a stylesheet in `charity/static/css/`, `check_stylesheet.py` runs
+  `core/tests/test_stylesheet.py` in the background and reports a failure to Claude. If the test
+  can't run at all, it tells the person instead.
+
+`core/tests/test_claude_hooks.py` tests both scripts.
 
 A rule that can be checked goes in CI, pre-commit or a hook; prose in `CLAUDE.md` is for
 judgement calls. A rule CI already checks (the changelog entry, the docs build) gets no hook.
@@ -700,6 +704,7 @@ judgement calls. A rule CI already checks (the changelog entry, the docs build) 
 **Consequences**
 
 - The hooks bind only Claude Code. A person can still run the whole suite.
-- Each shell command that mentions pytest, and each edit, starts `uv run python` (about a tenth
-  of a second). A stylesheet edit also runs its test, about eight seconds, in the background.
+- Each shell command that mentions pytest, and each stylesheet edit, starts `uv run python`
+  (about a tenth of a second). A stylesheet edit also runs its test, about eight seconds, in the
+  background.
 - The hooks need `uv`, as everything else in the project does.
