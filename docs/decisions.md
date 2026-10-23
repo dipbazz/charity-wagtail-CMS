@@ -673,3 +673,33 @@ decision, as publishing the docs does ([Writing docs](contributing/writing-docs.
 
 - Some free public-only services are passed over, or wait for the decision.
 - Going private later doesn't break CI, deployment or the docs.
+
+## Claude Code hooks for rules a machine can check
+
+**Status:** in use (since October 2026)
+
+**Context**
+
+`CLAUDE.md` told Claude Code, in prose, not to run the whole test suite and to write stylesheets
+mobile first. Prose depends on being remembered, and the file had grown long enough that rules
+were missed. Both rules can be checked by a program.
+
+**Decision**
+
+`.claude/settings.json` holds hooks that every contributor's Claude Code runs, with their scripts
+in `.claude/hooks/`:
+
+- Before a shell command, `pytest_scope.py` blocks a pytest run that names no path, node id or
+  `-k` filter and isn't `--lf` or `--sw` ([Testing](contributing/testing.md#running-the-tests)).
+- After a change to a file in `charity/static/css/`, `check_stylesheet.py` runs
+  `core/tests/test_stylesheet.py` in the background and reports a failure to Claude.
+
+A rule that can be checked goes in CI, pre-commit or a hook; prose in `CLAUDE.md` is for
+judgement calls. A rule CI already checks (the changelog entry, the docs build) gets no hook.
+
+**Consequences**
+
+- The hooks bind only Claude Code. A person can still run the whole suite.
+- Each shell command that mentions pytest, and each edit, starts `uv run python` (about a tenth
+  of a second). A stylesheet edit also runs its test, about eight seconds, in the background.
+- The hooks need `uv`, as everything else in the project does.
