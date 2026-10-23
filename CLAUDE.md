@@ -3,73 +3,56 @@
 The project's documentation is in `docs/` (Sphinx with MyST Markdown; plain Markdown you can read
 directly). Read `docs/project-context.md` before exploring the code: it's a one-page map that
 says which docs page answers which question. Open the page you need rather than re-scanning the
-repo. Catch up with `git log --oneline <last verified version>..HEAD --stat` and re-read only what
-changed. A PR that changes what a docs page describes updates that page in the same PR, and
-the docs must build with `uv run --group docs sphinx-build -W --keep-going docs docs/_build/html`.
+repo. Catch up with `git log --oneline <version>..HEAD --stat`, where `<version>` is that page's
+"Last verified against", and re-read only what changed. A PR that changes what a docs page
+describes updates that page in the same PR, and the docs must build with
+`uv run --group docs sphinx-build -W --keep-going docs docs/_build/html`.
 
 ## Every charity, standard first
 
-Many charities run this one product, so a proposal is judged by what it does for all of them.
-Before proposing a fix, feature or design, read the Principles section of
-`docs/contributing/index.md` and answer its questions in the proposal: who else has the problem,
-where the shared cause is, which standard applies, what it costs each charity, and which test
-stops it coming back. Never offer a template, CSS, code or branch for one charity only. Follow
-the standards (WCAG 2.2 AA, web conventions, the charity site standard in
-`docs/site/standard.md`, the law) before modern styling, and add modern styling only through the
-design tokens and shared components. Each charity has its own installation on a shared server;
-never build several charities into one (`docs/decisions.md`). A change to what a charity must
-send or decide updates the onboarding pack in `onboarding/` in the same PR
-(`docs/contributing/onboarding.md`); a charity only ever gets links to its guide and form,
-never a file.
+Many charities run this one product, each on its own installation on a shared server; never build
+several into one (`docs/decisions.md`), and never offer a template, CSS, code or branch for one
+charity only. Before proposing a fix, feature or design, answer the questions in the Principles
+section of `docs/contributing/index.md` in the proposal. Follow the standards (WCAG 2.2 AA, web
+conventions, `docs/site/standard.md`, the law) before modern styling, and add modern styling only
+through the design tokens and shared components. A change to what a charity must send or decide
+updates the onboarding pack in `onboarding/` in the same PR (`docs/contributing/onboarding.md`);
+a charity only ever gets links to its guide and form, never a file.
 
 ## Reviews before code and before merge
 
 A `needs: …` label marks a review an issue or pull request still owes
-(`docs/contributing/reviews.md`); CI fails a pull request while one is left. Before branching
-for an issue, run `gh issue view <n> --json labels` and do any `needs:` review first. Load the
-`workflow` skill (`.claude/skills/workflow/`) to file an issue, start one, open a pull request or
-finish a review. If a gstack skill a review needs isn't installed, stop and ask the user to
-install gstack (`docs/contributing/reviews.md#tools`); never skip the review.
+(`docs/contributing/reviews.md`); CI fails a pull request while one is left. Load the `workflow`
+skill to file an issue, start one (its `needs:` reviews come before branching), open a pull
+request or finish a review.
 
 ## Where rules live
 
 Rules say what, when and where; memory says who, which and how. A rule for every contributor goes
 in `docs/`, with a short pointer in a skill (`.claude/skills/`, loaded by task) or a rule file
-(`.claude/rules/<topic>.md` with `paths:` frontmatter, loaded when a matching file is opened). A rule for this maintainer alone goes in `CLAUDE.local.md`. Memory holds only current
-state and how-to for this machine. When a workflow or decision comes up that none of these
-covers, first propose where it goes, get the user's yes, and write it there before relying on it.
+(`.claude/rules/<topic>.md` with `paths:` frontmatter, loaded when a matching file is opened). A
+rule a machine can check is a check instead: CI, pre-commit, or a hook in `.claude/settings.json`.
+A rule for this maintainer alone goes in `CLAUDE.local.md`. Memory holds only current state and
+how-to for this machine. When a workflow or decision comes up that none of these covers, first
+propose where it goes, get the user's yes, and write it there before relying on it.
 
 ## Versions and changelog
 
 Every PR adds a file `changelog.d/<slug>.<group>.md` (the entry, written for the person the change
-affects), or is labelled `no changelog` (CI checks this). Never edit `CHANGELOG.md` in a PR. Each version is a GitHub milestone: put a
-PR in the milestone of the issue it closes. One version is built at a time and released when it's
-done (there are no iterations). Work started straight away joins the version being built; work
-filed for later goes into the next milestone, unless it fixes a P1 bug on the live site. Rules
-and release steps: `docs/contributing/releases.md`.
+affects), or is labelled `no changelog` (CI checks this). Only a release edits `CHANGELOG.md`. Put
+a PR in the milestone of the issue it closes; which milestone new work joins, and the release
+steps, are in `docs/contributing/releases.md`.
 
 ## Design mobile first
 
-HTML with no CSS already works on any screen, so that is where every design starts: semantic
-markup in reading order, then styles for a 320px phone with no media query, then `min-width`
-queries (in `rem`) that add layout only where a wider screen needs it. Never design for desktop
-and override down with `max-width` queries. Load the `mobile-first` skill
-(`.claude/skills/mobile-first/`) before writing or reviewing any CSS or layout markup.
+Start from semantic HTML, style a 320px phone with no media query, then add `min-width` queries
+in `rem`; never override down with `max-width`. Load the `mobile-first` skill before writing or
+reviewing any CSS or layout markup.
 
 ## QA is part of done
 
-CI runs the mechanical half of QA on every pull request: `charity/tests/test_demo_layout_browser.py`
-loads each kind of demo page at 320, 375, 412, 768, 1024 and 1440px and fails on sideways scrolling
-or a tap target under 44px. The rest is yours:
-
-1. **Locally,** run only the tests you wrote or changed and the ones for the code you touched
-   (`uv run pytest path/to/tests`), plus `ruff check` and `ruff format --check`. Don't run the
-   full suite: CI runs it on every push, and the pull request isn't merged until it's green.
-2. **Fix each bug test-first:** write a test in the relevant app's `tests/` package, run it to see
-   it fail for the reason the bug describes, fix the bug, see it pass. One bug per commit, test and
-   fix together. If pytest can't catch it (purely visual), say so in the pull request.
-3. **Say what a person must check.** The pull request description is short and follows
-   `.github/pull_request_template.md`; its "Check before merging" section names the pages, widths
-   and what to look for in the browser, or says nothing needs checking (a change with no templates
-   or CSS). A pull request labelled `needs: qa` gets a `/qa-only` pass; never run `/qa`, which
-   commits its own fixes.
+Run only the tests you wrote or changed and those for the code you touched
+(`docs/contributing/testing.md`, "Running the tests"); CI runs the whole suite, including the
+layout checks at six widths. Fix each bug test-first, one bug per commit; if pytest can't catch
+it, say so in the pull request. The pull request's "Check before merging" section names the
+pages, widths and what to look for in the browser, or says nothing needs checking.
