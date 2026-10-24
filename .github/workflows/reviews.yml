@@ -7,8 +7,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited, labeled, unlabeled]
 
+# The `opened` run has its own group: opening a pull request with --label fires `labeled` at
+# once, and in one group that run would cancel the one that adds the review labels (#240).
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.action == 'opened' && 'opened' || 'check' }}
   cancel-in-progress: true
 
 permissions:

@@ -29,3 +29,15 @@ def test_dependabot_checks_the_actions_for_updates_every_week():
 
     assert 'package-ecosystem: "github-actions"' in config
     assert 'interval: "weekly"' in config
+
+
+def test_the_run_that_labels_a_new_pull_request_cant_be_cancelled_by_a_later_event():
+    """Opening a pull request with --label fires `opened`, then `labeled`. In one concurrency
+    group the second run cancels the first before it adds `needs: code review`, and the second
+    finds no review owed and passes (#240).
+    """
+    workflow = (GITHUB / "workflows" / "reviews.yml").read_text(encoding="utf-8")
+    group = re.search(r"^\s+group:\s*(.+)$", workflow, re.MULTILINE).group(1)
+
+    assert "github.event.action" in group
+    assert "'opened'" in group

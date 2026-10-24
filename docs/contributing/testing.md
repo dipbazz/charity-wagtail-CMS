@@ -46,7 +46,7 @@ Some tests guard the whole project rather than one feature:
 | `charity/tests/test_translations.py` | No visible template text is unmarked for translation; no Nepali entry is empty or fuzzy; the `.mo` matches the `.po` |
 | `core/tests/test_permissions.py` | What editors and moderators can do |
 | `charity/tests/test_query_budgets.py` | The most queries each kind of page may run |
-| `charity/tests/test_workflows.py` | Every workflow action is pinned to a commit |
+| `charity/tests/test_workflows.py` | Every workflow action is pinned to a commit; the `Reviews` run that labels a new pull request can't be cancelled by the next event |
 | `charity/tests/test_deploy.py` | `.env` stays out of git and the image, and reaches the app; images pinned; logs capped |
 | `charity/tests/test_production_settings.py` | Production refuses to start half-configured; every app's warnings are logged |
 | `home/tests/test_seed_demo.py` | Every demo page renders |
