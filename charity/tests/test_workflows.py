@@ -31,13 +31,14 @@ def test_dependabot_checks_the_actions_for_updates_every_week():
     assert 'interval: "weekly"' in config
 
 
-def test_the_run_that_labels_a_new_pull_request_cant_be_cancelled_by_a_later_event():
-    """Opening a pull request with --label fires `opened`, then `labeled`. In one concurrency
-    group the second run cancels the first before it adds `needs: code review`, and the second
-    finds no review owed and passes (#240).
+def test_every_reviews_run_labels_the_pull_request_before_it_checks():
+    """Opening a pull request with --label fires `opened`, then `labeled`. If only the `opened`
+    run adds `needs: code review`, the `labeled` run can read the labels first and pass, and
+    GitHub shows that pass (#240). So the step that adds the labels must run on every event.
     """
     workflow = (GITHUB / "workflows" / "reviews.yml").read_text(encoding="utf-8")
-    group = re.search(r"^\s+group:\s*(.+)$", workflow, re.MULTILINE).group(1)
+    marks = workflow.index("name: Mark the reviews")
+    checks = workflow.index("name: Check that no review is still needed")
+    mark_step = workflow[marks:checks]
 
-    assert "github.event.action" in group
-    assert "'opened'" in group
+    assert "github.event.action" not in mark_step

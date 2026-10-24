@@ -7,10 +7,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited, labeled, unlabeled]
 
-# The `opened` run has its own group: opening a pull request with --label fires `labeled` at
-# once, and in one group that run would cancel the one that adds the review labels (#240).
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.action == 'opened' && 'opened' || 'check' }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -28,11 +26,19 @@ jobs:
     steps:
       # Every pull request needs a code review, and one that changes what people see needs QA.
       # Adding the labels here means forgetting them can't let a pull request through.
-      - name: Mark the reviews a new pull request needs
-        if: github.event.action == 'opened'
+      # Every run does it, not only `opened`: opening a pull request with --label fires `labeled`
+      # at once, and that run could read the labels before `opened` added them and pass (#240).
+      # A label that was ever on the pull request isn't put back: whoever finished that review
+      # took it off.
+      - name: Mark the reviews a pull request needs
         run: |
-          labels=("needs: code review")
-          if gh pr diff "$PR" --repo "$REPO" --name-only | grep --quiet --extended-regexp '(^|/)templates/|\.(css|js|html)$'; then
+          ever=$(gh api "repos/$REPO/issues/$PR/events" --paginate --jq '.[] | select(.event == "labeled") | .label.name')
+          labels=()
+          if ! grep --quiet --line-regexp "needs: code review" <<< "$ever"; then
+            labels+=("needs: code review")
+          fi
+          if ! grep --quiet --line-regexp "needs: qa" <<< "$ever" \
+            && gh pr diff "$PR" --repo "$REPO" --name-only | grep --quiet --extended-regexp '(^|/)templates/|\.(css|js|html)$'; then
             labels+=("needs: qa")
           fi
           for label in "${labels[@]}"; do
