@@ -132,9 +132,49 @@ public. The rules for it, and for any later upload from visitors:
   checks its size, so Caddy refuses any request over 12 MB, the most the admin's uploads need
   ([Running the live site](../hosting.md)). Any other web server in front of the site needs the
   same limit.
-- **Accepted risk:** there's no limit on how many receipts are sent or on the storage as a whole,
-  only 5 MB and 13 million decoded pixels per file, both checked before the picture is decoded, and one
-  per payment.
+- **Few per connection:** one connection may say "I've paid" 5 times in five minutes
+  ([below](#one-connection-can-only-try-so-often)).
+- **Accepted risk:** there's no limit on the storage as a whole, only 5 MB and 13 million decoded
+  pixels per file, both checked before the picture is decoded, one per payment and the limit per
+  connection.
+
+## One connection can only try so often
+
+Every public action that saves something or calls a provider with the charity's merchant key is
+counted per internet connection, so a script can't fill the Pledges list with junk, get the
+merchant account throttled or fill the shared disk (#226). `core/limits.py` does the counting,
+on Django's cache API, with no package.
+
+| Action (`LIMITS` key) | Counted when | Default per window |
+|---|---|---|
+| `pledge` | The form is valid and would save a new pledge (not a mistake, not the same copy sent again) | 10 |
+| `start_payment` | A new attempt would start (not a paid or held pledge, not going back to the attempt just started) | 10 |
+| `qr_paid` | "I've paid" is valid and would be saved | 5 |
+| `payment_return` | Coming back from a provider, or Check my payment, would ask the provider (not for a paid payment) | 30 |
+
+- **The window** is `LIMITS_WINDOW`, 300 seconds, for every action. It's the wait supporters are
+  told, so keep it short. Both are in `charity/settings/base.py`; 0 stops every counted try.
+- **Never limited:** reading any page, and the way to a provider's page (`go_to_provider`), which
+  calls no provider and could stop a payer between Pay and the provider.
+- **One too many** is HTTP 429 with `Retry-After` and never cached; nothing is saved and no
+  provider is asked. What supporters see is in
+  [Appeals and giving](../site/appeals-and-giving.md#one-try-too-many).
+- **The connection** is the address Caddy sends as `X-Real-IP` (`LIMITS_ADDRESS_HEADER` in
+  production), which replaces any a visitor sends; a visitor's `X-Forwarded-For` is never read.
+  Without the header (dev, tests) it's the address Django sees. IPv6 counts by its /64, which a
+  household usually has whole; `::ffff:` addresses count as IPv4.
+- **The counters** are in their own cache, `CACHES["limits"]`: files under the web container's
+  `/tmp` in production, shared by both gunicorn workers, at most 2,000 entries (about 8 MB; when
+  full Django forgets a random third, which fails nothing). They're kept with the window as their
+  expiry, never with `cache.incr()`, which on a file cache saves the key again with the default
+  timeout. The default cache, Wagtail's, is separate.
+- **Logged once:** the first try too many from a connection for an action in a window is one
+  WARNING on the `core` logger, naming the action, its limit and the window, never the address;
+  later ones log nothing, so a flood can't push errors out of the logs.
+- **If the counters break,** the try goes through and one ERROR names the action: giving keeps
+  working.
+- **Not covered here:** other forms (#231) and the public check's provider calls per payment
+  (#232). The team's Check now in the admin has its own limit per payment.
 
 ## Production refuses to start half-configured
 
