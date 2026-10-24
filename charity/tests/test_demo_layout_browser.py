@@ -103,11 +103,18 @@ def pay_pages(demo_site, settings):
         )
         not_found.claim_paid(QRCode.objects.first(), "TXN-8842").mark_not_found(by=None)
         paths.append(f"{donate_page.url}pay/{not_found.reference}/qr/")
+        # The page saying to wait, after one try too many coming back from a provider (#226).
+        waiting = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        payment = waiting.start_payment("esewa", live=False)
+        paths.append(f"{donate_page.url}payment/{payment.reference}/")
+    settings.LIMITS = {**settings.LIMITS, "payment_return": 0}
     return paths
 
 
 def test_each_pay_page_fits_and_can_be_tapped_at_every_width(site_page, pay_pages):
-    assert len(pay_pages) == 16  # in both languages
+    assert len(pay_pages) == 18  # in both languages
     problems = []
     for path in pay_pages:
         problems += [f"{path} {item}" for item in layout_problems(site_page, path)]
