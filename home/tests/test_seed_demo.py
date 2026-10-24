@@ -3,7 +3,7 @@ from django.core.management import call_command
 from wagtail.models import Locale, Page
 
 from campaigns.forms import PledgeForm
-from campaigns.models import CampaignPage, DonatePage
+from campaigns.models import CampaignPage, DonatePage, Pledge
 from contact.models import FormPage
 
 # Imported via the module: a name starting with "Test" would be collected by pytest.
@@ -71,6 +71,18 @@ def test_privacy_notice_names_the_tick_boxes_as_the_pledge_form_does(seeded):
     assert f"<b>{labels['show_on_website']}</b>" in body
 
 
+def test_privacy_notice_says_when_a_gift_is_shown_as_the_consent_does(seeded):
+    """The consent (#100): the name, appeal and date once they've said they've paid; the amount
+    once it arrives."""
+    body = str(SiteSettings.for_site(seeded).privacy_page.specific.body)
+
+    assert (
+        "Your name, the appeal and the date on a page you can share and in our list of recent "
+        "supporters only if you ticked" in body
+    )
+    assert "once you've told us you've paid, and the amount once your gift has arrived" in body
+
+
 def test_donate_page_takes_pledges_for_the_appeals(seeded, client):
     donate = SiteSettings.for_site(seeded).donate_page.specific
 
@@ -79,6 +91,22 @@ def test_donate_page_takes_pledges_for_the_appeals(seeded, client):
     html = client.get(donate.url, {"appeal": "flood-relief"}).content.decode()
     assert "Flash flood relief in Nepal" in html
     assert "Where every Rs 100 goes" in html
+
+
+def test_adds_a_gift_to_share_paid_only_in_a_test_system(seeded, client):
+    """So the thank-you page and the gift's page can be seen, and are in the layout and query
+    budget checks (#100). Fictional, and marked as a test: no money moved."""
+    gift = Pledge.objects.get(show_on_website=True)
+    donate = gift.page
+
+    assert gift.payment_status == "paid"
+    assert not gift.paid_payment().live
+    assert gift.appeal.slug == "clean-water-kisumu"
+    page = client.get(f"{donate.url}gifts/{gift.gift_code}/").content.decode()
+    assert "is supporting Clean water for Kisumu" in page
+    assert "Test gift: no money was taken" in page
+    thanks = client.get(f"{donate.url}pay/{gift.reference}/").content.decode()
+    assert "Others can help too" in thanks
 
 
 def test_amounts_are_in_rupees_on_every_page(seeded, client):

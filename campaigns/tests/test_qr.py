@@ -742,9 +742,15 @@ class TestTheCheckingPage:
 
         page = soup(client.get(checking_url(donate_page, pledge)))
 
-        # The thanks already says the amount: no summary, no steps, no QR, no other way.
+        # The thanks already says the amount: no summary, no steps, no QR, no other way. Its only
+        # form is the share section's Show my gift box (#100).
         content = page.select_one("main")
-        assert content.select("dl.gift-summary, ol.qr-progress, form, .qr-card, .pay-way") == []
+        assert content.select("dl.gift-summary, ol.qr-progress, .qr-card, .pay-way") == []
+        assert [form["class"] for form in content.select("form")] == [["show-gift"]]
+        # The appeals are a plain link: the share section's Tell your friends is the main button.
+        appeals = page.find("a", string="See all our appeals")
+        assert appeals["href"] == "/appeals/"
+        assert "button" not in appeals.get("class", [])
         assert "Pay another way" not in text_of(page)
 
     def test_gives_the_pledge_number_to_call_about_it(

@@ -243,7 +243,9 @@ write them. Wording needs a Nepali speaker's eye: have one read the `.po` file b
 published translations of the page being read. The header's switch uses it, and so does
 `<head>`: a page that has a translation gets `<link rel="alternate" hreflang>` for each version,
 with `x-default` for the main language, so search engines show people the page in their
-language. The sitemap lists the same alternates. Search keeps its query when switching.
+language. The sitemap lists the same alternates. Search keeps its query when switching. A route
+under a page keeps its place too when the view puts it in `language_subpath` (a gift's page,
+`gifts/<code>/` under the Donate page), as long as the route reads in each language.
 
 ### Search in Nepali
 

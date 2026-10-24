@@ -72,7 +72,9 @@ Body text is 1.0625rem with a line height of 1.6; headings are dark teal at 1.2.
 **Components:**
 
 - **Buttons**: amber with dark text for the main action; a larger size for calls to action; at
-  least 44px tall.
+  least 44px tall. `.button-outline` (outlined in the brand colour) for a lesser action near the
+  main one, and `.link-button` for a button in a row of links. A button that waits for JavaScript
+  starts `hidden`, which always wins over a class's `display`.
 - **Cards** (appeals, stories): a white box with a border, photo on top, in a grid that fits as
   many 18rem columns as the screen allows.
 - **Progress**: "Rs … raised of Rs …" above a rounded amber bar on a grey track.

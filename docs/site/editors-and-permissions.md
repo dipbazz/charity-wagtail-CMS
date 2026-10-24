@@ -27,6 +27,7 @@ whoever hosts the site.
 | **Pledges** | View, filter and export | ✅ | ✅ |
 | | Check a payment with its provider (**Check with eSewa now**) | ✅ | ✅ |
 | | Mark a QR payment paid, or not found (**Can confirm payments**) | ❌ | ✅ |
+| | Stop showing a gift on the website, and show it again (**Can stop showing a gift on the website**) | ✅ | ✅ |
 | | Add, change or delete | ❌ | ❌ |
 | **Form submissions** | View and export (comes with editing the form page) | ✅ | ✅ |
 | **Users, groups and sites** | Manage | ❌ | ❌ |

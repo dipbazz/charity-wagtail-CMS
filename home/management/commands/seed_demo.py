@@ -7,6 +7,7 @@ from django.core.files.images import ImageFile
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils import timezone
 from PIL import Image, ImageDraw, ImageFont
 from wagtail.images.rect import Rect
 from wagtail.models import Locale, Site
@@ -17,6 +18,8 @@ from campaigns.models import (
     CampaignPage,
     DonatePage,
     DonatePageAmount,
+    PaymentStatus,
+    Pledge,
     QRCode,
     QRCodeName,
 )
@@ -341,9 +344,11 @@ class Command(BaseCommand):
                         "</li><li>Your mobile number only to remind you each month to give, on "
                         "WhatsApp or by text.</li><li>Your email address for stories and appeals "
                         f"only if you ticked <b>{tick_boxes['email_updates']}</b>.</li><li>Your "
-                        "name, amount, appeal and date on this website only if you ticked "
-                        f"<b>{tick_boxes['show_on_website']}</b>, and only once your gift has "
-                        "arrived.</li></ul><p>Your message is for our team only and never "
+                        "name, the appeal and the date on a page you can share and in our list of "
+                        "recent supporters only if you ticked "
+                        f"<b>{tick_boxes['show_on_website']}</b>, once you've told us you've "
+                        "paid, and the amount once your gift has arrived.</li></ul><p>Your "
+                        "message is for our team only and never "
                         "appears on the website.</p>",
                     ),
                     ("heading", {"heading_text": "Who can see it", "size": "h2"}),
@@ -425,7 +430,7 @@ class Command(BaseCommand):
                 (10000, "Water purification for a month"),
             ],
         )
-        self.add_campaign(
+        kisumu = self.add_campaign(
             campaigns,
             title="Clean water for Kisumu",
             slug="clean-water-kisumu",
@@ -611,6 +616,7 @@ class Command(BaseCommand):
         self.add_nepali_pages(home, donate, campaigns, flood, news, flood_story, testimonial)
         self.add_nepali_snippets(settings, banner, testimonial, [successes, updates])
         self.add_qr_code()
+        self.add_shared_gift(donate, kisumu)
 
         self.stdout.write(self.style.SUCCESS(f"Created demo content for {SITE_NAME}."))
         self.stdout.write(f"About page: {about.url}")
@@ -756,6 +762,22 @@ class Command(BaseCommand):
         QRCodeName.objects.create(
             code=code, locale=Locale.objects.get(language_code="ne"), name="नमुना पे"
         )
+
+    def add_shared_gift(self, donate, appeal):
+        """One paid gift whose fictional giver agreed to show it, so the thank-you page and the
+        gift's page for friends can be seen and checked (#100). Paid in eSewa's test system, so
+        the gift's page says no money was taken."""
+        gift = Pledge.objects.create(
+            page=donate,
+            appeal=appeal,
+            amount=1500,
+            currency="NPR",
+            name="Asha Gurung",
+            email="asha@example.org",
+            show_on_website=True,
+            show_on_website_changed_at=timezone.now(),
+        )
+        gift.start_payment("esewa", live=False).record(PaymentStatus.PAID, "000DEMO")
 
     def add_nepali_snippets(self, settings, banner, testimonial, categories):
         """Translate the banner, the charity's name and address, the testimonial and the news

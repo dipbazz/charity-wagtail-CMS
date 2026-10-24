@@ -7,6 +7,8 @@ and say why; if it saves queries, lower the budget.
 
 import pytest
 
+from campaigns.models import Pledge
+
 pytestmark = pytest.mark.django_db
 
 # The card listings (/, /appeals/, /stories/) each spend one query prefetching card image renditions
@@ -51,6 +53,30 @@ def test_page_stays_within_its_query_budget(
     client, demo_site, django_assert_max_num_queries, path, budget
 ):
     # The first visit creates image renditions and fills caches; budget the visits after it.
+    assert client.get(path).status_code == 200
+
+    with django_assert_max_num_queries(budget):
+        client.get(path)
+
+
+# The demo's shared gift (#100), whose addresses are random. Both pages spend three more than
+# /about/ reading the pledge with its appeal, its payments, and whether the appeal is private (its
+# view restrictions, two queries). The thank-you page spends two more on the appeals page it links
+# to and that page's restrictions; the gift's page one more on the appeal's photo. A gift paid with
+# real money (the demo's is a test) spends one more on the thanks, matching it to a suggested
+# amount to say what it does.
+GIFT_BUDGETS = {"thanks": 20, "gift": 19}
+
+
+@pytest.mark.parametrize(("which", "budget"), GIFT_BUDGETS.items())
+def test_a_gift_stays_within_its_query_budget(
+    client, demo_site, django_assert_max_num_queries, which, budget
+):
+    gift = Pledge.objects.get(show_on_website=True)
+    path = {
+        "thanks": f"{gift.page.url}pay/{gift.reference}/",
+        "gift": f"{gift.page.url}gifts/{gift.gift_code}/",
+    }[which]
     assert client.get(path).status_code == 200
 
     with django_assert_max_num_queries(budget):

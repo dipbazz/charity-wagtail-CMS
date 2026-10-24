@@ -38,6 +38,7 @@ from wagtail.models import Orderable, Page, PageManager
 from wagtail.query import PageQuerySet
 from wagtail.search import index
 
+from campaigns import sharing
 from campaigns.payments import (
     IN_PERSON,
     ONLINE,
@@ -209,6 +210,10 @@ class CampaignPage(SocialMetaMixin, Page):
     def is_active(self):
         return self.end_date is None or self.end_date >= datetime.date.today()
 
+    @property
+    def target_reached(self):
+        return bool(self.target_amount) and self.amount_raised >= self.target_amount
+
     def clean(self):
         super().clean()
         if self.end_date and self.start_date and self.end_date < self.start_date:
@@ -249,6 +254,11 @@ REUSE_ATTEMPT_FOR = datetime.timedelta(minutes=10)
 PAYMENT_MESSAGE = "payment"
 
 
+# What saving the thank-you page's Show my gift box did ("shown" or "hidden"), for that page to
+# say once.
+GIFT_MESSAGE = "gift"
+
+
 def tell_pay_page(request, result):
     """Leave the online pay page a one-off result: "checked" (the provider hasn't confirmed the
     payment yet), "unreachable" (it couldn't be asked) or "not-started" (it couldn't start one).
@@ -256,18 +266,30 @@ def tell_pay_page(request, result):
     messages.info(request, result, extra_tags=PAYMENT_MESSAGE)
 
 
+def take_message(request, tag):
+    """The message with `tag` left for this page, if any. Any other message is kept for the page
+    it's for.
+
+    The pay page's messages are all taken on the first call, once per request: reading the
+    messages again would bring back the ones already taken, and add the others twice."""
+    if not hasattr(request, "pay_page_messages"):
+        request.pay_page_messages = {}
+        others = []
+        for message in messages.get_messages(request):
+            tags = (message.extra_tags or "").split()
+            mine = next((tag for tag in (PAYMENT_MESSAGE, GIFT_MESSAGE) if tag in tags), None)
+            if mine:
+                request.pay_page_messages[mine] = message.message
+            else:
+                others.append(message)
+        for message in others:
+            messages.add_message(request, message.level, message.message, message.extra_tags)
+    return request.pay_page_messages.get(tag)
+
+
 def pay_page_result(request):
-    """The result tell_pay_page() left, if any. Any other message is kept for the page it's for."""
-    result = None
-    others = []
-    for message in messages.get_messages(request):
-        if PAYMENT_MESSAGE in (message.extra_tags or "").split():
-            result = message.message
-        else:
-            others.append(message)
-    for message in others:
-        messages.add_message(request, message.level, message.message, message.extra_tags)
-    return result
+    """The result tell_pay_page() left, if any."""
+    return take_message(request, PAYMENT_MESSAGE)
 
 
 # Not ready to pay yet: offered with the ways to pay, on every pledge's pay page, but not a way
@@ -373,6 +395,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     qr_paid_template = "campaigns/pay/qr_paid.html"
     checking_template = "campaigns/pay/checking.html"
     redirect_template = "campaigns/donate_page_redirect.html"
+    gift_template = "campaigns/gift_page.html"
     preview_modes = [("", "Donate page"), ("thank-you", "Thank-you page")]
 
     def get_appeals(self):
@@ -459,12 +482,19 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         qr_codes = self.qr_codes_for(pledge.currency, names)
         return providers, ways_to_pay(providers, site_settings, qr_codes), qr_codes
 
-    def get_pledge(self, reference):
-        return get_object_or_404(
-            Pledge.objects.select_related("appeal").prefetch_related("payments"),
-            reference=reference,
-            page=self,
+    def get_pledge(self, in_any_language=False, **lookup):
+        """One of this page's pledges, by its reference (its pay page) or gift code (its gift's
+        page), with its appeal and payments. `in_any_language`: sent from this page in any
+        language, as a gift's page reads in each."""
+        if in_any_language:
+            lookup["page__translation_key"] = self.translation_key
+        else:
+            lookup["page"] = self
+        pledge = get_object_or_404(
+            Pledge.objects.select_related("appeal").prefetch_related("payments"), **lookup
         )
+        pledge.page = self  # it's this page: sharing reads it without fetching it again
+        return pledge
 
     @path("pay/<uuid:reference>/", name="pay")
     def pay(self, request, reference):
@@ -474,7 +504,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         A pledge one way is still dealing with goes to that way's page, and a pledge with only
         one way to pay goes straight to it. Paid, it says thank you, like every pay address.
         """
-        pledge = self.get_pledge(reference)
+        pledge = self.get_pledge(reference=reference)
         state = pledge.pay_page_state()
         site_settings = SiteSettings.for_request(request)
         if state in THANKED:
@@ -509,7 +539,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             return self.way_page(request, reference, QR, step=2)
         if request.method != "POST":
             return HttpResponseNotAllowed(["GET", "POST"])
-        pledge = self.get_pledge(reference)
+        pledge = self.get_pledge(reference=reference)
         # Sent again, or from a tab opened before an online attempt started (that attempt may be
         # paid): the page dealing with the pledge.
         state = pledge.pay_page_state()
@@ -551,7 +581,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         told us, and the pledge number to call about it. Every pay address of the pledge comes
         here meanwhile, as nothing else can be paid. Once it's found or not, this goes to the pay
         page, which says which."""
-        pledge = self.get_pledge(reference)
+        pledge = self.get_pledge(reference=reference)
         if pledge.pay_page_state() != "to-confirm":
             return self.redirect_to(request, "pay", reference)
         claimed = next(p for p in pledge.payments.all() if p.status == PaymentStatus.TO_CONFIRM)
@@ -566,6 +596,108 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "paid_by": claimed.paid_by(),
                 "site_settings": site_settings,
                 "phone_link": phone_link(site_settings),
+                **self.sharing_context(request, pledge, site_settings),
+            },
+        )
+
+    def sharing_context(self, request, pledge, site_settings):
+        """The share section (#100), for the thank-you and checking pages: what to say, where a
+        share sends friends, and the Show my gift box."""
+        from campaigns.forms import ShowGiftForm  # forms imports this module's Pledge
+
+        appeal = sharing.appeal_shown(pledge)
+        charity = site_settings.name
+        url = sharing.share_url(pledge, appeal, request)
+        text = sharing.share_text(pledge, appeal, charity)
+        if sharing.gift_view(pledge) != sharing.HIDDEN:
+            title = sharing.gift_title(pledge, appeal, charity)
+        else:
+            title = appeal.title if appeal else charity
+        return {
+            "share": {
+                "appeal": appeal,
+                "needs_help": appeal is not None and sharing.needs_help(appeal),
+                "url": url,
+                "text": text,
+                "title": title,
+                "whatsapp": sharing.whatsapp_link(text, url),
+                "facebook": sharing.facebook_link(url),
+                # Just saved: the page says so, and focus moves to the section.
+                "saved": take_message(request, GIFT_MESSAGE),
+            },
+            # Ticked while it's shown: not for a QR payment being checked, agreed in the old words.
+            "show_gift_form": ShowGiftForm(
+                initial={"show_on_website": sharing.gift_view(pledge) != sharing.HIDDEN}
+            ),
+        }
+
+    @path("pay/<uuid:reference>/show-gift/", name="show_gift")
+    def show_gift(self, request, reference):
+        """The Show my gift box on the thank-you and checking pages: shows the gift on its page
+        for friends, or takes it down, and says which once back there, only if the page did go
+        up or down. Only once the supporter has told us they've paid, and never while the team
+        has taken it down."""
+        from campaigns.forms import ShowGiftForm  # forms imports this module's Pledge
+
+        if request.method != "POST":
+            return HttpResponseNotAllowed(["POST"])
+        pledge = self.get_pledge(reference=reference)
+        state = pledge.pay_page_state()
+        form = ShowGiftForm(request.POST)
+        if sharing.offers_sharing(pledge) and not pledge.hidden_by_team and form.is_valid():
+            was_shown = sharing.gift_view(pledge) != sharing.HIDDEN
+            # Not changed if the team took it down meanwhile, so it says nothing.
+            if pledge.set_show_on_website(form.cleaned_data["show_on_website"]):
+                shown = sharing.gift_view(pledge) != sharing.HIDDEN
+                if shown != was_shown:
+                    messages.info(request, "shown" if shown else "hidden", extra_tags=GIFT_MESSAGE)
+        route = STATE_ROUTES.get(state, "pay")
+        return self.redirect_to(request, route, reference, fragment="share")
+
+    @path("gifts/<slug:code>/", name="gift")
+    def gift(self, request, code):
+        """A gift's public page, which its supporter shares with friends (#100): their name, the
+        appeal and what they gave, and a way for friends to give too. Its address is the
+        pledge's gift code, never its reference, which pays it. It shows only what
+        campaigns/sharing.py allows. Otherwise it goes where a share would now send friends (the
+        appeal, else this page), so a link shared before still leads somewhere to give: not for
+        good, as it may be shown again. It reads in each language, the appeal too, so a friend
+        who switches language keeps the gift."""
+        pledge = self.get_pledge(in_any_language=True, gift_code=code)
+        if pledge.appeal and pledge.appeal.locale_id != self.locale_id:
+            pledge.appeal = pledge.appeal.localized  # its live translation, else as it is
+        view = sharing.gift_view(pledge)
+        appeal = sharing.appeal_shown(pledge)
+        if view == sharing.HIDDEN:
+            return HttpResponseRedirect((appeal or self).get_url(request))
+        paid = pledge.paid_payment()
+        if paid:
+            given_on = pledge.paid_at or paid.updated_at
+        else:  # the day they told us they paid, while the team checks it
+            payments = pledge.payments.all()
+            given_on = next(p for p in payments if p.status == PaymentStatus.TO_CONFIRM).created_at
+        title = sharing.gift_title(pledge, appeal, SiteSettings.for_request(request).name)
+        return self.render(
+            request,
+            template=self.gift_template,
+            context_overrides={
+                "pledge": pledge,
+                "view": view,
+                "appeal": appeal,
+                "gift_title": title,
+                "summary": appeal.summary if appeal else self.introduction,
+                "gift_amount": format_money(*sharing.gift_amount(pledge)),
+                "given_on": given_on,
+                "test_gift": sharing.is_test(pledge),
+                "gift_url": sharing.gift_url(pledge, request),
+                # The language switcher and hreflang links go to the gift in each language.
+                "language_subpath": self.reverse_subpage("gift", args=[code]),
+                # The appeal's preview picture, else the Donate page's.
+                "social_image": (appeal and appeal.get_social_image()) or self.get_social_image(),
+                # A closed appeal points friends to the open ones, if there are any.
+                "open_appeals": bool(appeal)
+                and not appeal.is_active
+                and self.get_appeals().exists(),
             },
         )
 
@@ -585,7 +717,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         # Taken before any redirect: left in the session, it would turn up in the admin, or here
         # later as news that's no longer true.
         result = pay_page_result(request) if way == ONLINE else None
-        pledge = self.get_pledge(reference)
+        pledge = self.get_pledge(reference=reference)
         state = pledge.pay_page_state()
         if state in HELD and STATE_ROUTES[state] != WAY_ROUTES[way]:
             return self.redirect_to(request, STATE_ROUTES[state], reference)
@@ -644,6 +776,12 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         }
         # Named on the choices, and on the online page.
         context["pay_with"] = either([provider.name for provider in providers])
+        if state in THANKED:
+            context |= self.sharing_context(request, pledge, site_settings)
+            # What the gift does, unless only a test system took it: then it does nothing.
+            if received.live:
+                appeal = context["share"]["appeal"]
+                context["impact_line"] = sharing.impact_line(pledge, appeal, site_settings.currency)
         if way == ONLINE:
             latest = next(iter(pledge.payments.all()), None)  # newest first
             context |= {
@@ -806,10 +944,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 tell_pay_page(request, "checked")
         return self.redirect_to(request, "pay_online", payment.pledge.reference)
 
-    def redirect_to(self, request, name, *args):
-        """303 to one of this page's routes."""
+    def redirect_to(self, request, name, *args, fragment=""):
+        """303 to one of this page's routes, at `fragment` if given (a section's id)."""
         url = self.get_url(request) + self.reverse_subpage(name, args=args)
-        return HttpResponseRedirect(url, status=303)
+        return HttpResponseRedirect(f"{url}#{fragment}" if fragment else url, status=303)
 
     def serve_preview(self, request, mode_name):
         if mode_name == "thank-you":
@@ -998,6 +1136,11 @@ def new_pledge_number():
     return str(100000 + secrets.randbelow(900000))
 
 
+def new_gift_code():
+    """A random code for a gift's public page: 72 bits as 12 URL-safe characters."""
+    return secrets.token_urlsafe(9)
+
+
 class Pledge(models.Model):
     """A supporter's promise to give, sent from the Donate page, then paid online (a Payment)
     or arranged with the team."""
@@ -1040,7 +1183,9 @@ class Pledge(models.Model):
     )
     show_on_website = models.BooleanField(
         default=False,
-        help_text="Agreed to their name, amount, appeal and date being listed once received.",
+        help_text="Agreed to their name, appeal and date being shown on a page they can share and "
+        "in the list of recent supporters once they say they've paid, and the amount once it's "
+        "received.",
     )
     created_at = models.DateTimeField("sent", auto_now_add=True)
     # The one-time ID of the copy of the form it was sent from. Sending that copy again (after
@@ -1058,12 +1203,29 @@ class Pledge(models.Model):
     # the pledge without guessing between two people with the same name. Never a way in: the pay
     # page is at the reference.
     number = models.CharField("pledge number", max_length=6, unique=True, editable=False)
+    # The address of the gift's public page, which the supporter shares (#100). Random, so
+    # nobody can guess one or count up to the next, and never the reference, which pays it.
+    gift_code = models.CharField(max_length=12, unique=True, editable=False)
+    # When the supporter last ticked or unticked show_on_website: on the form, or on the
+    # thank-you page. Empty when they agreed before gift pages, in the old words: "Once your gift
+    # reaches us" (campaigns/sharing.py).
+    show_on_website_changed_at = models.DateTimeField(
+        "show on website changed", null=True, blank=True, editable=False
+    )
+    # The team's Stop showing on the website: the gift isn't shown, whatever the supporter
+    # ticks, until the team shows it again.
+    hidden_by_team = models.BooleanField("taken down by the team", default=False, editable=False)
 
     class Meta:
         ordering = ["-created_at"]
-        # Whoever finds a payment in the team's statement and marks it paid, or says it isn't
-        # there: moderators have it, editors only read pledges.
-        permissions = [("confirm_payment", "Can confirm payments")]
+        permissions = [
+            # Whoever finds a payment in the team's statement and marks it paid, or says it isn't
+            # there: moderators have it, editors only read pledges.
+            ("confirm_payment", "Can confirm payments"),
+            # Whoever takes a gift's public page down (a made-up name, say) and puts it back:
+            # editors and moderators.
+            ("stop_showing_gift", "Can stop showing a gift on the website"),
+        ]
 
     def __str__(self):
         return f"{self.name}: {self.display_amount()} {self.get_frequency_display().lower()}"
@@ -1071,20 +1233,31 @@ class Pledge(models.Model):
     def save(self, *args, **kwargs):
         if self.reference is None:
             self.reference = uuid.uuid4()
-        if self.number:
+        # Made with the box ticked (in the admin, tests or the demo too): agreed in today's words.
+        if self._state.adding and self.show_on_website and not self.show_on_website_changed_at:
+            self.show_on_website_changed_at = timezone.now()
+        if self.number and self.gift_code:
             return super().save(*args, **kwargs)
-        # Pick the number here, not in the form, so pledges made in the admin, in tests or in the
-        # demo get one too. A number already taken (one in 900,000 per pledge) is tried again;
-        # any other clash, such as the form's double click, is passed on.
+        # Pick the number and gift code here, not in the form, so pledges made in the admin, in
+        # tests or in the demo get them too. One picked already taken (a number is one in 900,000
+        # per pledge) is tried again; any other clash, such as the form's double click or a
+        # number given already taken, is passed on.
+        number, gift_code = self.number, self.gift_code
         for attempt in range(10):
-            self.number = new_pledge_number()
+            self.number = number or new_pledge_number()
+            self.gift_code = gift_code or new_gift_code()
             try:
                 with transaction.atomic():
                     return super().save(*args, **kwargs)
             except IntegrityError:
-                taken = Pledge.objects.filter(number=self.number).exists()
+                picked_taken = Q()
+                if not number:
+                    picked_taken |= Q(number=self.number)
+                if not gift_code:
+                    picked_taken |= Q(gift_code=self.gift_code)
+                taken = Pledge.objects.filter(picked_taken).exists()
                 if not taken or attempt == 9:
-                    self.number = ""
+                    self.number, self.gift_code = number, gift_code
                     raise
 
     @admin.display(description="Pledge number")
@@ -1177,6 +1350,20 @@ class Pledge(models.Model):
                 return "not-found"
             return "failed" if latest and latest.reached_provider() else "not-started"
         return "ready"
+
+    def set_show_on_website(self, shown):
+        """The supporter's choice from the thank-you page's box, and when they made it. Not while
+        the team has taken the gift down. Returns whether it changed anything. Ticked again after
+        agreeing in the old words, it records that they agree in today's."""
+        now = timezone.now()
+        changed = (
+            Pledge.objects.filter(pk=self.pk, hidden_by_team=False)
+            .exclude(show_on_website=shown, show_on_website_changed_at__isnull=False)
+            .update(show_on_website=shown, show_on_website_changed_at=now)
+        )
+        if changed:
+            self.show_on_website, self.show_on_website_changed_at = shown, now
+        return bool(changed)
 
     def has_paid_payment(self):
         """Whether any attempt has paid it, live or test, at any amount: it's never asked for

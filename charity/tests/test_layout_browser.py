@@ -5,9 +5,11 @@ pytest's HTML checks can't see where things end up on screen. Run
 """
 
 import pytest
+from playwright.sync_api import expect
 from wagtail.models import Locale
 from wagtail_factories import ImageFactory
 
+from campaigns.models import Pledge
 from campaigns.tests.factories import CampaignIndexPageFactory, DonatePageFactory
 from conftest import SITE
 from core.models import SiteSettings, SiteSettingsText
@@ -369,3 +371,16 @@ def test_a_button_has_the_sites_font(site_page, home_page):
     )
 
     assert button == body
+
+
+# Regression: a control that waits for JavaScript (<button class="button" hidden>, such as Copy
+# link on Not ready to pay yet) showed without it, and did nothing when pressed: .button's display
+# beat the hidden attribute. Found while building #100 on 2026-10-19.
+@pytest.mark.browser_context_args(java_script_enabled=False)
+def test_a_button_waiting_for_javascript_stays_hidden_without_it(site_page, home_page):
+    donate_page = DonatePageFactory(parent=home_page)
+    pledge = Pledge.objects.create(page=donate_page, amount=2500, currency="NPR", name="Sita")
+    site_page.goto(f"{SITE}{donate_page.url}pay/{pledge.reference}/later/")
+
+    expect(site_page.get_by_role("textbox")).to_be_visible()  # the link, to select and copy
+    expect(site_page.locator("button.button[data-copy]")).to_be_hidden()

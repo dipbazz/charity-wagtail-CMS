@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 from bs4 import BeautifulSoup
+from django.contrib.messages import get_messages
 from django.urls import reverse
 from django.utils import timezone
 from wagtail.models import Locale
@@ -86,7 +87,9 @@ def kinds(payment):
 
 
 def pay_buttons(response):
-    return [button.get_text(strip=True) for button in soup(response).select("form button")]
+    """The buttons that pay: not the thanks' Show my gift box (#100)."""
+    buttons = soup(response).select("form:not(.show-gift) button")
+    return [button.get_text(strip=True) for button in buttons]
 
 
 def pay_button(response, label):
@@ -1015,6 +1018,9 @@ class TestComingBack:
         assert "FAKE-123" in text(page)
         assert "test" not in text(page).lower()
         assert pay_buttons(page) == []
+        # Then sharing that they've given (#100), straight after the reference.
+        reference = soup(page).find("p", string="Fake Pay reference: FAKE-123")
+        assert reference.find_next_sibling()["class"] == ["share-gift"]
 
     def test_a_test_payment_says_first_that_no_money_was_taken(
         self, client, donate_page, pledge, payment
@@ -1048,7 +1054,10 @@ class TestComingBack:
 
         page = soup(client.get(online_url(donate_page, pledge)))
 
-        assert page.find("a", string="See all our appeals")["href"] == "/appeals/"
+        appeals = page.find("a", string="See all our appeals")
+        assert appeals["href"] == "/appeals/"
+        # A plain link since #100: Tell your friends is the main button.
+        assert "button" not in appeals.get("class", [])
 
     def test_thanks_lead_home_on_a_site_with_no_appeals_page(
         self, client, donate_page, pledge, payment
@@ -1242,6 +1251,26 @@ class TestComingBack:
         assert "We asked Fake Pay just now" in page
         assert "can't be deleted" not in page
         assert "can't be deleted" in admin
+
+    def test_thanks_after_a_check_leave_every_message_as_it_was(
+        self, admin_client, donate_page, pledge, payment, fake_provider
+    ):
+        """Paid (by the provider's webhook) between the check and the online page: the thanks
+        take the check's note, which is no longer true, and keep the admin's message once."""
+        fake_provider.outcome = Outcome(Status.WAITING)
+        paid = Pledge.objects.create(page=donate_page, amount=500, currency="NPR", name="Ram")
+        paid.start_payment("khalti", live=True).record(Status.PAID, "GFq9PFS7")
+        admin_client.post(reverse("pledges:delete", args=[paid.pk]))  # refused, with a message
+        admin_client.get(return_url(donate_page, payment))
+        payment.record(Status.PAID, "FP-1")
+
+        thanks = admin_client.get(online_url(donate_page, pledge))
+        later = admin_client.get(reverse("pledges:index"))
+
+        assert "Thank you" in text(thanks)
+        left = [message.message for message in get_messages(later.wsgi_request)]
+        assert len(left) == 1
+        assert "can't be deleted" in left[0]
 
     def test_what_it_found_isnt_kept_when_paying_online_has_gone(
         self, admin_client, donate_page, pledge, fake_provider, settings

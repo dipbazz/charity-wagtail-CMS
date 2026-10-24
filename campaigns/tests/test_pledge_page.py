@@ -14,6 +14,7 @@ from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
+from wagtail.models import ModelLogEntry
 
 from campaigns.models import CampaignPage, Frequency, Payment, PaymentStatus, Pledge, StepKind
 from nepal_payments import Outcome, ProviderUnavailable, Status
@@ -456,3 +457,121 @@ class TestCheckWithTheProviderNow:
         assert response.status_code == 302
         assert response.url.startswith(reverse("wagtailadmin_login"))
         assert fake_provider.checked == []
+
+
+class TestStopShowingOnTheWebsite:
+    """The team's answer to a made-up name on a gift's page for friends (#100): editors and
+    moderators take it down, and only they can put it back."""
+
+    @pytest.fixture
+    def gift(self, donate_page):
+        from campaigns.tests.test_sharing import pledge_in
+
+        return pledge_in("paid", donate_page, CampaignPage.objects.get(slug="flood-relief"))
+
+    def gift_page(self, client, gift):
+        return client.get(f"{gift.page.url}gifts/{gift.gift_code}/")
+
+    @pytest.mark.parametrize("member", ["editor", "moderator"])
+    def test_offered_on_a_gift_shown_on_the_website(self, client, request, gift, member):
+        client.force_login(request.getfixturevalue(member))
+
+        page = section(open_page(client, gift), "Message and consents")
+
+        stop = page.find("a", string="Stop showing on the website")
+        assert stop["href"] == reverse("pledges:stop_showing", args=[gift.pk])
+        friends = page.find("a", string="Their page for friends")
+        assert friends["href"] == f"http://localhost{gift.page.url}gifts/{gift.gift_code}/"
+
+    def test_not_offered_without_consent(self, client, team, pledge):
+        page = section(open_page(client, pledge), "Message and consents")
+
+        assert page.find("a", string="Stop showing on the website") is None
+
+    def test_asks_first(self, client, team, gift):
+        response = client.get(reverse("pledges:stop_showing", args=[gift.pk]))
+        page = BeautifulSoup(response.content, "html.parser")
+
+        assert response.status_code == 200
+        assert "Asha Gurung" in text(page.find("h1"))
+        assert page.find("button", string="Yes, stop showing it") is not None
+        assert not Pledge.objects.get(pk=gift.pk).hidden_by_team
+
+    def test_takes_the_page_down_at_once(self, client, team, gift):
+        response = client.post(reverse("pledges:stop_showing", args=[gift.pk]))
+
+        assert response.status_code == 302
+        assert response.url == inspect_url(gift)
+        assert Pledge.objects.get(pk=gift.pk).hidden_by_team
+        assert self.gift_page(client, gift).status_code == 302  # to the appeal
+
+    def test_says_where_friends_go_now(self, client, team, gift):
+        response = client.get(reverse("pledges:stop_showing", args=[gift.pk]))
+
+        assert "page not found" not in response.content.decode()
+        assert "goes to the appeal" in text(BeautifulSoup(response.content, "html.parser"))
+
+    def test_says_so_on_the_pledge(self, client, team, gift):
+        client.post(reverse("pledges:stop_showing", args=[gift.pk]))
+
+        page = section(open_page(client, gift), "Message and consents")
+
+        assert "Taken down by your team" in text(page)
+        assert page.find("button", string="Show again") is not None
+        assert page.find("a", string="Their page for friends") is None
+        history = page.find("a", string="Who took it down, and when")
+        assert history["href"] == reverse("pledges:history", args=[gift.pk])
+
+    def test_is_logged_in_the_pledges_history(self, client, team, gift):
+        client.post(reverse("pledges:stop_showing", args=[gift.pk]))
+        client.post(reverse("pledges:show_again", args=[gift.pk]))
+
+        history = client.get(reverse("pledges:history", args=[gift.pk])).content.decode()
+
+        assert "Stopped showing on the website" in history
+        assert "Shown again on the website" in history
+        assert team.get_username() in history
+
+    def test_sent_twice_is_logged_once(self, client, team, gift):
+        """A confirm sent twice, or from a tab left open: the history is the team's record of
+        who took it down."""
+        for action in ("stop_showing", "stop_showing", "show_again", "show_again"):
+            client.post(reverse(f"pledges:{action}", args=[gift.pk]))
+
+        logged = ModelLogEntry.objects.filter(object_id=str(gift.pk))
+        assert logged.filter(action="campaigns.stop_showing").count() == 1
+        assert logged.filter(action="campaigns.show_again").count() == 1
+
+    def test_show_again_puts_it_back(self, client, team, gift):
+        client.post(reverse("pledges:stop_showing", args=[gift.pk]))
+
+        client.post(reverse("pledges:show_again", args=[gift.pk]))
+
+        assert not Pledge.objects.get(pk=gift.pk).hidden_by_team
+        assert self.gift_page(client, gift).status_code == 200
+
+    def test_show_again_only_by_sending_the_form(self, client, team, gift):
+        Pledge.objects.filter(pk=gift.pk).update(hidden_by_team=True)
+
+        assert client.get(reverse("pledges:show_again", args=[gift.pk])).status_code == 405
+        assert Pledge.objects.get(pk=gift.pk).hidden_by_team
+
+    @pytest.mark.parametrize("action", ["stop_showing", "show_again"])
+    def test_not_for_someone_who_only_reads_pledges(self, client, django_user_model, gift, action):
+        user = django_user_model.objects.create_user(username="reader", password="x")
+        user.user_permissions.add(
+            Permission.objects.get(codename="access_admin"),
+            Permission.objects.get(codename="view_pledge"),
+        )
+        client.force_login(user)
+        Pledge.objects.filter(pk=gift.pk).update(hidden_by_team=action == "show_again")
+
+        response = client.post(reverse(f"pledges:{action}", args=[gift.pk]))
+
+        # Wagtail sends someone without permission back to the dashboard.
+        assert response.status_code == 302
+        assert response.url == reverse("wagtailadmin_home")
+        assert Pledge.objects.get(pk=gift.pk).hidden_by_team is (action == "show_again")
+        page = section(open_page(client, gift), "Message and consents")
+        assert page.find("a", string="Stop showing on the website") is None
+        assert page.find("button", string="Show again") is None

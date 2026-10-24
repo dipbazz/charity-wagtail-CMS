@@ -1,11 +1,11 @@
 # Nepali text for the site's menus, buttons, forms and messages.
 # Same license as the project.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-17 04:09+0100\n"
+"POT-Creation-Date: 2026-10-19 06:09+0100\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -20,6 +20,12 @@ msgstr "जहाँ सबैभन्दा बढी आवश्यक छ"
 
 msgid "Choose an amount or enter your own."
 msgstr "रकम छान्नुहोस् वा आफ्नै रकम लेख्नुहोस्।"
+
+msgid "Show my gift on this website"
+msgstr "मेरो दान यस वेबसाइटमा देखाउनुहोस्"
+
+msgid "Once you've told us you've paid, we'll show your name, the appeal and the date on a page you can share, and in our list of recent supporters; the amount once your gift reaches us. Nothing else about you is shown."
+msgstr "तपाईंले भुक्तानी गरेको कुरा हामीलाई बताएपछि, हामी तपाईंको नाम, अपिल र मिति तपाईंले साझा गर्न सक्ने एउटा पृष्ठमा र हालका सहयोगीहरूको सूचीमा देखाउनेछौं; रकम भने तपाईंको दान हामीले पाएपछि मात्र देखाइनेछ। तपाईंको अरू कुनै जानकारी देखाइने छैन।"
 
 msgid "Country"
 msgstr "देश"
@@ -63,9 +69,6 @@ msgstr "तपाईंको दानसँगै सन्देश"
 msgid "Email me stories from our projects and appeals that need help"
 msgstr "हाम्रा परियोजनाका कथा र सहयोग चाहिएका अपिलहरू मलाई इमेलमा पठाउनुहोस्"
 
-msgid "Show my gift on this website"
-msgstr "मेरो दान यस वेबसाइटमा देखाउनुहोस्"
-
 msgid "For example, if you're giving in memory of someone. Only our team will read it."
 msgstr "उदाहरणका लागि, कसैको सम्झनामा दान दिँदै हुनुहुन्छ भने। तपाईंको सन्देश हाम्रो संस्थाको सदस्यहरूले मात्र पढ्नेछन्।"
 
@@ -74,9 +77,6 @@ msgstr "घर वा वडा नम्बर, सडक वा टोल, स
 
 msgid "You can ask us to stop at any time."
 msgstr "तपाईं जुनसुकै बेला हामीलाई भनेर निस्क्रिय गर्न सक्नुहुन्छ।"
-
-msgid "Once your gift reaches us, we'll list your name, the amount, the appeal and the date. Nothing else about you is shown."
-msgstr "तपाईंको दान हामीले पाएपछि, हामी तपाईंको नाम, रकम, अपिल र मिति सूचीमा देखाउनेछौं। तपाईंको अरू कुनै जानकारी सम्प्रेषण हुने छैन।"
 
 msgid "We'll only use this to send you a monthly reminder on WhatsApp, or by text message if you're in Nepal and not on WhatsApp."
 msgstr "हामी यो नम्बर मासिक सम्झना सन्देश पठाउन मात्र प्रयोग गर्नेछौं: व्हाट्सएपमा, वा तपाईं नेपालमा हुनुहुन्छ र व्हाट्सएप प्रयोग गर्नुहुन्न भने एसएमएसमा।"
@@ -141,6 +141,33 @@ msgstr "आफैं आएर"
 #, python-format
 msgid "A gift to %(charity)s: %(appeal)s"
 msgstr "%(charity)s लाई दान: %(appeal)s"
+
+#, python-format
+msgid "It pays for %(impact)s."
+msgstr "यसले %(impact)s जुटाउँछ।"
+
+msgid "It helps wherever the need is greatest."
+msgstr "यसले जहाँ सबैभन्दा बढी आवश्यकता छ, त्यहाँ सहयोग गर्छ।"
+
+#, python-format
+msgid "I've just given to %(charity)s. They still need help. If you can, you could give too:"
+msgstr "मैले भर्खरै %(charity)s लाई दान दिएँ। उनीहरूलाई अझै सहयोग चाहिएको छ। सक्नुहुन्छ भने, तपाईं पनि दान दिन सक्नुहुन्छ:"
+
+#, python-format
+msgid "I've just given to %(appeal)s with %(charity)s. They still need help. If you can, you could give too:"
+msgstr "मैले भर्खरै %(charity)s मार्फत %(appeal)s मा दान दिएँ। उनीहरूलाई अझै सहयोग चाहिएको छ। सक्नुहुन्छ भने, तपाईं पनि दान दिन सक्नुहुन्छ:"
+
+#, python-format
+msgid "I've just given to %(appeal)s with %(charity)s. If you can, you could give too:"
+msgstr "मैले भर्खरै %(charity)s मार्फत %(appeal)s मा दान दिएँ। सक्नुहुन्छ भने, तपाईं पनि दान दिन सक्नुहुन्छ:"
+
+#, python-format
+msgid "%(name)s is supporting %(charity)s"
+msgstr "%(name)s ले %(charity)s लाई सहयोग गर्दै हुनुहुन्छ"
+
+#, python-format
+msgid "%(name)s is supporting %(appeal)s"
+msgstr "%(name)s ले %(appeal)s मा सहयोग गर्दै हुनुहुन्छ"
 
 msgid "Filter appeals"
 msgstr "अपिलहरू छान्नुहोस्"
@@ -237,6 +264,36 @@ msgstr "%(provider)s खोल्दै…"
 #, python-format
 msgid "Continue to %(provider)s"
 msgstr "%(provider)s मा जानुहोस्"
+
+msgid "Test gift: no money was taken"
+msgstr "परीक्षण दान: कुनै पैसा लिइएन"
+
+#, python-format
+msgid "Paid by QR on %(date)s. Our team is checking it."
+msgstr "%(date)s मा QR बाट भुक्तानी गरिएको। हाम्रो टोलीले यसलाई जाँच्दैछ।"
+
+#, python-format
+msgid "Gives %(amount)s a month"
+msgstr "मासिक %(amount)s दान दिनुहुन्छ"
+
+#, python-format
+msgid "Gave %(amount)s on %(date)s"
+msgstr "%(date)s मा %(amount)s दान दिनुभयो"
+
+msgid "Give to this appeal"
+msgstr "यो अपिलमा दान दिनुहोस्"
+
+msgid "Give where it's needed most"
+msgstr "जहाँ सबैभन्दा बढी आवश्यक छ, त्यहाँ दान दिनुहोस्"
+
+msgid "Give"
+msgstr "दान दिनुहोस्"
+
+msgid "Read about this appeal"
+msgstr "यो अपिलबारे पढ्नुहोस्"
+
+msgid "See our open appeals"
+msgstr "हाम्रा खुला अपिलहरू हेर्नुहोस्"
 
 msgid "This appeal has closed."
 msgstr "यो अपिल बन्द भइसकेको छ।"
@@ -348,6 +405,57 @@ msgstr "QR कोड स्क्यान गर्नुहोस्"
 msgid "Paid? Tell us"
 msgstr "भुक्तानी गर्नुभयो? हामीलाई बताउनुहोस्"
 
+msgid "Others can help too"
+msgstr "अरूले पनि सहयोग गर्न सक्छन्"
+
+msgid "Your page for friends is ready."
+msgstr "साथीहरूका लागि तपाईंको पृष्ठ तयार छ।"
+
+msgid "Your page for friends has been taken down."
+msgstr "साथीहरूका लागि तपाईंको पृष्ठ हटाइयो।"
+
+#, python-format
+msgid "%(appeal)s still needs support. If you tell your friends, their gifts can help as well."
+msgstr "%(appeal)s लाई अझै सहयोग चाहिएको छ। तपाईंले साथीहरूलाई भन्नुभयो भने, उनीहरूको दानले पनि सहयोग गर्न सक्छ।"
+
+#, python-format
+msgid "%(appeal)s has reached its target. Your friends can still help: every gift goes further."
+msgstr "%(appeal)s ले आफ्नो लक्ष्य पूरा गरिसकेको छ। तपाईंका साथीहरूले अझै सहयोग गर्न सक्छन्: हरेक दानले थप काम गर्छ।"
+
+msgid "Our work still needs support. If you tell your friends, their gifts can help as well."
+msgstr "हाम्रो कामलाई अझै सहयोग चाहिएको छ। तपाईंले साथीहरूलाई भन्नुभयो भने, उनीहरूको दानले पनि सहयोग गर्न सक्छ।"
+
+msgid "Our team has taken your page down. If you'd like it back, call us:"
+msgstr "हाम्रो टोलीले तपाईंको पृष्ठ हटाएको छ। फेरि राख्न चाहनुहुन्छ भने, हामीलाई फोन गर्नुहोस्:"
+
+msgid "Our team has taken your page down."
+msgstr "हाम्रो टोलीले तपाईंको पृष्ठ हटाएको छ।"
+
+msgid "Save"
+msgstr "सुरक्षित गर्नुहोस्"
+
+msgid "Tell your friends"
+msgstr "साथीहरूलाई भन्नुहोस्"
+
+msgid "WhatsApp"
+msgstr "व्हाट्सएप"
+
+msgid "Facebook"
+msgstr "फेसबुक"
+
+msgid "Copied"
+msgstr "कपी भयो"
+
+msgid "Link copied."
+msgstr "लिङ्क कपी भयो।"
+
+#, python-format
+msgid "Copy this link: %(link)s"
+msgstr "यो लिङ्क कपी गर्नुहोस्: %(link)s"
+
+msgid "Copy link"
+msgstr "लिङ्क कपी गर्नुहोस्"
+
 msgid "Your pledge is saved."
 msgstr "तपाईंको प्रतिबद्धता सुरक्षित भयो।"
 
@@ -406,17 +514,11 @@ msgstr "लिङ्क राख्नुहोस् र पछि फर्�
 msgid "Keep this link to come back and pay when you're ready:"
 msgstr "तयार हुँदा फर्केर भुक्तानी गर्न यो लिङ्क राख्नुहोस्:"
 
-msgid "Copied"
-msgstr "कपी भयो"
-
 msgid "Link copied. Keep it somewhere you'll find it."
 msgstr "लिङ्क कपी भयो। यसलाई सजिलै भेटिने ठाउँमा राख्नुहोस्।"
 
 msgid "Press Ctrl+C (or ⌘+C) to copy the selected link."
 msgstr "छानिएको लिङ्क कपी गर्न Ctrl+C (वा ⌘+C) थिच्नुहोस्।"
-
-msgid "Copy link"
-msgstr "लिङ्क कपी गर्नुहोस्"
 
 msgid "Try paying again"
 msgstr "फेरि भुक्तानी गरेर हेर्नुहोस्"
@@ -700,6 +802,9 @@ msgstr[1] "%(counter)s नतिजा"
 #, python-format
 msgid "No results found for “%(query)s”."
 msgstr "“%(query)s” का लागि कुनै नतिजा फेला परेन।"
+
+#~ msgid "Once your gift reaches us, we'll list your name, the amount, the appeal and the date. Nothing else about you is shown."
+#~ msgstr "तपाईंको दान हामीले पाएपछि, हामी तपाईंको नाम, रकम, अपिल र मिति सूचीमा देखाउनेछौं। तपाईंको अरू कुनै जानकारी सम्प्रेषण हुने छैन।"
 
 #~ msgid "done"
 #~ msgstr "सम्पन्न"

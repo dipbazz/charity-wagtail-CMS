@@ -1,0 +1,37 @@
+{% load i18n wagtailroutablepage_tags %}
+{# Sharing that they've given (#100), once they've told us they've paid: an invitation to help the cause, with their name only if they agree (the box, in the pledge form's words). WhatsApp, Facebook and the box work without JavaScript; Tell your friends (the phone's own share sheet) and Copy link need it, so donate.js and charity.js show them. Every link opens here, in the same tab. #}
+<section class="share-gift" aria-labelledby="share">
+    <h2 id="share" tabindex="-1"{% if share.saved %} data-focus-on-load{% endif %}>{% translate "Others can help too" %}</h2>
+    {% if share.saved == "shown" %}
+        <p class="payment-message" role="status">{% translate "Your page for friends is ready." %}</p>
+    {% elif share.saved == "hidden" %}
+        <p class="payment-message" role="status">{% translate "Your page for friends has been taken down." %}</p>
+    {% endif %}
+    <p>
+        {% if share.needs_help %}
+            {% blocktranslate trimmed with appeal=share.appeal.title %}{{ appeal }} still needs support. If you tell your friends, their gifts can help as well.{% endblocktranslate %}
+        {% elif share.appeal and share.appeal.is_active %}
+            {% blocktranslate trimmed with appeal=share.appeal.title %}{{ appeal }} has reached its target. Your friends can still help: every gift goes further.{% endblocktranslate %}
+        {% else %}
+            {% translate "Our work still needs support. If you tell your friends, their gifts can help as well." %}
+        {% endif %}
+    </p>
+    {% if pledge.hidden_by_team %}
+        {# The team's Stop showing on the website sticks: only the team can show it again. #}
+        <p>{% if site_settings.phone %}{% translate "Our team has taken your page down. If you'd like it back, call us:" %}{% else %}{% translate "Our team has taken your page down." %}{% endif %}</p>
+        {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
+    {% else %}
+        <form class="show-gift" method="post" action="{% routablepageurl page 'show_gift' pledge.reference %}">
+            {% csrf_token %}
+            {% include "campaigns/forms/checkbox.html" with field=show_gift_form.show_on_website %}
+            <button type="submit" class="button button-outline">{% translate "Save" %}</button>
+        </form>
+    {% endif %}
+    <button type="button" class="button button-large" data-share data-share-title="{{ share.title }}" data-share-text="{{ share.text }}" data-share-url="{{ share.url }}" hidden>{% translate "Tell your friends" %}</button>
+    <ul class="share-links">
+        <li><a href="{{ share.whatsapp }}">{% translate "WhatsApp" %}</a></li>
+        <li><a href="{{ share.facebook }}">{% translate "Facebook" %}</a></li>
+        <li><button type="button" class="link-button" data-copy="share-link" data-copy-value="{{ share.url }}" data-copied="{% translate 'Copied' %}" data-copied-status="{% translate 'Link copied.' %}" data-copy-failed-status="{% blocktranslate with link=share.url %}Copy this link: {{ link }}{% endblocktranslate %}" hidden>{% translate "Copy link" %}</button></li>
+    </ul>
+    <p class="copy-status" role="status" data-copy-status="share-link"></p>
+</section>

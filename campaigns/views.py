@@ -7,6 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch, Q
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
+from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.cache import add_never_cache_headers
@@ -15,10 +16,13 @@ from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
 from wagtail.admin.ui.tables import Column
 from wagtail.admin.views.generic import DeleteView, EditView, IndexView, InspectView
+from wagtail.admin.views.generic.history import HistoryView
 from wagtail.admin.viewsets.model import ModelViewSet
+from wagtail.log_actions import log
 from wagtail.snippets.views.snippets import IndexView as SnippetIndexView
 from wagtail.snippets.views.snippets import SnippetViewSet
 
+from campaigns import sharing
 from campaigns.forms import MAX_AMOUNT, MarkPaidForm
 from campaigns.models import ASK_AGAIN_AFTER, Payment, PaymentStatus, Pledge, QRCode
 from core.exports import VisitorTextExportMixin
@@ -93,6 +97,7 @@ class PledgeDeleteView(DeleteView):
 
 
 CONFIRM_PERMISSION = "campaigns.confirm_payment"
+STOP_SHOWING_PERMISSION = "campaigns.stop_showing_gift"
 
 
 def when(moment):
@@ -159,13 +164,19 @@ class PledgeInspectView(InspectView):
         context = super().get_context_data(**kwargs)
         # Fetched once and shared, so the answer, the payments and their steps make no more
         # queries however many there are.
-        pledge = Pledge.objects.prefetch_related(
-            Prefetch("payments", Payment.objects.prefetch_related("steps__by"))
-        ).get(pk=self.object.pk)
+        pledge = (
+            Pledge.objects.select_related("page")
+            .prefetch_related(Prefetch("payments", Payment.objects.prefetch_related("steps__by")))
+            .get(pk=self.object.pk)
+        )
         payments = list(pledge.payments.all())
         paid = pledge.paid_payment()
         word = pledge.payment_display()
+        shown = pledge.page and sharing.gift_view(pledge) != sharing.HIDDEN
         context.update(
+            # Their page for friends (#100), while it's up, for the team to see what it shows.
+            gift_url=sharing.gift_url(pledge, self.request) if shown else "",
+            can_stop_showing=self.request.user.has_perm(STOP_SHOWING_PERMISSION),
             pledge=pledge,
             payments=payments,
             # The paid one is open, or else the latest; every other one is folded.
@@ -180,6 +191,13 @@ class PledgeInspectView(InspectView):
             max_amount=MAX_AMOUNT,
         )
         return context
+
+
+class PledgeHistoryView(HistoryView):
+    """A pledge's history, for anyone who can read pledges, not only those who can change them:
+    the team acts on pledges (Stop showing on the website, #100) without editing them."""
+
+    any_permission_required = ["view", "add", "change", "delete"]
 
 
 class PledgeViewSet(ModelViewSet):
@@ -203,6 +221,7 @@ class PledgeViewSet(ModelViewSet):
     edit_view_class = PledgeEditView
     delete_view_class = PledgeDeleteView
     inspect_view_class = PledgeInspectView
+    history_view_class = PledgeHistoryView
 
     def get_urlpatterns(self):
         return [
@@ -227,7 +246,49 @@ class PledgeViewSet(ModelViewSet):
                 self.check_view,
                 name="check",
             ),
+            path("<int:pk>/stop-showing/", self.stop_showing_view, name="stop_showing"),
+            path("<int:pk>/show-again/", self.show_again_view, name="show_again"),
         ]
+
+    @staticmethod
+    def gift_to_show_or_not(request, pk):
+        """The pledge, if this person may take its gift's page down or put it back (a 403
+        otherwise): editors and moderators."""
+        if not request.user.has_perm(STOP_SHOWING_PERMISSION):
+            raise PermissionDenied
+        return get_object_or_404(Pledge, pk=pk)
+
+    def stop_showing_view(self, request, pk):
+        """Stop showing on the website (#100): takes the gift's page for friends down at once,
+        say for a made-up name, after asking first. It sticks: the supporter's box is replaced by
+        a note to call, and only Show again puts it back. Logged in the pledge's history."""
+        pledge = self.gift_to_show_or_not(request, pk)
+        if request.method == "POST":
+            # Logged only if it changed: sent twice, or from a tab left open, it's one entry.
+            if Pledge.objects.filter(pk=pk, hidden_by_team=False).update(hidden_by_team=True):
+                log(instance=pledge, action="campaigns.stop_showing", user=request.user)
+            messages.success(request, f"{pledge.name}'s gift isn't shown on the website now.")
+            return redirect("pledges:inspect", pk)
+        return TemplateResponse(
+            request,
+            "campaigns/admin/stop_showing.html",
+            {
+                "pledge": pledge,
+                "page_title": "Stop showing on the website",
+                "page_subtitle": pledge.name,
+                "header_icon": "doc-full",
+            },
+        )
+
+    @method_decorator(require_POST)
+    def show_again_view(self, request, pk):
+        """Show again: undoes Stop showing on the website. The page is up again if the supporter
+        still agrees to it. Logged in the pledge's history."""
+        pledge = self.gift_to_show_or_not(request, pk)
+        if Pledge.objects.filter(pk=pk, hidden_by_team=True).update(hidden_by_team=False):
+            log(instance=pledge, action="campaigns.show_again", user=request.user)
+        messages.success(request, f"{pledge.name}'s gift can be shown on the website again.")
+        return redirect("pledges:inspect", pk)
 
     @method_decorator(require_POST)
     def check_view(self, request, pk, payment_pk):

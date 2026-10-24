@@ -12,7 +12,8 @@
         </title>
         {% if page.search_description %}<meta name="description" content="{{ page.search_description }}">{% endif %}
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        {% include "includes/social_meta.html" %}
+        {# A page under another (a gift's page under the Donate page) gives its own link preview here. #}
+        {% block social_meta %}{% include "includes/social_meta.html" %}{% endblock %}
         {% for hreflang, href in languages.alternates %}
             <link rel="alternate" hreflang="{{ hreflang }}" href="{{ href }}">
         {% endfor %}

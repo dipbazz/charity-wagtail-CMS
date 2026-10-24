@@ -77,6 +77,22 @@
                 <li>Email updates: {{ pledge.email_updates|yesno:"Yes,No" }} {% icon name=pledge.email_updates|yesno:"check,cross" %}</li>
                 <li>Show on website: {{ pledge.show_on_website|yesno:"Yes,No" }} {% icon name=pledge.show_on_website|yesno:"check,cross" %}</li>
             </ul>
+            {# Their gift's page for friends (#100), and the team's answer to a made-up name on it. #}
+            {% if pledge.hidden_by_team %}
+                <p>Taken down by your team: their gift isn't shown on the website, and they can't show it again themselves.</p>
+                <p><a class="contact-link" href="{% url 'pledges:history' pledge.pk %}">Who took it down, and when</a></p>
+                {% if can_stop_showing %}
+                    <form method="post" action="{% url 'pledges:show_again' pledge.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="button button-secondary">Show again</button>
+                    </form>
+                {% endif %}
+            {% elif pledge.show_on_website %}
+                {% if gift_url %}<p><a class="contact-link" href="{{ gift_url }}">Their page for friends</a></p>{% endif %}
+                {% if can_stop_showing %}
+                    <p><a class="button button-secondary" href="{% url 'pledges:stop_showing' pledge.pk %}">Stop showing on the website</a></p>
+                {% endif %}
+            {% endif %}
         {% endpanel %}
 
         {% if payments %}{% fragment as payments_heading %}Payments ({{ payments|length }}){% endfragment %}{% else %}{% fragment as payments_heading %}Payments{% endfragment %}{% endif %}

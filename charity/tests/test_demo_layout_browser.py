@@ -37,8 +37,8 @@ PATHS = [
 
 # What a thumb taps. Text links inside a paragraph are exempt: they're as tall as the line.
 TAP_TARGETS = (
-    ".site-footer a, .tag-list a, .pagination a, .pay-way, .pay-steps a, .button, button,"
-    " summary, select,"
+    ".site-footer a, .tag-list a, .pagination a, .pay-way, .pay-steps a, .share-links a, .button,"
+    " button, summary, select,"
     " input:not([type=checkbox]):not([type=radio]):not([type=hidden])"
 )
 
@@ -110,6 +110,20 @@ def test_each_pay_page_fits_and_can_be_tapped_at_every_width(site_page, pay_page
     assert len(pay_pages) == 16  # in both languages
     problems = []
     for path in pay_pages:
+        problems += [f"{path} {item}" for item in layout_problems(site_page, path)]
+
+    assert not problems, "\n".join(problems)
+
+
+def test_a_gift_and_its_thanks_fit_and_can_be_tapped_at_every_width(site_page, demo_site):
+    """The demo's shared gift (#100): its thank-you page, with the share section, and its page
+    for friends."""
+    gift = Pledge.objects.get(show_on_website=True)
+    problems = []
+    for path in (
+        f"{gift.page.url}pay/{gift.reference}/",
+        f"{gift.page.url}gifts/{gift.gift_code}/",
+    ):
         problems += [f"{path} {item}" for item in layout_problems(site_page, path)]
 
     assert not problems, "\n".join(problems)
