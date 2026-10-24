@@ -36,6 +36,19 @@ def test_reads_the_address_caddy_sends_when_production_names_its_header(settings
     assert limits.client_address(request) == "198.51.100.20"
 
 
+def test_without_caddy_s_header_lets_every_try_through_and_says_so_once(settings, caplog):
+    """Behind Caddy, the address Django sees is Caddy's, so counting it would count every visitor
+    as one, and one script could stop all giving (before `caddy reload`, say)."""
+    settings.LIMITS_ADDRESS_HEADER = "HTTP_X_REAL_IP"
+
+    with caplog.at_level(logging.ERROR, logger="core"):
+        assert tries("pledge", request_from("172.18.0.3"), 5) == [False] * 5
+
+    assert len(caplog.records) == 1
+    assert "X-Real-IP" in caplog.text or "HTTP_X_REAL_IP" in caplog.text
+    assert "172.18.0.3" not in caplog.text
+
+
 def test_never_trusts_a_visitor_s_own_forwarded_for():
     request = request_from("203.0.113.7", HTTP_X_FORWARDED_FOR="198.51.100.99")
 

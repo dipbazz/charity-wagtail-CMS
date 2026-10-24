@@ -146,7 +146,8 @@ an odd one a busy appeal ([Security](contributing/security.md#one-connection-can
 The limits count per visitor, by the address Caddy sends as `X-Real-IP` (`header_up X-Real-IP
 {client_ip}` in `deploy/aws/Caddyfile`, and in the Caddy config in `compose.yaml`). Caddy
 replaces any `X-Real-IP` a visitor sends. Any other web server in front of the site must set the
-same header the same way, or every visitor counts as one.
+same header the same way: without it nothing is limited, and the logs say
+`No HTTP_X_REAL_IP on the request` once every five minutes.
 
 Behind Cloudflare (or any other proxy), tell Caddy to trust it, and `{client_ip}` becomes the
 visitor's address again with no change to Django: a global `servers` block with

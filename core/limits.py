@@ -20,9 +20,12 @@ logger = logging.getLogger(__name__)
 def client_address(request):
     """The visitor's connection: the address Caddy sends in production (a visitor's own
     X-Forwarded-For is never read), else the one Django sees. An IPv6 address counts as its /64,
-    which one household usually has whole; one that can't be read counts as itself."""
+    which one household usually has whole; one that can't be read counts as itself. None when
+    the proxy's header is missing: the address Django sees is then the proxy's, everyone's."""
     header = settings.LIMITS_ADDRESS_HEADER
-    address = (header and request.META.get(header)) or request.META.get("REMOTE_ADDR", "")
+    if header and not request.META.get(header):
+        return None
+    address = request.META.get(header or "REMOTE_ADDR", "")
     try:
         ip = ipaddress.ip_address(address.strip())
     except ValueError:
@@ -39,9 +42,20 @@ def over_limit(request, action):
     one too many in a window is logged, without the address, so a flood can't fill the logs."""
     window = settings.LIMITS_WINDOW
     limit = settings.LIMITS[action]
-    key = f"{action}:{client_address(request)}:{int(time.time() // window)}"
+    address = client_address(request)
+    window_number = int(time.time() // window)
     cache = caches["limits"]
+    key = f"{action}:{address}:{window_number}"
     try:
+        if address is None:
+            # Counting the proxy's address would let one script stop all giving, so the try goes
+            # through, as when the counters break. Said once per window.
+            if cache.add(f"no-address:{window_number}", True, timeout=window):
+                logger.error(
+                    "No %s on the request: nothing is counted until the proxy sends it.",
+                    settings.LIMITS_ADDRESS_HEADER,
+                )
+            return False
         count = cache.get(key, 0) + 1
         cache.set(key, count, timeout=window)
         if count <= limit:
