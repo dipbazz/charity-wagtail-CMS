@@ -67,12 +67,13 @@ bundle it into a fix.
 1. **Start from an issue** on the [project board](releases.md#the-project-board) with no
    `needs:` label left: its [reviews](reviews.md) come first. Move it to *In progress*.
 2. **Branch from `main`:** one feature or fix per branch, named `<type>/<issue-number>-<slug>`,
-   such as `feat/142-share-gift`, with a [commit type](#commits) and a few lowercase words. The
-   number shows which issue the branch is for. `gh issue develop 142 --name feat/142-share-gift
+   such as `feat/142-share-gift`, with a [commit type](#commits) and a slug of lowercase letters
+   and digits joined by single hyphens. The number shows which issue the branch is for. `gh issue develop 142 --name feat/142-share-gift
    --base main --checkout` makes the branch and links it to the issue; always give `--name`, or
    GitHub names it from the issue's title with no type. `main`, `chore/release-X.Y.Z` and
    `patch/X.Y.x` are named by [Releases](releases.md). pre-commit refuses a commit on any other
-   name (`.pre-commit-config.yaml`).
+   name (`.pre-commit-config.yaml`); `SKIP=branch-name git commit` skips just that check, for a
+   branch a tool named.
 3. **Work test-first** ([Testing](testing.md)): a failing test, then the code that makes it pass.
 4. **Update the docs** in the same pull request when it changes something a docs page describes
    ([Writing docs](writing-docs.md)).

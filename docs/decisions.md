@@ -599,6 +599,8 @@ round or an amended commit.
 - **The branch name** is checked too (since #238): `<type>/<issue-number>-<slug>`, so a branch,
   a pull request and the board show which issue the work is for. `scripts/check_branch_name.py`
   runs on every commit; `main`, `chore/release-X.Y.Z`, `patch/X.Y.x` and a detached `HEAD` pass.
+  CI doesn't check the name, so a clone that never installed the hook, or `--no-verify`, isn't
+  checked; `SKIP=branch-name` skips only this hook.
 - **ruff through uv,** as a local hook, rather than the `ruff-pre-commit` repository, so the
   version is the one in `uv.lock` and CI and the hook can never disagree.
 - CI keeps running ruff: the hook is skipped by `git commit --no-verify`, or a clone that never

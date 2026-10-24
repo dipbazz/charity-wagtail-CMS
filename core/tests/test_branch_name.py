@@ -85,6 +85,7 @@ def repo(tmp_path):
     git("init", "-q", "-b", "main", cwd=tmp_path)
     git("config", "user.name", "Test", cwd=tmp_path)
     git("config", "user.email", "test@example.com", cwd=tmp_path)
+    git("config", "commit.gpgsign", "false", cwd=tmp_path)
     git("commit", "-q", "--allow-empty", "-m", "start", cwd=tmp_path)
     return tmp_path
 
