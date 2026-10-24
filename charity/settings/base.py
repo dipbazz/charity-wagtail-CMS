@@ -243,6 +243,22 @@ WAGTAILADMIN_BASE_URL = SITE_URL
 PAYMENT_KEYS = {}
 LIVE_PAYMENTS = False
 
+# How often one internet connection may send a new pledge, start a payment, say it paid by QR or
+# come back from a provider, per window of LIMITS_WINDOW seconds (#226, core/limits.py). 0 stops
+# every try. The window is the wait supporters are told, so keep it short.
+LIMITS_WINDOW = 300
+LIMITS = {"pledge": 10, "start_payment": 10, "qr_paid": 5, "payment_return": 30}
+# The request header holding the visitor's address, set by the proxy in front (production);
+# None reads the connection's own address.
+LIMITS_ADDRESS_HEADER = None
+
+# The default cache is Wagtail's; the limits' counters have their own, so they can be shared by
+# every worker in production.
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+    "limits": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "limits"},
+}
+
 # Allowed file extensions for documents in the document library.
 # This can be omitted to allow all files, but note that this may present a security risk
 # if untrusted users are allowed to upload files -

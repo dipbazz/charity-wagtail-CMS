@@ -116,6 +116,21 @@ def test_forces_https_with_a_cautious_default_hsts(monkeypatch):
     assert settings["SECURE_HSTS_SECONDS"] == 3600
 
 
+def test_limits_count_in_a_cache_every_worker_shares_and_read_caddy_s_address(monkeypatch):
+    """Each gunicorn worker would count apart in its own memory (#226). The address is the one
+    Caddy sends, replacing whatever a visitor sent."""
+    monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
+
+    settings = load_settings()
+
+    limits = settings["CACHES"]["limits"]
+    assert limits["BACKEND"] == "django.core.cache.backends.filebased.FileBasedCache"
+    assert limits["LOCATION"].startswith("/tmp/")
+    assert limits["OPTIONS"]["MAX_ENTRIES"] == 2000
+    assert settings["CACHES"]["default"]["BACKEND"].endswith("LocMemCache")
+    assert settings["LIMITS_ADDRESS_HEADER"] == "HTTP_X_REAL_IP"
+
+
 def test_hsts_duration_is_configurable(monkeypatch):
     monkeypatch.setenv("DJANGO_SECRET_KEY", "from-env")
     monkeypatch.setenv("DJANGO_SECURE_HSTS_SECONDS", "31536000")
