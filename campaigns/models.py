@@ -634,8 +634,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     @path("pay/<uuid:reference>/show-gift/", name="show_gift")
     def show_gift(self, request, reference):
         """The Show my gift box on the thank-you and checking pages: shows the gift on its page
-        for friends, or takes it down, and says which once back there. Only once the supporter
-        has told us they've paid, and never while the team has taken it down."""
+        for friends, or takes it down, and says which once back there, only if the page did go
+        up or down. Only once the supporter has told us they've paid, and never while the team
+        has taken it down."""
         from campaigns.forms import ShowGiftForm  # forms imports this module's Pledge
 
         if request.method != "POST":
@@ -644,9 +645,12 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         state = pledge.pay_page_state()
         form = ShowGiftForm(request.POST)
         if sharing.offers_sharing(pledge) and not pledge.hidden_by_team and form.is_valid():
-            shown = form.cleaned_data["show_on_website"]
-            pledge.set_show_on_website(shown)
-            messages.info(request, "shown" if shown else "hidden", extra_tags=GIFT_MESSAGE)
+            was_shown = sharing.gift_view(pledge) != sharing.HIDDEN
+            # Not changed if the team took it down meanwhile, so it says nothing.
+            if pledge.set_show_on_website(form.cleaned_data["show_on_website"]):
+                shown = sharing.gift_view(pledge) != sharing.HIDDEN
+                if shown != was_shown:
+                    messages.info(request, "shown" if shown else "hidden", extra_tags=GIFT_MESSAGE)
         route = STATE_ROUTES.get(state, "pay")
         return self.redirect_to(request, route, reference, fragment="share")
 

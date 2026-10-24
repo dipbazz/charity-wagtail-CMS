@@ -294,6 +294,13 @@ class TestSavingIt:
         assert "Your page for friends has been taken down." in page.get_text()
         assert client.get(f"{donate_page.url}gifts/{pledge.gift_code}/").status_code == 302
 
+    def test_unticked_when_it_was_never_shown_says_nothing(self, client, donate_page):
+        pledge = pledge_in("paid", donate_page, show=False)
+
+        page = soup(show_gift_and_follow(client, donate_page, pledge, shown=False))
+
+        assert "taken down" not in page.get_text()
+
     def test_saving_the_same_choice_keeps_when_it_was_made(self, client, donate_page):
         pledge = pledge_in("paid", donate_page)
         agreed_at = pledge.show_on_website_changed_at
