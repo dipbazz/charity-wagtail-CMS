@@ -1,0 +1,13 @@
+{% extends "campaigns/pay/base.html" %}
+{% load i18n wagtailroutablepage_tags %}
+
+{# Starting a payment or coming back from one, over the limit (#226). People share an internet connection, so it never says they did anything wrong. Its button goes to the pledge's pay page, which is never limited and opens on what became of paying, so it can't offer paying twice. #}
+{% block pay_title %}{% blocktranslate count minutes=wait_minutes %}Please wait {{ minutes }} minute{% plural %}Please wait {{ minutes }} minutes{% endblocktranslate %}{% endblock %}
+
+{% block pay %}
+    <h1>{% blocktranslate count minutes=wait_minutes %}Please wait {{ minutes }} minute{% plural %}Please wait {{ minutes }} minutes{% endblocktranslate %}</h1>
+    <p class="lead" tabindex="-1" data-focus-on-load>{% translate "We've had a lot of tries from your internet connection just now. After the wait, go back to your pledge." %}</p>
+    <p>{% if site_settings.phone %}{% translate "If money has left your account, don't pay again. Call us and we'll look into it:" %}{% else %}{% translate "If money has left your account, don't pay again." %}{% endif %}</p>
+    {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
+    <p><a class="button button-large" href="{% routablepageurl page 'pay' pledge.reference %}">{% translate "Back to your pledge" %}</a></p>
+{% endblock %}

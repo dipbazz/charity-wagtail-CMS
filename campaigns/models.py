@@ -51,6 +51,7 @@ from campaigns.payments import (
     providers_for,
     ways_to_pay,
 )
+from core import limits
 from core.blocks import BaseStreamBlock
 from core.images import UPLOAD_EXTENSIONS, check_upload, clean_image, with_card_images
 from core.languages import main_language
@@ -394,6 +395,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     # Paying by QR is two pages: scanning (the way's page), then telling us it's paid.
     qr_paid_template = "campaigns/pay/qr_paid.html"
     checking_template = "campaigns/pay/checking.html"
+    wait_template = "campaigns/pay/wait.html"
     redirect_template = "campaigns/donate_page_redirect.html"
     gift_template = "campaigns/gift_page.html"
     preview_modes = [("", "Donate page"), ("thank-you", "Thank-you page")]
@@ -421,9 +423,14 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     @path("")
     def pledge_form(self, request):
         site_settings = SiteSettings.for_request(request)
+        waiting = False
         if request.method == "POST":
             form = self.get_form(request.POST, site_settings=site_settings)
-            if form.is_valid():
+            # Only a new pledge counts (#226): sending the same copy again updates the pledge it
+            # saved, so "hasn't been sent yet" is always true.
+            if form.is_valid() and not (
+                waiting := form.instance.pk is None and limits.over_limit(request, "pledge")
+            ):
                 pledge = form.save()
                 # 303 See Other: the browser fetches the next page with GET, so reloading it
                 # doesn't send the form again.
@@ -439,7 +446,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         providers = providers_for(site_settings.currency)
         qr_codes = self.qr_codes_for(site_settings.currency)
         ways = ways_to_pay(providers, site_settings, qr_codes)
-        return self.render(
+        response = self.render(
             request,
             context_overrides={
                 "form": form,
@@ -447,8 +454,10 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 **WAY_NAMES,
                 "pay_with": either([provider.name for provider in providers]),
                 "how_to_pay": self.how_to_pay(providers, ways),
+                "wait_minutes": waiting and limits.wait_minutes(),
             },
         )
+        return limits.too_many(response) if waiting else response
 
     def how_to_pay(self, providers, ways):
         """The ways as a phrase after "you can pay": "with eSewa or Khalti, by scanning our QR
@@ -552,7 +561,26 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         from campaigns.forms import QRPaidForm  # forms imports this module's Pledge
 
         form = QRPaidForm(request.POST, request.FILES, codes=qr_codes)
-        if not form.is_valid():
+        # Only a claim that would be saved counts (#226); over the limit, nothing is saved.
+        valid = form.is_valid()
+        if valid and limits.over_limit(request, "qr_paid"):
+            providers, ways, _ = self.ways_for(pledge, site_settings)
+            return limits.too_many(
+                self.render_pay_page(
+                    request,
+                    pledge,
+                    pledge.pay_page_state(),
+                    providers,
+                    ways,
+                    qr_codes,
+                    site_settings,
+                    QR,
+                    paid_form=form,
+                    template=self.qr_paid_template,
+                    wait_minutes=limits.wait_minutes(),
+                )
+            )
+        if not valid:
             providers, ways, _ = self.ways_for(pledge, site_settings)
             response = self.render_pay_page(
                 request,
@@ -753,10 +781,12 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         result=None,
         paid_form=None,
         template=None,
+        wait_minutes=None,
     ):
         """The choices (way None) or a way's page, or the thanks once paid (with no providers or
         ways: there's nothing left to pay). `result` is what asking a provider found, for the
-        online page. `template` is a way's other page (QR's step 2)."""
+        online page. `template` is a way's other page (QR's step 2). `wait_minutes`: how long to
+        wait before sending its form again, over the limit (#226)."""
         # An attempt for another amount (the pledge changed after it started) doesn't pay it,
         # but the money was still received, and isn't asked for again.
         received = pledge.paid_payment() if state in THANKED else None
@@ -772,6 +802,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             "other_ways": [other for other in [*ways, LATER] if other != way],
             "site_settings": site_settings,
             "phone_link": phone_link(site_settings),
+            "wait_minutes": wait_minutes,
             **WAY_NAMES,
         }
         # Named on the choices, and on the online page.
@@ -844,6 +875,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         ).first()
         if waiting and waiting.page_at_provider():
             return self.redirect_to(request, "go_to_provider", waiting.reference)
+        # Only a new attempt counts (#226).
+        if limits.over_limit(request, "start_payment"):
+            return self.wait_page(request, pledge)
 
         payment = pledge.start_payment(method, live=provider.live)
         return_path = self.get_url(request) + self.reverse_subpage(
@@ -931,6 +965,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
         )
         if payment.status != PaymentStatus.PAID:
+            # Only when the provider would be asked (#226).
+            if limits.over_limit(request, "payment_return"):
+                return self.wait_page(request, payment.pledge)
             payment.add_step(StepKind.CAME_BACK)
             failed_before = payment.status == PaymentStatus.FAILED
             outcome = payment.ask()
@@ -943,6 +980,24 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             ):
                 tell_pay_page(request, "checked")
         return self.redirect_to(request, "pay_online", payment.pledge.reference)
+
+    def wait_page(self, request, pledge):
+        """Starting a payment or coming back from one, over the limit (#226): how long to wait,
+        and the way back to the pledge's pay page, which is never limited and opens on what
+        became of paying, so it can't loop or offer paying twice."""
+        site_settings = SiteSettings.for_request(request)
+        return limits.too_many(
+            self.render(
+                request,
+                template=self.wait_template,
+                context_overrides={
+                    "pledge": pledge,
+                    "site_settings": site_settings,
+                    "phone_link": phone_link(site_settings),
+                    "wait_minutes": limits.wait_minutes(),
+                },
+            )
+        )
 
     def redirect_to(self, request, name, *args, fragment=""):
         """303 to one of this page's routes, at `fragment` if given (a section's id)."""
