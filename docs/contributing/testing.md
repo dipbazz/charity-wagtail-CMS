@@ -40,6 +40,7 @@ Some tests guard the whole project rather than one feature:
 |---|---|
 | `core/tests/test_dependencies.py` | `core` never imports a feature app |
 | `core/tests/test_stylesheet.py` | In every stylesheet, width queries are `min-width` in `rem`, and every colour outside `:root` is a `var(--…)` token that `charity.css`'s `:root` defines |
+| `core/tests/test_branch_name.py` | The pre-commit check accepts `<type>/<issue-number>-<slug>`, `main`, release and patch branches, and refuses any other name |
 | `core/tests/test_claude_hooks.py` | The Claude Code hooks block a whole-suite run and report a failing stylesheet, and nothing else |
 | `nepal_payments/tests/test_independence.py` | The payment package imports only the standard library and itself, so it can be published unchanged |
 | `nepal_payments/tests/test_contract.py` | Every payment provider found meets the contract: it needs its keys, sends the payer only to `https`, never says *paid* for an answer it can't read, and keeps its test mode off the live system |

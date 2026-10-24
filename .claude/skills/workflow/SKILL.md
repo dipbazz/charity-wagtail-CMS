@@ -26,6 +26,9 @@ which labels you added and why.
 branching, with the command `reviews.md` names. If the skill isn't installed, stop and tell the
 user to install gstack (`reviews.md#tools`); never skip the review.
 
+Then branch with `gh issue develop <n> --name <type>/<n>-<slug> --base main --checkout`, always
+with `--name` (the branch rule is in `docs/contributing/index.md`, step 2).
+
 | Review | Particular to this project |
 |---|---|
 | product | Hold-scope or reduction mode, never expansion. |

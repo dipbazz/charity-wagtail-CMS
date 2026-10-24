@@ -1,4 +1,5 @@
-# Checks run before each commit: the quick part of CI, and the commit subject's length.
+# Checks run before each commit: the quick part of CI, the branch's name and the commit
+# subject's length.
 # Set up once per clone with `uv run pre-commit install` (docs/getting-started/index.md).
 # ruff runs through uv, so it's the version in uv.lock, the same one CI runs.
 default_install_hook_types: [pre-commit, commit-msg]
@@ -17,6 +18,13 @@ repos:
         entry: uv run --no-sync ruff format --check --force-exclude
         language: system
         types_or: [python, pyi]
+      # Fails on a branch not named <type>/<issue-number>-<slug> (docs/contributing/index.md).
+      - id: branch-name
+        name: branch is named <type>/<issue-number>-<slug>
+        entry: uv run --no-sync python scripts/check_branch_name.py
+        language: system
+        always_run: true
+        pass_filenames: false
       # Fails on a first line over 72 characters. Merge and revert subjects are git's own.
       - id: commit-subject-length
         name: commit subject is 72 characters or fewer
