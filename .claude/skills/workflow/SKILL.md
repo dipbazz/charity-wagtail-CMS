@@ -51,6 +51,10 @@ The `Reviews` workflow adds `needs: code review`, and `needs: qa` for templates,
 JavaScript. Add `needs: security review` yourself when `reviews.md` says so. Then, in the order
 `reviews.md` gives:
 
+Before running a review asked for by name, check `gh pr view <n> --json labels` and the existing
+review comments. If its label is gone, or an earlier review it depends on is still owed, say so
+and ask before running it.
+
 1. **Security:** fix open findings test-first, comment the result on the pull request, then
    remove the label.
 2. **Code review:** Claude Code's `/code-review`, not gstack's `/review`. Fix findings test-first,
