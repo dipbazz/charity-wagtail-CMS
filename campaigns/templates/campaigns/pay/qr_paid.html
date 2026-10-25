@@ -9,7 +9,6 @@
 
 {% block pay %}
     <h1>{% translate "Scan our QR code" %}</h1>
-    {# What is wrong with what was sent, first: donate.js moves focus to it, and each line links to its field. #}
     {# Over the limit (#226): nothing was saved. It may follow a payment, so it says not to pay again. #}
     {% if wait_minutes %}
         <div class="payment-message" role="alert" tabindex="-1" data-focus-on-load>
@@ -19,6 +18,7 @@
             {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
         </div>
     {% endif %}
+    {# What is wrong with what was sent, first: donate.js moves focus to it, and each line links to its field. #}
     {% if paid_form.errors %}
         <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
             {% if paid_form.code.errors %}<p><a href="#{% if qr_codes|length > 1 %}id_code_0{% else %}id_transaction_id{% endif %}">{% translate "Check which app you paid with below." %}</a></p>{% endif %}
