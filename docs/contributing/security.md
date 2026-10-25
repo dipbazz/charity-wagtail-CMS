@@ -174,12 +174,14 @@ on Django's cache API, with no package.
   them first; only if it's still full, about 1,000 connections counted in one window, does
   Django forget a random third, which lets some of them try again early. They're kept with the window as their
   expiry, never with `cache.incr()`, which on a file cache saves the key again with the default
-  timeout. The default cache, Wagtail's, is separate.
+  timeout. Each count is read and saved under a lock file in that folder, so tries at the same
+  moment are counted one by one. The default cache, Wagtail's, is separate.
 - **Logged once:** the first try too many from a connection for an action in a window is one
   WARNING on the `core` logger, naming the action, its limit and the window, never the address;
   later ones log nothing, so a flood can't push errors out of the logs.
 - **If the counters break,** the try goes through, so giving keeps working, and one ERROR per
-  window in each worker names the action, with its traceback.
+  window in each worker names the action, with its traceback. So does an action a `LIMITS`
+  override leaves out.
 - **Not covered here:** other forms (#231) and the public check's provider calls per payment
   (#232). The team's Check now in the admin has its own limit per payment.
 
