@@ -565,47 +565,34 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         form = QRPaidForm(request.POST, request.FILES, codes=qr_codes)
         # Only a claim that would be saved counts (#226); over the limit, nothing is saved.
         valid = form.is_valid()
-        if valid and limits.over_limit(request, "qr_paid"):
-            providers, ways, _ = self.ways_for(pledge, site_settings)
-            left = limits.wait()
-            return limits.too_many(
-                self.render_pay_page(
-                    request,
-                    pledge,
-                    pledge.pay_page_state(),
-                    providers,
-                    ways,
-                    qr_codes,
-                    site_settings,
-                    QR,
-                    paid_form=form,
-                    template=self.qr_paid_template,
-                    left=left,
-                ),
-                left,
+        waiting = valid and limits.over_limit(request, "qr_paid")
+        if valid and not waiting:
+            pledge.claim_paid(
+                form.cleaned_data["code"],
+                form.cleaned_data["transaction_id"],
+                form.cleaned_data["receipt"],
             )
-        if not valid:
-            providers, ways, _ = self.ways_for(pledge, site_settings)
-            response = self.render_pay_page(
-                request,
-                pledge,
-                pledge.pay_page_state(),
-                providers,
-                ways,
-                qr_codes,
-                site_settings,
-                QR,
-                paid_form=form,
-                template=self.qr_paid_template,
-            )
-            response.status_code = 422
-            return response
-        pledge.claim_paid(
-            form.cleaned_data["code"],
-            form.cleaned_data["transaction_id"],
-            form.cleaned_data["receipt"],
+            return self.redirect_to(request, "checking", reference)
+        # Not sent: what is wrong with it (422), or too many tries (429, and how long to wait).
+        providers, ways, _ = self.ways_for(pledge, site_settings)
+        left = limits.wait() if waiting else None
+        response = self.render_pay_page(
+            request,
+            pledge,
+            pledge.pay_page_state(),
+            providers,
+            ways,
+            qr_codes,
+            site_settings,
+            QR,
+            paid_form=form,
+            template=self.qr_paid_template,
+            left=left,
         )
-        return self.redirect_to(request, "checking", reference)
+        if waiting:
+            return limits.too_many(response, left)
+        response.status_code = 422
+        return response
 
     @path("pay/<uuid:reference>/checking/", name="checking")
     def checking(self, request, reference):
