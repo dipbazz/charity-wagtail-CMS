@@ -1,6 +1,8 @@
 """Per-visitor limits on the public pages that write or call a provider (#226)."""
 
 import logging
+import threading
+import time
 
 import pytest
 from django.core.cache import caches
@@ -135,6 +137,39 @@ def test_an_action_with_no_limit_set_is_let_through_and_said_so_not_a_server_err
 
     assert [r.levelname for r in caplog.records] == ["ERROR"]
     assert "start_payment" in caplog.text
+
+
+def test_counts_every_try_when_workers_count_at_the_same_moment(settings, tmp_path, monkeypatch):
+    """Each worker reads the count, then saves one more a moment later. Without a lock, tries at
+    the same moment all read the same count and save the same one more, so a parallel flood
+    passes the limit by as many tries as it sends at once."""
+    settings.CACHES = {
+        **settings.CACHES,
+        "limits": {"BACKEND": "core.limits.CounterCache", "LOCATION": str(tmp_path)},
+    }
+    settings.LIMITS = {"pledge": 100}
+    monkeypatch.setattr(limits.time, "time", lambda: 1000.0)
+    get = limits.CounterCache.get
+
+    def get_then_get_busy(self, *args, **kwargs):
+        value = get(self, *args, **kwargs)
+        time.sleep(0.02)  # What a busy worker does between reading the count and saving it.
+        return value
+
+    monkeypatch.setattr(limits.CounterCache, "get", get_then_get_busy)
+    start = threading.Barrier(8, timeout=5)
+
+    def worker():
+        start.wait()
+        limits.over_limit(request_from(), "pledge")
+
+    workers = [threading.Thread(target=worker) for _ in range(8)]
+    for thread in workers:
+        thread.start()
+    for thread in workers:
+        thread.join()
+
+    assert caches["limits"].get("pledge:203.0.113.7:3") == 8
 
 
 def test_a_full_counter_cache_clears_past_windows_before_forgetting_a_live_count(

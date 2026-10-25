@@ -5,14 +5,17 @@ Counted in their own cache (CACHES["limits"]), in windows numbered by time. Each
 with the window as its expiry: never cache.incr(), which on a file cache saves the key again with
 the default timeout. A broken cache lets every try through, so giving keeps working."""
 
+import contextlib
 import ipaddress
 import logging
 import math
+import os
 import time
 
 from django.conf import settings
 from django.core.cache import caches
 from django.core.cache.backends.filebased import FileBasedCache
+from django.core.files import locks
 from django.utils.cache import add_never_cache_headers
 
 logger = logging.getLogger(__name__)
@@ -24,7 +27,16 @@ broken_logged_in = None
 class CounterCache(FileBasedCache):
     """The counters' cache in production. A past window's counters are never read again, so the
     file cache would keep them until full, then forget a random third of the files, live counts
-    too. Full, this deletes the past ones first, and forgets live ones only if still full."""
+    too. Full, this deletes the past ones first, and forgets live ones only if still full. Its
+    `locked()` makes a count one step across the workers that share the files."""
+
+    @contextlib.contextmanager
+    def locked(self):
+        self._createdir()
+        # Not a .djcache file, so it is never counted, culled or cleared as an entry.
+        with open(os.path.join(self._dir, "counting.lock"), "a") as lock_file:
+            locks.lock(lock_file, locks.LOCK_EX)  # Held until the file closes.
+            yield
 
     def _cull(self):
         filelist = self._list_cache_files()
@@ -79,8 +91,11 @@ def over_limit(request, action):
                     settings.LIMITS_ADDRESS_HEADER,
                 )
             return False
-        count = cache.get(key, 0) + 1
-        cache.set(key, count, timeout=window)
+        # Read, then saved: tries at the same moment must not all read the same count. Only the
+        # file cache has a lock; the in-memory one is for one process, which is development.
+        with getattr(cache, "locked", contextlib.nullcontext)():
+            count = cache.get(key, 0) + 1
+            cache.set(key, count, timeout=window)
         if count <= limit:
             return False
         if cache.add(f"{key}:logged", True, timeout=window):
