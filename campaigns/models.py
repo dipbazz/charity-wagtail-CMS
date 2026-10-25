@@ -446,6 +446,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         providers = providers_for(site_settings.currency)
         qr_codes = self.qr_codes_for(site_settings.currency)
         ways = ways_to_pay(providers, site_settings, qr_codes)
+        left = limits.wait() if waiting else None
         response = self.render(
             request,
             context_overrides={
@@ -454,11 +455,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 **WAY_NAMES,
                 "pay_with": either([provider.name for provider in providers]),
                 "how_to_pay": self.how_to_pay(providers, ways),
-                "wait_minutes": waiting and limits.wait_minutes(),
-                "wait_seconds": waiting and limits.wait_seconds(),
+                "wait_minutes": left and left.minutes,
+                "wait_seconds": left and left.seconds,
             },
         )
-        return limits.too_many(response) if waiting else response
+        return limits.too_many(response, left) if waiting else response
 
     def how_to_pay(self, providers, ways):
         """The ways as a phrase after "you can pay": "with eSewa or Khalti, by scanning our QR
@@ -566,6 +567,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         valid = form.is_valid()
         if valid and limits.over_limit(request, "qr_paid"):
             providers, ways, _ = self.ways_for(pledge, site_settings)
+            left = limits.wait()
             return limits.too_many(
                 self.render_pay_page(
                     request,
@@ -578,8 +580,9 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                     QR,
                     paid_form=form,
                     template=self.qr_paid_template,
-                    wait_minutes=limits.wait_minutes(),
-                )
+                    left=left,
+                ),
+                left,
             )
         if not valid:
             providers, ways, _ = self.ways_for(pledge, site_settings)
@@ -782,12 +785,12 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         result=None,
         paid_form=None,
         template=None,
-        wait_minutes=None,
+        left=None,
     ):
         """The choices (way None) or a way's page, or the thanks once paid (with no providers or
         ways: there's nothing left to pay). `result` is what asking a provider found, for the
-        online page. `template` is a way's other page (QR's step 2). `wait_minutes`: how long to
-        wait before sending its form again, over the limit (#226)."""
+        online page. `template` is a way's other page (QR's step 2). `left`: the `limits.wait()`
+        before sending its form again, over the limit (#226)."""
         # An attempt for another amount (the pledge changed after it started) doesn't pay it,
         # but the money was still received, and isn't asked for again.
         received = pledge.paid_payment() if state in THANKED else None
@@ -803,8 +806,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             "other_ways": [other for other in [*ways, LATER] if other != way],
             "site_settings": site_settings,
             "phone_link": phone_link(site_settings),
-            "wait_minutes": wait_minutes,
-            "wait_seconds": wait_minutes and limits.wait_seconds(),
+            "wait_minutes": left and left.minutes,
+            "wait_seconds": left and left.seconds,
             **WAY_NAMES,
         }
         # Named on the choices, and on the online page.
@@ -991,6 +994,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
         and the way back to the pledge's pay page, which is never limited and opens on what
         became of paying, so it can't loop or offer paying twice."""
         site_settings = SiteSettings.for_request(request)
+        left = limits.wait()
         return limits.too_many(
             self.render(
                 request,
@@ -999,10 +1003,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                     "pledge": pledge,
                     "site_settings": site_settings,
                     "phone_link": phone_link(site_settings),
-                    "wait_minutes": limits.wait_minutes(),
-                    "wait_seconds": limits.wait_seconds(),
+                    "wait_minutes": left.minutes,
+                    "wait_seconds": left.seconds,
                 },
-            )
+            ),
+            left,
         )
 
     def redirect_to(self, request, name, *args, fragment=""):

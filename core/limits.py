@@ -11,6 +11,7 @@ import logging
 import math
 import os
 import time
+from typing import NamedTuple
 
 from django.conf import settings
 from django.core.cache import caches
@@ -122,14 +123,22 @@ def wait_seconds():
     return math.ceil(window - time.time() % window)
 
 
-def wait_minutes():
-    """What's left of this window, in whole minutes rounded up, as the page says it."""
-    return math.ceil(wait_seconds() / 60)
+class Wait(NamedTuple):
+    minutes: int
+    seconds: int
 
 
-def too_many(response):
-    """Turn a page into the answer to one try too many: 429, when to try again, never cached."""
+def wait():
+    """What's left of this window, in whole minutes (as the page says it) and seconds, both from
+    one reading of the clock: a window ending between two readings would make them disagree."""
+    seconds = wait_seconds()
+    return Wait(math.ceil(seconds / 60), seconds)
+
+
+def too_many(response, left):
+    """Turn a page into the answer to one try too many: 429, when to try again (`left`, the
+    `wait()` the page was made with), never cached."""
     response.status_code = 429
-    response["Retry-After"] = str(wait_seconds())
+    response["Retry-After"] = str(left.seconds)
     add_never_cache_headers(response)
     return response

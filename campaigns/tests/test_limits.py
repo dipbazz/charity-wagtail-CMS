@@ -3,6 +3,7 @@ counts, what a supporter sees over the limit, and that nothing is saved or asked
 counting itself is core/tests/test_limits.py's."""
 
 import copy
+import re
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -310,6 +311,47 @@ class TestSayingItsPaidByQR:
 
         assert response.status_code == 422
         assert notice(response) is None
+
+
+class TestTheWaitIsOneReading:
+    """The window can end between two readings of the clock. Whatever a page says about the wait
+    (its words, its countdown, Retry-After) comes from one reading, so they agree."""
+
+    @pytest.fixture
+    def window_ends_after_one_second(self, limits, monkeypatch):
+        reads = iter([1])
+        monkeypatch.setattr("core.limits.wait_seconds", lambda: next(reads, 300))
+
+    def assert_agrees(self, response):
+        assert response["Retry-After"] == "1"
+        assert soup(response).select_one("[data-countdown]")["data-countdown"] == "1"
+        assert re.search(r"[Ww]ait 1 minute\b", text(response))
+
+    def test_the_pledge_form(self, client, donate_page, limits, window_ends_after_one_second):
+        limits("pledge", 0)
+
+        self.assert_agrees(send_pledge(client, donate_page))
+
+    def test_the_wait_page(
+        self, client, donate_page, fake_provider, limits, window_ends_after_one_second
+    ):
+        send_pledge(client, donate_page)
+        limits("start_payment", 0)
+
+        self.assert_agrees(start(client, donate_page, Pledge.objects.get()))
+
+    def test_the_qr_form(self, client, donate_page, limits, window_ends_after_one_second):
+        code = make_code("eSewa", account_number="9801234567")
+        pledge = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        limits("qr_paid", 0)
+
+        response = client.post(
+            qr_url(donate_page, pledge, "paid/"), {"code": code.pk, "transaction_id": "TXN-8841"}
+        )
+
+        self.assert_agrees(response)
 
 
 def test_a_supporter_paying_normally_never_waits(client, donate_page, fake_provider, settings):

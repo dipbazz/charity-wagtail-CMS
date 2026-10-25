@@ -193,7 +193,7 @@ def test_a_full_counter_cache_clears_past_windows_before_forgetting_a_live_count
 def test_a_stopped_response_says_when_to_try_again_and_is_never_cached(monkeypatch):
     monkeypatch.setattr(limits.time, "time", lambda: 1180.5)
 
-    response = limits.too_many(HttpResponse())
+    response = limits.too_many(HttpResponse(), limits.wait())
 
     assert response.status_code == 429
     assert response["Retry-After"] == "20"
@@ -208,4 +208,12 @@ def test_the_wait_is_what_s_left_of_the_window_rounded_up(monkeypatch, now, seco
     monkeypatch.setattr(limits.time, "time", lambda: now)
 
     assert limits.wait_seconds() == seconds
-    assert limits.wait_minutes() == minutes
+    assert limits.wait() == (minutes, seconds)
+
+
+def test_the_wait_reads_the_clock_once(monkeypatch):
+    """A window ending between two readings must not give 1 minute with about 5 minutes."""
+    readings = iter([1199.5, 1200.0])
+    monkeypatch.setattr(limits.time, "time", lambda: next(readings))
+
+    assert limits.wait() == (1, 1)
