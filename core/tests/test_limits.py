@@ -55,11 +55,13 @@ def test_never_trusts_a_visitor_s_own_forwarded_for():
     assert limits.client_address(request) == "203.0.113.7"
 
 
-def test_groups_ipv6_by_its_64_and_reads_mapped_ipv4_as_ipv4():
+def test_groups_ipv6_by_its_56_and_reads_mapped_ipv4_as_ipv4():
+    """A home line is often given a /56, so a script switching between its /64s is one."""
     one = limits.client_address(request_from("2001:db8:1:2::a"))
-    other = limits.client_address(request_from("2001:db8:1:2:ffff::b"))
+    other = limits.client_address(request_from("2001:db8:1:ff:ffff::b"))
 
-    assert one == other == "2001:db8:1:2::/64"
+    assert one == other == "2001:db8:1::/56"
+    assert limits.client_address(request_from("2001:db8:1:100::a")) == "2001:db8:1:100::/56"
     assert limits.client_address(request_from("::ffff:203.0.113.7")) == "203.0.113.7"
 
 

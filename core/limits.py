@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 
 def client_address(request):
     """The visitor's connection: the address Caddy sends in production (a visitor's own
-    X-Forwarded-For is never read), else the one Django sees. An IPv6 address counts as its /64,
-    which one household usually has whole; one that can't be read counts as itself. None when
+    X-Forwarded-For is never read), else the one Django sees. An IPv6 address counts as its /56,
+    the block a home line is often given whole, so switching between its /64s doesn't make a
+    script many; one that can't be read counts as itself. None when
     the proxy's header is missing: the address Django sees is then the proxy's, everyone's."""
     header = settings.LIMITS_ADDRESS_HEADER
     if header and not request.META.get(header):
@@ -33,7 +34,7 @@ def client_address(request):
     if ip.version == 6:
         if ip.ipv4_mapped:
             return str(ip.ipv4_mapped)
-        return str(ipaddress.ip_network(f"{ip}/64", strict=False))
+        return str(ipaddress.ip_network(f"{ip}/56", strict=False))
     return str(ip)
 
 

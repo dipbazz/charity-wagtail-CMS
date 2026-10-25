@@ -164,8 +164,9 @@ on Django's cache API, with no package.
   Without the setting (dev, tests) it's the address Django sees. If production's header is
   missing (Caddy not yet reloaded after a deploy, or another proxy in front), nothing is counted
   and one ERROR per window says so: counting the proxy's own address would make every visitor
-  one, and one script could stop all giving. IPv6 counts by its /64, which a household usually
-  has whole; `::ffff:` addresses count as IPv4.
+  one, and one script could stop all giving. IPv6 counts by its /56, the block a home line is
+  often given whole, so a script switching between its 256 /64s is still one; `::ffff:`
+  addresses count as IPv4. A /48 is 256 of them, which the limits don't cover.
 - **The counters** are in their own cache, `CACHES["limits"]`: files under the web container's
   `/tmp` in production, shared by both gunicorn workers, at most 2,000 entries (about 8 MB; when
   full Django forgets a random third, which fails nothing). They're kept with the window as their
