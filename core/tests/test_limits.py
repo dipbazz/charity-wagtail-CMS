@@ -124,6 +124,19 @@ def test_lets_the_try_through_when_the_counters_break(monkeypatch, caplog):
     assert len(caplog.records) == 2
 
 
+def test_an_action_with_no_limit_set_is_let_through_and_said_so_not_a_server_error(
+    settings, caplog
+):
+    """A LIMITS override that names only some actions must not break the others' pages."""
+    settings.LIMITS = {"pledge": 2}
+
+    with caplog.at_level(logging.ERROR, logger="core"):
+        assert tries("start_payment", request_from(), 3) == [False] * 3
+
+    assert [r.levelname for r in caplog.records] == ["ERROR"]
+    assert "start_payment" in caplog.text
+
+
 def test_a_full_counter_cache_clears_past_windows_before_forgetting_a_live_count(
     tmp_path, monkeypatch
 ):

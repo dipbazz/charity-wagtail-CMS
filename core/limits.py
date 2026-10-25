@@ -64,12 +64,12 @@ def over_limit(request, action):
     """Count this try at `action` and say whether it's one too many for this window. The first
     one too many in a window is logged, without the address, so a flood can't fill the logs."""
     window = settings.LIMITS_WINDOW
-    limit = settings.LIMITS[action]
     address = client_address(request)
     window_number = int(time.time() // window)
     cache = caches["limits"]
     key = f"{action}:{address}:{window_number}"
     try:
+        limit = settings.LIMITS[action]  # An override may leave an action out.
         if address is None:
             # Counting the proxy's address would let one script stop all giving, so the try goes
             # through, as when the counters break. Said once per window.
