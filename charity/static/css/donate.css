@@ -26,6 +26,12 @@
     margin-bottom: 0;
 }
 
+/* The wait's countdown (#226): figures of one width, so the time doesn't shift each second. */
+.countdown {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
 .error-summary {
     margin-block: 1.5rem;
     padding: 1rem 1.25rem;

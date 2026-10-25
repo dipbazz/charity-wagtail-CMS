@@ -455,6 +455,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                 "pay_with": either([provider.name for provider in providers]),
                 "how_to_pay": self.how_to_pay(providers, ways),
                 "wait_minutes": waiting and limits.wait_minutes(),
+                "wait_seconds": waiting and limits.wait_seconds(),
             },
         )
         return limits.too_many(response) if waiting else response
@@ -803,6 +804,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             "site_settings": site_settings,
             "phone_link": phone_link(site_settings),
             "wait_minutes": wait_minutes,
+            "wait_seconds": wait_minutes and limits.wait_seconds(),
             **WAY_NAMES,
         }
         # Named on the choices, and on the online page.
@@ -998,6 +1000,7 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
                     "site_settings": site_settings,
                     "phone_link": phone_link(site_settings),
                     "wait_minutes": limits.wait_minutes(),
+                    "wait_seconds": limits.wait_seconds(),
                 },
             )
         )

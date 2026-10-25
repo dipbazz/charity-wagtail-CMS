@@ -2,6 +2,8 @@
 counts, what a supporter sees over the limit, and that nothing is saved or asked then. The
 counting itself is core/tests/test_limits.py's."""
 
+import copy
+
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -44,6 +46,29 @@ def assert_stopped(response):
     assert "no-cache" in response["Cache-Control"]
 
 
+def assert_counts_down(response):
+    """The wait in minutes and seconds, which donate.js shows and counts down; the minutes in
+    the words are what's left as the page is made, for a browser without JavaScript. Only the
+    end is said to screen readers, not each second."""
+    countdown = soup(response).select_one("[data-countdown]")
+    assert countdown["data-countdown"] == "300" and countdown.has_attr("hidden")
+    ticking = countdown.select_one("[data-countdown-left]")
+    assert ticking["aria-hidden"] == "true"
+    assert " ".join(ticking.get_text().split()) == "Time left:"
+    assert countdown.select_one("[data-countdown-time]")
+    done = countdown.select_one("[data-countdown-done]")
+    assert done["role"] == "status" and done.get_text() == ""
+    assert done["data-done-text"] == "You can try again now."
+
+
+def shown_words(element):
+    """Its words as a browser without JavaScript shows them: not what starts hidden."""
+    element = copy.copy(element)
+    for hidden in element.select("[hidden]"):
+        hidden.decompose()
+    return " ".join(element.get_text().split())
+
+
 def notice(response):
     """The neutral box saying to wait, not a red box saying what to check."""
     return soup(response).select_one(".payment-message:not(.is-problem)[data-focus-on-load]")
@@ -62,11 +87,12 @@ class TestThePledgeForm:
         assert soup(response).find("input", {"name": "name"})["value"] == "Sita Sharma"
         box = notice(response)
         assert box["role"] == "alert" and box["tabindex"] == "-1"
-        assert " ".join(box.get_text().split()) == (
+        assert shown_words(box) == (
             "Your pledge hasn't been sent yet "
             "We've had a lot of tries from your internet connection just now. Wait 5 minutes, "
             "then press Continue to payment again. Your answers are still here."
         )
+        assert_counts_down(response)
 
     def test_names_the_form_s_own_button_when_there_s_no_way_to_pay(
         self, client, donate_page, limits
@@ -143,6 +169,7 @@ class TestStartingAPayment:
         assert page.find("a", href="tel:+97714567890")
         back = page.find("a", string="Back to your pledge")
         assert back["href"] == pay_url(donate_page, pledge)
+        assert_counts_down(response)
 
     def test_going_back_to_the_attempt_just_started_isn_t_counted(
         self, client, donate_page, pledge, fake_provider, limits
@@ -266,12 +293,13 @@ class TestSayingItsPaidByQR:
         assert page.find("input", {"name": "transaction_id"})["value"] == "TXN-8841"
         box = notice(response)
         assert box["role"] == "alert" and box["tabindex"] == "-1"
-        assert " ".join(box.get_text().split()) == (
+        assert shown_words(box) == (
             "We haven't got your message yet: we've had a lot of tries from your internet "
             "connection just now. Wait 5 minutes, then choose your screenshot again if you're "
             "sending one, and press I've paid. If money has left your account, don't pay "
             "again. Call us and we'll look into it: +977 1-4567890"
         )
+        assert_counts_down(response)
 
     def test_a_mistake_is_shown_again_without_counting(
         self, client, donate_page, pledge, code, limits

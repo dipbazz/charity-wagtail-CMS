@@ -9,7 +9,7 @@ import re
 import pytest
 from playwright.sync_api import expect
 
-from campaigns.models import Pledge
+from campaigns.models import Pledge, StepKind
 from charity.tests.test_demo_layout_browser import layout_problems
 from conftest import SITE
 from nepal_payments import Redirect
@@ -323,3 +323,35 @@ class TestPayPage:
 
         assert response.request.method == "GET"
         expect(site_page.get_by_role("button", name="Continue to Fake Pay")).to_be_visible()
+
+
+class TestOneTryTooMany:
+    """The wait's countdown (#226), which only a browser runs."""
+
+    @pytest.fixture
+    def wait_page(self, donate_page, fake_provider, settings, monkeypatch):
+        settings.LIMITS = {**settings.LIMITS, "payment_return": 0}
+        monkeypatch.setattr("core.limits.wait_seconds", lambda: 125)
+        pledge = Pledge.objects.create(
+            page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
+        )
+        payment = pledge.start_payment("fakepay", live=False)
+        payment.add_step(StepKind.CAME_BACK)  # the first time back is always asked
+        return f"{donate_page.url}payment/{payment.reference}/"
+
+    def test_counts_down_in_minutes_and_seconds_and_says_once_when_it_s_over(
+        self, site_page, wait_page
+    ):
+        site_page.clock.install()
+        site_page.goto(SITE + wait_page)
+        left = site_page.locator("[data-countdown-left]")
+        done = site_page.locator("[data-countdown-done]")
+
+        expect(left).to_have_text("Time left: 2:05")
+        site_page.clock.run_for(66_000)
+        expect(left).to_have_text("Time left: 0:59")
+        expect(done).to_have_text("")
+        site_page.clock.run_for(59_000)
+
+        expect(left).to_be_hidden()
+        expect(done).to_have_text("You can try again now.")

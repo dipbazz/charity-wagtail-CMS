@@ -27,6 +27,7 @@
             <div class="payment-message" role="alert" tabindex="-1" data-focus-on-load>
                 <h2>{% translate "Your pledge hasn't been sent yet" %}</h2>
                 <p>{% if ways %}{% blocktranslate count minutes=wait_minutes %}We've had a lot of tries from your internet connection just now. Wait {{ minutes }} minute, then press Continue to payment again. Your answers are still here.{% plural %}We've had a lot of tries from your internet connection just now. Wait {{ minutes }} minutes, then press Continue to payment again. Your answers are still here.{% endblocktranslate %}{% else %}{% blocktranslate count minutes=wait_minutes %}We've had a lot of tries from your internet connection just now. Wait {{ minutes }} minute, then press Send my pledge again. Your answers are still here.{% plural %}We've had a lot of tries from your internet connection just now. Wait {{ minutes }} minutes, then press Send my pledge again. Your answers are still here.{% endblocktranslate %}{% endif %}</p>
+                {% include "campaigns/includes/countdown.html" %}
             </div>
         {% endif %}
         {% if form.errors %}

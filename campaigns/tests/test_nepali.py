@@ -552,3 +552,7 @@ class TestOverTheLimitInNepali:
         ) in text
         assert soup(response).find("a", string="आफ्नो प्रतिबद्धतामा फर्कनुहोस्")
         assert "Please wait" not in text and "Back to your pledge" not in text
+        countdown = soup(response).select_one("[data-countdown]")
+        assert countdown.select_one("[data-countdown-left]").get_text().strip() == "बाँकी समय:"
+        done = countdown.select_one("[data-countdown-done]")
+        assert done["data-done-text"] == "अब फेरि प्रयास गर्न सक्नुहुन्छ।"

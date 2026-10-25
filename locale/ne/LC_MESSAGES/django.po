@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 22:18+0100\n"
+"POT-Creation-Date: 2026-10-25 02:40+0000\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -312,6 +312,12 @@ msgstr "हाम्रा खुला अपिलहरू हेर्नु
 
 msgid "This appeal has closed."
 msgstr "यो अपिल बन्द भइसकेको छ।"
+
+msgid "Time left:"
+msgstr "बाँकी समय:"
+
+msgid "You can try again now."
+msgstr "अब फेरि प्रयास गर्न सक्नुहुन्छ।"
 
 #, python-format
 msgid "%(raised)s raised of %(target)s"

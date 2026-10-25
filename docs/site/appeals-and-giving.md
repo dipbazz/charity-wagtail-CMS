@@ -356,8 +356,12 @@ or "too many", since people share a connection:
   page, which is never limited and opens on what became of paying.
 
 The wait it names, and `Retry-After`, is what's left of the window when the page is made, in whole
-minutes (seconds for `Retry-After`) rounded up: the counts start again when the window ends. There's
-no countdown and nothing retries by itself.
+minutes (seconds for `Retry-After`) rounded up: the counts start again when the window ends.
+Below the words, `donate.js` shows "Time left: 2:14" and counts it down each second
+(`campaigns/includes/countdown.html`, starting `hidden`, so without JavaScript there's only the
+minutes). Screen readers aren't told each second; when it reaches 0 the line becomes "You can try
+again now.", a status they announce once. The figures stay as 0–9 in Nepali too. Nothing retries
+by itself.
 
 ### How paying works, above the form
 
