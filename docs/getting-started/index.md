@@ -10,8 +10,8 @@ From a fresh clone to the site running on your computer with demo content, then 
 - to run the reviews as this project does: Claude Code and the gstack skills (optional; see
   [Reviews: tools](../contributing/reviews.md#tools))
 
-There's no JavaScript build step and no database server to install: the site uses SQLite, one
-CSS file and two small scripts.
+There's no JavaScript build step and no database server to install: the site uses SQLite, two
+stylesheets and two small scripts (the second of each only on the Donate page and its pay pages).
 
 ## Run the site
 
@@ -59,14 +59,14 @@ Development pays in the providers' test systems, where no money moves
 
 - **eSewa works straight away,** on the test keys eSewa publishes. Send a pledge on `/donate/`,
   choose **Pay with eSewa**, and sign in on eSewa's page with eSewa ID `9711111111`, password
-  `Nepal@123` and token `123456`.
+  `Nepal@123` and OTP `123456`.
 - **Khalti needs your own test key.** Sign up as a merchant at
   [test-admin.khalti.com](https://test-admin.khalti.com) (its sign-in code is `987654`), then put the
   test secret key in `.env.local` as `DJANGO_PAYMENT_KHALTI_SECRET_KEY`. Pay with Khalti ID
   `9800000000`, MPIN `1111` and code `987654`.
 
-The pay page lists these accounts while the site is in test mode. The tests never call either
-provider.
+The pay page only says that payments are in test mode: it never shows these accounts. The tests
+never call either provider.
 
 ### Run it as the live site runs it
 

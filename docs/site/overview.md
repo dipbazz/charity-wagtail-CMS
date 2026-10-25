@@ -32,8 +32,8 @@ Wagtail's database search. uv manages dependencies, ruff formats and lints, pyte
 pytest-django, wagtail-factories and Playwright for browser tests). In production, gunicorn serves
 the app and WhiteNoise its static files.
 
-There's no JavaScript build step: one stylesheet, one script for every page and one for the
-Donate page. Runtime dependencies beyond Wagtail are deliberately few: WhiteNoise and
+There's no JavaScript build step: two stylesheets and two scripts, one pair for every page and
+one for the Donate page, its pay pages and its gift pages. Runtime dependencies beyond Wagtail are deliberately few: WhiteNoise and
 [phonenumbers](../decisions.md#phone-numbers-with-phonenumbers).
 
 Two traps with versions this new:
@@ -48,7 +48,7 @@ Two traps with versions this new:
 | App | Owns |
 |---|---|
 | `charity` | The project: settings, URLs, the API, the base templates, the stylesheet and scripts |
-| `core` | Everything shared: content blocks, the image model, re-saving uploads (`clean_image()`) and private file storage, site settings and the banner, partners and testimonials, languages, money and phone formatting, the mail backend, the sitemap, template tags, the `update_site_url` and `backup_site` commands, and `makemessages` and `compilemessages` with this repo's defaults ([Languages](languages.md)) |
+| `core` | Everything shared: content blocks, the image model, re-saving uploads (`clean_image()`) and private file storage, site settings and the banner, partners and testimonials, languages, the form that requires text in every language, money and phone formatting, the rate limits on public forms (`limits.py`), spreadsheet-safe exports (`exports.py`), the mail backend, the sitemap, template tags, the `update_site_url` and `backup_site` commands, and `makemessages` and `compilemessages` with this repo's defaults ([Languages](languages.md)) |
 | `home` | The home page, standard pages and the demo content (`seed_demo`) |
 | `campaigns` | Appeals, the Donate page, pledges and paying them (with the QR codes and supporters' receipt screenshots, and the `delete_old_receipts` command), and the admin's fundraising panel |
 | `nepal_payments` | The payment providers (eSewa, Khalti), one file each. Not a Django app: it imports nothing from Django or this site, so it can be published for any Python project (#196); `campaigns/payments.py` connects it to the site ([Paying a pledge](appeals-and-giving.md#paying-a-pledge)) |
@@ -110,8 +110,9 @@ Each part uses what Wagtail already provides before adding code of its own:
 |---|---|---|
 | `charity.settings.base` | the others | Apps, middleware, templates, Wagtail settings, SQLite in the project folder |
 | `charity.settings.dev` | `manage.py` and `wsgi.py` by default | Debug on, any host, emails printed to the console, django-debug-toolbar, uploads served by Django. Reads this computer's own settings from a gitignored `.env.local` (copy `.env.local.example`), such as `DJANGO_LANGUAGE_CODE=ne`. Pays in eSewa's test system with its published keys |
+| `charity.settings.payments` | dev and production | Reads each provider's keys from `DJANGO_PAYMENT_<PROVIDER>_<KEY>` ([Running the live site](../hosting.md#paying-pledges-online)) |
 | `charity.settings.test` | pytest | Fast password hashing, uploads kept in memory, emails kept in memory, English as the main language |
-| `charity.settings.production` | the Docker image | Everything from `DJANGO_*` environment variables; refuses to start without the required ones ([Running the live site](../hosting.md#environment-variables)) |
+| `charity.settings.production` | the Docker image | Everything from `DJANGO_*` environment variables, including the payment keys and the switch to real money; the rate limits' counters in a file cache all workers share, and the private folder for receipt screenshots. Refuses to start without the required ones ([Running the live site](../hosting.md#environment-variables)) |
 
 ## Logging
 

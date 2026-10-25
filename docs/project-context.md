@@ -3,11 +3,11 @@
 A one-page map into these docs for anyone (or any AI session) starting work here: each question
 points to the one page that answers it, so there's no need to read everything or scan the code.
 
-**Last verified against:** `v0.4.0` (every page and screenshot checked on 2026-10-12)
+**Last verified against:** `v0.5.0` (every page and screenshot checked on 2026-10-25)
 
 ## Keeping the docs current
 
-- **Starting a session:** trust the docs. Run `git log --oneline v0.4.0..HEAD --stat` (the version
+- **Starting a session:** trust the docs. Run `git log --oneline v0.5.0..HEAD --stat` (the version
   above) and re-read only the pages for the areas those commits touched. Re-scan the repo only if
   most areas changed, or if the docs contradict the code.
 - **Before reading code to answer a question,** read the page below that answers it. Always read
@@ -23,11 +23,13 @@ points to the one page that answers it, so there's no need to read everything or
 
 A Wagtail 8 / Django 6.1 site that small charities in Nepal and the UK get free, demoed with a
 fictional water charity. Supporters read appeals and news, pledge and pay (eSewa or Khalti, in
-the providers' test systems until a charity goes live, or in person) and volunteer, in Nepali or
+the providers' test systems until a charity goes live, by scanning the charity's QR code, or
+in person) and volunteer, in Nepali or
 English; the team edits in the Wagtail admin, editors drafting and
 moderators publishing. SQLite, no JavaScript build step. Feature apps (`home`, `campaigns`, `news`,
 `contact`, `search`) depend on `core`, which never imports them; the payment providers are
-`nepal_payments`, which imports nothing from the site. Production runs the Docker image on
+`nepal_payments`, which imports nothing from the site (its README is the provider API). The pack a
+new charity is sent is in `onboarding/`, which the site never serves. Production runs the Docker image on
 one EC2 server behind Caddy, configured by `DJANGO_*` environment variables; each charity gets its
 own installation there, built to one standard structure. Built test-first with
 pytest, styled mobile first, and budgeted for queries and page weight in CI.
@@ -46,7 +48,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | How are photos stored, protected and served? What's `with_card_images`? | [Images](site/images.md) |
 | Colours, a charity's brand colours and previewing them, fonts, header, breakpoints, JavaScript, accessibility? How do I style something? | [Look and feel](site/look-and-feel.md) and the `mobile-first` skill |
 | Who can change what? Why can't editors see my new snippet? | [Editors and permissions](site/editors-and-permissions.md) |
-| How does the live server work? Environment variables, commands, backups, logs, deploying, restoring? | [Running the live site](hosting.md) |
+| How does the live server work? Environment variables, payment keys and turning on real money, the visitor's address, commands, backups, logs, deploying, restoring? | [Running the live site](hosting.md) |
 | How is a fix, feature or design judged? Quick fix or lasting one? Standard or modern? | [Contributing: Principles](contributing/index.md#principles) |
 | Branches, commits, pull requests, code style? | [Contributing](contributing/index.md) |
 | Which reviews does an issue or pull request need? What do the `needs:` labels mean? Which tools (Claude Code, gstack)? | [Reviews](contributing/reviews.md) |
@@ -55,7 +57,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | What mistakes must I not repeat? | [Security](contributing/security.md) |
 | How do I add a page type, a snippet or setting, a block, or a payment provider? | [Extending the site](contributing/extending.md) |
 | What's in the demo data? Photo credits? | [Demo content](contributing/demo-content.md) |
-| What do we ask a new charity for? How do its guide and form stay current? | [Onboarding a charity](contributing/onboarding.md) |
+| What do we ask a new charity for? How do its guide and form (the pack in `onboarding/`) stay current? | [Onboarding a charity](contributing/onboarding.md) |
 | Issues, epics, the board, versions, the changelog, releasing? | [Issues, versions and releases](contributing/releases.md) |
 | How do I write or build these docs? | [Writing docs](contributing/writing-docs.md) |
 | Why SQLite, one server, `.live().public()`, pinned actions, permission migrations, Playwright, no parallel tests, whole-sentence Nepali tests? Can I use a public-only service? | [Decisions](decisions.md) |

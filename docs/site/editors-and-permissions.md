@@ -26,7 +26,7 @@ whoever hosts the site.
 | **QR codes** (the charity's own, for supporters to pay by scanning) | Add, change and remove | ❌ | ✅ |
 | **Pledges** | View, filter and export | ✅ | ✅ |
 | | Check a payment with its provider (**Check with eSewa now**) | ✅ | ✅ |
-| | Mark a QR payment paid, or not found (**Can confirm payments**) | ❌ | ✅ |
+| | Mark a QR payment paid, or not found, and see the supporter's receipt screenshot (**Can confirm payments**) | ❌ | ✅ |
 | | Stop showing a gift on the website, and show it again (**Can stop showing a gift on the website**) | ✅ | ✅ |
 | | Add, change or delete | ❌ | ❌ |
 | **Form submissions** | View and export (comes with editing the form page) | ✅ | ✅ |
@@ -58,6 +58,7 @@ Beyond Wagtail's own admin, the team gets:
 
 - a **fundraising panel** on the dashboard ([Appeals and giving](appeals-and-giving.md#appeals));
 - **Pledges** in the menu ([Appeals and giving](appeals-and-giving.md#pledges-in-the-admin));
+- **QR codes** in the menu, for moderators ([Appeals and giving](appeals-and-giving.md#paying-a-pledge));
 - **Supporters** (partners and testimonials) and **News categories** in the menu;
 - the **Highlight** button in rich text ([Pages and content](pages-and-content.md#content-blocks));
 - **Translate** on every page ([Languages](languages.md#what-editors-do)).
@@ -73,6 +74,8 @@ test database) gets the same permissions and nobody has to set them by hand:
 - `news/migrations/0004_editor_and_moderator_permissions.py`: news categories;
 - `campaigns/migrations/0006_pledge_permissions.py`: viewing pledges;
 - `campaigns/migrations/0014_qr_payments.py`: QR codes, and confirming payments;
+- `campaigns/migrations/0017_gift_sharing.py`: stopping a gift's page for friends and showing it
+  again (both groups);
 - `core/migrations/0008_translation_permissions.py`: translating pages.
 
 **A new snippet or setting needs a migration like these, or editors can't see it in the admin.**

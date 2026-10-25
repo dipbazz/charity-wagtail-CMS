@@ -14,7 +14,7 @@ by itself. Adding a gateway means adding one file.
 
 | Code | Gateway | Currencies | Keys | Test system |
 |---|---|---|---|---|
-| `esewa` | [eSewa ePay v2](https://developer.esewa.com.np/pages/Epay) | NPR | `PRODUCT_CODE`, `SECRET_KEY` | Works with no account: `ESewa.test_keys` are eSewa's published test keys. Pay with eSewa ID 9711111111, password Nepal@123, token 123456 |
+| `esewa` | [eSewa ePay v2](https://developer.esewa.com.np/pages/Epay) | NPR | `PRODUCT_CODE`, `SECRET_KEY` | Works with no account: `ESewa.test_keys` are eSewa's published test keys. Pay with eSewa ID 9711111111, password Nepal@123, OTP 123456 |
 | `khalti` | [Khalti web checkout (KPG-2)](https://docs.khalti.com/khalti-epayment/) | NPR, from Rs 10 | `SECRET_KEY` | Needs a merchant's own test key from [test-admin.khalti.com](https://test-admin.khalti.com) (sign-in OTP 987654). Pay with Khalti ID 9800000000, MPIN 1111, OTP 987654 |
 
 ## How a payment works

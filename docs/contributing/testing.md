@@ -55,6 +55,7 @@ Some tests guard the whole project rather than one feature:
 | `charity/tests/test_lighthouse_budgets.py` | Each page's total weight budget is its image budget plus the fixed allowance ([Performance](performance.md)) |
 | `charity/tests/test_changelog.py`, `test_changelog_fragments.py` | The changelog is well-formed, its newest version matches `pyproject.toml`, and `changelog.d/` files are named `<slug>.<group>.md` |
 | `charity/tests/test_docs.py` | The docs sidebar menu isn't hidden |
+| `charity/tests/test_onboarding_pack.py` | The onboarding pack keeps up with the charity site standard, uses only the placeholders we fill in, and stays readable by `form-script.gs` |
 
 ## How to write them
 
@@ -96,7 +97,8 @@ A request under `/ne/` leaves Nepali active in the test's thread, and translated
 up when it's shown, so `conftest.py` puts English back after every test. Inside a test, read lazy
 text (a form's label) within `translation.override("ne")`. Tests of the site's own Nepali words
 are `charity/tests/test_nepali_interface.py` (header, footer, search, 404) and
-`campaigns/tests/test_nepali.py` (appeals and the pledge form). They check whole translated
+`campaigns/tests/test_nepali.py` (appeals, the pledge form, paying, the QR page, sharing and the
+wait page). They check whole translated
 sentences, so a change to a translation's wording updates its test in the same commit
 ([Decisions](../decisions.md#nepali-tests-check-whole-sentences)).
 
@@ -154,10 +156,11 @@ QA is split between what a machine checks on every pull request and what needs a
 
 **CI checks layout on every pull request.** `charity/tests/test_demo_layout_browser.py` loads one
 page of each kind from the demo site (home, an ordinary page, the appeals and an appeal, news, the
-Donate and volunteer forms, search, and the Nepali home page and appeal) at 320, 375, 412, 768,
-1024 and 1440px, and fails when a page scrolls sideways or has a tap target under 44px (a button,
-select, text field, summary, or a link in the footer, filters or pagination; links inside a
-paragraph are exempt). The failure names the page, the width and the element. Add a new kind of
+Donate and volunteer forms, search, and the Nepali home page, appeal and Donate page; each pay
+page in both languages, from the choices to the wait page; and a shared gift's thank-you and
+gift pages) at 320, 375, 412, 768, 1024 and 1440px, and fails when a page scrolls sideways or has
+a tap target under 44px (a button, select, text field, summary, a way to pay, a pay step or share
+link, or a link in the footer, filters or pagination; links inside a paragraph are exempt). The failure names the page, the width and the element. Add a new kind of
 page to `PATHS`, and a new kind of control to `TAP_TARGETS`. It also runs the home page in both
 languages with each light or dark name bar and footer
 ([Look and feel](../site/look-and-feel.md#a-light-or-dark-name-bar-and-footer)), and fails when
@@ -185,9 +188,9 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and every
 
 | Job | What it checks |
 |---|---|
-| `test` | ruff, `makemigrations --check`, Django's `check --deploy --fail-level WARNING` against production settings, the test suite with coverage, including the browser tests in Chromium and the layout check at six widths |
+| `test` | ruff, `makemigrations --check`, the onboarding form script's Node tests, Django's `check --deploy --fail-level WARNING` against production settings, the test suite with coverage, including the browser tests in Chromium and the layout check at six widths |
 | `lighthouse` | Page weight and layout shift on a phone ([Performance](performance.md)) |
-| `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse |
+| `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse, and so does the local `compose.yaml` |
 | `docs` | These docs build with warnings as errors; the built site is uploaded as the `docs-html` artifact |
 | `changelog` (its own workflow) | The pull request adds a `changelog.d/` file, unless it's labelled `no changelog` |
 | `reviews` (its own workflow) | Neither the pull request nor an issue it closes has a `needs:` label left ([Reviews](reviews.md)) |
