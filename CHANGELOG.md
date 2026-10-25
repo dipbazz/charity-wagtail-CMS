@@ -10,6 +10,136 @@ version number.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-25
+
+### Upgrade notes
+
+- Nothing changes until a charity takes payments. Then set each provider's merchant keys in the
+  server's `deploy/aws/.env` as `DJANGO_PAYMENT_<PROVIDER>_<KEY>` (the keys are listed in Running the
+  live site), and `DJANGO_LIVE_PAYMENTS=true` only together with live keys. The `web` service now
+  reads the whole `.env`, and a provider with only some of its keys stops the site starting
+  ([#93](https://github.com/dipbazz/Charity-wagtail-CMS/issues/93)).
+- Caddy now refuses any request over 12 MB, so nobody can fill the server's disk with one upload
+  ([#217](https://github.com/dipbazz/Charity-wagtail-CMS/pull/217)), and sends each visitor's
+  address to the site, which the new limits count by
+  ([#226](https://github.com/dipbazz/Charity-wagtail-CMS/issues/226)). After deploying, run
+  `sudo docker compose exec -w /etc/caddy caddy caddy reload` in `deploy/aws/`: `up -d` keeps Caddy
+  on its old configuration, and until it's reloaded nothing is limited and the logs say
+  `No HTTP_X_REAL_IP on the request`.
+- The nightly backup now deletes old receipt screenshots after it has copied the backup to S3
+  ([#217](https://github.com/dipbazz/Charity-wagtail-CMS/pull/217)).
+
+### Added
+
+- Whoever sets up a charity sends it one guide and one form, both made from the onboarding pack in `onboarding/` and kept up to date under the same links, so a charity never works from an old copy ([#203](https://github.com/dipbazz/Charity-wagtail-CMS/issues/203)).
+- Supporters can pay their pledge straight after sending it: with eSewa or Khalti where the charity
+  has set them up, or in person at the charity's office, with its address and phone from Site
+  settings. Whether a payment went through comes from eSewa or Khalti themselves, so a payment can't
+  be faked, and a failed or cancelled one can be tried again. Payments use eSewa's and Khalti's test
+  systems, where no money moves, until a charity goes live, and the pay page and a test payment's
+  thank-you say so.
+  The team sees in **Pledges** whether each pledge is paid, can filter by it, and gets the provider's
+  reference in the export. A pledge paid with real money can't be deleted, even by a superuser
+  ([#93](https://github.com/dipbazz/Charity-wagtail-CMS/issues/93)).
+- Supporters can pay a pledge by scanning the charity's own QR code. The new **QR codes** page in the
+  admin lists them, with an **Add** button when there are none; each has a name in each language, an
+  image, and the account name the app shows after scanning. Only moderators can change them. The
+  **Scan our QR code** has two steps, each on its own page. Step 1 shows the amount and the pledge
+  number to copy into the app's Remarks, the QR as uploaded with a **Save QR code** link, the account
+  name to check after scanning, and the account to pay instead if scanning doesn't work. Step 2,
+  **I've paid**, takes the transaction ID from the receipt, and the pledge shows **To confirm**: it
+  can't be paid another way until it's checked, so nobody pays twice. Meanwhile each of its pay
+  addresses thanks the supporter and gives the pledge number to call about. The site can't check a QR payment, so a moderator finds it in the wallet or bank statement and marks it
+  paid or not found from the pledge, which also shows each payment's history. Moderators get the new
+  **Can confirm payments** permission for this. A charity with a QR code but no eSewa or Khalti
+  account can now take gifts on its own site
+  ([#197](https://github.com/dipbazz/Charity-wagtail-CMS/issues/197)).
+- Every pledge has a six-digit **pledge number**, shown on its pay pages as "482 913". A supporter
+  paying at the office gives it, so the team finds their pledge without guessing between two people
+  with the same name. Search for it in **Pledges**, with or without the space; the list and the
+  export show it ([#202](https://github.com/dipbazz/Charity-wagtail-CMS/issues/202)).
+- A pledge's page in the admin now leads with what the team acts on: the amount, how often and the
+  appeal, then whether it's paid and how ("Paid with eSewa on 14 Oct, transaction 000AWEO") or why
+  not, the contact details with email and phone as links, the message and consents, and each payment
+  with what happened to it, step by step, in plain words. **Check with eSewa now** (or Khalti) asks
+  the provider about a payment that hasn't finished, so "did my payment go through?" can be
+  answered without the provider's portal. Pledges a person must look at (money received for another
+  amount, or part refunded) say **Needs checking** in the list, the export and on the page, and
+  search now finds a pledge by mobile number or by a reference or transaction ID from a statement
+  ([#96](https://github.com/dipbazz/Charity-wagtail-CMS/issues/96)).
+- Supporters who pay by QR code can send a screenshot of their app's receipt with **I've paid**,
+  instead of the transaction ID or as well as it: either one is enough now. A screenshot, or a
+  photo from any phone camera, of up to 5 MB is taken, and only a copy at most 2000 pixels across
+  is kept; a screenshot over 13 megapixels is refused, so no upload can run the server out of
+  memory. People who can confirm
+  payments see the screenshot on the pledge in the admin; editors only read that one was sent. The
+  website saves each screenshot afresh, keeps it where no web address reaches it, and deletes it
+  once the payment is marked paid or not found, or after 30 days at most. Screenshots aren't backed
+  up. Add a line to your privacy notice saying so (the demo's notice has the wording). A phone
+  camera's JPEG that was refused as "not a JPEG, PNG or WebP image" is now accepted, for QR codes
+  too ([#197](https://github.com/dipbazz/Charity-wagtail-CMS/issues/197)).
+- Site settings have a new **Refund policy**, written in each language like the address. Once it's
+  filled in, every pay page shows it under "Refunds", below the gift, so supporters read it before
+  choosing to pay. Left empty, the pay pages say nothing about refunds
+  ([#202](https://github.com/dipbazz/Charity-wagtail-CMS/issues/202)).
+- After paying, supporters can tell their friends. The thank-you page says what their gift does, then
+  invites them to share with **Tell your friends** (their phone's own share menu), WhatsApp, Facebook
+  or a link to copy. If they agreed to show their gift, friends get a page of its own: "Asha is
+  supporting Clean water for Kisumu", what she gave, the appeal's progress and a button to give too.
+  Without that agreement the share has no name and leads to the appeal. Supporters can change their
+  mind on the thank-you page, and the pledge form's consent now says exactly when their name and
+  amount are shown. Editors and moderators can take a gift's page down from the pledge with **Stop
+  showing on the website** (a new permission both groups have), and only they can show it again.
+  Meanwhile, links already shared lead to the appeal
+  ([#100](https://github.com/dipbazz/Charity-wagtail-CMS/issues/100)).
+
+### Changed
+
+- After sending a pledge, supporters choose how to pay first, and each way has its own page: **Pay
+  online** (eSewa and Khalti), **Pay in person**, and **Not ready to pay yet?**, which gives the link
+  to come back and pay later. Paying in person lists what to do at the counter, a step at a time, and
+  is offered only when Site settings tick the new **We take gifts at our office** and give an office
+  address or phone; the Donate page's sentence about how to pay says "or in person" only then too. With only one way to pay, the form goes straight
+  to it. The Donate page's thank-you text now shows only on a site with no way to pay yet
+  ([#202](https://github.com/dipbazz/Charity-wagtail-CMS/issues/202)).
+- The Donate page now says how paying works on its own site, in Nepali and English: with the
+  providers set up there and in person, or that no payment is taken online yet. A charity's own
+  payment notice follows it, for anything to add such as bank details. Notices still holding the old
+  default text ("No payment is taken on this website yet") were removed, and the button reads
+  **Continue to payment** when a payment step follows
+  ([#93](https://github.com/dipbazz/Charity-wagtail-CMS/issues/93)).
+- The **Pay with eSewa** and **Pay with Khalti** buttons now show each provider's own logo, so
+  supporters find their app at a glance instead of reading each button. The buttons are white with a
+  border in the charity's colour, one under another, and keep the logo while they say "Opening
+  eSewa…". A charity has nothing to set up: the logos come with the providers
+  ([#201](https://github.com/dipbazz/Charity-wagtail-CMS/issues/201)).
+- A pledge on the Donate page can be for up to 999,999 in the site's currency (it was 99,999,999),
+  so an extra zero typed by mistake is refused. A bigger gift is arranged with the charity directly
+  ([#214](https://github.com/dipbazz/Charity-wagtail-CMS/pull/214)).
+- Site settings now save the address and the refund policy only when each is written for every
+  language, or for none, so readers of each language are told the same. If your address is in one
+  language only, the next save asks for it in the others. The charity's name can still be in one
+  language ([#202](https://github.com/dipbazz/Charity-wagtail-CMS/issues/202)).
+
+### Fixed
+
+- Buttons such as Search and Send are in the site's font, like links styled as buttons, rather than
+  the browser's own ([#93](https://github.com/dipbazz/Charity-wagtail-CMS/issues/93)).
+- With JavaScript off, the **Copy link** buttons on "Not ready to pay yet?" and the news feed no longer
+  show and then do nothing when pressed; the link can be selected and copied by hand
+  ([#100](https://github.com/dipbazz/Charity-wagtail-CMS/issues/100)).
+
+### Security
+
+- Exported pledges and form submissions show what supporters typed as text. A name such as
+  `=HYPERLINK(…)` could run as a formula when the team opened the export in Excel or Google Sheets,
+  and send other supporters' details away ([#200](https://github.com/dipbazz/Charity-wagtail-CMS/pull/200)).
+- One internet connection can now send only so many new pledges, start so many payments, say "I've
+  paid" so many times and come back from a provider so many times in five minutes, so a script can't
+  fill a charity's Pledges list, get its merchant account throttled or fill the server's disk. A
+  supporter paying normally never notices; one try too many is asked to wait a few minutes, with
+  their answers kept and nothing saved ([#226](https://github.com/dipbazz/Charity-wagtail-CMS/issues/226)).
+
 ## [0.4.0] - 2026-10-11
 
 ### Added
@@ -277,7 +407,8 @@ The first tracked release. It collects everything built before versioning starte
 - Every CI action is pinned to a commit, and Dependabot proposes updates
   ([#69](https://github.com/dipbazz/Charity-wagtail-CMS/pull/69)).
 
-[Unreleased]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/dipbazz/Charity-wagtail-CMS/compare/v0.1.0...v0.2.0

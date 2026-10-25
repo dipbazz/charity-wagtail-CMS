@@ -1,1 +1,0 @@
-Whoever sets up a charity sends it one guide and one form, both made from the onboarding pack in `onboarding/` and kept up to date under the same links, so a charity never works from an old copy ([#203](https://github.com/dipbazz/Charity-wagtail-CMS/issues/203)).

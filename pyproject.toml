@@ -1,6 +1,6 @@
 [project]
 name = "charity-cms"
-version = "0.4.0"
+version = "0.5.0"
 requires-python = ">=3.13"
 dependencies = [
     "phonenumbers>=9.0.40",
