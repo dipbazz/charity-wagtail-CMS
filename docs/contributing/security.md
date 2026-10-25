@@ -178,8 +178,8 @@ on Django's cache API, with no package.
 - **Logged once:** the first try too many from a connection for an action in a window is one
   WARNING on the `core` logger, naming the action, its limit and the window, never the address;
   later ones log nothing, so a flood can't push errors out of the logs.
-- **If the counters break,** the try goes through and one ERROR names the action: giving keeps
-  working.
+- **If the counters break,** the try goes through, so giving keeps working, and one ERROR per
+  window in each worker names the action, with its traceback.
 - **Not covered here:** other forms (#231) and the public check's provider calls per payment
   (#232). The team's Check now in the admin has its own limit per payment.
 

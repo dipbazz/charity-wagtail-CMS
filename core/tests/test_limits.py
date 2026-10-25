@@ -11,8 +11,9 @@ from core import limits
 
 
 @pytest.fixture(autouse=True)
-def default_limits(settings):
+def default_limits(settings, monkeypatch):
     settings.LIMITS_WINDOW = 300
+    monkeypatch.setattr(limits, "broken_logged_in", None)
     settings.LIMITS = {"pledge": 2, "start_payment": 2}
     settings.LIMITS_ADDRESS_HEADER = None
 
@@ -108,11 +109,19 @@ def test_lets_the_try_through_when_the_counters_break(monkeypatch, caplog):
         raise OSError("disk full")
 
     monkeypatch.setattr(caches["limits"], "get", broken)
+    monkeypatch.setattr(limits.time, "time", lambda: 1000.0)
     with caplog.at_level(logging.ERROR, logger="core"):
         assert tries("pledge", request_from("203.0.113.7"), 3) == [False, False, False]
 
-    assert [r.levelname for r in caplog.records] == ["ERROR"] * 3
+    # Once per window in each worker, so a flood can't push errors out of the logs.
+    assert [r.levelname for r in caplog.records] == ["ERROR"]
     assert "pledge" in caplog.text and "203.0.113.7" not in caplog.text
+
+    monkeypatch.setattr(limits.time, "time", lambda: 1300.0)
+    with caplog.at_level(logging.ERROR, logger="core"):
+        tries("start_payment", request_from("203.0.113.7"), 2)
+
+    assert len(caplog.records) == 2
 
 
 def test_a_full_counter_cache_clears_past_windows_before_forgetting_a_live_count(

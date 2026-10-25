@@ -17,6 +17,9 @@ from django.utils.cache import add_never_cache_headers
 
 logger = logging.getLogger(__name__)
 
+# The window this worker last said the counters broke in: the cache can't remember it.
+broken_logged_in = None
+
 
 class CounterCache(FileBasedCache):
     """The counters' cache in production. A past window's counters are never read again, so the
@@ -88,7 +91,12 @@ def over_limit(request, action):
                 window,
             )
     except Exception:
-        logger.exception("Couldn't count a try at %s; it was let through.", action)
+        global broken_logged_in
+        if broken_logged_in != window_number:
+            broken_logged_in = window_number
+            logger.exception(
+                "Couldn't count a try at %s; it and others this window are let through.", action
+            )
         return False
     return True
 
