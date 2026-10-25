@@ -965,8 +965,11 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
             Payment.objects.select_related("pledge"), reference=reference, pledge__page=self
         )
         if payment.status != PaymentStatus.PAID:
-            # Only when the provider would be asked (#226).
-            if limits.over_limit(request, "payment_return"):
+            # Only when the provider would be asked, and never the first time back (#226): each
+            # payment has only one, starting one is counted, and others on the payer's
+            # connection could otherwise leave a real payment unconfirmed.
+            came_back = payment.steps.filter(kind=StepKind.CAME_BACK).exists()
+            if came_back and limits.over_limit(request, "payment_return"):
                 return self.wait_page(request, payment.pledge)
             payment.add_step(StepKind.CAME_BACK)
             failed_before = payment.status == PaymentStatus.FAILED

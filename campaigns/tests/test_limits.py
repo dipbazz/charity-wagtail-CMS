@@ -184,25 +184,43 @@ class TestComingBackFromTheProvider:
         start(client, donate_page, Pledge.objects.get())
         return Payment.objects.get()
 
-    def test_over_the_limit_asks_no_provider(
+    def test_the_first_return_is_always_asked(
         self, client, donate_page, payment, fake_provider, limits
     ):
+        """A payer who really paid is never left unconfirmed by others on their connection.
+        Each payment comes back first only once, and starting one is counted."""
+        limits("payment_return", 0)
+        fake_provider.outcome = Outcome(Status.PAID, "FAKE-123", word="DONE")
+
+        response = client.get(return_url(donate_page, payment))
+
+        assert response.status_code == 303
+        assert len(fake_provider.checked) == 1
+        assert Pledge.objects.get().has_paid_payment()
+
+    def test_over_the_limit_a_later_check_asks_no_provider(
+        self, client, donate_page, payment, fake_provider, limits
+    ):
+        fake_provider.outcome = Outcome(Status.WAITING, "", word="PENDING")
+        client.get(return_url(donate_page, payment))
         limits("payment_return", 0)
 
         response = client.get(return_url(donate_page, payment))
 
         assert_stopped(response)
-        assert fake_provider.checked == []
-        assert not payment.steps.filter(kind=StepKind.CAME_BACK).exists()
+        assert len(fake_provider.checked) == 1
+        assert payment.steps.filter(kind=StepKind.CAME_BACK).count() == 1
         assert soup(response).h1.get_text() == "Please wait 5 minutes"
 
     def test_the_wait_page_is_never_indexed_and_stays_within_the_pay_pages_budget(
-        self, client, donate_page, payment, limits, django_assert_max_num_queries
+        self, client, donate_page, payment, fake_provider, limits, django_assert_max_num_queries
     ):
         """The pay pages' 15 (test_pay.py). Starting a payment spends three more before it
         knows a try is one too many: the payments it checks for one paid, held or to go back to."""
+        fake_provider.outcome = Outcome(Status.WAITING, "", word="PENDING")
+        client.get(return_url(donate_page, payment))  # the first return, and fills caches
         limits("payment_return", 0)
-        client.get(return_url(donate_page, payment))  # fills caches
+        client.get(return_url(donate_page, payment))
 
         with django_assert_max_num_queries(15):
             response = client.get(return_url(donate_page, payment))

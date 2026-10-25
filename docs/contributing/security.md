@@ -150,7 +150,7 @@ on Django's cache API, with no package.
 | `pledge` | The form is valid and would save a new pledge (not a mistake, not the same copy sent again) | 10 |
 | `start_payment` | A new attempt would start (not a paid or held pledge, not going back to the attempt just started) | 10 |
 | `qr_paid` | "I've paid" is valid and would be saved | 5 |
-| `payment_return` | Coming back from a provider, or Check my payment, would ask the provider (not for a paid payment) | 30 |
+| `payment_return` | Coming back from a provider again, or Check my payment, would ask the provider (not for a paid payment, and never a payment's first time back: each has one, starting one is counted, and others on the payer's connection could otherwise leave a real payment unconfirmed) | 30 |
 
 - **The window** is `LIMITS_WINDOW`, 300 seconds, for every action. It's the wait supporters are
   told, so keep it short. Both are in `charity/settings/base.py`; 0 stops every counted try.

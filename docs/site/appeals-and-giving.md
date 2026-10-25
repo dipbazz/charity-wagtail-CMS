@@ -350,7 +350,8 @@ or "too many", since people share a connection:
   minutes, then press Continue to payment again. Your answers are still here." (naming the form's
   own button). The QR notice adds "If money has left your account, don't pay again." and the
   charity's phone.
-- **Starting a payment, or coming back from one,** shows `campaigns/pay/wait.html`: "Please wait
+- **Starting a payment, or coming back from one again** (the first time back is always asked),
+  shows `campaigns/pay/wait.html`: "Please wait
   5 minutes", the same don't-pay-again line and phone, and **Back to your pledge**, to the pay
   page, which is never limited and opens on what became of paying.
 
