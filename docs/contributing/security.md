@@ -169,8 +169,10 @@ on Django's cache API, with no package.
   often given whole, so a script switching between its 256 /64s is still one; `::ffff:`
   addresses count as IPv4. A /48 is 256 of them, which the limits don't cover.
 - **The counters** are in their own cache, `CACHES["limits"]`: files under the web container's
-  `/tmp` in production, shared by both gunicorn workers, at most 2,000 entries (about 8 MB; when
-  full Django forgets a random third, which fails nothing). They're kept with the window as their
+  `/tmp` in production, shared by both gunicorn workers, at most 2,000 entries (about 8 MB).
+  A past window's counters are never read again, so when full `core.limits.CounterCache` deletes
+  them first; only if it's still full, about 1,000 connections counted in one window, does
+  Django forget a random third, which lets some of them try again early. They're kept with the window as their
   expiry, never with `cache.incr()`, which on a file cache saves the key again with the default
   timeout. The default cache, Wagtail's, is separate.
 - **Logged once:** the first try too many from a connection for an action in a window is one

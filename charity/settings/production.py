@@ -36,11 +36,11 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # Caddy sends the visitor's address as X-Real-IP, replacing any a visitor sent (#226).
 LIMITS_ADDRESS_HEADER = "HTTP_X_REAL_IP"
 # The limits' counters, in files every gunicorn worker shares: in memory, each would count apart.
-# About 8 MB when full, when Django forgets a random third, which fails nothing.
+# About 8 MB when full, when past windows' counters go first (core.limits.CounterCache).
 CACHES = {
     **CACHES,
     "limits": {
-        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "BACKEND": "core.limits.CounterCache",
         "LOCATION": "/tmp/charity-limits",
         "OPTIONS": {"MAX_ENTRIES": 2000},
     },

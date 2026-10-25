@@ -12,9 +12,28 @@ import time
 
 from django.conf import settings
 from django.core.cache import caches
+from django.core.cache.backends.filebased import FileBasedCache
 from django.utils.cache import add_never_cache_headers
 
 logger = logging.getLogger(__name__)
+
+
+class CounterCache(FileBasedCache):
+    """The counters' cache in production. A past window's counters are never read again, so the
+    file cache would keep them until full, then forget a random third of the files, live counts
+    too. Full, this deletes the past ones first, and forgets live ones only if still full."""
+
+    def _cull(self):
+        filelist = self._list_cache_files()
+        if len(filelist) < self._max_entries:
+            return
+        for name in filelist:
+            try:
+                with open(name, "rb") as f:
+                    self._is_expired(f)
+            except FileNotFoundError:
+                pass  # The other worker deleted it first.
+        super()._cull()
 
 
 def client_address(request):

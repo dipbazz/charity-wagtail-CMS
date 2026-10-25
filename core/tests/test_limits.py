@@ -115,6 +115,24 @@ def test_lets_the_try_through_when_the_counters_break(monkeypatch, caplog):
     assert "pledge" in caplog.text and "203.0.113.7" not in caplog.text
 
 
+def test_a_full_counter_cache_clears_past_windows_before_forgetting_a_live_count(
+    tmp_path, monkeypatch
+):
+    """A past window's counters are never read again, so Django's file cache would keep them and,
+    once full, forget a random third of the files, live counts too."""
+    cache = limits.CounterCache(str(tmp_path), {"OPTIONS": {"MAX_ENTRIES": 4}})
+    monkeypatch.setattr(limits.time, "time", lambda: 1000.0)
+    for n in range(4):
+        cache.set(f"pledge:203.0.113.{n}:3", 10, timeout=300)
+    monkeypatch.setattr(limits.time, "time", lambda: 1350.0)
+
+    for n in range(3):
+        cache.set(f"pledge:203.0.113.{n}:4", n, timeout=300)
+
+    assert len(cache._list_cache_files()) == 3
+    assert [cache.get(f"pledge:203.0.113.{n}:4") for n in range(3)] == [0, 1, 2]
+
+
 def test_a_stopped_response_says_when_to_try_again_and_is_never_cached(monkeypatch):
     monkeypatch.setattr(limits.time, "time", lambda: 1180.5)
 

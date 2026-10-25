@@ -124,7 +124,7 @@ def test_limits_count_in_a_cache_every_worker_shares_and_read_caddy_s_address(mo
     settings = load_settings()
 
     limits = settings["CACHES"]["limits"]
-    assert limits["BACKEND"] == "django.core.cache.backends.filebased.FileBasedCache"
+    assert limits["BACKEND"] == "core.limits.CounterCache"
     assert limits["LOCATION"].startswith("/tmp/")
     assert limits["OPTIONS"]["MAX_ENTRIES"] == 2000
     assert settings["CACHES"]["default"]["BACKEND"].endswith("LocMemCache")
