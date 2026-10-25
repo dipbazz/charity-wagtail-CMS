@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 DEPLOY = ROOT / "deploy" / "aws"
 
@@ -30,6 +32,12 @@ def test_images_from_docker_hub_are_pinned_to_a_digest():
     assert pulled, "expected the compose file to pull at least the Caddy image"
     pinned = re.compile(r":[\w.-]+@sha256:[0-9a-f]{64}$")
     assert [image for image in pulled if not pinned.search(image)] == []
+
+
+@pytest.mark.parametrize("config", [DEPLOY / "Caddyfile", ROOT / "compose.yaml"])
+def test_caddy_sends_the_visitor_s_address_in_its_own_header(config):
+    """The limits count per visitor (#226): Caddy's X-Real-IP replaces anything a visitor sends."""
+    assert "header_up X-Real-IP {client_ip}" in config.read_text(encoding="utf-8")
 
 
 def test_logs_cant_fill_the_disk():

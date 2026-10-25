@@ -9,7 +9,7 @@ from django.utils import translation
 from PIL import Image
 
 from campaigns.forms import PledgeForm
-from campaigns.models import Pledge
+from campaigns.models import Pledge, StepKind
 from core.models import SiteSettings
 
 pytestmark = pytest.mark.django_db
@@ -484,3 +484,75 @@ class TestSharingInNepali:
         }
         assert alternates["ne"] == f"http://localhost{nepali_donate_page.url}{path}"
         assert alternates["x-default"] == f"http://localhost{donate_page.url}{path}"
+
+
+class TestOverTheLimitInNepali:
+    """What a supporter sees after one try too many (#226), in Nepali."""
+
+    @pytest.fixture(autouse=True)
+    def no_tries_left(self, settings, monkeypatch):
+        settings.LIMITS_WINDOW = 300
+        monkeypatch.setattr("core.limits.wait_seconds", lambda: 300)
+        settings.LIMITS = dict.fromkeys(settings.LIMITS, 0)
+
+    @pytest.fixture
+    def pledge(self, nepali_donate_page):
+        return Pledge.objects.create(
+            page=nepali_donate_page,
+            amount=2500,
+            currency="NPR",
+            name="Sita Sharma",
+            email="sita@example.com",
+        )
+
+    def test_the_pledge_form_s_notice(self, client, nepali_donate_page):
+        from campaigns.tests.test_pay import VALID
+
+        response = client.post(nepali_donate_page.url, {**VALID, "appeal": ""})
+        text = visible_text(response)
+
+        assert response.status_code == 429
+        assert "तपाईंको प्रतिबद्धता अझै पठाइएको छैन" in text
+        assert (
+            "तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास भएका छन्। 5 मिनेट पर्खनुहोस्, अनि फेरि "
+            "मेरो प्रतिबद्धता पठाउनुहोस् थिच्नुहोस्। तपाईंका जवाफहरू यहीँ छन्।"
+        ) in text
+        assert "a lot of tries" not in text
+
+    def test_the_qr_notice(self, client, nepali_donate_page, pledge):
+        from campaigns.tests.test_qr import make_code
+
+        code = make_code("eSewa", account_name="BRIGHTWELL WATER")
+        response = client.post(
+            f"{nepali_donate_page.url}pay/{pledge.reference}/qr/paid/",
+            {"code": code.pk, "transaction_id": "TXN-8841"},
+        )
+        text = visible_text(response)
+
+        assert response.status_code == 429
+        assert (
+            "हामीले तपाईंको सन्देश अझै पाएका छैनौं: तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास "
+            "भएका छन्। 5 मिनेट पर्खनुहोस्, अनि स्क्रिनसट पठाउँदै हुनुहुन्छ भने त्यसलाई फेरि "
+            "छान्नुहोस्, र मैले भुक्तानी गरें थिच्नुहोस्।"
+        ) in text
+        assert "तपाईंको खाताबाट पैसा गइसकेको छ भने फेरि भुक्तानी नगर्नुहोस्।" in text
+        assert "a lot of tries" not in text
+
+    def test_the_wait_page(self, client, nepali_donate_page, pledge, fake_provider):
+        payment = pledge.start_payment("fakepay", live=False)
+        payment.add_step(StepKind.CAME_BACK)  # the first time back is always asked
+
+        response = client.get(f"{nepali_donate_page.url}payment/{payment.reference}/")
+        text = visible_text(response)
+
+        assert response.status_code == 429
+        assert soup(response).h1.get_text() == "कृपया 5 मिनेट पर्खनुहोस्"
+        assert (
+            "तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास भएका छन्। पर्खिसकेपछि आफ्नो प्रतिबद्धतामा फर्कनुहोस्।"
+        ) in text
+        assert soup(response).find("a", string="आफ्नो प्रतिबद्धतामा फर्कनुहोस्")
+        assert "Please wait" not in text and "Back to your pledge" not in text
+        countdown = soup(response).select_one("[data-countdown]")
+        assert countdown.select_one("[data-countdown-left]").get_text().strip() == "बाँकी समय:"
+        done = countdown.select_one("[data-countdown-done]")
+        assert done["data-done-text"] == "अब फेरि प्रयास गर्न सक्नुहुन्छ।"

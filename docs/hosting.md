@@ -137,6 +137,22 @@ emailed.
 Read them on the server with `sudo docker compose logs --tail 200 web` in `deploy/aws/`. A new app
 needs its name added to the loggers in `charity/settings/production.py`.
 
+A line such as `WARNING core: Too many tries at pledge from one connection: over 10 in 300
+seconds.` means one connection hit a limit on the public pages; many of them at once is a flood,
+an odd one a busy appeal ([Security](contributing/security.md#one-connection-can-only-try-so-often)).
+
+## The visitor's address
+
+The limits count per visitor, by the address Caddy sends as `X-Real-IP` (`header_up X-Real-IP
+{client_ip}` in `deploy/aws/Caddyfile`, and in the Caddy config in `compose.yaml`). Caddy
+replaces any `X-Real-IP` a visitor sends. Any other web server in front of the site must set the
+same header the same way: without it nothing is limited, and the logs say
+`No HTTP_X_REAL_IP on the request` once every five minutes.
+
+Behind Cloudflare (or any other proxy), tell Caddy to trust it, and `{client_ip}` becomes the
+visitor's address again with no change to Django: a global `servers` block with
+`trusted_proxies static <Cloudflare's ranges>` and `client_ip_headers CF-Connecting-IP`.
+
 ## Paying pledges online
 
 Each charity's installation offers the payment providers it has merchant accounts for

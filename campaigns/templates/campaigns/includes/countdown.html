@@ -1,0 +1,6 @@
+{% load i18n %}
+{# One try too many (#226): what's left of the wait in minutes and seconds, which donate.js shows and counts down; without it, the minutes in the words above are what's left as the page is made. Screen readers aren't told each second (aria-hidden, in an alert), only once, when the wait is over. #}
+<p class="countdown" data-countdown="{{ wait_seconds }}" hidden>
+    <span data-countdown-left aria-hidden="true">{% translate "Time left:" %} <span data-countdown-time></span></span>
+    <span role="status" data-countdown-done data-done-text="{% translate 'You can try again now.' %}"></span>
+</p>

@@ -32,6 +32,19 @@ SITE_URL = os.environ["DJANGO_SITE_URL"].rstrip("/")
 WAGTAILADMIN_BASE_URL = SITE_URL
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Caddy sends the visitor's address as X-Real-IP, replacing any a visitor sent (#226).
+LIMITS_ADDRESS_HEADER = "HTTP_X_REAL_IP"
+# The limits' counters, in files every gunicorn worker shares: in memory, each would count apart.
+# About 8 MB when full, when past windows' counters go first (core.limits.CounterCache).
+CACHES = {
+    **CACHES,
+    "limits": {
+        "BACKEND": "core.limits.CounterCache",
+        "LOCATION": "/tmp/charity-limits",
+        "OPTIONS": {"MAX_ENTRIES": 2000},
+    },
+}
 SECURE_SSL_REDIRECT = True
 # Start short and raise once HTTPS is confirmed everywhere; browsers cache HSTS for this long.
 SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_SECURE_HSTS_SECONDS", 3600))

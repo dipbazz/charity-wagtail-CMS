@@ -5,7 +5,7 @@ from urllib.parse import urljoin, urlsplit
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.cache import cache
+from django.core.cache import cache, caches
 from django.core.management import call_command
 from django.db import connection, transaction
 from django.test.utils import CaptureQueriesContext
@@ -18,9 +18,11 @@ def clear_cache():
     """The test database rolls back after each test but the cache doesn't.
 
     Wagtail caches Site root URLs there, so a test that changes the Site would leak into the next.
+    The limits' counters (core/limits.py) would stop the next test's tries.
     """
     yield
     cache.clear()
+    caches["limits"].clear()
 
 
 @pytest.fixture(autouse=True)

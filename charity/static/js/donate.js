@@ -62,6 +62,30 @@ if (busyButtons.length) {
     });
 }
 
+// One try too many (#226): what's left of the wait, counted down in minutes and seconds from what
+// the server said as the page was made. Each second is hidden from screen readers; the end is
+// said once, by the status line. Without JavaScript, the words give the minutes.
+document.querySelectorAll("[data-countdown]").forEach((countdown) => {
+    const end = Date.now() + Number(countdown.dataset.countdown) * 1000;
+    const left = countdown.querySelector("[data-countdown-left]");
+    const time = countdown.querySelector("[data-countdown-time]");
+    const done = countdown.querySelector("[data-countdown-done]");
+    let timer;
+    const show = () => {
+        const seconds = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+        if (seconds === 0) {
+            clearInterval(timer);
+            left.hidden = true;
+            done.textContent = done.dataset.doneText;
+            return;
+        }
+        time.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+    };
+    show();
+    countdown.hidden = false;
+    timer = setInterval(show, 1000);
+});
+
 // The pay page's message, what became of paying (didn't go through, check first, thank you):
 // focused as the page opens, so a screen reader reads it before the rest of the page.
 document.querySelector("[data-focus-on-load]")?.focus();

@@ -335,6 +335,34 @@ not found, with its pledge, or after 30 days if nobody has checked it (`delete_o
 payment stays To confirm). It isn't backed up. The rules are in
 [Security](../contributing/security.md#a-supporters-upload-is-private-and-short-lived).
 
+### One try too many
+
+Each internet connection may send only so many new pledges, start so many payments, say "I've
+paid" so many times and come back from a provider so many times in five minutes
+([Security](../contributing/security.md#one-connection-can-only-try-so-often)). A supporter
+paying normally, with a retry or two, never gets near it. Over the limit nothing is saved and no
+provider is asked, the answer is HTTP 429 with `Retry-After`, and the words never say "blocked"
+or "too many", since people share a connection:
+
+- **The pledge form and QR's "I've paid"** come back filled in (only a screenshot must be chosen
+  again), with a notice at the top in the neutral box, focused as the page opens: "Your pledge
+  hasn't been sent yet. We've had a lot of tries from your internet connection just now. Wait 5
+  minutes, then press Continue to payment again. Your answers are still here." (naming the form's
+  own button). The QR notice adds "If money has left your account, don't pay again." and the
+  charity's phone.
+- **Starting a payment, or coming back from one again** (the first time back is always asked),
+  shows `campaigns/pay/wait.html`: "Please wait
+  5 minutes", the same don't-pay-again line and phone, and **Back to your pledge**, to the pay
+  page, which is never limited and opens on what became of paying.
+
+The wait it names, and `Retry-After`, is what's left of the window when the page is made, in whole
+minutes (seconds for `Retry-After`) rounded up: the counts start again when the window ends.
+Below the words, `donate.js` shows "Time left: 2:14" and counts it down each second
+(`campaigns/includes/countdown.html`, starting `hidden`, so without JavaScript there's only the
+minutes). Screen readers aren't told each second; when it reaches 0 the line becomes "You can try
+again now.", a status they announce once. The figures stay as 0–9 in Nepali too. Nothing retries
+by itself.
+
 ### How paying works, above the form
 
 The page writes this itself, in the reader's language, from the same `ways_to_pay()` as the pay

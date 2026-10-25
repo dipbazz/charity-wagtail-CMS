@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-19 06:09+0100\n"
+"POT-Creation-Date: 2026-10-25 02:40+0000\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -216,6 +216,21 @@ msgstr "मासिक रोज्नुभयो भने, पहिलो �
 msgid "No payment is taken on this website yet. Send this form and we'll contact you about how to pay. If you choose monthly, we'll help you set up a regular payment."
 msgstr "यो वेबसाइटमा अहिलेसम्म भुक्तानी लिइँदैन। यो फारम पठाउनुहोस्, कसरी भुक्तानी गर्ने भनेर हामी तपाईंलाई सम्पर्क गर्नेछौं। मासिक रोज्नुभयो भने, नियमित भुक्तानी मिलाउन हामी सहयोग गर्नेछौं।"
 
+msgid "Your pledge hasn't been sent yet"
+msgstr "तपाईंको प्रतिबद्धता अझै पठाइएको छैन"
+
+#, python-format
+msgid "We've had a lot of tries from your internet connection just now. Wait %(minutes)s minute, then press Continue to payment again. Your answers are still here."
+msgid_plural "We've had a lot of tries from your internet connection just now. Wait %(minutes)s minutes, then press Continue to payment again. Your answers are still here."
+msgstr[0] "तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास भएका छन्। %(minutes)s मिनेट पर्खनुहोस्, अनि फेरि भुक्तानीतर्फ जानुहोस् थिच्नुहोस्। तपाईंका जवाफहरू यहीँ छन्।"
+msgstr[1] "तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास भएका छन्। %(minutes)s मिनेट पर्खनुहोस्, अनि फेरि भुक्तानीतर्फ जानुहोस् थिच्नुहोस्। तपाईंका जवाफहरू यहीँ छन्।"
+
+#, python-format
+msgid "We've had a lot of tries from your internet connection just now. Wait %(minutes)s minute, then press Send my pledge again. Your answers are still here."
+msgid_plural "We've had a lot of tries from your internet connection just now. Wait %(minutes)s minutes, then press Send my pledge again. Your answers are still here."
+msgstr[0] "तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास भएका छन्। %(minutes)s मिनेट पर्खनुहोस्, अनि फेरि मेरो प्रतिबद्धता पठाउनुहोस् थिच्नुहोस्। तपाईंका जवाफहरू यहीँ छन्।"
+msgstr[1] "तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास भएका छन्। %(minutes)s मिनेट पर्खनुहोस्, अनि फेरि मेरो प्रतिबद्धता पठाउनुहोस् थिच्नुहोस्। तपाईंका जवाफहरू यहीँ छन्।"
+
 msgid "Please check your pledge"
 msgstr "कृपया आफ्नो प्रतिबद्धता जाँच्नुहोस्"
 
@@ -297,6 +312,12 @@ msgstr "हाम्रा खुला अपिलहरू हेर्नु
 
 msgid "This appeal has closed."
 msgstr "यो अपिल बन्द भइसकेको छ।"
+
+msgid "Time left:"
+msgstr "बाँकी समय:"
+
+msgid "You can try again now."
+msgstr "अब फेरि प्रयास गर्न सक्नुहुन्छ।"
 
 #, python-format
 msgid "%(raised)s raised of %(target)s"
@@ -660,6 +681,12 @@ msgstr "चरण २ मा जानुहोस्"
 msgid "Paid? Tell us here"
 msgstr "भुक्तानी गर्नुभयो? यहाँ हामीलाई बताउनुहोस्"
 
+#, python-format
+msgid "We haven't got your message yet: we've had a lot of tries from your internet connection just now. Wait %(minutes)s minute, then choose your screenshot again if you're sending one, and press I've paid."
+msgid_plural "We haven't got your message yet: we've had a lot of tries from your internet connection just now. Wait %(minutes)s minutes, then choose your screenshot again if you're sending one, and press I've paid."
+msgstr[0] "हामीले तपाईंको सन्देश अझै पाएका छैनौं: तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास भएका छन्। %(minutes)s मिनेट पर्खनुहोस्, अनि स्क्रिनसट पठाउँदै हुनुहुन्छ भने त्यसलाई फेरि छान्नुहोस्, र मैले भुक्तानी गरें थिच्नुहोस्।"
+msgstr[1] "हामीले तपाईंको सन्देश अझै पाएका छैनौं: तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास भएका छन्। %(minutes)s मिनेट पर्खनुहोस्, अनि स्क्रिनसट पठाउँदै हुनुहुन्छ भने त्यसलाई फेरि छान्नुहोस्, र मैले भुक्तानी गरें थिच्नुहोस्।"
+
 msgid "Check which app you paid with below."
 msgstr "तल तपाईंले कुन एपबाट भुक्तानी गर्नुभयो, जाँच्नुहोस्।"
 
@@ -689,6 +716,18 @@ msgstr "पठाउँदै…"
 
 msgid "I've paid"
 msgstr "मैले भुक्तानी गरें"
+
+#, python-format
+msgid "Please wait %(minutes)s minute"
+msgid_plural "Please wait %(minutes)s minutes"
+msgstr[0] "कृपया %(minutes)s मिनेट पर्खनुहोस्"
+msgstr[1] "कृपया %(minutes)s मिनेट पर्खनुहोस्"
+
+msgid "We've had a lot of tries from your internet connection just now. After the wait, go back to your pledge."
+msgstr "तपाईंको इन्टरनेट जडानबाट भर्खरै धेरै प्रयास भएका छन्। पर्खिसकेपछि आफ्नो प्रतिबद्धतामा फर्कनुहोस्।"
+
+msgid "Back to your pledge"
+msgstr "आफ्नो प्रतिबद्धतामा फर्कनुहोस्"
 
 msgid "Page not found"
 msgstr "पृष्ठ फेला परेन"
