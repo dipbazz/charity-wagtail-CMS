@@ -490,8 +490,9 @@ class TestOverTheLimitInNepali:
     """What a supporter sees after one try too many (#226), in Nepali."""
 
     @pytest.fixture(autouse=True)
-    def no_tries_left(self, settings):
+    def no_tries_left(self, settings, monkeypatch):
         settings.LIMITS_WINDOW = 300
+        monkeypatch.setattr("core.limits.wait_seconds", lambda: 300)
         settings.LIMITS = dict.fromkeys(settings.LIMITS, 0)
 
     @pytest.fixture

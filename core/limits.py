@@ -74,14 +74,20 @@ def over_limit(request, action):
     return True
 
 
+def wait_seconds():
+    """What's left of this window in whole seconds rounded up: the counts start again after it."""
+    window = settings.LIMITS_WINDOW
+    return math.ceil(window - time.time() % window)
+
+
 def wait_minutes():
-    """The window, in whole minutes rounded up, as the page says it."""
-    return math.ceil(settings.LIMITS_WINDOW / 60)
+    """What's left of this window, in whole minutes rounded up, as the page says it."""
+    return math.ceil(wait_seconds() / 60)
 
 
 def too_many(response):
     """Turn a page into the answer to one try too many: 429, when to try again, never cached."""
     response.status_code = 429
-    response["Retry-After"] = str(settings.LIMITS_WINDOW)
+    response["Retry-After"] = str(wait_seconds())
     add_never_cache_headers(response)
     return response

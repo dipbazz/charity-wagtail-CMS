@@ -115,16 +115,22 @@ def test_lets_the_try_through_when_the_counters_break(monkeypatch, caplog):
     assert "pledge" in caplog.text and "203.0.113.7" not in caplog.text
 
 
-def test_a_stopped_response_says_when_to_try_again_and_is_never_cached():
+def test_a_stopped_response_says_when_to_try_again_and_is_never_cached(monkeypatch):
+    monkeypatch.setattr(limits.time, "time", lambda: 1180.5)
+
     response = limits.too_many(HttpResponse())
 
     assert response.status_code == 429
-    assert response["Retry-After"] == "300"
+    assert response["Retry-After"] == "20"
     assert "no-cache" in response["Cache-Control"]
 
 
-@pytest.mark.parametrize(("window", "minutes"), [(300, 5), (301, 6), (30, 1)])
-def test_the_wait_is_the_window_in_whole_minutes_rounded_up(settings, window, minutes):
-    settings.LIMITS_WINDOW = window
+@pytest.mark.parametrize(
+    ("now", "seconds", "minutes"), [(900.0, 300, 5), (1000.0, 200, 4), (1199.9, 1, 1)]
+)
+def test_the_wait_is_what_s_left_of_the_window_rounded_up(monkeypatch, now, seconds, minutes):
+    """The counts start again when the window ends, so that's when to try again."""
+    monkeypatch.setattr(limits.time, "time", lambda: now)
 
+    assert limits.wait_seconds() == seconds
     assert limits.wait_minutes() == minutes

@@ -152,8 +152,9 @@ on Django's cache API, with no package.
 | `qr_paid` | "I've paid" is valid and would be saved | 5 |
 | `payment_return` | Coming back from a provider again, or Check my payment, would ask the provider (not for a paid payment, and never a payment's first time back: each has one, starting one is counted, and others on the payer's connection could otherwise leave a real payment unconfirmed) | 30 |
 
-- **The window** is `LIMITS_WINDOW`, 300 seconds, for every action. It's the wait supporters are
-  told, so keep it short. Both are in `charity/settings/base.py`; 0 stops every counted try.
+- **The window** is `LIMITS_WINDOW`, 300 seconds, for every action. Windows are fixed, numbered
+  by the clock, and the wait supporters are told is what's left of the current one, so keep it
+  short. Both are in `charity/settings/base.py`; 0 stops every counted try.
 - **Never limited:** reading any page, and the way to a provider's page (`go_to_provider`), which
   calls no provider and could stop a payer between Pay and the provider.
 - **One too many** is HTTP 429 with `Retry-After` and never cached; nothing is saved and no

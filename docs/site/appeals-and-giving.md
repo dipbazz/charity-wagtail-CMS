@@ -355,8 +355,9 @@ or "too many", since people share a connection:
   5 minutes", the same don't-pay-again line and phone, and **Back to your pledge**, to the pay
   page, which is never limited and opens on what became of paying.
 
-The wait it names is the window from settings, in whole minutes rounded up. There's no countdown
-and nothing retries by itself.
+The wait it names, and `Retry-After`, is what's left of the window when the page is made, in whole
+minutes (seconds for `Retry-After`) rounded up: the counts start again when the window ends. There's
+no countdown and nothing retries by itself.
 
 ### How paying works, above the form
 
