@@ -11,7 +11,7 @@ import re
 import pytest
 from django.urls import reverse
 
-from campaigns.models import DonatePage, Pledge, QRCode
+from campaigns.models import DonatePage, Pledge, QRCode, StepKind
 from conftest import SITE
 from core.brand import FONT_STACKS, contrast
 from core.models import SiteSettings
@@ -103,11 +103,13 @@ def pay_pages(demo_site, settings):
         )
         not_found.claim_paid(QRCode.objects.first(), "TXN-8842").mark_not_found(by=None)
         paths.append(f"{donate_page.url}pay/{not_found.reference}/qr/")
-        # The page saying to wait, after one try too many coming back from a provider (#226).
+        # The page saying to wait, after one try too many coming back from a provider again
+        # (#226): the first time back is always asked.
         waiting = Pledge.objects.create(
             page=donate_page, amount=2500, currency="NPR", name="Sita", email="sita@example.com"
         )
         payment = waiting.start_payment("esewa", live=False)
+        payment.add_step(StepKind.CAME_BACK)
         paths.append(f"{donate_page.url}payment/{payment.reference}/")
     settings.LIMITS = {**settings.LIMITS, "payment_return": 0}
     return paths

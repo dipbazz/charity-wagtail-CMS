@@ -9,7 +9,7 @@ from django.utils import translation
 from PIL import Image
 
 from campaigns.forms import PledgeForm
-from campaigns.models import Pledge
+from campaigns.models import Pledge, StepKind
 from core.models import SiteSettings
 
 pytestmark = pytest.mark.django_db
@@ -539,6 +539,7 @@ class TestOverTheLimitInNepali:
 
     def test_the_wait_page(self, client, nepali_donate_page, pledge, fake_provider):
         payment = pledge.start_payment("fakepay", live=False)
+        payment.add_step(StepKind.CAME_BACK)  # the first time back is always asked
 
         response = client.get(f"{nepali_donate_page.url}payment/{payment.reference}/")
         text = visible_text(response)
