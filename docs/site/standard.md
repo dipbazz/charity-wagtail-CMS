@@ -60,8 +60,11 @@ and Contact.
 
 Home, About us (with who runs the charity, and Reports and accounts under it), Appeals, Stories,
 Get involved (with the volunteer form under it), Contact, Donate, the privacy notice and the
-accessibility statement, in each of the site's languages. A new site starts with all of them, with
-placeholder text that tells the editor what to write. The charity's own pages go alongside.
+accessibility statement, in each of the site's languages. A new site starts with all of them in its
+main language, as drafts with placeholder text that tells the editor what to write, and with a home
+page in each language. The other language's pages are made with Translate
+([Languages](languages.md#what-editors-do)) once each main page is written and published. A page
+with placeholder text can't be published. The charity's own pages go alongside.
 
 ## The home page
 
@@ -91,8 +94,10 @@ links to Reports and accounts.
 
 ## How it's kept
 
-- **A new site starts with the standard pages** in both languages, from one command
-  ([#175](https://github.com/dipbazz/Charity-wagtail-CMS/issues/175)).
+- **A new site starts with the standard pages** in its main language and a home page in each
+  language, from one command
+  ([#175](https://github.com/dipbazz/Charity-wagtail-CMS/issues/175)). Placeholder text is one
+  line in square brackets starting "[Write:", and no page carrying it can go live.
 - **Tests fail when a site drifts from the standard**, such as a missing or reordered menu section.
   Each issue that builds a part adds its test.
 - **Changing the standard means changing this page,** in a pull request of its own, and every
