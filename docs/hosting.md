@@ -137,7 +137,7 @@ emailed.
 Read them on the server with `sudo docker compose logs --tail 200 web` in `deploy/aws/`. A new app
 needs its name added to the loggers in `charity/settings/production.py`.
 
-A line such as `WARNING core: Too many tries at pledge from one connection: over 10 in 300
+A line such as `WARNING core.limits: Too many tries at pledge from one connection: over 10 in 300
 seconds.` means one connection hit a limit on the public pages; many of them at once is a flood,
 an odd one a busy appeal ([Security](contributing/security.md#one-connection-can-only-try-so-often)).
 

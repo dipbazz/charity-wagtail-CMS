@@ -25,8 +25,8 @@ each language), settings in `charity/settings/base.py`, and the site's own Nepal
   listed only in that language.
 - **The site's own words are in the language being read too:** the header and footer, buttons, the
   pledge form with its labels and errors, search, pagination, "Page not found".
-- **So is the content around the pages:** the announcement banner, the footer's address,
-  testimonials, partners and news categories. Each falls back to the main language until it's
+- **So is the content around the pages:** the announcement banner, the footer's address, the refund
+  policy, testimonials, partners, news categories and the names of the charity's QR codes. Each falls back to the main language until it's
   translated, so nothing disappears while a translation is missing.
 - **Links chosen in settings follow the language too:** on a Nepali page the header's Donate button
   and the banner's link go to the Nepali version of their page once it's published.
@@ -139,7 +139,7 @@ else in the main language; a snippet only in another language is left out, as a 
 language is. A page that was translated keeps the snippets chosen for the original (its
 testimonial block, a story's categories), so those are looked up by `translation_key`.
 
-**Settings text** (the charity's name, its address and the banner's message) can't be translated
+**Settings text** (the charity's name, its address and refund policy, and the banner's message) can't be translated
 that way:
 Wagtail keeps exactly one Site settings record per Site, with no Translate action. The settings
 keep everything that's the same in every language; the text that differs is in a table of rows
@@ -164,7 +164,8 @@ core_sitesettingstext
    (settings, locale) is unique: one row per language
 ```
 
-`AnnouncementBanner` and `AnnouncementBannerText` (with `message`) have the same shape. Editors
+`AnnouncementBanner` and `AnnouncementBannerText` (with `message`) have the same shape, and so
+do `QRCode` and `QRCodeName`. Editors
 see the rows as a **Text in each language** section in the same settings form, so a third
 language needs no migration, only another row. In templates `site_settings.name`,
 `site_settings.address` and `banner.message` are properties that return the row in the language

@@ -55,7 +55,9 @@ permissions**, or editors can't see the new item in the admin.
    `in_reading_language` ([Languages](../site/languages.md#snippets-and-settings-text)). A setting
    subclasses `BaseSiteSetting` (one per site) with `@register_setting`, and templates read it as
    `settings.<app>.<ModelName>`; text it shows readers goes in a `TextInEachLanguage` row model, as
-   the banner's message does. Shared ones go in `core`, feature ones in their app. Then
+   the banner's message does. Text that must say the same to every reader (an address, a refund
+   policy) is listed in the row model's `in_every_language`, and the setting uses
+   `base_form_class = TextInEachLanguageForm`. Shared ones go in `core`, feature ones in their app. Then
    `makemigrations`.
 3. **Grant the permissions in a data migration**, modelled on
    `core/migrations/0004_editor_and_moderator_permissions.py`. What matters:
@@ -105,14 +107,17 @@ file:
    the team, such as "The payer cancelled at IME Pay. Nothing was taken."), `needs_checking` (its
    words that mean a person must look, such as a partial refund), `logo` (its own logo file,
    unchanged, put in `nepal_payments/static/payment-logos/`; its pay button shows it, and the
-   contract test fails a provider without one), then `start()` (where
+   contract test fails a provider without one), `test_keys` and `test_login` if the provider
+   publishes a test system, and `opens_once` if its payment page takes the payer only once; then
+   `start()` (where
    to send the payer) and `check()` (ask the provider what became of a payment, with its word).
    Reach the provider only through `nepal_payments.http.request_json`.
 2. **Run the tests.** `nepal_payments/tests/test_contract.py` checks every provider it finds,
    yours included. Then write `nepal_payments/tests/test_<code>.py` for the provider's own API,
    with the `provider_server` fixture answering in its place.
 3. **List its keys** in [Running the live site](../hosting.md#paying-pledges-online), and add a
-   row to the README's table of providers and a changelog entry.
+   row to the README's table of providers and to its logo table, the test account to
+   [Paying a pledge](../site/appeals-and-giving.md#paying-a-pledge), and a changelog entry.
 
 Nothing else changes: the pay page, the admin and the settings work from the registry, and a
 payment's `method` choices are a function, so there's no migration. A charity turns the provider

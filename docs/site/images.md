@@ -35,6 +35,15 @@ Partner logos stay PNG, through `{% image %}`. The charity's own logo in the hea
 ([The logo](look-and-feel.md#the-logo)); SVG isn't accepted
 ([Decisions](../decisions.md#the-logo-is-a-raster-image-not-an-svg)).
 
+## Pictures outside the library
+
+The charity's QR codes and supporters' receipt screenshots skip the image library. Each upload is
+re-saved by `clean_image()` (`core/images.py`) and only the copies are kept: QR codes at 1600 and
+800 pixels across, receipts at 2000. It takes JPEG, PNG or WebP of up to 5 MB (never SVG), refuses
+a picture that decodes to too many pixels (13 million for a receipt), and drops everything but the
+picture, such as location and camera details
+([Appeals and giving](appeals-and-giving.md#paying-a-pledge)).
+
 ## The homepage banner
 
 The homepage banner uses `{% hero_picture %}` (`core/templatetags/picture_tags.py`), because

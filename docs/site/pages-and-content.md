@@ -82,7 +82,7 @@ Settings that apply to every page, under **Settings** in the admin (`core/models
 - **Site settings** (moderators only, because they hold the charity's identity): the charity's
   **name** (in the header, the footer and the tab title), its address and its **refund policy**
   ([Appeals and giving](appeals-and-giving.md#paying-a-pledge)), each written in each
-  language (the address and refund policy in every language or none); charity number, contact email and phone (shown in the footer); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
+  language (the address and refund policy in every language or none); charity number, contact email and phone (shown in the footer); **We take gifts at our office**, which offers paying in person after a pledge, with that address and phone ([Appeals and giving](appeals-and-giving.md#paying-a-pledge)); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
   the **currency** every amount is shown in ([Money](appeals-and-giving.md#money)); the
   **default phone country** for mobile numbers on forms; Facebook, Instagram and LinkedIn
   links (each shown in the footer only when set); and, on the **Brand** tab, the charity's
@@ -109,7 +109,8 @@ who is emailed about each submission.
 
 - The email's **Reply-To** is the sender's email field, so the team can answer directly.
 - If the email can't be sent, the error is logged and the visitor still sees the thank-you page:
-  the submission is already saved, and the team reads and exports submissions (CSV) in the admin.
+  the submission is already saved, and the team reads and exports submissions (CSV or Excel) in the admin. Anything a visitor typed
+  that a spreadsheet would run as a formula is exported as text.
 - "How we use your details" links to the privacy notice just before the Send button.
 
 ## News
@@ -169,6 +170,7 @@ Every full URL (feed, sitemap, canonical, API) comes from the Wagtail Site recor
 | `/donate/?appeal=<slug>&amount=<n>` | The Donate page with an appeal and amount preselected ([Appeals and giving](appeals-and-giving.md#donate-page)) |
 | `/donate/thank-you/` | Where a sent pledge lands when the site has no way to pay; opening or reloading it saves nothing |
 | `/donate/pay/<reference>/` | A pledge's pay page: the ways to pay, each on its own page under it ([Appeals and giving](appeals-and-giving.md#paying-a-pledge)) |
+| `/donate/payment/<reference>/` | Where a payment provider sends the payer back: the site asks the provider, then goes to the pledge's online page (`…/go/` sends the payer back to the provider's page) |
 | `/donate/gifts/<code>/` | A paid gift's page for friends, while its supporter agrees to show it ([Appeals and giving](appeals-and-giving.md#sharing-a-gift)) |
 | `/stories/tag/…`, `/stories/category/…`, `/stories/feed/` | News listings and the RSS feed, under the news page's address |
 | `/documents/<id>/<filename>` | Document downloads, through Wagtail's view, which checks a private collection's password or login |

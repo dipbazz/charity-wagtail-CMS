@@ -2,7 +2,7 @@
 
 A website and content management system for small charities in Nepal and the UK, built with
 Django 6.1 and Wagtail 8.0. Supporters read appeals and news, pledge a gift and pay it (eSewa or
-Khalti, or in person) and volunteer, in Nepali or English; the charity's team runs it all from the Wagtail admin. The demo charity,
+Khalti, a QR code, or in person) and volunteer, in Nepali or English; the charity's team runs it all from the Wagtail admin. The demo charity,
 **Brightwell Water Trust**, is fictional. Every feature was built test-first with pytest.
 
 **Live site:** <https://16-192-118-94.sslip.io>, running the demo content on AWS EC2.

@@ -49,7 +49,8 @@ itself, then anything the charity adds: [Paying a pledge](#how-paying-works-abov
 the pledge form, then a body for anything else, such as a table of where the money goes.
 
 - **Links can preselect** an appeal and an amount: `/donate/?appeal=flood-relief&amount=2500`.
-  Either can be left out, and an appeal or amount that isn't on offer is ignored.
+  Either can be left out. An appeal that isn't on offer is ignored; an amount that isn't one of
+  the suggested amounts is filled in under **Other amount**.
 - **The appeals offered** are the open, public appeals in the page's language, by title, after
   "Wherever it's needed most" (the default).
 - **After sending**, the pledge is saved and the browser is redirected (303) to the pledge's
@@ -117,7 +118,8 @@ none, the form goes to the thank-you page. A way that isn't offered goes back to
 unless it's dealing with the pledge: the online page still shows a payment that may have gone
 through after the provider's keys were removed, without buttons to pay again.
 
-Every page (the choices and each way's) shows the same summary first: the gift (amount, how
+Every page (the choices and each way's, except the QR way's step 2 and the checking page, which
+come after it) shows the same summary first: the gift (amount, how
 often, appeal; never the giver's name or details) and the **pledge number** ("482 913"), then
 its own content. Each has its own title, is kept out of search engines, and ends with **Pay
 another way**: a row for each other way, then Not ready to pay yet (folded away while an online
@@ -125,7 +127,7 @@ payment may be paid, below). The phone's Back button goes
 back to the choices. Once the pledge is paid, every address says thank you, so a page left open
 or a link kept to pay later never offers paying again.
 
-When Site settings give a **refund policy**, every unpaid pay page shows it under the summary,
+When Site settings give a **refund policy**, every unpaid pay page with the summary shows it there,
 headed "Refunds", so a supporter reads it before choosing to pay. With none set, the pages say
 nothing about refunds: no site states a policy its charity hasn't.
 
