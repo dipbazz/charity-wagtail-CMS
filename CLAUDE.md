@@ -24,7 +24,8 @@ a charity only ever gets links to its guide and form, never a file.
 A `needs: …` label marks a review an issue or pull request still owes
 (`docs/contributing/reviews.md`); CI fails a pull request while one is left. Load the `workflow`
 skill to file an issue, start one (its `needs:` reviews come before branching), open a pull
-request or finish a review.
+request or finish a review. Before each commit, check the change belongs to this branch's issue;
+if not, branch from `main` for it.
 
 ## Where rules live
 
