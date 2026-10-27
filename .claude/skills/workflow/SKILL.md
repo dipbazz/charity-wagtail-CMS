@@ -57,7 +57,7 @@ Straight after opening it, check each of these (`docs/contributing/index.md`, st
 only the first:
 
 - [ ] A `changelog.d/<slug>.<group>.md` file, or the `no changelog` label.
-- [ ] The milestone of the issue it closes.
+- [ ] A milestone: the `Milestone` workflow copies the closing issue's; set it by hand if not.
 - [ ] Its issue's board card is in *In review*.
 - [ ] Each docs page the change describes is updated.
 - [ ] The onboarding pack (`onboarding/`), if what a charity sends or decides has changed.
