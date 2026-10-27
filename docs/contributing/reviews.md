@@ -22,21 +22,45 @@ The tools make reviews quicker but aren't required. Without them, do the same re
 against the questions below and post the result the same way: the labels and the workflow work
 the same either way.
 
+## Tiers: how much review a change gets
+
+Most changes are small, and three reviews on a typo cost more than they catch. Each issue gets a
+tier once, when it's filed, and the tier decides its reviews. Mark it with a label: `tier: light`
+or `tier: high risk`; no label means standard.
+
+| Tier | When | Reviews |
+|---|---|---|
+| Light | Docs, wording, CI or tooling, a small CSS fix, a bug fix with its test | Pull request: `/code-review medium`. No `/qa-only`: CI's layout checks cover six widths, and the person checks the pages the pull request lists |
+| Standard | A normal feature or visible change | Issue: design review if it changes what people see. Pull request: `/code-review high`, then `/qa-only` if it changes what people see |
+| High risk | Payments, personal data, permissions, uploads, a new dependency, or a `security` issue | Issue: eng review, and product review if the scope isn't clear. Pull request: security review, code review, then QA |
+
+The `Reviews` workflow doesn't add `needs: qa` to a pull request labelled `tier: light`, or to one
+closing an issue that is.
+
+**One pull request, about one day.** An issue too broad for that becomes a parent issue with
+sub-issues, each one pull request (for example the model, then the view, then the template). Split
+it when it's filed, or at its eng review.
+
+**Re-review only for new risk.** A fix pushed after a review puts back only the label of an earlier
+review whose ground it changes, and only when it touches high-risk code: a CSS fix from QA never
+puts back the security review.
+
 ## Which reviews an issue or pull request needs
 
-When an issue is filed, or a pull request opened, give it a label for each review it needs. The
-`Reviews` workflow adds `needs: code review` to every new pull request, and `needs: qa` when it
-changes templates, CSS or JavaScript; add `needs: security review` by hand.
+When an issue is filed, or a pull request opened, give it a label for each review its tier and
+the table below call for. The `Reviews` workflow adds `needs: code review` to every new pull
+request, and `needs: qa` when it changes templates, CSS or JavaScript and isn't light; add
+`needs: security review` by hand.
 
 | Label | Decides | Needed when | Run with |
 |---|---|---|---|
-| `needs: product review` | Whether it's worth building, and how much of it | A new epic or feature track, scope that isn't clear, or a change to what charities must send or decide | `/plan-ceo-review` (hold or reduce scope), after `/office-hours` for a raw idea |
+| `needs: product review` | Whether it's worth building, and how much of it | A high-risk issue, a new epic or feature track, scope that isn't clear, or a change to what charities must send or decide | `/plan-ceo-review` (hold or reduce scope), after `/office-hours` for a raw idea |
 | `needs: design review` | What people see and do: layout, states, wording, accessibility | It adds or changes what visitors or editors see: a page type, block, template, menu, form or admin screen | `/plan-design-review` |
-| `needs: eng review` | Data, architecture, edge cases and the tests to write | Models or migrations, payments, personal data, permissions, a new dependency, or work spanning more than one pull request | `/plan-eng-review` |
+| `needs: eng review` | Data, architecture, edge cases and the tests to write | A high-risk issue: migrations on payment or personal-data models, permissions, a new dependency, or work spanning more than one pull request | `/plan-eng-review` |
 | `needs: investigation` | A bug's cause, before anyone fixes it | A bug whose cause isn't known | `/investigate` |
-| `needs: security review` | Whether the change opens a hole | A pull request touching forms, uploads, payments, permissions, settings or dependencies, or closing an issue labelled `security` | `/cso --diff --base main` |
-| `needs: code review` | Bugs that tests and CI don't catch | Every pull request | `/code-review high <pull request number>` |
-| `needs: qa` | Whether it works and looks right in the browser | A pull request that changes templates, CSS or JavaScript | `/qa-only`, then the person checks the pages its description lists |
+| `needs: security review` | Whether the change opens a hole | A high-risk pull request: payments, personal data, uploads, permissions or dependencies, or closing an issue labelled `security`. The release's whole-code `/cso` covers the rest | `/cso --diff --base main` |
+| `needs: code review` | Bugs that tests and CI don't catch | Every pull request | `/code-review high <pull request number>` (`medium` for a light one) |
+| `needs: qa` | Whether it works and looks right in the browser | A standard or high-risk pull request that changes templates, CSS or JavaScript | `/qa-only`, then the person checks the pages its description lists |
 
 The first four go on issues and are done before coding; the last three go on pull requests and
 are done before merging. Each builds on the one before, so they run in the table's order:
@@ -54,8 +78,11 @@ Then the label comes off the same place.
 | **A pull request** (security, code review, QA) | `## <Kind> review (<date>)`: what was found, and for each finding the commit that fixed it or why it stays. If nothing was found, say so. | Once every finding is fixed or answered: `gh pr edit <n> --remove-label "needs: code review"`. The person who checked the pages removes `needs: qa`. |
 
 Fixing a review's own findings doesn't need that review again. Any other change pushed after a
-review, such as a fix QA asked for, puts back the label of each earlier review whose ground it
-changes.
+review, such as a fix QA asked for, puts back the label of an earlier review only for new risk
+(see [Tiers](#tiers-how-much-review-a-change-gets)).
+
+Run one review per session: it ends with its comment, which hands over to the next, so a fresh
+session starts from that comment rather than a long history.
 
 Removing a label from an issue doesn't re-run the check on its open pull request. Re-run the
 `Reviews` check from the pull request's Checks tab, or push.

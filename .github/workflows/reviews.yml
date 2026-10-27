@@ -29,15 +29,28 @@ jobs:
       # Every run does it, not only `opened`: opening a pull request with --label fires `labeled`
       # at once, and that run could read the labels before `opened` added them and pass (#240).
       # A label that was ever on the pull request isn't put back: whoever finished that review
-      # took it off.
+      # took it off. A light pull request (labelled `tier: light`, or closing an issue that is)
+      # gets no QA: the layout checks cover it and the person checks the pages it lists.
       - name: Mark the reviews a pull request needs
         run: |
           ever=$(gh api "repos/$REPO/issues/$PR/events" --paginate --jq '.[] | select(.event == "labeled") | .label.name')
+          tiers=$(gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$PR" -f query='
+            query($owner: String!, $name: String!, $pr: Int!) {
+              repository(owner: $owner, name: $name) {
+                pullRequest(number: $pr) {
+                  labels(first: 50) { nodes { name } }
+                  closingIssuesReferences(first: 20) { nodes { labels(first: 50) { nodes { name } } } }
+                }
+              }
+            }' --jq '.data.repository.pullRequest
+              | [.labels.nodes[].name] + [(.closingIssuesReferences.nodes // [])[] | select(. != null) | (.labels.nodes // [])[].name]
+              | .[] | select(startswith("tier: "))')
           labels=()
           if ! grep --quiet --line-regexp "needs: code review" <<< "$ever"; then
             labels+=("needs: code review")
           fi
           if ! grep --quiet --line-regexp "needs: qa" <<< "$ever" \
+            && ! grep --quiet --line-regexp "tier: light" <<< "$tiers" \
             && gh pr diff "$PR" --repo "$REPO" --name-only | grep --quiet --extended-regexp '(^|/)templates/|\.(css|js|html)$'; then
             labels+=("needs: qa")
           fi

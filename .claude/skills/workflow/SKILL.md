@@ -16,9 +16,11 @@ under "Find what's waiting" in `reviews.md`, and list titles only.
 
 ## Filing an issue
 
-Use the issue forms. Then add a label for each review the issue needs, by the criteria in
-`reviews.md` (`gh issue edit <n> --add-label "needs: design review"`), and say in one line each
-which labels you added and why.
+Use the issue forms. Choose its tier (`reviews.md`, "Tiers") and label it `tier: light` or
+`tier: high risk` (none for standard). Split work bigger than one day's pull request into
+sub-issues now (API calls in the board memory). Then add a label for each review the tier and
+`reviews.md` call for (`gh issue edit <n> --add-label "needs: design review"`), and say in one
+line each which labels you added and why.
 
 ## Starting an issue
 
@@ -46,7 +48,8 @@ work becomes a GitHub issue), and keep the full report in `~/.gstack`.
 2. Remove the label from that same place. If an open pull request closes the issue, re-run its
    `Reviews` check (`gh run rerun` on its latest `Reviews` run), since removing an issue's label
    doesn't.
-3. After an issue's review, suggest `/clear` before building: the comment carries the decisions.
+3. Suggest `/clear` before the next review or building: one review per session, and the comment
+   carries the decisions.
 
 ## Opening a pull request
 
@@ -71,7 +74,7 @@ and ask before running it.
 
 1. **Security:** fix open findings test-first, comment the result on the pull request, then
    remove the label.
-2. **Code review:** Claude Code's `/code-review`, not gstack's `/review`. Fix findings test-first,
+2. **Code review:** Claude Code's `/code-review` (`medium` for `tier: light`), not gstack's `/review`. Fix findings test-first,
    not with `--fix`, comment the result on the pull request, then remove the label.
 3. **QA:** `/qa-only`, never `/qa` or `/design-review`, which commit their own fixes, several per
    commit. Fix each bug it reports test-first, one per commit, putting back any earlier label
