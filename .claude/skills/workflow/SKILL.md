@@ -50,7 +50,8 @@ work becomes a GitHub issue), and keep the full report in `~/.gstack`.
 
 ## Opening a pull request
 
-Straight after opening it, check each of these; CI checks only the first:
+Straight after opening it, check each of these (`docs/contributing/index.md`, step 7); CI checks
+only the first:
 
 - [ ] A `changelog.d/<slug>.<group>.md` file, or the `no changelog` label.
 - [ ] The milestone of the issue it closes.
