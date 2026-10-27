@@ -25,8 +25,10 @@ the same either way.
 ## Tiers: how much review a change gets
 
 Most changes are small, and three reviews on a typo cost more than they catch. Each issue gets a
-tier once, when it's filed, and the tier decides its reviews. Mark it with a label: `tier: light`
-or `tier: high risk`; no label means standard.
+tier once, when it's filed and before any pull request for it is opened, and the tier decides its
+reviews. Mark the issue (never the pull request) with a label: `tier: light` or `tier: high risk`;
+no label means standard. **High risk wins:** a change to high-risk code is high risk however
+small, so a one-line fix in the payments code isn't light.
 
 | Tier | When | Reviews |
 |---|---|---|
@@ -34,8 +36,9 @@ or `tier: high risk`; no label means standard.
 | Standard | A normal feature or visible change | Issue: design review if it changes what people see. Pull request: `/code-review high`, then `/qa-only` if it changes what people see |
 | High risk | Payments, personal data, permissions, uploads, a new dependency, or a `security` issue | Issue: eng review, and product review if the scope isn't clear. Pull request: security review, code review, then QA |
 
-The `Reviews` workflow doesn't add `needs: qa` to a pull request labelled `tier: light`, or to one
-closing an issue that is.
+The `Reviews` workflow reads the tier from the issues a pull request closes. It adds
+`needs: security review` when any of them is high risk, and leaves out `needs: qa` only when every
+one is light. If a tier changes after the pull request is opened, re-run its `Reviews` check.
 
 **One pull request, about one day.** An issue too broad for that becomes a parent issue with
 sub-issues, each one pull request (for example the model, then the view, then the template). Split
@@ -48,17 +51,18 @@ puts back the security review.
 ## Which reviews an issue or pull request needs
 
 When an issue is filed, or a pull request opened, give it a label for each review its tier and
-the table below call for. The `Reviews` workflow adds `needs: code review` to every new pull
-request, and `needs: qa` when it changes templates, CSS or JavaScript and isn't light; add
-`needs: security review` by hand.
+the table below call for. The tier table above decides which issues are high risk; the rows
+below don't repeat its list. The `Reviews` workflow adds `needs: code review` to every new pull
+request, `needs: security review` to a high-risk one, and `needs: qa` when it changes templates,
+CSS or JavaScript and isn't light.
 
 | Label | Decides | Needed when | Run with |
 |---|---|---|---|
-| `needs: product review` | Whether it's worth building, and how much of it | A high-risk issue, a new epic or feature track, scope that isn't clear, or a change to what charities must send or decide | `/plan-ceo-review` (hold or reduce scope), after `/office-hours` for a raw idea |
+| `needs: product review` | Whether it's worth building, and how much of it | Scope that isn't clear, a new epic or feature track, or a change to what charities must send or decide | `/plan-ceo-review` (hold or reduce scope), after `/office-hours` for a raw idea |
 | `needs: design review` | What people see and do: layout, states, wording, accessibility | It adds or changes what visitors or editors see: a page type, block, template, menu, form or admin screen | `/plan-design-review` |
-| `needs: eng review` | Data, architecture, edge cases and the tests to write | A high-risk issue: migrations on payment or personal-data models, permissions, a new dependency, or work spanning more than one pull request | `/plan-eng-review` |
+| `needs: eng review` | Data, architecture, edge cases and the tests to write | A high-risk issue, or work at any tier spanning more than one pull request (to split it) | `/plan-eng-review` |
 | `needs: investigation` | A bug's cause, before anyone fixes it | A bug whose cause isn't known | `/investigate` |
-| `needs: security review` | Whether the change opens a hole | A high-risk pull request: payments, personal data, uploads, permissions or dependencies, or closing an issue labelled `security`. The release's whole-code `/cso` covers the rest | `/cso --diff --base main` |
+| `needs: security review` | Whether the change opens a hole | A high-risk pull request. The release's whole-code `/cso` covers the rest | `/cso --diff --base main` |
 | `needs: code review` | Bugs that tests and CI don't catch | Every pull request | `/code-review high <pull request number>` (`medium` for a light one) |
 | `needs: qa` | Whether it works and looks right in the browser | A standard or high-risk pull request that changes templates, CSS or JavaScript | `/qa-only`, then the person checks the pages its description lists |
 

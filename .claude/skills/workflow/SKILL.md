@@ -64,8 +64,8 @@ only the first:
 
 Then whatever `CLAUDE.local.md` lists for this maintainer's own files, if there is one.
 
-The `Reviews` workflow adds `needs: code review`, and `needs: qa` for templates, CSS or
-JavaScript. Add `needs: security review` yourself when `reviews.md` says so. Then, in the order
+The `Reviews` workflow adds `needs: code review`, `needs: security review` for a high-risk
+issue, and `needs: qa` for templates, CSS or JavaScript unless every closed issue is light. Then, in the order
 `reviews.md` gives:
 
 Before running a review asked for by name, check `gh pr view <n> --json labels` and the existing

@@ -29,28 +29,34 @@ jobs:
       # Every run does it, not only `opened`: opening a pull request with --label fires `labeled`
       # at once, and that run could read the labels before `opened` added them and pass (#240).
       # A label that was ever on the pull request isn't put back: whoever finished that review
-      # took it off. A light pull request (labelled `tier: light`, or closing an issue that is)
-      # gets no QA: the layout checks cover it and the person checks the pages it lists.
+      # took it off. The tier comes from the issues it closes, set when they were filed, never
+      # from the pull request, so it's there before the first run. High risk wins: any closed
+      # issue labelled `tier: high risk` adds a security review. Only when every closed issue is
+      # `tier: light` is QA skipped: the layout checks cover it and the person checks the pages.
       - name: Mark the reviews a pull request needs
         run: |
           ever=$(gh api "repos/$REPO/issues/$PR/events" --paginate --jq '.[] | select(.event == "labeled") | .label.name')
-          tiers=$(gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$PR" -f query='
+          tier=$(gh api graphql -F owner="${REPO%/*}" -F name="${REPO#*/}" -F pr="$PR" -f query='
             query($owner: String!, $name: String!, $pr: Int!) {
               repository(owner: $owner, name: $name) {
                 pullRequest(number: $pr) {
-                  labels(first: 50) { nodes { name } }
                   closingIssuesReferences(first: 20) { nodes { labels(first: 50) { nodes { name } } } }
                 }
               }
-            }' --jq '.data.repository.pullRequest
-              | [.labels.nodes[].name] + [(.closingIssuesReferences.nodes // [])[] | select(. != null) | (.labels.nodes // [])[].name]
-              | .[] | select(startswith("tier: "))')
+            }' --jq '[(.data.repository.pullRequest.closingIssuesReferences.nodes // [])[] | select(. != null)
+                | [(.labels.nodes // [])[].name]]
+              | if any(.[]; index("tier: high risk")) then "high risk"
+                elif length > 0 and all(.[]; index("tier: light")) then "light"
+                else "standard" end')
           labels=()
           if ! grep --quiet --line-regexp "needs: code review" <<< "$ever"; then
             labels+=("needs: code review")
           fi
+          if [ "$tier" = "high risk" ] && ! grep --quiet --line-regexp "needs: security review" <<< "$ever"; then
+            labels+=("needs: security review")
+          fi
           if ! grep --quiet --line-regexp "needs: qa" <<< "$ever" \
-            && ! grep --quiet --line-regexp "tier: light" <<< "$tiers" \
+            && [ "$tier" != "light" ] \
             && gh pr diff "$PR" --repo "$REPO" --name-only | grep --quiet --extended-regexp '(^|/)templates/|\.(css|js|html)$'; then
             labels+=("needs: qa")
           fi
