@@ -601,6 +601,9 @@ round or an amended commit.
   runs on every commit; `main`, `chore/release-X.Y.Z`, `patch/X.Y.x` and a detached `HEAD` pass.
   CI doesn't check the name, so a clone that never installed the hook, or `--no-verify`, isn't
   checked; `SKIP=branch-name` skips only this hook.
+- **`CLAUDE.md`'s length** is checked too (since #249): a commit that leaves it over 600 words
+  is refused (`scripts/check_claude_md_words.py`). It's read at every session start, so it keeps
+  only what every task needs; detail goes in `docs/` or a skill, with a short pointer.
 - **ruff through uv,** as a local hook, rather than the `ruff-pre-commit` repository, so the
   version is the one in `uv.lock` and CI and the hook can never disagree.
 - CI keeps running ruff: the hook is skipped by `git commit --no-verify`, or a clone that never

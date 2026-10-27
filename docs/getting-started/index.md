@@ -19,7 +19,7 @@ stylesheets and two small scripts (the second of each only on the Donate page an
 git clone https://github.com/dipbazz/Charity-wagtail-CMS.git
 cd Charity-wagtail-CMS
 uv sync
-uv run pre-commit install                  # once: checks ruff, the branch name and the commit subject on each commit
+uv run pre-commit install                  # once: checks ruff, the branch name, CLAUDE.md's length and the commit subject on each commit
 uv run python manage.py migrate
 uv run python manage.py seed_demo          # fictional charity content, safe to re-run
 uv run python manage.py createsuperuser
