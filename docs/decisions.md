@@ -172,11 +172,11 @@ history.
 - **Semantic Versioning,** with the parts defined by who has to act on an upgrade (MAJOR: whoever
   hosts or edits the site; MINOR: new features; PATCH: fixes). Calendar versions were the other
   option; they're simple but say nothing about whether an upgrade needs care.
-- **0.1.0 is the first release,** collecting everything built before versioning started. 1.0.0
-  is kept for the first time a real charity runs the site.
-- **When 1.0.0 happens** (since #249): the first release made after both v0.6.0 (the charity
+- **0.1.0 is the first release,** collecting everything built before versioning started.
+- **When 1.0.0 happens** (since #249; before it, "the first time a real charity runs the
+  site"): the first minor release, not a patch, made after both v0.6.0 (the charity
   site standard) is deployed to CCDCE and CCDCE's real content is live, with no placeholder
-  pages left. CCDCE went live on 0.4.0 with placeholder content, so by the rule above 0.5.0
+  pages left. CCDCE went live on 0.4.0 with placeholder content, so by the old rule 0.5.0
   should have been 1.0.0; nobody noticed at release time, and 0.x was kept until the site
   standard and real content are both live. Choosing the number is now a release step.
 - **A hand-written `CHANGELOG.md`** in the Keep a Changelog format, with a line added by each

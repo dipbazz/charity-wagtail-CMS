@@ -65,9 +65,9 @@ library that other code calls, so the parts are defined by who has to act when t
 
 While the version is `0.x`, the site is still taking shape: a change that would be MAJOR bumps
 MINOR instead, and its release notes get an **Upgrade notes** section saying what to do. Version
-`1.0.0` marks the first time a real charity runs the site: it's the first release made after
-both v0.6.0 (the charity site standard) is deployed to CCDCE and CCDCE's real content is live,
-with no placeholder pages left ([Decisions](../decisions.md)).
+`1.0.0` is the first minor release (not a patch) made after both v0.6.0 (the charity site
+standard) is deployed to CCDCE and CCDCE's real content is live, with no placeholder pages left
+([Decisions](../decisions.md)).
 
 The version lives in one place, `version` in `pyproject.toml`, and
 `charity/tests/test_changelog.py` fails if it doesn't match the newest release in the changelog.
@@ -131,8 +131,9 @@ Release a version as soon as the last issue in its milestone is closed.
 1. **Check the milestone.** Every issue in it is closed, or moved to the next milestone or the
    Backlog with a comment saying why.
 2. **Prepare the release** on a `chore/release-X.Y.Z` branch:
-   - **choose the number.** Are v0.6.0 and a charity's real content both live? Then this
-     release is `1.0.0` ([Version numbers](#version-numbers));
+   - **choose the number.** While the version is still `0.x`: are v0.6.0 and CCDCE's real
+     content both live on CCDCE? Then this release is `1.0.0`, not the next `0.x`
+     ([Version numbers](#version-numbers));
    - run `uv run python -m charity.changelog X.Y.Z`. It adds the `changelog.d/` entries to
      `CHANGELOG.md`'s `Unreleased` section, renames that to `## [X.Y.Z] - YYYY-MM-DD` (today),
      starts a new empty `Unreleased`, updates the links at the bottom and deletes the files; read
