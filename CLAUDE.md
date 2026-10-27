@@ -42,7 +42,7 @@ propose where it goes, get the user's yes, and write it there before relying on 
 Every PR adds a file `changelog.d/<slug>.<group>.md` (the entry, written for the person the change
 affects), or is labelled `no changelog` (CI checks this). Only a release edits `CHANGELOG.md`. Put
 a PR in the milestone of the issue it closes; which milestone new work joins, and the release
-steps, are in `docs/contributing/releases.md`.
+steps, are in `docs/contributing/releases.md`; it also says which release is 1.0.0.
 
 ## Design mobile first
 
