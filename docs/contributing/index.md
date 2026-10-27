@@ -65,7 +65,9 @@ bundle it into a fix.
 ## The workflow
 
 1. **Start from an issue** on the [project board](releases.md#the-project-board) with no
-   `needs:` label left: its [reviews](reviews.md) come first. Move it to *In progress*.
+   `needs:` label left: its [reviews](reviews.md) come first. Move it to *In progress*. An issue
+   is about one day's pull request; a broader one is split into sub-issues, one pull request
+   each, when it's filed or at its eng review ([Tiers](reviews.md#tiers-how-much-review-a-change-gets)).
 2. **Branch from `main`:** one feature or fix per branch, named `<type>/<issue-number>-<slug>`,
    such as `feat/142-share-gift`, with a [commit type](#commits) and a slug of lowercase letters
    and digits joined by single hyphens. The number shows which issue the branch is for. `gh issue develop 142 --name feat/142-share-gift
