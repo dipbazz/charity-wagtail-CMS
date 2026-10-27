@@ -1,5 +1,5 @@
-# Checks run before each commit: the quick part of CI, the branch's name and the commit
-# subject's length.
+# Checks run before each commit: the quick part of CI, the branch's name, CLAUDE.md's length
+# and the commit subject's length.
 # Set up once per clone with `uv run pre-commit install` (docs/getting-started/index.md).
 # ruff runs through uv, so it's the version in uv.lock, the same one CI runs.
 default_install_hook_types: [pre-commit, commit-msg]
@@ -25,6 +25,12 @@ repos:
         language: system
         always_run: true
         pass_filenames: false
+      # Fails when CLAUDE.md is over 600 words: it's read at every session start.
+      - id: claude-md-words
+        name: CLAUDE.md is 600 words or fewer
+        entry: uv run --no-sync python scripts/check_claude_md_words.py
+        language: system
+        files: ^CLAUDE\.md$
       # Fails on a first line over 72 characters. Merge and revert subjects are git's own.
       - id: commit-subject-length
         name: commit subject is 72 characters or fewer

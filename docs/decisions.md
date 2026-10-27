@@ -172,8 +172,13 @@ history.
 - **Semantic Versioning,** with the parts defined by who has to act on an upgrade (MAJOR: whoever
   hosts or edits the site; MINOR: new features; PATCH: fixes). Calendar versions were the other
   option; they're simple but say nothing about whether an upgrade needs care.
-- **0.1.0 is the first release,** collecting everything built before versioning started. 1.0.0
-  is kept for the first time a real charity runs the site.
+- **0.1.0 is the first release,** collecting everything built before versioning started.
+- **When 1.0.0 happens** (since #249; before it, "the first time a real charity runs the
+  site"): the first minor release, not a patch, made after both v0.6.0 (the charity
+  site standard) is deployed to CCDCE and CCDCE's real content is live, with no placeholder
+  pages left. CCDCE went live on 0.4.0 with placeholder content, so by the old rule 0.5.0
+  should have been 1.0.0; nobody noticed at release time, and 0.x was kept until the site
+  standard and real content are both live. Choosing the number is now a release step.
 - **A hand-written `CHANGELOG.md`** in the Keep a Changelog format, with a line added by each
   pull request and a CI check that fails without one (unless labelled `no changelog`). Writing
   the entry with the change, rather than from pull request titles at release time, means it's
@@ -601,6 +606,9 @@ round or an amended commit.
   runs on every commit; `main`, `chore/release-X.Y.Z`, `patch/X.Y.x` and a detached `HEAD` pass.
   CI doesn't check the name, so a clone that never installed the hook, or `--no-verify`, isn't
   checked; `SKIP=branch-name` skips only this hook.
+- **`CLAUDE.md`'s length** is checked too (since #249): a commit that leaves it over 600 words
+  is refused (`scripts/check_claude_md_words.py`). It's read at every session start, so it keeps
+  only what every task needs; detail goes in `docs/` or a skill, with a short pointer.
 - **ruff through uv,** as a local hook, rather than the `ruff-pre-commit` repository, so the
   version is the one in `uv.lock` and CI and the hook can never disagree.
 - CI keeps running ruff: the hook is skipped by `git commit --no-verify`, or a clone that never

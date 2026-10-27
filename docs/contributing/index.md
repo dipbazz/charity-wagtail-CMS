@@ -87,7 +87,9 @@ bundle it into a fix.
 7. **Open a pull request** against `main`, in the version's milestone. Its description is short
    and follows the template: what changed, what to check in the browser before merging, and
    anything the reviewer must act on; the why goes in the commit messages. Pull requests aren't
-   stacked on each other.
+   stacked on each other. Straight after opening it, check its changelog file (or the
+   `no changelog` label), its milestone, its issue's board card in *In review*, the docs pages
+   it describes and, if what a charity sends or decides has changed, the onboarding pack.
 8. **QA:** CI checks every page layout at six widths; the pull request lists what a person must
    check in the browser ([QA](testing.md#qa)).
 9. **Reviews:** the pull request gets `needs: code review`, and `needs: qa` or
@@ -102,6 +104,8 @@ pre-commit refuses a longer subject (`.pre-commit-config.yaml`).
 
 - Types: `feat`, `fix`, `perf`, `refactor`, `test`, `chore`, `docs`, `style`, `ci`.
 - One logical change per commit; never bundle unrelated changes.
+- Before each commit, check the change belongs to this branch's issue; if it doesn't, branch
+  from `main` for it.
 - The body explains *why*; the diff shows what.
 - Include `Closes #N` when the commit fixes an issue.
 - A breaking change gets a `!`, e.g. `feat(api)!: change response shape`.

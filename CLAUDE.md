@@ -24,7 +24,8 @@ a charity only ever gets links to its guide and form, never a file.
 A `needs: …` label marks a review an issue or pull request still owes
 (`docs/contributing/reviews.md`); CI fails a pull request while one is left. Load the `workflow`
 skill to file an issue, start one (its `needs:` reviews come before branching), open a pull
-request or finish a review.
+request or finish a review. Before each commit, check the change belongs to this branch's issue;
+if not, branch from `main` for it.
 
 ## Where rules live
 
@@ -41,7 +42,7 @@ propose where it goes, get the user's yes, and write it there before relying on 
 Every PR adds a file `changelog.d/<slug>.<group>.md` (the entry, written for the person the change
 affects), or is labelled `no changelog` (CI checks this). Only a release edits `CHANGELOG.md`. Put
 a PR in the milestone of the issue it closes; which milestone new work joins, and the release
-steps, are in `docs/contributing/releases.md`.
+steps, are in `docs/contributing/releases.md`; it also says which release is 1.0.0.
 
 ## Design mobile first
 

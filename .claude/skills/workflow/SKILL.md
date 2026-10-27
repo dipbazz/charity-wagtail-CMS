@@ -50,6 +50,17 @@ work becomes a GitHub issue), and keep the full report in `~/.gstack`.
 
 ## Opening a pull request
 
+Straight after opening it, check each of these (`docs/contributing/index.md`, step 7); CI checks
+only the first:
+
+- [ ] A `changelog.d/<slug>.<group>.md` file, or the `no changelog` label.
+- [ ] The milestone of the issue it closes.
+- [ ] Its issue's board card is in *In review*.
+- [ ] Each docs page the change describes is updated.
+- [ ] The onboarding pack (`onboarding/`), if what a charity sends or decides has changed.
+
+Then whatever `CLAUDE.local.md` lists for this maintainer's own files, if there is one.
+
 The `Reviews` workflow adds `needs: code review`, and `needs: qa` for templates, CSS or
 JavaScript. Add `needs: security review` yourself when `reviews.md` says so. Then, in the order
 `reviews.md` gives:
