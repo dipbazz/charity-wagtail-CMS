@@ -144,21 +144,23 @@ def forms_linking_to(notice):
     return list(Page.objects.live().type(*with_forms).filter(on_the_sites).order_by("path"))
 
 
-def refusals_to_unpublish(pages):
+def refusals_to_unpublish(pages, going_together=()):
     """An `UnpublishRefused` for each of `pages` that is a site's privacy notice while forms that
     link to it are live: [] if all can be unpublished.
 
     Forms going offline in the same action still count: an action unpublishes its pages one at a
-    time, and the forms may come after the notice.
+    time, and the forms may come after the notice. Only forms in `going_together` don't: pages
+    whose expiry has passed, which go in the same run of `publish_scheduled`.
     """
+    going = {page.pk for page in going_together}
     notices = set(
         SiteSettings.objects.filter(privacy_page__in=[page.pk for page in pages]).values_list(
             "privacy_page", flat=True
         )
     )
     refusals = []
-    for page in pages:
-        if page.pk in notices and (forms := forms_linking_to(page)):
+    for page in (page for page in pages if page.pk in notices):
+        if forms := [form for form in forms_linking_to(page) if form.pk not in going]:
             names = ", ".join(f"“{form.title}”" for form in forms)
             refusals.append(UnpublishRefused(page, [UNPUBLISH_FORMS_FIRST.format(forms=names)]))
     return refusals

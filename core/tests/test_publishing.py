@@ -669,6 +669,22 @@ class TestThePrivacyNoticesExpiry:
 
         assert live(expired, about) == ["Privacy notice"]
 
+    def test_goes_with_the_forms_expiring_in_the_same_run(self, expired, live_form):
+        expire(live_form, minutes_ago=5)
+
+        call_command("publish_scheduled")
+
+        assert live(expired, live_form) == []
+
+    def test_stays_while_one_form_stays_live(self, home_page, expired, live_form):
+        expire(live_form, minutes_ago=5)
+        donate = draft(home_page, DonatePage(title="Donate", slug="donate"))
+        donate.save_revision().publish()
+
+        call_command("publish_scheduled")
+
+        assert live(expired, live_form, donate) == ["Privacy notice", "Donate"]
+
     def test_is_no_longer_due_to_expire(self, expired):
         call_command("publish_scheduled")
 
