@@ -55,9 +55,9 @@ unpublished), an expiry time (the notice stays live with its expiry cleared, and
 the server log say why) and code (`unpublish()` raises `UnpublishRefused`). Forms unpublished in
 the same action still count, so unpublish them first.
 
-Not guarded: the publish action of Wagtail's admin API
-(`/admin/api/main/pages/<id>/action/publish/`), which no admin screen uses, and deleting the
-privacy notice or choosing another in Site settings while forms are live.
+Not guarded: the publish and unpublish actions of Wagtail's admin API
+(`/admin/api/main/pages/<id>/action/publish/` and `…/unpublish/`), which no admin screen uses,
+and deleting the privacy notice or choosing another in Site settings while forms are live.
 
 ## Home page
 
