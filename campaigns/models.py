@@ -62,6 +62,7 @@ from core.models import (
     TextInEachLanguageMixin,
 )
 from core.money import CURRENCY_CHOICES, format_money
+from core.publishing import PublishGuardMixin
 from nepal_payments import (
     PaymentError,
     PaymentRequest,
@@ -73,7 +74,7 @@ from nepal_payments import (
 logger = logging.getLogger(__name__)
 
 
-class CampaignIndexPage(Page):
+class CampaignIndexPage(PublishGuardMixin, Page):
     introduction = models.TextField(blank=True)
 
     content_panels = Page.content_panels + [FieldPanel("introduction")]
@@ -123,7 +124,7 @@ class CampaignPageQuerySet(PageQuerySet):
 CampaignPageManager = PageManager.from_queryset(CampaignPageQuerySet)
 
 
-class CampaignPage(SocialMetaMixin, Page):
+class CampaignPage(PublishGuardMixin, SocialMetaMixin, Page):
     summary = models.TextField(max_length=300, help_text="Shown on listing cards and in search.")
     hero_image = models.ForeignKey(
         "core.CustomImage",
@@ -342,7 +343,7 @@ def either(names):
     return gettext("%(names)s or %(last)s") % {"names": ", ".join(names[:-1]), "last": names[-1]}
 
 
-class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
+class DonatePage(PublishGuardMixin, RoutablePageMixin, SocialMetaMixin, Page):
     """The page every Donate button leads to: suggested amounts and a pledge form.
 
     Each pledge it takes is saved as a `Pledge`, listed under Pledges in the admin. The form
@@ -350,6 +351,8 @@ class DonatePage(RoutablePageMixin, SocialMetaMixin, Page):
     way's page when there's only one), or to the thank-you page, so reloading any of them can't
     send the form again.
     """
+
+    collects_personal_details = True
 
     introduction = models.TextField(blank=True)
     # The page itself says how paying works on this site (online with the providers set up here,

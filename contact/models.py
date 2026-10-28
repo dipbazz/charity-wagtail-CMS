@@ -13,6 +13,8 @@ from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 from wagtail.contrib.forms.panels import FormSubmissionsPanel
 from wagtail.fields import RichTextField
 
+from core.publishing import FormPageForm, PublishGuardMixin
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,8 +22,11 @@ class FormField(AbstractFormField):
     page = ParentalKey("FormPage", on_delete=models.CASCADE, related_name="form_fields")
 
 
-class FormPage(AbstractEmailForm):
+class FormPage(PublishGuardMixin, AbstractEmailForm):
     """A form editors build themselves, e.g. volunteer sign-up or general enquiries."""
+
+    collects_personal_details = True
+    base_form_class = FormPageForm
 
     intro = RichTextField(blank=True)
     thank_you_text = RichTextField(blank=True)

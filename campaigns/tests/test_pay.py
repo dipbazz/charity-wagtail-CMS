@@ -231,13 +231,14 @@ class TestEveryPayPage:
     def test_stays_within_its_query_budget(
         self, client, donate_page, pledge, way, django_assert_max_num_queries
     ):
-        """What every page with a header spends (charity/tests/test_query_budgets.py), plus three:
-        the pledge with its appeal, its payments, and the charity's QR codes (a charity's names
-        for them cost one more). Paying in person ends with a link to the appeals, which costs
-        two more: the appeals page, and its view restrictions."""
+        """What every page with a header spends (charity/tests/test_query_budgets.py), with the
+        privacy notice chosen as a live Donate page's must be, plus three: the pledge with its
+        appeal, its payments, and the charity's QR codes (a charity's names for them cost one
+        more). Paying in person ends with a link to the appeals, which costs two more: the
+        appeals page, and its view restrictions."""
         client.get(pay_url(donate_page, pledge, way))  # the first visit fills caches
 
-        with django_assert_max_num_queries(17 if way == "in-person" else 15):
+        with django_assert_max_num_queries(18 if way == "in-person" else 16):
             client.get(pay_url(donate_page, pledge, way))
 
     @pytest.mark.parametrize("way", [*EVERY_WAY, "the form"])
