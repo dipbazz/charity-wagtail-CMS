@@ -44,8 +44,8 @@ Drafts always save. Every way a page goes live asks the same check:
 |---|---|
 | Publish, or Submit for moderation, in the editor | The error is on the field, or on the block in a body |
 | Approving a workflow task | The page's edit view says why; the task waits to be approved again |
-| Bulk publish | The chosen pages, and their subpages when included, are checked first: one refusal and nothing is published, with each page named |
-| A go-live time | The page stays a draft with its go-live time cleared; its History and the server log say why, and the pages after it still go live |
+| Bulk publish | The chosen pages, and their subpages when included, are checked first: one refusal and nothing is published, with each page named. Each is checked as the site is now, so a form chosen with the privacy notice is refused: publish the notice on its own first |
+| A go-live time | The page stays a draft with its go-live time cleared, from its draft too; its History and the server log say why, and the pages after it still go live |
 | Code | `publish()` raises `PublishRefused` |
 
 The other way round, **the chosen privacy notice can't be unpublished while any form or Donate
@@ -53,7 +53,8 @@ page on its site is live**, in either language: "Unpublish these forms first: â€
 That holds for Unpublish in the editor (with its subpages too), bulk unpublish (nothing is
 unpublished), an expiry time (the notice stays live with its expiry cleared, and its History and
 the server log say why) and code (`unpublish()` raises `UnpublishRefused`). Forms unpublished in
-the same action still count, so unpublish them first.
+the same action still count, so unpublish them first; only forms whose expiry time passes in
+the same run as the notice's go with it.
 
 Not guarded: the publish and unpublish actions of Wagtail's admin API
 (`/admin/api/main/pages/<id>/action/publish/` and `â€¦/unpublish/`), which no admin screen uses,
