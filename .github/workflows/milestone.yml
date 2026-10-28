@@ -47,5 +47,8 @@ jobs:
             echo "It closes no issue in an open milestone; nothing to copy."
             exit 0
           fi
-          gh pr edit "$NUMBER" --repo "$GITHUB_REPOSITORY" --milestone "$milestone"
-          echo "Milestone set to $milestone."
+          if gh pr edit "$NUMBER" --repo "$GITHUB_REPOSITORY" --milestone "$milestone"; then
+            echo "Milestone set to $milestone."
+          else
+            echo "::warning::Couldn't set the milestone \"$milestone\"; set it by hand (pull requests from forks can't be edited here)."
+          fi
