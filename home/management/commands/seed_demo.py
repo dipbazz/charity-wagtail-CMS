@@ -599,7 +599,6 @@ class Command(BaseCommand):
             )
         ]
         settings.donate_page = donate
-        settings.privacy_page = privacy
         settings.logo = make_charity_logo()
         settings.currency = "NPR"
         settings.phone_country = "NP"
