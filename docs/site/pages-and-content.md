@@ -52,9 +52,10 @@ The other way round, **the chosen privacy notice can't be unpublished while any 
 page on its site is live**, in either language: "Unpublish these forms first: …", naming them.
 That holds for Unpublish in the editor (with its subpages too), bulk unpublish (nothing is
 unpublished), an expiry time (the notice stays live with its expiry cleared, and its History and
-the server log say why) and code (`unpublish()` raises `UnpublishRefused`). Forms unpublished in
-the same action still count, so unpublish them first; only forms whose expiry time passes in
-the same run as the notice's go with it.
+the server log say why) and code (`unpublish()` raises `UnpublishRefused`). Forms going offline
+with the notice don't count: those among the subpages or pages unpublished in the same action,
+or whose expiry time passes in the same run as the notice's. So a whole site, notice and forms,
+can be unpublished in one step; the refusal names only the forms that would stay live.
 
 Not guarded: the publish and unpublish actions of Wagtail's admin API
 (`/admin/api/main/pages/<id>/action/publish/` and `…/unpublish/`), which no admin screen uses,

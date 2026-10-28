@@ -36,6 +36,10 @@ logger = logging.getLogger(__name__)
 # Set while `core`'s `publish_scheduled` runs: only there is a refused publish logged, not raised.
 running_on_schedule = ContextVar("running_on_schedule", default=False)
 
+# The ids of the pages a bulk unpublish has checked together, set for the rest of its request:
+# it unpublishes them one at a time, so `unpublish()` mustn't count the others as staying live.
+unpublishing_together = ContextVar("unpublishing_together", default=frozenset())
+
 # The History entries of a page whose scheduled publishing, or expiry, was refused.
 SCHEDULED_PUBLISHING_REFUSED = "charity.publish.scheduled.refused"
 SCHEDULED_UNPUBLISHING_REFUSED = "charity.unpublish.scheduled.refused"
@@ -151,9 +155,10 @@ def refusals_to_unpublish(pages, going_together=()):
     """An `UnpublishRefused` for each of `pages` that is a site's privacy notice while forms that
     link to it are live: [] if all can be unpublished.
 
-    Forms going offline in the same action still count: an action unpublishes its pages one at a
-    time, and the forms may come after the notice. Only forms in `going_together` don't: pages
-    whose expiry has passed, which go in the same run of `publish_scheduled`.
+    Forms in `going_together` don't count: the other pages the same action unpublishes, or whose
+    expiry has passed in the same run of `publish_scheduled`. The editor's Unpublish takes them
+    offline one at a time, so a crash between them could leave a form live after its notice;
+    the editor then sees it live and unpublishes it.
     """
     going = {page.pk for page in going_together}
     notices = set(
@@ -279,7 +284,8 @@ class PublishGuardMixin:
         raise PublishRefused(page, reasons)
 
     def unpublish(self, *args, **kwargs):
-        if refusals := refusals_to_unpublish([self]):
+        going = Page.objects.filter(pk__in=unpublishing_together.get())
+        if refusals := refusals_to_unpublish([self], going_together=going):
             raise refusals[0]
         return super().unpublish(*args, **kwargs)
 

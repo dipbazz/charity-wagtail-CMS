@@ -664,6 +664,43 @@ class TestUnpublishingThePrivacyNotice:
         assert messages == ["Nothing was unpublished.", NOT_UNPUBLISHED]
         assert set(live(about, privacy_notice)) == {"About us", "Privacy notice"}
 
+    def test_from_the_editor_with_the_forms_going_too(
+        self, client, moderator, home_page, privacy_notice, live_form
+    ):
+        unpublish(client, moderator, home_page, include_descendants="on")
+
+        assert live(home_page, privacy_notice, live_form) == []
+
+    def test_in_bulk_with_the_forms_going_too(
+        self, client, moderator, home_page, privacy_notice, live_form
+    ):
+        bulk(client, moderator, "unpublish", [home_page], include_descendants="on")
+
+        assert live(home_page, privacy_notice, live_form) == []
+
+    def test_after_a_bulk_unpublish_the_next_request_checks_again(
+        self, client, moderator, home_page, privacy_notice, live_form
+    ):
+        about = home_page.add_child(instance=StandardPage(title="About us", slug="about"))
+        bulk(client, moderator, "unpublish", [about, privacy_notice, live_form])
+        privacy_notice.save_revision().publish()
+        live_form.save_revision().publish()
+
+        with pytest.raises(UnpublishRefused):
+            privacy_notice.unpublish()
+
+    def test_names_only_the_forms_staying_live(
+        self, client, moderator, home_page, privacy_notice, live_form
+    ):
+        about = under_a_page(privacy_notice, home_page)
+        donate = draft(about, DonatePage(title="Donate", slug="donate"))
+        donate.save_revision().publish()
+
+        messages = unpublish(client, moderator, about, include_descendants="on")
+
+        assert messages == [NOT_UNPUBLISHED]
+        assert set(live(about, privacy_notice, donate)) == {"About us", "Privacy notice", "Donate"}
+
 
 def expire(page, minutes_ago):
     """`page`, due to be unpublished `minutes_ago`, as an expiry time leaves it once it has

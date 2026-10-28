@@ -7,19 +7,26 @@ from django.urls import reverse
 from django.utils import translation
 from wagtail.models import Site
 
-from core.publishing import PublishRefused
+from core.publishing import PublishRefused, unpublishing_together
 
 
 class PublishRefusedMiddleware:
     """Shows why a page wasn't published when the admin's call to `publish()` is refused, as
     approving a workflow task's can be (#175): a message on the page's edit view, in place of an
-    error page. Everything the refused call changed has been rolled back by then."""
+    error page. Everything the refused call changed has been rolled back by then.
+
+    It also forgets the pages a bulk unpublish checked together once its request ends, so they
+    never reach the next request a worker serves."""
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        return self.get_response(request)
+        together = unpublishing_together.set(frozenset())
+        try:
+            return self.get_response(request)
+        finally:
+            unpublishing_together.reset(together)
 
     def process_exception(self, request, exception):
         if not isinstance(exception, PublishRefused):

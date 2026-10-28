@@ -18,6 +18,7 @@ from core.publishing import (
     PublishRefused,
     reasons_not_to_publish,
     refusals_to_unpublish,
+    unpublishing_together,
 )
 
 
@@ -80,7 +81,7 @@ def check_before_unpublishing(request, page):
     pages = [page]
     if request.POST.get("include_descendants"):
         pages += subpages_acted_on(page, request.user, publishing=False)
-    refusals = refusals_to_unpublish(pages)
+    refusals = refusals_to_unpublish(pages, going_together=pages)
     if not refusals:
         return None
     for refusal in refusals:
@@ -108,8 +109,10 @@ def check_every_page_before_bulk_publishing(request, action_type, objects, actio
             if (reasons := reasons_not_to_publish(page))
         ]
     else:
-        refusals = refusals_to_unpublish(pages)
+        refusals = refusals_to_unpublish(pages, going_together=pages)
     if not refusals:
+        if not publishing:
+            unpublishing_together.set(frozenset(page.pk for page in pages))
         return None
     messages.error(request, "Nothing was published." if publishing else "Nothing was unpublished.")
     for refusal in refusals:
