@@ -14,7 +14,6 @@ from core.publishing import (
     SCHEDULED_PUBLISHING_REFUSED,
     SCHEDULED_UNPUBLISHING_REFUSED,
     PublishRefused,
-    latest_draft,
     reasons_not_to_publish,
     refusals_to_unpublish,
 )
@@ -100,9 +99,10 @@ def check_every_page_before_bulk_publishing(request, action_type, objects, actio
         for page in objects:
             pages += subpages_acted_on(page, request.user, publishing)
     if publishing:
+        drafts = [page.specific.get_latest_revision_as_object() for page in pages]
         refusals = [
             PublishRefused(page, reasons)
-            for page in map(latest_draft, pages)
+            for page in drafts
             if (reasons := reasons_not_to_publish(page))
         ]
     else:

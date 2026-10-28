@@ -118,12 +118,6 @@ def what_a_form_lacks(page, site):
     return lacks
 
 
-def latest_draft(page):
-    """The page as publishing it now would make it: its latest revision."""
-    revision = page.get_latest_revision()
-    return revision.as_object() if revision else page.specific
-
-
 def reasons_not_to_publish(page, site=None):
     """Why `page`, as it would be published, can't go live: [] if it can.
 
