@@ -465,6 +465,14 @@ class TestScheduledPublishing:
         entry = PageLogEntry.objects.get(page=refused, action="charity.publish.scheduled.refused")
         assert entry.message == f"Scheduled publishing refused: {PUBLISH_PRIVACY_NOTICE}"
 
+    def test_publishing_late_from_code_is_refused_as_usual(self, refused):
+        """Only `publish_scheduled` refuses without raising; code that publishes a page whose
+        time has passed hears why."""
+        revision = refused.get_latest_revision()
+
+        with pytest.raises(PublishRefused):
+            revision.publish()
+
     def test_a_page_publishing_now_is_refused_as_usual(self, home_page):
         page = draft(home_page, StandardPage(title="About us", slug="about"))
         page.introduction = PLACEHOLDER

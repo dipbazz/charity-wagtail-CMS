@@ -14,11 +14,11 @@ code.
 import logging
 import operator
 import re
+from contextvars import ContextVar
 from functools import reduce
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import timezone
 from django.utils.html import strip_tags
 from modelcluster.fields import ParentalKey
 from wagtail.admin.forms import WagtailAdminPageForm
@@ -32,6 +32,9 @@ from wagtail.models import COMMENTS_RELATION_NAME, Page, Revision, get_page_mode
 from core.models import SiteSettings
 
 logger = logging.getLogger(__name__)
+
+# Set while `core`'s `publish_scheduled` runs: only there is a refused publish logged, not raised.
+running_on_schedule = ContextVar("running_on_schedule", default=False)
 
 # The History entries of a page whose scheduled publishing, or expiry, was refused.
 SCHEDULED_PUBLISHING_REFUSED = "charity.publish.scheduled.refused"
@@ -270,7 +273,7 @@ class PublishGuardMixin:
         reasons = reasons_not_to_publish(page)
         if not reasons:
             return super().publish(revision, *args, **kwargs)
-        if revision.approved_go_live_at and revision.approved_go_live_at <= timezone.now():
+        if running_on_schedule.get() and revision.approved_go_live_at:
             refuse_scheduled(page, revision, reasons)
             return None
         raise PublishRefused(page, reasons)
