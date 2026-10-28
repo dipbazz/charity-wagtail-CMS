@@ -122,6 +122,12 @@ class TestWhereThePlaceholderIs:
 
         assert reasons_not_to_publish(page) == []
 
+    def test_a_plain_page_is_checked_too(self, home_page):
+        """Wagtail's own `Page`, which bulk actions can hand over, has no form."""
+        page = draft(home_page, Page(title="About us", slug="about"))
+
+        assert reasons_not_to_publish(page) == []
+
 
 class TestForms:
     def test_need_the_privacy_notice_live(self, home_page, privacy_notice):

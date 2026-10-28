@@ -111,7 +111,7 @@ def what_a_form_lacks(page, site):
     """What a page with a form lacks to go live, as (field, message) pairs: a live privacy notice
     (no field of the page's) and an address to send messages to."""
     lacks = []
-    if page.collects_personal_details and not privacy_notice_is_live(site):
+    if getattr(page, "collects_personal_details", False) and not privacy_notice_is_live(site):
         lacks.append((None, PUBLISH_PRIVACY_NOTICE))
     if isinstance(page, AbstractEmailForm) and not page.to_address.strip():
         lacks.append(("to_address", ADD_RECIPIENT))
