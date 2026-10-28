@@ -21,6 +21,7 @@ from campaigns.models import DonatePage
 from contact.models import FormField, FormPage
 from core.publishing import (
     ADD_RECIPIENT,
+    PUBLISH_NOTICE_ALONE,
     PUBLISH_PRIVACY_NOTICE,
     REPLACE_PLACEHOLDERS,
     PublishCheckFormMixin,
@@ -495,6 +496,22 @@ class TestBulkPublishing:
             f"“Volunteer with us” wasn't published. {PUBLISH_PRIVACY_NOTICE}",
         ]
         assert live(ready, about, volunteer) == []
+
+    def test_with_the_privacy_notice_says_to_publish_it_alone(
+        self, client, moderator, home_page, privacy_notice
+    ):
+        """Each page is checked as the site is now, so forms wait for a notice published first."""
+        privacy_notice.unpublish()
+        volunteer = volunteer_form(home_page)
+
+        messages = bulk(client, moderator, "publish", [privacy_notice, volunteer])
+
+        assert messages == [
+            "Nothing was published.",
+            f"“Volunteer with us” wasn't published. {PUBLISH_PRIVACY_NOTICE}",
+            PUBLISH_NOTICE_ALONE,
+        ]
+        assert live(privacy_notice, volunteer) == []
 
     def test_reads_the_draft_it_would_publish(self, client, moderator, home_page):
         about = home_page.add_child(instance=StandardPage(title="About us", slug="about"))

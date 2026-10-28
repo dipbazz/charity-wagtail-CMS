@@ -47,6 +47,7 @@ PLACEHOLDER = re.compile(
 # The admin is in English only, so these aren't marked for translation.
 REPLACE_PLACEHOLDERS = "Replace the text in [square brackets] with your own before publishing."
 PUBLISH_PRIVACY_NOTICE = "Publish the privacy notice first: this form collects personal details."
+PUBLISH_NOTICE_ALONE = "Publish the privacy notice on its own first, then the rest."
 ADD_RECIPIENT = "Add the email address that gets each message before publishing."
 UNPUBLISH_FORMS_FIRST = "Unpublish these forms first: {forms}."
 

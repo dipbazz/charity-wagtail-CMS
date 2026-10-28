@@ -9,8 +9,10 @@ from wagtail.models import Page
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import SnippetViewSet, SnippetViewSetGroup
 
-from core.models import Partner, Testimonial
+from core.models import Partner, SiteSettings, Testimonial
 from core.publishing import (
+    PUBLISH_NOTICE_ALONE,
+    PUBLISH_PRIVACY_NOTICE,
     SCHEDULED_PUBLISHING_REFUSED,
     SCHEDULED_UNPUBLISHING_REFUSED,
     PublishRefused,
@@ -112,7 +114,17 @@ def check_every_page_before_bulk_publishing(request, action_type, objects, actio
     messages.error(request, "Nothing was published." if publishing else "Nothing was unpublished.")
     for refusal in refusals:
         messages.error(request, str(refusal))
+    if publishing and waits_for_the_notice(refusals, pages):
+        messages.error(request, PUBLISH_NOTICE_ALONE)
     return redirect(action.next_url)
+
+
+def waits_for_the_notice(refusals, pages):
+    """Whether a page was refused for the privacy notice not being live while it's among `pages`:
+    each page is checked as the site is now, so the notice must go live on its own first."""
+    return any(PUBLISH_PRIVACY_NOTICE in refusal.reasons for refusal in refusals) and (
+        SiteSettings.objects.filter(privacy_page__in=[page.pk for page in pages]).exists()
+    )
 
 
 @hooks.register("register_rich_text_features")
