@@ -572,6 +572,9 @@ footer of every page and, as "How we use your details", just before every form's
   menu), then chooses in **Site settings → Privacy notice**.
 - Until a *published* page is chosen there are no links, so a draft never leads to a "page not
   found".
+- The Donate page and every form can't be published until the notice is, and the notice can't be
+  unpublished while any of them is live
+  ([Pages and content](pages-and-content.md#what-stops-a-page-going-live)).
 - On a page in the other language, the links go to the notice's translation once it's published,
   and to the main notice until then.
 - The demo's notice is example text that describes what the site stores. A charity must replace

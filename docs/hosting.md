@@ -104,7 +104,7 @@ Run them with `uv run python manage.py <command>` locally, or
 | `backup_site <folder>` | Writes `db.sqlite3` (a consistent copy, made with SQLite's backup API, safe while the site serves requests) and `media.tar.gz` (the uploads, under `media/`) to a folder, overwriting an earlier backup there. Refuses a folder inside the uploads, or every backup would contain the previous ones. SQLite only |
 | `delete_old_receipts` | Deletes the receipt screenshots supporters sent with a QR payment more than 30 days ago that nobody has marked paid or not found (the payment stays To confirm), and any screenshot file that old that no payment points at. `backup.sh` runs it after the backup, every night |
 | `seed_demo` | Builds the demo charity ([Demo content](contributing/demo-content.md)). Safe to re-run: if appeals exist it adds nothing, but it always runs `update_site_url`. Refuses a Nepali-first site, because the demo is English-first |
-| `publish_scheduled` | Wagtail's: publishes and unpublishes pages with a go-live or expiry time |
+| `publish_scheduled` | Wagtail's, wrapped by `core`: publishes and unpublishes pages with a go-live or expiry time, except a page that can't go live and a privacy notice that forms link to. Each of those is left as it is with its time cleared, a warning in the log and a History entry ([Pages and content](site/pages-and-content.md#what-stops-a-page-going-live)). `--dryrun` lists what it would do |
 
 ## Scheduled publishing
 

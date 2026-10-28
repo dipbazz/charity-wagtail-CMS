@@ -122,7 +122,7 @@ Delete this section once [#191](https://github.com/dipbazz/Charity-wagtail-CMS/i
 | Contact and accessibility statement | Missing | [#167](https://github.com/dipbazz/Charity-wagtail-CMS/issues/167) |
 | Home page | Banner, current appeals, then any blocks | [#173](https://github.com/dipbazz/Charity-wagtail-CMS/issues/173) |
 | Donate page | Introduction, payment notice, pledge form, then any blocks | [#174](https://github.com/dipbazz/Charity-wagtail-CMS/issues/174) |
-| A new site's pages | None: `seed_demo` builds only the fictional demo | [#175](https://github.com/dipbazz/Charity-wagtail-CMS/issues/175) |
+| A new site's pages | None: `seed_demo` builds only the fictional demo. A page with placeholder text can't go live | [#175](https://github.com/dipbazz/Charity-wagtail-CMS/issues/175) |
 
 ## Where the code is
 
