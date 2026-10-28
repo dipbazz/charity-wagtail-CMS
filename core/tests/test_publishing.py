@@ -438,6 +438,19 @@ class TestScheduledPublishing:
 
         assert not Revision.page_revisions.filter(approved_go_live_at__isnull=False).exists()
 
+    def test_the_go_live_time_is_gone_from_the_draft(self, home_page, privacy_notice):
+        """Or the editor would show it, and publishing the draft again would schedule it again."""
+        page = volunteer_form(home_page)
+        page.go_live_at = timezone.now() - datetime.timedelta(minutes=10)
+        schedule(page, minutes_ago=10)
+        privacy_notice.unpublish()
+
+        call_command("publish_scheduled")
+
+        assert (
+            Page.objects.get(pk=page.pk).specific.get_latest_revision_as_object().go_live_at is None
+        )
+
     def test_the_refusal_is_logged(self, refused, caplog):
         call_command("publish_scheduled")
 
@@ -690,6 +703,15 @@ class TestThePrivacyNoticesExpiry:
 
         expired.refresh_from_db()
         assert expired.expire_at is None
+
+    def test_the_expiry_time_is_gone_from_its_draft(self, expired):
+        expired.expire_at = timezone.now() - datetime.timedelta(minutes=10)
+        expired.save_revision()
+
+        call_command("publish_scheduled")
+
+        expired = Page.objects.get(pk=expired.pk).specific
+        assert expired.get_latest_revision_as_object().expire_at is None
 
     def test_the_refusal_is_logged(self, expired, caplog):
         call_command("publish_scheduled")

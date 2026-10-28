@@ -286,10 +286,23 @@ def refuse_scheduled(page, revision, reasons):
     the page stays as it is with its schedule cleared, and the server log and its History say
     why."""
     Revision.objects.filter(pk=revision.pk).update(approved_go_live_at=None)
+    clear_from_drafts(page, "go_live_at", revision)
     logger.warning(
         "Scheduled publishing of “%s” (page %s) refused: %s", page.title, page.pk, " ".join(reasons)
     )
     log(instance=page, action=SCHEDULED_PUBLISHING_REFUSED, data={"reasons": reasons})
+
+
+def clear_from_drafts(page, field, *revisions):
+    """Clears a refused schedule's time, `field`, from `revisions` and the page's latest revision
+    too: the editor shows a draft's times, and publishing it again would schedule it again."""
+    latest = Revision.page_revisions.filter(object_id=str(page.pk)).order_by("-pk").first()
+    for revision in {
+        revision.pk: revision for revision in [*revisions, latest] if revision
+    }.values():
+        if revision.content.get(field) is not None:
+            revision.content[field] = None
+            revision.save(update_fields=["content"])
 
 
 def refuse_expiry(refusal):
@@ -297,6 +310,7 @@ def refuse_expiry(refusal):
     expiry cleared."""
     page = refusal.page
     Page.objects.filter(pk=page.pk).update(expire_at=None)
+    clear_from_drafts(page, "expire_at")
     logger.warning(
         "Scheduled unpublishing of “%s” (page %s) refused: %s",
         page.title,
