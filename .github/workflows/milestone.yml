@@ -1,0 +1,55 @@
+name: Milestone
+
+# A pull request ships in the version of the issue it closes, so it gets that issue's
+# milestone. GitHub has no setting for this. "edited" runs it again when the description
+# gains a "Closes #n" line.
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  milestone:
+    # A milestone set by hand is left alone.
+    if: github.event.pull_request.milestone == null
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy the closing issue's milestone onto the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # The first open milestone among the issues this pull request closes.
+          milestone=$(gh api graphql \
+            -F owner="$OWNER" -F repo="$REPO" -F number="$NUMBER" \
+            -f query='query($owner: String!, $repo: String!, $number: Int!) {
+              repository(owner: $owner, name: $repo) {
+                pullRequest(number: $number) {
+                  closingIssuesReferences(first: 20) {
+                    nodes { milestone { title state } }
+                  }
+                }
+              }
+            }' \
+            --jq '[(.data.repository.pullRequest.closingIssuesReferences.nodes // [])[]
+                   | select(. != null) | .milestone
+                   | select(. != null and .state == "OPEN") | .title][0] // empty')
+          if [ -z "$milestone" ]; then
+            echo "It closes no issue in an open milestone; nothing to copy."
+            exit 0
+          fi
+          if gh pr edit "$NUMBER" --repo "$GITHUB_REPOSITORY" --milestone "$milestone"; then
+            echo "Milestone set to $milestone."
+          else
+            echo "::warning::Couldn't set the milestone \"$milestone\"; set it by hand (pull requests from forks can't be edited here)."
+          fi

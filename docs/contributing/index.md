@@ -86,12 +86,14 @@ bundle it into a fix.
    (`uv run pytest path/to/tests`), and `uv run python manage.py makemigrations --check --dry-run`
    if models changed. ruff runs on every commit through pre-commit (`uv run pre-commit install`,
    once per clone), and CI runs the whole suite on every push.
-7. **Open a pull request** against `main`, in the version's milestone. Its description is short
+7. **Open a pull request** against `main`. It gets the milestone of the issue it closes
+   automatically (the `Milestone` workflow), unless you set one yourself. Its description is short
    and follows the template: what changed, what to check in the browser before merging, and
    anything the reviewer must act on; the why goes in the commit messages. Pull requests aren't
    stacked on each other. Straight after opening it, check its changelog file (or the
-   `no changelog` label), its milestone, its issue's board card in *In review*, the docs pages
-   it describes and, if what a charity sends or decides has changed, the onboarding pack.
+   `no changelog` label), that it has a milestone, its issue's board card in *In review*, the
+   docs pages it describes and, if what a charity sends or decides has changed, the onboarding
+   pack.
 8. **QA:** CI checks every page layout at six widths; the pull request lists what a person must
    check in the browser ([QA](testing.md#qa)).
 9. **Reviews:** the pull request gets `needs: code review`, and `needs: qa` or

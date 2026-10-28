@@ -120,6 +120,10 @@ released as soon as it's done, whatever the day: a version is usually a few days
   next version is planned. This keeps each version finishable.
 - **The exception is a bug on the live site** that stops people using it (`P1`). Its fix can
   join the current version, or ship on its own as a [patch release](#patch-releases).
+- **A pull request takes the milestone of the issue it closes.** The `Milestone` workflow
+  (`.github/workflows/milestone.yml`) copies it when the pull request is opened, or when its
+  description gains a `Closes #n` line; a milestone set by hand is left alone. A pull request
+  that closes no issue gets one by hand.
 - Issues nobody has planned yet stay in the Backlog with no milestone. So does planned work
   that turns out not to matter for this version: take it out of the milestone, and it's
   considered again when the next version is planned.
