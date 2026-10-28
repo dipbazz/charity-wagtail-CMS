@@ -1,10 +1,12 @@
-"""What stops a page going live (#175), on every route that publishes a page.
+"""What stops a page going live (#175), on every route that publishes or unpublishes a page.
 
 A page can't go live while it holds "[Write: …]" placeholder text, while it's a form and its
-site's privacy notice isn't live, or while it's a form that emails nobody.
+site's privacy notice isn't live, or while it's a form that emails nobody. The privacy notice
+can't be unpublished while forms on its site are live.
 """
 
 import datetime
+import io
 
 import pytest
 from django.contrib.messages import get_messages
@@ -24,6 +26,7 @@ from core.publishing import (
     PublishCheckFormMixin,
     PublishGuardMixin,
     PublishRefused,
+    UnpublishRefused,
     has_placeholder,
     reasons_not_to_publish,
 )
@@ -514,3 +517,159 @@ class TestBulkPublishing:
         bulk(client, moderator, "publish", [about])
 
         assert live(about, team) == ["About us"]
+
+
+@pytest.fixture
+def live_form(home_page, privacy_notice):
+    """A live form on the site, which links to its privacy notice."""
+    page = volunteer_form(home_page)
+    page.save_revision().publish()
+    return page
+
+
+def unpublish(client, user, page, **data):
+    """Unpublish `page` from its editor; the messages it leaves."""
+    client.force_login(user)
+    response = client.post(reverse("wagtailadmin_pages:unpublish", args=[page.pk]), data)
+    assert response.status_code == 302
+    return [str(message) for message in get_messages(response.wsgi_request)]
+
+
+def under_a_page(page, home_page):
+    """A live "About us" page, with `page` moved under it."""
+    about = home_page.add_child(instance=StandardPage(title="About us", slug="about"))
+    page.move(about, pos="last-child")
+    return about
+
+
+FORMS_FIRST = "Unpublish these forms first: “Volunteer with us”."
+NOT_UNPUBLISHED = f"“Privacy notice” wasn't unpublished. {FORMS_FIRST}"
+
+
+class TestUnpublishingThePrivacyNotice:
+    """Forms link to the privacy notice chosen in Site settings, so it can't be unpublished while
+    any form or Donate page on its site is live, on any route; the refusal names them."""
+
+    def test_from_code_is_refused_naming_the_forms(self, home_page, privacy_notice, live_form):
+        donate = draft(home_page, DonatePage(title="Donate", slug="donate"))
+        donate.save_revision().publish()
+
+        with pytest.raises(UnpublishRefused) as refused:
+            privacy_notice.unpublish()
+
+        assert str(refused.value) == (
+            "“Privacy notice” wasn't unpublished. "
+            "Unpublish these forms first: “Volunteer with us”, “Donate”."
+        )
+        assert live(privacy_notice) == ["Privacy notice"]
+
+    def test_a_nepali_form_counts(self, home_page, nepali_home_page, privacy_notice):
+        nepali_form = volunteer_form(home_page).copy_for_translation(nepali_home_page.locale)
+        nepali_form.save_revision().publish()
+
+        with pytest.raises(UnpublishRefused):
+            privacy_notice.unpublish()
+
+    def test_goes_once_no_form_is_live(self, home_page, privacy_notice):
+        volunteer_form(home_page)
+
+        privacy_notice.unpublish()
+
+        assert live(privacy_notice) == []
+
+    def test_from_the_editor_shows_why(self, client, moderator, privacy_notice, live_form):
+        messages = unpublish(client, moderator, privacy_notice)
+
+        assert messages == [NOT_UNPUBLISHED]
+        assert live(privacy_notice) == ["Privacy notice"]
+
+    def test_from_the_editor_with_its_parent(
+        self, client, moderator, home_page, privacy_notice, live_form
+    ):
+        about = under_a_page(privacy_notice, home_page)
+
+        messages = unpublish(client, moderator, about, include_descendants="on")
+
+        assert messages == [NOT_UNPUBLISHED]
+        assert set(live(about, privacy_notice)) == {"About us", "Privacy notice"}
+
+    def test_from_the_editor_leaves_out_subpages_it_wouldnt_unpublish(
+        self, client, moderator, home_page, privacy_notice, live_form
+    ):
+        about = under_a_page(privacy_notice, home_page)
+
+        unpublish(client, moderator, about)
+
+        assert live(about, privacy_notice) == ["Privacy notice"]
+
+    def test_in_bulk_nothing_is_unpublished(
+        self, client, moderator, home_page, privacy_notice, live_form
+    ):
+        about = home_page.add_child(instance=StandardPage(title="About us", slug="about"))
+
+        messages = bulk(client, moderator, "unpublish", [about, privacy_notice])
+
+        assert messages == ["Nothing was unpublished.", NOT_UNPUBLISHED]
+        assert set(live(about, privacy_notice)) == {"About us", "Privacy notice"}
+
+    def test_in_bulk_with_its_parent(self, client, moderator, home_page, privacy_notice, live_form):
+        about = under_a_page(privacy_notice, home_page)
+
+        messages = bulk(client, moderator, "unpublish", [about], include_descendants="on")
+
+        assert messages == ["Nothing was unpublished.", NOT_UNPUBLISHED]
+        assert set(live(about, privacy_notice)) == {"About us", "Privacy notice"}
+
+
+def expire(page, minutes_ago):
+    """`page`, due to be unpublished `minutes_ago`, as an expiry time leaves it once it has
+    passed."""
+    expire_at = timezone.now() - datetime.timedelta(minutes=minutes_ago)
+    Page.objects.filter(pk=page.pk).update(expire_at=expire_at)
+
+
+class TestThePrivacyNoticesExpiry:
+    """`publish_scheduled` also unpublishes every page whose expiry time has passed. The privacy
+    notice stays live while forms link to it, its expiry cleared, and the server log and its
+    History say why; the other pages still go."""
+
+    @pytest.fixture
+    def expired(self, privacy_notice, live_form):
+        expire(privacy_notice, minutes_ago=10)
+        return privacy_notice
+
+    def test_stays_live_and_the_other_pages_go(self, home_page, expired):
+        about = home_page.add_child(instance=StandardPage(title="About us", slug="about"))
+        expire(about, minutes_ago=5)
+
+        call_command("publish_scheduled")
+
+        assert live(expired, about) == ["Privacy notice"]
+
+    def test_is_no_longer_due_to_expire(self, expired):
+        call_command("publish_scheduled")
+
+        expired.refresh_from_db()
+        assert expired.expire_at is None
+
+    def test_the_refusal_is_logged(self, expired, caplog):
+        call_command("publish_scheduled")
+
+        assert (
+            f"Scheduled unpublishing of “Privacy notice” (page {expired.pk}) refused: {FORMS_FIRST}"
+        ) in caplog.messages
+
+    def test_its_history_says_why(self, expired):
+        call_command("publish_scheduled")
+
+        entry = PageLogEntry.objects.get(page=expired, action="charity.unpublish.scheduled.refused")
+        assert entry.message == f"Scheduled unpublishing refused: {FORMS_FIRST}"
+
+    def test_a_dry_run_only_says_so(self, expired):
+        output = io.StringIO()
+
+        call_command("publish_scheduled", dryrun=True, stdout=output)
+
+        assert f"“Privacy notice” won't be unpublished. {FORMS_FIRST}" in output.getvalue()
+        expired.refresh_from_db()
+        assert expired.expire_at is not None

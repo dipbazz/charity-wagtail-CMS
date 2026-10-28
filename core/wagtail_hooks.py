@@ -12,9 +12,11 @@ from wagtail.snippets.views.snippets import SnippetViewSet, SnippetViewSetGroup
 from core.models import Partner, Testimonial
 from core.publishing import (
     SCHEDULED_PUBLISHING_REFUSED,
+    SCHEDULED_UNPUBLISHING_REFUSED,
     PublishRefused,
     latest_draft,
     reasons_not_to_publish,
+    refusals_to_unpublish,
 )
 
 
@@ -42,38 +44,72 @@ class SupportersViewSetGroup(SnippetViewSetGroup):
 register_snippet(SupportersViewSetGroup)
 
 
+class RefusalFormatter(LogFormatter):
+    """A History entry saying why a page's scheduled publishing or expiry was refused."""
+
+    def format_message(self, log_entry):
+        return f"{self.label}: {' '.join(log_entry.data['reasons'])}"
+
+
 @hooks.register("register_log_actions")
-def register_scheduled_publishing_refused(actions):
+def register_refusals(actions):
     @actions.register_action(SCHEDULED_PUBLISHING_REFUSED)
-    class ScheduledPublishingRefused(LogFormatter):
+    class ScheduledPublishingRefused(RefusalFormatter):
         label = "Scheduled publishing refused"
 
-        def format_message(self, log_entry):
-            return f"Scheduled publishing refused: {' '.join(log_entry.data['reasons'])}"
+    @actions.register_action(SCHEDULED_UNPUBLISHING_REFUSED)
+    class ScheduledUnpublishingRefused(RefusalFormatter):
+        label = "Scheduled unpublishing refused"
+
+
+def subpages_acted_on(page, user, publishing):
+    """The subpages that publishing `page` with its subpages publishes (its drafts), or
+    unpublishing it unpublishes (its live subpages): those `user` may."""
+    subpages = page.get_descendants()
+    for subpage in subpages.not_live() if publishing else subpages.live():
+        permissions = subpage.permissions_for_user(user)
+        if permissions.can_publish() if publishing else permissions.can_unpublish():
+            yield subpage
+
+
+@hooks.register("before_unpublish_page")
+def check_before_unpublishing(request, page):
+    """The editor's Unpublish, of the page and its live subpages if asked, is refused with why
+    when the privacy notice is among them while forms link to it."""
+    pages = [page]
+    if request.POST.get("include_descendants"):
+        pages += subpages_acted_on(page, request.user, publishing=False)
+    refusals = refusals_to_unpublish(pages)
+    if not refusals:
+        return None
+    for refusal in refusals:
+        messages.error(request, str(refusal))
+    return redirect("wagtailadmin_pages:edit", page.pk)
 
 
 @hooks.register("before_bulk_action")
 def check_every_page_before_bulk_publishing(request, action_type, objects, action):
-    """Bulk publish publishes the chosen pages, and their drafts below if asked, one at a time:
-    check them all first, so it publishes all of them or none, naming each page that stops it."""
-    if action_type != "publish" or not issubclass(action.model, Page):
+    """Bulk publish and unpublish act on the chosen pages, and their subpages if asked, one at a
+    time: check them all first, so it acts on all of them or none, naming each page that stops
+    it."""
+    if action_type not in ("publish", "unpublish") or not issubclass(action.model, Page):
         return None
+    publishing = action_type == "publish"
     pages = list(objects)
     if action.cleaned_form.cleaned_data["include_descendants"]:
         for page in objects:
-            pages += [
-                draft
-                for draft in page.get_descendants().not_live().specific()
-                if draft.permissions_for_user(request.user).can_publish()
-            ]
-    refusals = [
-        PublishRefused(page, reasons)
-        for page in map(latest_draft, pages)
-        if (reasons := reasons_not_to_publish(page))
-    ]
+            pages += subpages_acted_on(page, request.user, publishing)
+    if publishing:
+        refusals = [
+            PublishRefused(page, reasons)
+            for page in map(latest_draft, pages)
+            if (reasons := reasons_not_to_publish(page))
+        ]
+    else:
+        refusals = refusals_to_unpublish(pages)
     if not refusals:
         return None
-    messages.error(request, "Nothing was published.")
+    messages.error(request, "Nothing was published." if publishing else "Nothing was unpublished.")
     for refusal in refusals:
         messages.error(request, str(refusal))
     return redirect(action.next_url)
