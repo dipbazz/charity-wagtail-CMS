@@ -91,8 +91,9 @@ bundle it into a fix.
    and follows the template: what changed, what to check in the browser before merging, and
    anything the reviewer must act on; the why goes in the commit messages. Pull requests aren't
    stacked on each other. Straight after opening it, check its changelog file (or the
-   `no changelog` label), that it has a milestone, its issue's board card in *In review*, the docs pages
-   it describes and, if what a charity sends or decides has changed, the onboarding pack.
+   `no changelog` label), that it has a milestone, its issue's board card in *In review*, the
+   docs pages it describes and, if what a charity sends or decides has changed, the onboarding
+   pack.
 8. **QA:** CI checks every page layout at six widths; the pull request lists what a person must
    check in the browser ([QA](testing.md#qa)).
 9. **Reviews:** the pull request gets `needs: code review`, and `needs: qa` or
