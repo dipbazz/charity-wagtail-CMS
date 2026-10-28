@@ -35,13 +35,14 @@ jobs:
             -f query='query($owner: String!, $repo: String!, $number: Int!) {
               repository(owner: $owner, name: $repo) {
                 pullRequest(number: $number) {
-                  closingIssuesReferences(first: 10) {
+                  closingIssuesReferences(first: 20) {
                     nodes { milestone { title state } }
                   }
                 }
               }
             }' \
-            --jq '[.data.repository.pullRequest.closingIssuesReferences.nodes[].milestone
+            --jq '[(.data.repository.pullRequest.closingIssuesReferences.nodes // [])[]
+                   | select(. != null) | .milestone
                    | select(. != null and .state == "OPEN") | .title][0] // empty')
           if [ -z "$milestone" ]; then
             echo "It closes no issue in an open milestone; nothing to copy."
