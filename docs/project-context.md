@@ -58,7 +58,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | How do I add a page type, a snippet or setting, a block, or a payment provider? | [Extending the site](contributing/extending.md) |
 | What's in the demo data? Photo credits? | [Demo content](contributing/demo-content.md) |
 | What do we ask a new charity for? How do its guide and form (the pack in `onboarding/`) stay current? | [Onboarding a charity](contributing/onboarding.md) |
-| Issues, epics, the board, versions, the changelog, releasing? | [Issues, versions and releases](contributing/releases.md) |
+| Issues, ideas not yet planned, epics, the board, versions, the changelog, releasing? | [Issues, versions and releases](contributing/releases.md) |
 | How do I write or build these docs? | [Writing docs](contributing/writing-docs.md) |
 | Why SQLite, one server, `.live().public()`, pinned actions, permission migrations, Playwright, no parallel tests, whole-sentence Nepali tests? Can I use a public-only service? | [Decisions](decisions.md) |
 | What changed in each version? What's planned? | [Changelog](changelog.md), [milestones](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) |

@@ -19,12 +19,27 @@ Labels:
 | `accessibility`, `security` | Areas that need extra care in review |
 | `epic` | A feature track (below) |
 | `needs: …` | A review the issue or pull request still needs before work starts or it merges ([Reviews](reviews.md)) |
+| `might do` | Worth discussing later, not planned |
+
+## From idea to issue
+
+An idea nobody has decided to build yet is filed with the feature form, labelled `enhancement`
+and `needs: product review`, with no milestone, tier or epic. Its product review decides one of
+three things:
+
+- **Build it:** attach it to an epic, give it its tier and the reviews that tier calls for
+  ([Reviews](reviews.md#tiers-how-much-review-a-change-gets)), and plan it into a milestone
+  ([below](#what-goes-into-which-version)).
+- **Park it:** label it `might do` and leave it open.
+- **Drop it:** close it as not planned, saying why.
+
+So `needs: product review` with no milestone lists the ideas waiting for a decision.
 
 ## Epics
 
 Each feature track is an issue labelled `epic` and titled `Epic: …`, with the work as its
 sub-issues. It says the goal, why it matters, how the work is split and when it's done.
-Attach every new issue to an epic.
+Attach every new issue to an epic, except an idea ([above](#from-idea-to-issue)).
 
 Docs for a new feature aren't separate sub-issues: the feature's pull request updates its own
 docs page, under that feature's epic.
