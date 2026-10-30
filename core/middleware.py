@@ -42,11 +42,12 @@ class PublishRefusedMiddleware:
         "created" misleads when only going live was refused: replace it before the page renders."""
         form = (response.context_data or {}).get("form")
         if getattr(form, "only_going_live_refused", False):
-            for message in request._messages._queued_messages:
-                for banner in WAGTAIL_BANNERS:
-                    message.message = mark_safe(
-                        message.message.replace(gettext(banner), CANT_GO_LIVE_YET)
-                    )
+            for message in messages.get_messages(request):
+                for banner in map(gettext, WAGTAIL_BANNERS):
+                    if banner in message.message:
+                        message.message = mark_safe(
+                            message.message.replace(banner, CANT_GO_LIVE_YET)
+                        )
         return response
 
     def process_exception(self, request, exception):
