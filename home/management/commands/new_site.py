@@ -176,14 +176,23 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def set_up(self, options):
-        names = {code: options[f"name_{code}"] for code, _ in settings.WAGTAIL_CONTENT_LANGUAGES}
-        if not all(name.strip() for name in names.values()):
+        names = {
+            code: options[f"name_{code}"].strip() for code, _ in settings.WAGTAIL_CONTENT_LANGUAGES
+        }
+        email = options["email"].strip()
+        phone = options["phone"].strip()
+        if not all(names.values()):
             raise CommandError("The charity's name is needed in every language.")
-        if options["email"]:
+        if email:
             try:
-                validate_email(options["email"])
+                validate_email(email)
             except ValidationError as error:
-                raise CommandError(f"{options['email']} isn't an email address.") from error
+                raise CommandError(f"{email} isn't an email address.") from error
+        if phone and (
+            not any(character.isdigit() for character in phone)
+            or len(phone) > SiteSettings._meta.get_field("phone").max_length
+        ):
+            raise CommandError(f"{phone} isn't a phone number.")
 
         site = Site.objects.filter(is_default_site=True).first()
         home = site and site.root_page.specific
@@ -209,7 +218,7 @@ class Command(BaseCommand):
 
         site.site_name = names[main]
         site.save()
-        self.write_settings(site, names, by_slug, options)
+        self.write_settings(site, names, by_slug, email, phone)
         return homes, pages
 
     def name_home(self, home, name):
@@ -225,10 +234,10 @@ class Command(BaseCommand):
         page = page.specific if page else home.copy_for_translation(locale)
         return self.name_home(page, name)
 
-    def write_settings(self, site, names, by_slug, options):
+    def write_settings(self, site, names, by_slug, email, phone):
         settings_ = SiteSettings.for_site(site)
-        settings_.contact_email = options["email"]
-        settings_.phone = options["phone"]
+        settings_.contact_email = email
+        settings_.phone = phone
         settings_.donate_page = by_slug["donate"]
         settings_.privacy_page = by_slug["privacy"]
         settings_.save()

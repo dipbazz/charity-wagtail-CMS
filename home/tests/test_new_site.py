@@ -225,6 +225,33 @@ class TestSiteSettings:
 
         assert not Page.objects.child_of(home_page).exists()
 
+    @pytest.mark.parametrize("phone", ["ask at office", "1" * 31], ids=["no digits", "too long"])
+    def test_refuses_a_phone_that_isnt_one(self, home_page, phone):
+        with pytest.raises(CommandError, match="phone"):
+            new_site(phone=phone)
+
+        assert not Page.objects.child_of(home_page).exists()
+
+    def test_a_blank_phone_counts_as_none(self, site):
+        new_site(phone="  ")
+
+        assert SiteSettings.for_site(site).phone == ""
+
+    def test_keeps_no_spaces_around_what_it_was_given(self, home_page, site):
+        new_site(
+            name_en=" Bright Future ",
+            email=" hello@brightfuture.example ",
+            phone=" +977 1 400 0000 ",
+        )
+
+        site = Site.objects.get(pk=site.pk)
+        settings_ = SiteSettings.for_site(site)
+        home_page.refresh_from_db()
+        assert home_page.title == site.site_name == "Bright Future"
+        assert settings_.texts.get(locale__language_code="en").name == "Bright Future"
+        assert settings_.contact_email == "hello@brightfuture.example"
+        assert settings_.phone == "+977 1 400 0000"
+
 
 class TestWhatItRefuses:
     def test_a_site_with_pages_under_its_home_page(self, home_page):
