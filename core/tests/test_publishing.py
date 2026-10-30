@@ -624,7 +624,7 @@ class TestUnpublishingThePrivacyNotice:
     def test_from_the_editor_shows_why(self, client, moderator, privacy_notice, live_form):
         messages = unpublish(client, moderator, privacy_notice)
 
-        assert messages == [NOT_UNPUBLISHED]
+        assert messages == ["Nothing was unpublished.", NOT_UNPUBLISHED]
         assert live(privacy_notice) == ["Privacy notice"]
 
     def test_from_the_editor_with_its_parent(
@@ -634,7 +634,7 @@ class TestUnpublishingThePrivacyNotice:
 
         messages = unpublish(client, moderator, about, include_descendants="on")
 
-        assert messages == [NOT_UNPUBLISHED]
+        assert messages == ["Nothing was unpublished.", NOT_UNPUBLISHED]
         assert set(live(about, privacy_notice)) == {"About us", "Privacy notice"}
 
     def test_from_the_editor_leaves_out_subpages_it_wouldnt_unpublish(
@@ -698,7 +698,7 @@ class TestUnpublishingThePrivacyNotice:
 
         messages = unpublish(client, moderator, about, include_descendants="on")
 
-        assert messages == [NOT_UNPUBLISHED]
+        assert messages == ["Nothing was unpublished.", NOT_UNPUBLISHED]
         assert set(live(about, privacy_notice, donate)) == {"About us", "Privacy notice", "Donate"}
 
 
