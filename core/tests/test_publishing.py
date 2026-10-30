@@ -13,6 +13,7 @@ from django.contrib.messages import get_messages
 from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
+from pytest_django.asserts import assertContains, assertNotContains
 from wagtail.contrib.forms.forms import WagtailAdminFormPageForm
 from wagtail.models import Page, PageLogEntry, Revision, WorkflowState, get_page_models
 from wagtail.test.utils.form_data import inline_formset, nested_form_data, rich_text, streamfield
@@ -21,6 +22,7 @@ from campaigns.models import DonatePage
 from contact.models import FormField, FormPage
 from core.publishing import (
     ADD_RECIPIENT,
+    CANT_GO_LIVE_YET,
     PUBLISH_NOTICE_ALONE,
     PUBLISH_PRIVACY_NOTICE,
     REPLACE_PLACEHOLDERS,
@@ -279,6 +281,23 @@ class TestTheEditor:
         assert response.context["form"].errors["introduction"] == [REPLACE_PLACEHOLDERS]
         page.refresh_from_db()
         assert not page.live
+
+    @pytest.mark.parametrize("action", [PUBLISH, SUBMIT], ids=["publish", "submit"])
+    def test_a_refusal_says_the_changes_are_kept(self, client, moderator, home_page, action):
+        page = draft(home_page, StandardPage(title="About us", slug="about"))
+
+        response = self.edit(client, moderator, page, action, introduction=PLACEHOLDER)
+
+        assertContains(response, CANT_GO_LIVE_YET)
+        assertNotContains(response, "could not be saved")
+
+    def test_other_errors_keep_wagtails_message(self, client, moderator, home_page):
+        page = draft(home_page, StandardPage(title="About us", slug="about"))
+
+        response = self.edit(client, moderator, page, PUBLISH, title="", introduction=PLACEHOLDER)
+
+        assertContains(response, "could not be saved")
+        assertNotContains(response, CANT_GO_LIVE_YET)
 
     def test_publish_puts_the_error_on_the_block(self, client, moderator, home_page):
         page = draft(home_page, StandardPage(title="About us", slug="about"))

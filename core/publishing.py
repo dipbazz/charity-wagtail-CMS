@@ -57,6 +57,10 @@ PUBLISH_PRIVACY_NOTICE = "Publish the privacy notice first: this form collects p
 PUBLISH_NOTICE_ALONE = "Publish the privacy notice on its own first, then the rest."
 ADD_RECIPIENT = "Add the email address that gets each message before publishing."
 UNPUBLISH_FORMS_FIRST = "Unpublish these forms first: {forms}."
+CANT_GO_LIVE_YET = (
+    "This page can't go live yet. Your changes are still here: fix the errors below, then try "
+    "again."
+)
 
 # The fields every page has that an editor writes; the rest are Wagtail's own.
 PAGE_FIELDS_WRITTEN = ("title", "seo_title", "search_description")
@@ -195,10 +199,15 @@ class PublishCheckFormMixin:
     """For a page's admin form: Publish, Submit and Approve are refused for what
     `reasons_not_to_publish` stops, each error where the editor can fix it. Drafts save."""
 
+    # Whether only those checks stopped the form, so `core.middleware` says so.
+    only_going_live_refused = False
+
     def is_valid(self):
         valid = super().is_valid()
         if self.goes_live():
-            valid = self.can_go_live() and valid
+            can_go_live = self.can_go_live()
+            self.only_going_live_refused = valid and not can_go_live
+            valid = valid and can_go_live
         return valid
 
     def goes_live(self):

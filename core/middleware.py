@@ -5,9 +5,14 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.middleware.locale import LocaleMiddleware
 from django.urls import reverse
 from django.utils import translation
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext
 from wagtail.models import Site
 
-from core.publishing import PublishRefused, unpublishing_together
+from core.publishing import CANT_GO_LIVE_YET, PublishRefused, unpublishing_together
+
+# What Wagtail's edit view says when its form is invalid, as it asks for it to be translated.
+WAGTAIL_BANNER = "The page could not be saved due to validation errors."
 
 
 class PublishRefusedMiddleware:
@@ -27,6 +32,16 @@ class PublishRefusedMiddleware:
             return self.get_response(request)
         finally:
             unpublishing_together.reset(together)
+
+    def process_template_response(self, request, response):
+        """The edit view has no hook for its banner, and "could not be saved" misleads when only
+        going live was refused: replace it before the page renders."""
+        form = (response.context_data or {}).get("form")
+        if getattr(form, "only_going_live_refused", False):
+            banner = gettext(WAGTAIL_BANNER)
+            for message in request._messages._queued_messages:
+                message.message = mark_safe(message.message.replace(banner, CANT_GO_LIVE_YET))
+        return response
 
     def process_exception(self, request, exception):
         if not isinstance(exception, PublishRefused):
