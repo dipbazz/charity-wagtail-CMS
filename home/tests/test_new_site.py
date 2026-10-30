@@ -52,10 +52,11 @@ NOT_BUILT_YET = {
 }
 
 
-def new_site(**options):
+def new_site(stdout=None, **options):
     """Runs the command; what it printed."""
-    out = io.StringIO()
-    call_command("new_site", name_en="Bright Future", name_ne="उज्यालो भविष्य", stdout=out, **options)
+    out = stdout or io.StringIO()
+    names = {"name_en": "Bright Future", "name_ne": "उज्यालो भविष्य"}
+    call_command("new_site", stdout=out, **{**names, **options})
     return out.getvalue()
 
 
@@ -290,6 +291,16 @@ class TestWhatItPrints:
         assert order == sorted(order)
         for still_to_do in ("Site settings", "DNS", "Email"):
             assert still_to_do in printed
+
+    def test_a_failure_to_print_keeps_the_setup(self, home_page):
+        class CantPrint(io.StringIO):
+            def write(self, text):
+                raise UnicodeEncodeError("cp1252", text, 0, 1, "can't be shown")
+
+        with pytest.raises(UnicodeEncodeError):
+            new_site(stdout=CantPrint())
+
+        assert pages_under(home_page).keys() == BUILT.keys()
 
 
 class TestTheDayOneHomePage:

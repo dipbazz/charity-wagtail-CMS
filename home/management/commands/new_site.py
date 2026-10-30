@@ -169,8 +169,13 @@ class Command(BaseCommand):
         parser.add_argument("--email", default="", help="The charity's main email, if it sent one.")
         parser.add_argument("--phone", default="", help="The charity's main phone, if it sent one.")
 
-    @transaction.atomic
     def handle(self, *args, **options):
+        homes, pages = self.set_up(options)
+        # After the transaction: a setup that worked stays, even if printing it fails.
+        self.report(homes, pages)
+
+    @transaction.atomic
+    def set_up(self, options):
         names = {code: options[f"name_{code}"] for code, _ in settings.WAGTAIL_CONTENT_LANGUAGES}
         if not all(name.strip() for name in names.values()):
             raise CommandError("The charity's name is needed in every language.")
@@ -205,7 +210,7 @@ class Command(BaseCommand):
         site.site_name = names[main]
         site.save()
         self.write_settings(site, names, by_slug, options)
-        self.report(homes, pages)
+        return homes, pages
 
     def name_home(self, home, name):
         home.title = name
