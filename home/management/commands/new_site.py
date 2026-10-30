@@ -254,6 +254,10 @@ class Command(BaseCommand):
             self.stdout.write(f"Live   {self.language(languages, page)}   {page.title}")
         for page in pages:
             self.stdout.write(f"Draft  {self.language(languages, page)}   {page.title}")
+        # The running site keeps its list of home pages in its own memory, which this can't clear.
+        self.stdout.write(
+            "\nRestart the site now, or its second language can take up to an hour to appear."
+        )
         self.stdout.write("\nStill to do:")
         for number, step in enumerate(still_to_do(), start=1):
             self.stdout.write(f"{number}. {step}")

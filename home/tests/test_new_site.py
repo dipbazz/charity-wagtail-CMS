@@ -319,6 +319,11 @@ class TestWhatItPrints:
         for still_to_do in ("Site settings", "DNS", "Email"):
             assert still_to_do in printed
 
+    def test_says_to_restart_the_site_first(self):
+        printed = new_site()
+
+        assert printed.index("Restart the site") < printed.index("Still to do")
+
     def test_a_failure_to_print_keeps_the_setup(self, home_page):
         class CantPrint(io.StringIO):
             def write(self, text):
