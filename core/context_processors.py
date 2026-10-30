@@ -9,10 +9,10 @@ from core.models import AnnouncementBanner, SiteSettings
 def chosen_pages(request):
     """The pages chosen in settings that every page links to, in the language being read.
 
-    `privacy_page` is the privacy notice for the footer and forms (#105): None until a page is
-    chosen and published. `donate_page_link` is the header's Donate button and `banner_link_page`
-    the announcement banner's link (#117). Each is its published translation in the language
-    being read, else the chosen page.
+    `privacy_page` is the privacy notice for the footer and forms (#105) and `donate_page_link` the
+    header's Donate button: each None until a page is chosen and published. `banner_link_page` is
+    the announcement banner's link (#117). Each is its published translation in the language being
+    read, else the chosen page.
 
     Looked up only when a template uses one, and then all together in one query: the chosen pages
     and their published translations in the language being read.
@@ -48,8 +48,9 @@ def chosen_pages(request):
         for name, pk in chosen.items():
             page = by_id.get(pk)
             found[name] = page and translations.get(page.translation_key, page)
-        if found["privacy_page"] is not None and not found["privacy_page"].live:
-            found["privacy_page"] = None
+        for name in ("privacy_page", "donate_page_link"):
+            if found[name] is not None and not found[name].live:
+                found[name] = None
         return found
 
     pages = SimpleLazyObject(find)
