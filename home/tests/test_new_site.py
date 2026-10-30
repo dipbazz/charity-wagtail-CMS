@@ -324,7 +324,7 @@ class TestTheDayOneHomePage:
     def test_leaves_out_the_contact_list_without_details(self, client, home_page):
         new_site()
 
-        assertNotContains(client.get("/"), 'class="day-one-contact"')
+        assertNotContains(client.get("/"), "day-one-contact")
 
     def test_shows_no_menu_or_donate_button_yet(self, client, built):
         response = client.get("/")
