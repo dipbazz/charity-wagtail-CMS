@@ -3,19 +3,42 @@
 
 {% block body_class %}template-homepage{% endblock %}
 
+{# A new site's home page is titled with the charity's name, so don't repeat it. #}
+{% block title_suffix %}{% with name=settings.core.SiteSettings.name %}{% if name and name != page.title %}| {{ name }}{% endif %}{% endwith %}{% endblock %}
+
+{% block extra_meta %}
+    {# Nothing's written yet: a search engine shouldn't keep this as the charity's page. #}
+    {% if page.on_day_one %}<meta name="robots" content="noindex">{% endif %}
+{% endblock %}
+
 {% block content %}
-    <section class="hero">
-        {% if page.hero_image %}
-            {% hero_picture page.hero_image class="hero-image" fetchpriority="high" %}
-        {% endif %}
-        <div class="hero-content container">
-            <h1>{{ page.hero_heading|default:page.title }}</h1>
-            {% if page.hero_text %}<p class="lead">{{ page.hero_text }}</p>{% endif %}
-            {% if page.hero_cta_text %}
-                <a class="button button-large" href="{% if page.hero_cta_page %}{% pageurl page.hero_cta_page %}{% else %}#{% endif %}">{{ page.hero_cta_text }}</a>
+    {% if page.on_day_one %}
+        {% with site_settings=settings.core.SiteSettings %}
+            <div class="container">
+                <h1 lang="{{ site_settings.name_language }}">{{ site_settings.name|default:page.title }}</h1>
+                <p class="lead">{% translate "Our new website is on its way." %}</p>
+                {% if site_settings.contact_email or site_settings.phone %}
+                    <ul class="tag-list day-one-contact">
+                        {% if site_settings.contact_email %}<li><a href="mailto:{{ site_settings.contact_email }}">{{ site_settings.contact_email }}</a></li>{% endif %}
+                        {% if site_settings.phone %}<li><a href="{{ phone_link }}">{{ site_settings.phone }}</a></li>{% endif %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endwith %}
+    {% else %}
+        <section class="hero">
+            {% if page.hero_image %}
+                {% hero_picture page.hero_image class="hero-image" fetchpriority="high" %}
             {% endif %}
-        </div>
-    </section>
+            <div class="hero-content container">
+                <h1>{{ page.hero_heading|default:page.title }}</h1>
+                {% if page.hero_text %}<p class="lead">{{ page.hero_text }}</p>{% endif %}
+                {% if page.hero_cta_text %}
+                    <a class="button button-large" href="{% if page.hero_cta_page %}{% pageurl page.hero_cta_page %}{% else %}#{% endif %}">{{ page.hero_cta_text }}</a>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
 
     <div class="container">
         {% if featured_campaigns %}

@@ -37,8 +37,8 @@ PATHS = [
 
 # What a thumb taps. Text links inside a paragraph are exempt: they're as tall as the line.
 TAP_TARGETS = (
-    ".site-footer a, .tag-list a, .pagination a, .pay-way, .pay-steps a, .share-links a, .button,"
-    " button, summary, select,"
+    ".site-footer a, .tag-list a, .day-one-contact a, .pagination a, .pay-way, .pay-steps a,"
+    " .share-links a, .button, button, summary, select,"
     " input:not([type=checkbox]):not([type=radio]):not([type=hidden])"
 )
 
