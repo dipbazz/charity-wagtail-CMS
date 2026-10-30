@@ -1,9 +1,42 @@
 from django.conf import settings
 from django.conf.urls.i18n import is_language_prefix_patterns_used
-from django.http import Http404, HttpResponseRedirect
+from django.contrib import messages
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.middleware.locale import LocaleMiddleware
+from django.urls import reverse
 from django.utils import translation
 from wagtail.models import Site
+
+from core.publishing import PublishRefused, unpublishing_together
+
+
+class PublishRefusedMiddleware:
+    """Shows why a page wasn't published when the admin's call to `publish()` is refused, as
+    approving a workflow task's can be (#175): a message on the page's edit view, in place of an
+    error page. Everything the refused call changed has been rolled back by then.
+
+    It also forgets the pages a bulk unpublish checked together once its request ends, so they
+    never reach the next request a worker serves."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        together = unpublishing_together.set(frozenset())
+        try:
+            return self.get_response(request)
+        finally:
+            unpublishing_together.reset(together)
+
+    def process_exception(self, request, exception):
+        if not isinstance(exception, PublishRefused):
+            return None
+        messages.error(request, str(exception))
+        url = reverse("wagtailadmin_pages:edit", args=[exception.page.pk])
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            # What the admin's approval window expects once an action is done.
+            return JsonResponse({"step": "success", "redirect": url})
+        return HttpResponseRedirect(url)
 
 
 class URLLocaleMiddleware(LocaleMiddleware):

@@ -95,7 +95,7 @@ def appeals(home_page):
 
 
 @pytest.fixture
-def donate_page(home_page, appeals):
+def donate_page(home_page, appeals, privacy_notice):
     page = DonatePageFactory(
         parent=home_page,
         body=[("paragraph", "<p>Where every Rs 100 goes</p>")],

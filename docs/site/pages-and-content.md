@@ -24,6 +24,43 @@ The **main menu** is the home page's children with "Show in menus" ticked, in th
 read, marking the current page and section for screen readers (`{% main_menu %}`,
 `core/templatetags/navigation_tags.py`).
 
+## What stops a page going live
+
+A few mistakes would put something untrue or unlawful on a live site, so the admin refuses to
+publish a page (`core/publishing.py`):
+
+- **while it holds placeholder text**, one line in square brackets starting "[Write:" (or
+  "[लेख्नुहोस्:"), which tells the editor what only the charity can write
+  ([The charity site standard](standard.md#how-its-kept)). Other brackets, such as "[1]", are
+  fine;
+- **while it's a form or the Donate page and the privacy notice chosen in Site settings isn't
+  published**, because a page that collects personal details must say how they're used
+  ([Appeals and giving](appeals-and-giving.md#privacy-notice));
+- **while it's a form with no email address to send each message to**, or nobody would read them.
+
+Drafts always save. Every way a page goes live asks the same check:
+
+| Route | When it's refused |
+|---|---|
+| Publish, or Submit for moderation, in the editor | The error is on the field, or on the block in a body |
+| Approving a workflow task | The page's edit view says why; the task waits to be approved again |
+| Bulk publish | The chosen pages, and their subpages when included, are checked first: one refusal and nothing is published, with each page named. Each is checked as the site is now, so a form chosen with the privacy notice is refused: publish the notice on its own first |
+| A go-live time | The page stays a draft with its go-live time cleared, from its draft too; its History and the server log say why, and the pages after it still go live |
+| Code | `publish()` raises `PublishRefused` |
+
+The other way round, **the chosen privacy notice can't be unpublished while any form or Donate
+page on its site is live**, in either language: "Unpublish these forms first: …", naming them.
+That holds for Unpublish in the editor (with its subpages too), bulk unpublish (nothing is
+unpublished), an expiry time (the notice stays live with its expiry cleared, and its History and
+the server log say why) and code (`unpublish()` raises `UnpublishRefused`). Forms going offline
+with the notice don't count: those among the subpages or pages unpublished in the same action,
+or whose expiry time passes in the same run as the notice's. So a whole site, notice and forms,
+can be unpublished in one step; the refusal names only the forms that would stay live.
+
+Not guarded: the publish and unpublish actions of Wagtail's admin API
+(`/admin/api/main/pages/<id>/action/publish/` and `…/unpublish/`), which no admin screen uses,
+and deleting the privacy notice or choosing another in Site settings while forms are live.
+
 ## Home page
 
 The first thing a visitor sees, so it leads with the charity's message and its open appeals

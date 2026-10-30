@@ -21,6 +21,7 @@ from core.blocks import BaseStreamBlock
 from core.images import with_card_images
 from core.languages import in_reading_language
 from core.models import SocialMetaMixin
+from core.publishing import PublishGuardMixin
 
 
 class NewsCategory(TranslatableMixin, models.Model):
@@ -87,7 +88,7 @@ class NewsFeed(Feed):
         return datetime.datetime.combine(item.date, datetime.time())
 
 
-class NewsIndexPage(RoutablePageMixin, Page):
+class NewsIndexPage(PublishGuardMixin, RoutablePageMixin, Page):
     introduction = models.TextField(blank=True)
 
     content_panels = Page.content_panels + [FieldPanel("introduction")]
@@ -155,7 +156,7 @@ class NewsPageTag(TaggedItemBase):
     )
 
 
-class NewsPage(SocialMetaMixin, Page):
+class NewsPage(PublishGuardMixin, SocialMetaMixin, Page):
     date = models.DateField("Post date", default=datetime.date.today)
     introduction = models.TextField(max_length=300)
     hero_image = models.ForeignKey(

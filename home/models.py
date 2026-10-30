@@ -12,9 +12,10 @@ from campaigns.models import CampaignPage
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
 from core.models import SocialMetaMixin
+from core.publishing import PublishGuardMixin
 
 
-class HomePage(SocialMetaMixin, Page):
+class HomePage(PublishGuardMixin, SocialMetaMixin, Page):
     hero_heading = models.CharField(max_length=255, blank=True)
     hero_text = models.TextField(blank=True)
     hero_image = models.ForeignKey(
@@ -80,7 +81,7 @@ class HomePage(SocialMetaMixin, Page):
         return context
 
 
-class StandardPage(SocialMetaMixin, Page):
+class StandardPage(PublishGuardMixin, SocialMetaMixin, Page):
     """A general-purpose content page, e.g. About us or Our work."""
 
     introduction = models.TextField(blank=True)

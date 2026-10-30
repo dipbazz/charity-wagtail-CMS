@@ -121,7 +121,13 @@ class TestDonatePage:
         assert link["href"] == privacy_notice.url
         assert link.find_next("button", type="submit") is not None
 
-    def test_no_privacy_link_without_a_privacy_notice(self, client, donate_page):
+    def test_no_privacy_link_without_a_privacy_notice(self, client, donate_page, site):
+        """The page can't go live before a notice is chosen (#175), so the choice is cleared
+        after."""
+        settings = SiteSettings.for_site(site)
+        settings.privacy_page = None
+        settings.save()
+
         assert "How we use your details" not in client.get(donate_page.url).content.decode()
 
     def test_offers_open_public_appeals_and_wherever_needed_most(self, client, donate_page):

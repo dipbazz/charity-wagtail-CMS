@@ -8,13 +8,14 @@ from openpyxl import load_workbook
 from wagtail.contrib.forms.models import FormSubmission
 
 from contact.models import FormField, FormPage
+from core.models import SiteSettings
 from home.models import StandardPage
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def volunteer_form(home_page):
+def volunteer_form(home_page, privacy_notice):
     page = FormPage(
         title="Volunteer with us",
         slug="volunteer",
@@ -70,7 +71,13 @@ class TestFormPage:
         assert link["href"] == privacy_notice.url
         assert link.find_next("button", type="submit") is not None
 
-    def test_no_privacy_link_without_a_privacy_notice(self, client, volunteer_form):
+    def test_no_privacy_link_without_a_privacy_notice(self, client, volunteer_form, site):
+        """The form can't go live before a notice is chosen (#175), so the choice is cleared
+        after."""
+        settings = SiteSettings.for_site(site)
+        settings.privacy_page = None
+        settings.save()
+
         assert "How we use your details" not in client.get(volunteer_form.url).content.decode()
 
     def test_valid_submission_is_stored_and_shows_thank_you(self, client, volunteer_form):
