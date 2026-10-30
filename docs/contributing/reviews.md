@@ -25,7 +25,9 @@ the same either way.
 ## Tiers: how much review a change gets
 
 Most changes are small, and three reviews on a typo cost more than they catch. Each issue gets a
-tier once, when it's filed and before any pull request for it is opened, and the tier decides its
+tier once, when it's filed (an idea, when its product review decides to build it,
+[From idea to issue](releases.md#from-idea-to-issue)) and before any pull request for it is
+opened, and the tier decides its
 reviews. Mark the issue (never the pull request) with a label: `tier: light` or `tier: high risk`;
 no label means standard. **High risk wins:** a change to high-risk code is high risk however
 small, so a one-line fix in the payments code isn't light.
@@ -58,7 +60,7 @@ CSS or JavaScript and isn't light.
 
 | Label | Decides | Needed when | Run with |
 |---|---|---|---|
-| `needs: product review` | Whether it's worth building, and how much of it | Scope that isn't clear, a new epic or feature track, or a change to what charities must send or decide | `/plan-ceo-review` (hold or reduce scope), after `/office-hours` for a raw idea |
+| `needs: product review` | Whether it's worth building, and how much of it | Scope that isn't clear, a new epic or feature track, or a change to what charities must send or decide | `/plan-ceo-review` (hold or reduce scope), after `/office-hours` for a raw idea ([From idea to issue](releases.md#from-idea-to-issue)) |
 | `needs: design review` | What people see and do: layout, states, wording, accessibility | It adds or changes what visitors or editors see: a page type, block, template, menu, form or admin screen | `/plan-design-review` |
 | `needs: eng review` | Data, architecture, edge cases and the tests to write | A high-risk issue, or work at any tier spanning more than one pull request (to split it) | `/plan-eng-review` |
 | `needs: investigation` | A bug's cause, before anyone fixes it | A bug whose cause isn't known | `/investigate` |
