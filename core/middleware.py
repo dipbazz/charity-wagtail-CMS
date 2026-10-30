@@ -11,8 +11,12 @@ from wagtail.models import Site
 
 from core.publishing import CANT_GO_LIVE_YET, PublishRefused, unpublishing_together
 
-# What Wagtail's edit view says when its form is invalid, as it asks for it to be translated.
-WAGTAIL_BANNER = "The page could not be saved due to validation errors."
+# What Wagtail's edit and create views say when their form is invalid, as they ask for it to be
+# translated.
+WAGTAIL_BANNERS = (
+    "The page could not be saved due to validation errors.",
+    "The page could not be created due to validation errors.",
+)
 
 
 class PublishRefusedMiddleware:
@@ -34,13 +38,15 @@ class PublishRefusedMiddleware:
             unpublishing_together.reset(together)
 
     def process_template_response(self, request, response):
-        """The edit view has no hook for its banner, and "could not be saved" misleads when only
-        going live was refused: replace it before the page renders."""
+        """The edit and create views have no hook for their banner, and "could not be saved" or
+        "created" misleads when only going live was refused: replace it before the page renders."""
         form = (response.context_data or {}).get("form")
         if getattr(form, "only_going_live_refused", False):
-            banner = gettext(WAGTAIL_BANNER)
             for message in request._messages._queued_messages:
-                message.message = mark_safe(message.message.replace(banner, CANT_GO_LIVE_YET))
+                for banner in WAGTAIL_BANNERS:
+                    message.message = mark_safe(
+                        message.message.replace(gettext(banner), CANT_GO_LIVE_YET)
+                    )
         return response
 
     def process_exception(self, request, exception):

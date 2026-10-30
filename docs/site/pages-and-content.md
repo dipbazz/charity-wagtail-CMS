@@ -52,7 +52,7 @@ Drafts always save. Every way a page goes live asks the same check:
 
 | Route | When it's refused |
 |---|---|
-| Publish, or Submit for moderation, in the editor | The error is on the field, or on the block in a body, and the banner says the page can't go live yet and the changes are still there, in place of Wagtail's "could not be saved" |
+| Publish, or Submit for moderation, in the editor | The error is on the field, or on the block in a body, and the banner says the page can't go live yet, the changes are still there and it can be saved as a draft, in place of Wagtail's "could not be saved" or, on a new page, "could not be created" |
 | Approving a workflow task | The page's edit view says why; the task waits to be approved again |
 | Bulk publish | The chosen pages, and their subpages when included, are checked first: one refusal and nothing is published, with each page named. Each is checked as the site is now, so a form chosen with the privacy notice is refused: publish the notice on its own first |
 | A go-live time | The page stays a draft with its go-live time cleared, from its draft too; its History and the server log say why, and the pages after it still go live |

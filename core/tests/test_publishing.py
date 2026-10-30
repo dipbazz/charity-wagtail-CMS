@@ -299,6 +299,22 @@ class TestTheEditor:
         assertContains(response, "could not be saved")
         assertNotContains(response, CANT_GO_LIVE_YET)
 
+    def test_a_refused_new_page_says_the_changes_are_kept(
+        self, client, moderator, home_page, privacy_notice
+    ):
+        response = self.add_form_page(client, moderator, home_page, to_address="")
+
+        assertContains(response, CANT_GO_LIVE_YET)
+        assertNotContains(response, "could not be created")
+
+    def test_other_errors_on_a_new_page_keep_wagtails_message(
+        self, client, moderator, home_page, privacy_notice
+    ):
+        response = self.add_form_page(client, moderator, home_page, title="", to_address="")
+
+        assertContains(response, "could not be created")
+        assertNotContains(response, CANT_GO_LIVE_YET)
+
     def test_publish_puts_the_error_on_the_block(self, client, moderator, home_page):
         page = draft(home_page, StandardPage(title="About us", slug="about"))
         body = streamfield(

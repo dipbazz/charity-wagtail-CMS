@@ -58,8 +58,8 @@ PUBLISH_NOTICE_ALONE = "Publish the privacy notice on its own first, then the re
 ADD_RECIPIENT = "Add the email address that gets each message before publishing."
 UNPUBLISH_FORMS_FIRST = "Unpublish these forms first: {forms}."
 CANT_GO_LIVE_YET = (
-    "This page can't go live yet. Your changes are still here: fix the errors below, then try "
-    "again."
+    "This page can't go live yet. Your changes are still here: fix the errors below and try "
+    "again, or save it as a draft to finish later."
 )
 
 # The fields every page has that an editor writes; the rest are Wagtail's own.
