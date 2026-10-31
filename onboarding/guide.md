@@ -108,6 +108,8 @@ accessibility statement and Contact.
 
 ### 4.1 Home page
 
+First, tell us your organisation's name as it should appear on the website, in Nepali and English.
+
 Most visitors will open your website on a phone. Top to bottom, the home page shows the same parts
 as every charity's home page, in this order:
 
@@ -374,7 +376,8 @@ We send you a preview of each page before it goes live, so you can check it on y
 - ☐ Numbers checked
 - ☐ Address, contact details and social links confirmed
 - ☐ Registration details confirmed
-- ☐ Privacy notice and accessibility statement approved
+- ☐ Privacy notice and accessibility statement approved (we publish the privacy notice first, then
+  the Donate page, because the Donate page and forms cannot go live before it)
 - ☐ Everyone in the photos agreed to be shown
 - ☐ {domain} approved and connected
 - ☐ You have checked the preview on your own phone and said "yes, publish"

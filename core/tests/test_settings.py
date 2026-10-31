@@ -48,6 +48,19 @@ def test_header_donate_button_links_to_the_chosen_donate_page(client, home_page,
     assert f'class="button" href="{donate.url}"' in html
 
 
+def test_header_has_no_donate_button_until_the_donate_page_is_live(
+    client, home_page, site_settings
+):
+    donate = StandardPage(title="Donate", slug="donate", live=False)
+    home_page.add_child(instance=donate)
+    site_settings.donate_page = donate
+    site_settings.save()
+
+    html = client.get("/").content.decode()
+
+    assert f'href="{donate.url}"' not in html
+
+
 def test_header_donate_button_on_a_nepali_page_links_to_the_nepali_donate_page(
     client, home_page, nepali_home_page, nepali_locale, site_settings
 ):

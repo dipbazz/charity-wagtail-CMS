@@ -5,9 +5,18 @@ from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.middleware.locale import LocaleMiddleware
 from django.urls import reverse
 from django.utils import translation
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext
 from wagtail.models import Site
 
-from core.publishing import PublishRefused, unpublishing_together
+from core.publishing import CANT_GO_LIVE_YET, PublishRefused, unpublishing_together
+
+# What Wagtail's edit and create views say when their form is invalid, as they ask for it to be
+# translated.
+WAGTAIL_BANNERS = (
+    "The page could not be saved due to validation errors.",
+    "The page could not be created due to validation errors.",
+)
 
 
 class PublishRefusedMiddleware:
@@ -27,6 +36,19 @@ class PublishRefusedMiddleware:
             return self.get_response(request)
         finally:
             unpublishing_together.reset(together)
+
+    def process_template_response(self, request, response):
+        """The edit and create views have no hook for their banner, and "could not be saved" or
+        "created" misleads when only going live was refused: replace it before the page renders."""
+        form = (response.context_data or {}).get("form")
+        if getattr(form, "only_going_live_refused", False):
+            for message in messages.get_messages(request):
+                for banner in map(gettext, WAGTAIL_BANNERS):
+                    if banner in message.message:
+                        message.message = mark_safe(
+                            message.message.replace(banner, CANT_GO_LIVE_YET)
+                        )
+        return response
 
     def process_exception(self, request, exception):
         if not isinstance(exception, PublishRefused):

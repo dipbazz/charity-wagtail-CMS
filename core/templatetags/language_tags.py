@@ -39,7 +39,8 @@ def language_versions(context):
     The switcher links to the page being read in each language that has a live home page on this
     site: to the page's live translation if there is one, otherwise to that language's home page,
     so it never leads to a 404. Without a page (search), it goes to the same view in the other
-    language. It has no links when the site has content in one language only.
+    language. It has no links when the site has content in one language only, or until the running
+    site has heard of the other language's home page.
     """
     request = context.get("request")
     site = Site.find_for_request(request)
@@ -56,6 +57,9 @@ def language_versions(context):
     # One query for the home pages and the page's translations, in every language.
     homes, translations = {}, {}
     for live_page in Page.objects.live().filter(translation_key__in=keys).select_related("locale"):
+        # Each process keeps its list of home pages, so one added elsewhere has no URL here yet.
+        if live_page.get_url(request) is None:
+            continue
         code = live_page.locale.language_code
         if live_page.translation_key == home_key:
             homes[code] = live_page

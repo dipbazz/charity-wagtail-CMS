@@ -7,20 +7,27 @@ can't be unpublished while forms on its site are live.
 
 import datetime
 import io
+from types import SimpleNamespace
 
 import pytest
+from django.contrib import messages
 from django.contrib.messages import get_messages
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.safestring import SafeString, mark_safe
+from pytest_django.asserts import assertContains, assertNotContains
 from wagtail.contrib.forms.forms import WagtailAdminFormPageForm
 from wagtail.models import Page, PageLogEntry, Revision, WorkflowState, get_page_models
 from wagtail.test.utils.form_data import inline_formset, nested_form_data, rich_text, streamfield
 
 from campaigns.models import DonatePage
 from contact.models import FormField, FormPage
+from core.middleware import PublishRefusedMiddleware
 from core.publishing import (
     ADD_RECIPIENT,
+    CANT_GO_LIVE_YET,
     PUBLISH_NOTICE_ALONE,
     PUBLISH_PRIVACY_NOTICE,
     REPLACE_PLACEHOLDERS,
@@ -279,6 +286,58 @@ class TestTheEditor:
         assert response.context["form"].errors["introduction"] == [REPLACE_PLACEHOLDERS]
         page.refresh_from_db()
         assert not page.live
+
+    @pytest.mark.parametrize("action", [PUBLISH, SUBMIT], ids=["publish", "submit"])
+    def test_a_refusal_says_the_changes_are_kept(self, client, moderator, home_page, action):
+        page = draft(home_page, StandardPage(title="About us", slug="about"))
+
+        response = self.edit(client, moderator, page, action, introduction=PLACEHOLDER)
+
+        assertContains(response, CANT_GO_LIVE_YET)
+        assertNotContains(response, "could not be saved")
+
+    def test_other_errors_keep_wagtails_message(self, client, moderator, home_page):
+        page = draft(home_page, StandardPage(title="About us", slug="about"))
+
+        response = self.edit(client, moderator, page, PUBLISH, title="", introduction=PLACEHOLDER)
+
+        assertContains(response, "could not be saved")
+        assertNotContains(response, CANT_GO_LIVE_YET)
+
+    def test_a_refused_new_page_says_the_changes_are_kept(
+        self, client, moderator, home_page, privacy_notice
+    ):
+        response = self.add_form_page(client, moderator, home_page, to_address="")
+
+        assertContains(response, CANT_GO_LIVE_YET)
+        assertNotContains(response, "could not be created")
+
+    def test_other_errors_on_a_new_page_keep_wagtails_message(
+        self, client, moderator, home_page, privacy_notice
+    ):
+        response = self.add_form_page(client, moderator, home_page, title="", to_address="")
+
+        assertContains(response, "could not be created")
+        assertNotContains(response, CANT_GO_LIVE_YET)
+
+    def test_only_wagtails_banner_is_replaced(self, rf):
+        request = rf.get("/")
+        request.session = {}
+        request._messages = FallbackStorage(request)
+        messages.error(
+            request, mark_safe("<p>The page could not be saved due to validation errors.</p>")
+        )
+        messages.info(request, "<b>A page's title</b>")
+        response = SimpleNamespace(
+            context_data={"form": SimpleNamespace(only_going_live_refused=True)}
+        )
+
+        PublishRefusedMiddleware(None).process_template_response(request, response)
+
+        banner, other = get_messages(request)
+        assert banner.message == f"<p>{CANT_GO_LIVE_YET}</p>"
+        assert isinstance(banner.message, SafeString)
+        assert not isinstance(other.message, SafeString)
 
     def test_publish_puts_the_error_on_the_block(self, client, moderator, home_page):
         page = draft(home_page, StandardPage(title="About us", slug="about"))
@@ -624,7 +683,7 @@ class TestUnpublishingThePrivacyNotice:
     def test_from_the_editor_shows_why(self, client, moderator, privacy_notice, live_form):
         messages = unpublish(client, moderator, privacy_notice)
 
-        assert messages == [NOT_UNPUBLISHED]
+        assert messages == ["Nothing was unpublished.", NOT_UNPUBLISHED]
         assert live(privacy_notice) == ["Privacy notice"]
 
     def test_from_the_editor_with_its_parent(
@@ -634,7 +693,7 @@ class TestUnpublishingThePrivacyNotice:
 
         messages = unpublish(client, moderator, about, include_descendants="on")
 
-        assert messages == [NOT_UNPUBLISHED]
+        assert messages == ["Nothing was unpublished.", NOT_UNPUBLISHED]
         assert set(live(about, privacy_notice)) == {"About us", "Privacy notice"}
 
     def test_from_the_editor_leaves_out_subpages_it_wouldnt_unpublish(
@@ -698,7 +757,7 @@ class TestUnpublishingThePrivacyNotice:
 
         messages = unpublish(client, moderator, about, include_descendants="on")
 
-        assert messages == [NOT_UNPUBLISHED]
+        assert messages == ["Nothing was unpublished.", NOT_UNPUBLISHED]
         assert set(live(about, privacy_notice, donate)) == {"About us", "Privacy notice", "Donate"}
 
 
