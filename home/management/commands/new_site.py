@@ -256,7 +256,8 @@ class Command(BaseCommand):
             self.stdout.write(f"Draft  {self.language(languages, page)}   {page.title}")
         # The running site keeps its list of home pages in its own memory, which this can't clear.
         self.stdout.write(
-            "\nRestart the site now, or its second language can take up to an hour to appear."
+            "\nRestart the site now, or for up to an hour its second language's home page"
+            " redirects to the main one and the language switcher stays hidden."
         )
         self.stdout.write("\nStill to do:")
         for number, step in enumerate(still_to_do(), start=1):
