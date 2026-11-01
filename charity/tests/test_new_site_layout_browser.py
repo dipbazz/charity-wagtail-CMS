@@ -15,6 +15,7 @@ pytestmark = [pytest.mark.browser, pytest.mark.django_db]
 def test_the_day_one_home_page_fits_and_can_be_tapped_at_every_width(site_page, site, path):
     call_command(
         "new_site",
+        interactive=False,
         name_en="Bright Future",
         name_ne="उज्यालो भविष्य",
         email="hello@brightfuture.example",

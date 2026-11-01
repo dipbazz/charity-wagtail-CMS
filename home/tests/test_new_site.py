@@ -53,11 +53,28 @@ NOT_BUILT_YET = {
 
 
 def new_site(stdout=None, **options):
-    """Runs the command; what it printed."""
+    """Runs the command without asking anything; what it printed."""
     out = stdout or io.StringIO()
     names = {"name_en": "Bright Future", "name_ne": "उज्यालो भविष्य"}
-    call_command("new_site", stdout=out, **{**names, **options})
+    call_command("new_site", stdout=out, interactive=False, **{**names, **options})
     return out.getvalue()
+
+
+def answering(monkeypatch, *answers, **options):
+    """Runs the command, typing `answers` in turn; the questions it asked."""
+    asked = []
+    typed = iter(answers)
+
+    def type_answer(question):
+        asked.append(question)
+        answer = next(typed)
+        if isinstance(answer, type):
+            raise answer
+        return answer
+
+    monkeypatch.setattr("builtins.input", type_answer)
+    call_command("new_site", stdout=io.StringIO(), stderr=io.StringIO(), **options)
+    return asked
 
 
 def nepali_home(home_page):
@@ -251,6 +268,82 @@ class TestSiteSettings:
         assert settings_.texts.get(locale__language_code="en").name == "Bright Future"
         assert settings_.contact_email == "hello@brightfuture.example"
         assert settings_.phone == "+977 1 400 0000"
+
+
+class TestAskingOneAtATime:
+    def test_asks_for_each_value_and_saves_the_answers(self, monkeypatch, site):
+        asked = answering(
+            monkeypatch,
+            "उज्यालो भविष्य",
+            "Bright Future",
+            "hello@brightfuture.example",
+            "+977 1 400 0000",
+        )
+
+        assert [question.split(":")[0] for question in asked] == [
+            "Charity's name in Nepali",
+            "Charity's name in English",
+            "Main email (optional, Enter to skip)",
+            "Main phone (optional, Enter to skip)",
+        ]
+        settings_ = SiteSettings.for_site(Site.objects.get(pk=site.pk))
+        assert settings_.texts.get(locale__language_code="ne").name == "उज्यालो भविष्य"
+        assert settings_.texts.get(locale__language_code="en").name == "Bright Future"
+        assert settings_.contact_email == "hello@brightfuture.example"
+        assert settings_.phone == "+977 1 400 0000"
+
+    def test_enter_skips_what_is_optional(self, monkeypatch, site):
+        answering(monkeypatch, "उज्यालो भविष्य", "Bright Future", "", "")
+
+        settings_ = SiteSettings.for_site(site)
+        assert settings_.contact_email == ""
+        assert settings_.phone == ""
+
+    @pytest.mark.parametrize(
+        "answers",
+        [
+            ("", "  ", "उज्यालो भविष्य", "Bright Future", "", ""),
+            ("उज्यालो भविष्य", "Bright Future", "not an address", "hello@brightfuture.example", ""),
+            ("उज्यालो भविष्य", "Bright Future", "", "ask at office", "+977 1 400 0000"),
+        ],
+        ids=["blank name", "bad email", "bad phone"],
+    )
+    def test_asks_again_after_an_answer_it_cant_use(self, monkeypatch, home_page, answers):
+        asked = answering(monkeypatch, *answers)
+
+        assert len(asked) == len(answers)
+        assert Page.objects.child_of(home_page).exists()
+
+    def test_doesnt_ask_for_what_the_command_was_given(self, monkeypatch, site):
+        asked = answering(monkeypatch, "", "", name_ne="उज्यालो भविष्य", name_en="Bright Future")
+
+        assert len(asked) == 2
+        assert "email" in asked[0]
+
+    def test_a_bad_value_given_to_the_command_is_refused(self, monkeypatch, home_page):
+        with pytest.raises(CommandError, match="email"):
+            answering(monkeypatch, name_ne="क", name_en="B", email="not an address")
+
+        assert not Page.objects.child_of(home_page).exists()
+
+    def test_refuses_a_site_with_pages_before_asking_anything(self, monkeypatch, home_page):
+        home_page.add_child(instance=StandardPage(title="Ours", slug="ours"))
+
+        with pytest.raises(CommandError, match="already has pages"):
+            answering(monkeypatch)
+
+    @pytest.mark.parametrize("stop", [KeyboardInterrupt, EOFError])
+    def test_stopping_part_way_changes_nothing(self, monkeypatch, home_page, stop):
+        with pytest.raises(CommandError, match="nothing was changed"):
+            answering(monkeypatch, "उज्यालो भविष्य", stop)
+
+        assert not Page.objects.child_of(home_page).exists()
+
+    def test_without_asking_a_name_is_still_needed(self, home_page):
+        with pytest.raises(CommandError, match="name"):
+            call_command("new_site", interactive=False, stdout=io.StringIO())
+
+        assert not Page.objects.child_of(home_page).exists()
 
 
 class TestWhatItRefuses:

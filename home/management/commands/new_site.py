@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.validators import validate_email
 from django.db import transaction
 from django.utils import translation
+from django.utils.translation import get_language_info
 from django.utils.translation import gettext as _
 from wagtail.models import Locale, Site
 
@@ -155,45 +156,75 @@ def still_to_do():
     ]
 
 
+def clean_name(value):
+    value = value.strip()
+    if not value:
+        raise CommandError("The charity's name is needed in every language.")
+    return value
+
+
+def clean_email(value):
+    value = value.strip()
+    if value:
+        try:
+            validate_email(value)
+        except ValidationError as error:
+            raise CommandError(f"{value} isn't an email address.") from error
+    return value
+
+
+def clean_phone(value):
+    value = value.strip()
+    if value and (
+        not any(character.isdigit() for character in value)
+        or len(value) > SiteSettings._meta.get_field("phone").max_length
+    ):
+        raise CommandError(f"{value} isn't a phone number.")
+    return value
+
+
+def questions():
+    """What the command asks, in order, as (option, question, clean); each also has its own
+    `--option`. A new value is one more line here. Languages are named in English: a console that
+    can't print Nepali can still ask."""
+    return [
+        *(
+            (f"name_{code}", f"Charity's name in {get_language_info(code)['name']}", clean_name)
+            for code, _language in settings.WAGTAIL_CONTENT_LANGUAGES
+        ),
+        ("email", "Main email (optional, Enter to skip)", clean_email),
+        ("phone", "Main phone (optional, Enter to skip)", clean_phone),
+    ]
+
+
 class Command(BaseCommand):
     help = (
-        "Set up a new charity's site: the standard pages as drafts and a home page in each "
-        "language. Refuses a site that already has pages."
+        "Set up a new charity's site, asking for each value in turn: the standard pages as drafts "
+        "and a home page in each language. Refuses a site that already has pages."
     )
 
     def add_arguments(self, parser):
-        for code, language in settings.WAGTAIL_CONTENT_LANGUAGES:
-            parser.add_argument(
-                f"--name-{code}", required=True, help=f"The charity's name in {language}."
-            )
-        parser.add_argument("--email", default="", help="The charity's main email, if it sent one.")
-        parser.add_argument("--phone", default="", help="The charity's main phone, if it sent one.")
+        for option, question, _clean in questions():
+            parser.add_argument(f"--{option.replace('_', '-')}", help=f"{question}.")
+        parser.add_argument(
+            "--no-input",
+            action="store_false",
+            dest="interactive",
+            help="Ask nothing: use only the values given here.",
+        )
 
     def handle(self, *args, **options):
-        homes, pages = self.set_up(options)
+        site, home = self.site_to_set_up()
+        answers = {
+            option: self.answer(options, option, question, clean)
+            for option, question, clean in questions()
+        }
+        homes, pages = self.set_up(site, home, answers)
         # After the transaction: a setup that worked stays, even if printing it fails.
         self.report(homes, pages)
 
-    @transaction.atomic
-    def set_up(self, options):
-        names = {
-            code: options[f"name_{code}"].strip() for code, _ in settings.WAGTAIL_CONTENT_LANGUAGES
-        }
-        email = options["email"].strip()
-        phone = options["phone"].strip()
-        if not all(names.values()):
-            raise CommandError("The charity's name is needed in every language.")
-        if email:
-            try:
-                validate_email(email)
-            except ValidationError as error:
-                raise CommandError(f"{email} isn't an email address.") from error
-        if phone and (
-            not any(character.isdigit() for character in phone)
-            or len(phone) > SiteSettings._meta.get_field("phone").max_length
-        ):
-            raise CommandError(f"{phone} isn't a phone number.")
-
+    def site_to_set_up(self):
+        """Checked before asking anything, so nobody answers questions for a site it refuses."""
         site = Site.objects.filter(is_default_site=True).first()
         home = site and site.root_page.specific
         if not isinstance(home, HomePage):
@@ -202,6 +233,28 @@ class Command(BaseCommand):
             )
         if any(page.get_children().exists() for page in [home, *home.get_translations()]):
             raise CommandError(NOT_NEW)
+        return site, home
+
+    def answer(self, options, option, question, clean):
+        """A value given to the command is used as it is, and refused if it's wrong; one typed is
+        asked for again."""
+        if options[option] is not None or not options["interactive"]:
+            return clean(options[option] or "")
+        while True:
+            try:
+                return clean(input(f"{question}: "))
+            except CommandError as error:
+                self.stderr.write(str(error))
+            except (KeyboardInterrupt, EOFError) as stopped:
+                raise CommandError("Stopped, so nothing was changed.") from stopped
+
+    @transaction.atomic
+    def set_up(self, site, home, answers):
+        names = {
+            code: answers[f"name_{code}"] for code, _language in settings.WAGTAIL_CONTENT_LANGUAGES
+        }
+        email = answers["email"]
+        phone = answers["phone"]
 
         main = home.locale.language_code
         with translation.override(main):
