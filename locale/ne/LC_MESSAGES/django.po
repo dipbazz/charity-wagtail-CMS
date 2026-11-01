@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-25 02:40+0000\n"
+"POT-Creation-Date: 2026-10-30 11:13+0000\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -800,6 +800,88 @@ msgstr "यो तस्बिर धेरै ठूलो छ: अझ सा�
 #, python-format
 msgid "Enter a mobile number, like %(example)s."
 msgstr "मोबाइल नम्बर लेख्नुहोस्, जस्तै %(example)s।"
+
+msgid "What we collect"
+msgstr "हामी के राख्छौं"
+
+msgid "<p>When you pledge a gift, we keep your name, email address and the message you write, and your home address and postcode if you give them. For a monthly gift you can also give a mobile number. If you pay by scanning our QR code, you can send us a screenshot of your app's receipt. When you sign up to volunteer, we keep the answers you give on the form.</p>"
+msgstr "<p>तपाईंले दान गर्ने वचन दिँदा हामी तपाईंको नाम, इमेल ठेगाना र तपाईंले लेखेको सन्देश राख्छौं; तपाईंले दिनुभयो भने घरको ठेगाना र पोस्टकोड पनि राख्छौं। मासिक दानका लागि तपाईं मोबाइल नम्बर पनि दिन सक्नुहुन्छ। हाम्रो QR कोड स्क्यान गरेर भुक्तानी गर्नुभयो भने तपाईं आफ्नो एपको रसिदको स्क्रिनसट पठाउन सक्नुहुन्छ। स्वयंसेवक बन्न दर्ता गर्दा तपाईंले फाराममा दिएका जवाफ हामी राख्छौं।</p>"
+
+msgid "What we use it for"
+msgstr "हामी यसलाई केका लागि प्रयोग गर्छौं"
+
+#, python-format
+msgid "<ul><li>To arrange your gift or your volunteering, and to thank you.</li><li>Your mobile number only to remind you each month to give, on WhatsApp or by text.</li><li>Your email address for stories and appeals only if you ticked <b>%(email_updates)s</b>.</li><li>Your name, the appeal and the date on a page you can share and in our list of recent supporters only if you ticked <b>%(show_on_website)s</b>, once you've told us you've paid, and the amount once your gift has arrived.</li></ul><p>Your message is for our team only and never appears on the website.</p>"
+msgstr "<ul><li>तपाईंको दान वा स्वयंसेवाको व्यवस्था गर्न र तपाईंलाई धन्यवाद दिन।</li><li>तपाईंको मोबाइल नम्बर, हरेक महिना दान गर्न WhatsApp वा SMS मार्फत सम्झाउन मात्र।</li><li>तपाईंको इमेल ठेगाना, कथा र अपिलहरूका लागि, तपाईंले <b>%(email_updates)s</b> मा चिनो लगाउनुभएको भए मात्र।</li><li>तपाईंको नाम, अपिल र मिति, तपाईंले सेयर गर्न सक्ने पृष्ठमा र हाम्रा हालका दाताहरूको सूचीमा, तपाईंले <b>%(show_on_website)s</b> मा चिनो लगाउनुभएको भए मात्र, तपाईंले भुक्तानी गरेको जानकारी दिएपछि; र रकम, तपाईंको दान आइपुगेपछि।</li></ul><p>तपाईंको सन्देश हाम्रो टोलीका लागि मात्र हो र वेबसाइटमा कहिल्यै देखिँदैन।</p>"
+
+msgid "Who can see it"
+msgstr "यो कसले हेर्न सक्छ"
+
+msgid "<p>Only the members of our team who manage gifts and volunteers. We don't sell your details or share them with anyone else.</p>"
+msgstr "<p>दान र स्वयंसेवक हेर्ने हाम्रो टोलीका सदस्यहरूले मात्र। हामी तपाईंको विवरण बेच्दैनौं र अरू कसैलाई दिँदैनौं।</p>"
+
+msgid "How long we keep it"
+msgstr "हामी यसलाई कति समय राख्छौं"
+
+msgid "<p>[Write: how long you keep pledges and volunteer sign-ups, and why.]</p>"
+msgstr "<p>[लेख्नुहोस्: दान वचन र स्वयंसेवक दर्ता कति समय राख्नुहुन्छ, र किन।]</p>"
+
+msgid "<p>A screenshot of a receipt is seen only by the team members who check payments. We keep it until we've checked your payment, and 30 days at most, then delete it; it isn't kept in our backups.</p>"
+msgstr "<p>रसिदको स्क्रिनसट भुक्तानी जाँच गर्ने टोलीका सदस्यहरूले मात्र हेर्छन्। तपाईंको भुक्तानी जाँच नगरेसम्म, बढीमा ३० दिन, हामी यसलाई राख्छौं र त्यसपछि मेटाउँछौं; यो हाम्रो ब्याकअपमा राखिँदैन।</p>"
+
+msgid "Seeing or deleting your details"
+msgstr "तपाईंको विवरण हेर्ने वा मेटाउने"
+
+msgid "<p>[Write: which role to contact, and how, to see, correct or delete the details you hold about someone.]</p>"
+msgstr "<p>[लेख्नुहोस्: आफ्नो विवरण हेर्न, सच्याउन वा मेटाउन कुन पदमा रहेका व्यक्तिलाई कसरी सम्पर्क गर्ने।]</p>"
+
+msgid "Volunteer with us"
+msgstr "हामीसँग स्वयंसेवा गर्नुहोस्"
+
+msgid "<p>[Write: what volunteers do with you, and how much time it takes.]</p>"
+msgstr "<p>[लेख्नुहोस्: स्वयंसेवकले तपाईंसँग के गर्छन्, र कति समय लाग्छ।]</p>"
+
+msgid "<p>[Write: what happens next, and when you'll be in touch.]</p>"
+msgstr "<p>[लेख्नुहोस्: अब के हुन्छ, र तपाईंले कहिले सम्पर्क गर्नुहुन्छ।]</p>"
+
+msgid "New volunteer sign-up"
+msgstr "नयाँ स्वयंसेवक दर्ता"
+
+msgid "Phone number"
+msgstr "फोन नम्बर"
+
+msgid "When are you free?"
+msgstr "तपाईं कहिले फुर्सदमा हुनुहुन्छ?"
+
+msgid "How would you like to help?"
+msgstr "तपाईं कसरी सहयोग गर्न चाहनुहुन्छ?"
+
+msgid "About us"
+msgstr "हाम्रो बारेमा"
+
+msgid "[Write: who you are, where you work and who you help.]"
+msgstr "[लेख्नुहोस्: तपाईं को हुनुहुन्छ, कहाँ काम गर्नुहुन्छ र कसलाई सहयोग गर्नुहुन्छ।]"
+
+msgid "Appeals"
+msgstr "सहयोग अपिल"
+
+msgid "[Write: one sentence on what your appeals pay for.]"
+msgstr "[लेख्नुहोस्: तपाईंका अपिलले के-केमा खर्च गर्छन्, एक वाक्यमा।]"
+
+msgid "Stories"
+msgstr "कथाहरू"
+
+msgid "[Write: one sentence on the stories you share here.]"
+msgstr "[लेख्नुहोस्: यहाँ कस्ता कथा सेयर गर्नुहुन्छ, एक वाक्यमा।]"
+
+msgid "[Write: one sentence on what a gift does.]"
+msgstr "[लेख्नुहोस्: दानले के गर्छ, एक वाक्यमा।]"
+
+msgid "How we use the details you give us."
+msgstr "तपाईंले दिएको विवरण हामी कसरी प्रयोग गर्छौं।"
+
+msgid "Our new website is on its way."
+msgstr "हाम्रो नयाँ वेबसाइट बन्दै छ।"
 
 msgid "Current appeals"
 msgstr "हालका अपिलहरू"

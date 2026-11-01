@@ -84,6 +84,7 @@ def check_before_unpublishing(request, page):
     refusals = refusals_to_unpublish(pages, going_together=pages)
     if not refusals:
         return None
+    messages.error(request, "Nothing was unpublished.")
     for refusal in refusals:
         messages.error(request, str(refusal))
     return redirect("wagtailadmin_pages:edit", page.pk)

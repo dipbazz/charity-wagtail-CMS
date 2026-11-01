@@ -5,7 +5,8 @@ import re
 import pytest
 from django.core.cache import cache
 from django.urls import clear_url_caches
-from wagtail.models import Locale
+from wagtail.models import Locale, Site
+from wagtail.models.sites import SITE_ROOT_PATHS_CACHE_KEY, SITE_ROOT_PATHS_CACHE_VERSION
 
 from home.models import StandardPage
 
@@ -119,6 +120,50 @@ class TestSwitcherOnANepaliFirstSite:
         translate(nepali_first, Locale.objects.get(language_code="en"), "Home")
 
         assert switcher_links(client, "/") == {"नेपाली": "/", "English": "/en/"}
+
+
+class TestAHomePageTheRunningSiteHasntHeardOf:
+    """Each process keeps its list of home pages, so one added elsewhere has no URL here yet."""
+
+    @pytest.fixture
+    def stale_list(self):
+        def main_language_only():
+            paths = [path for path in Site.get_site_root_paths() if path.language_code != "ne"]
+            cache.set(SITE_ROOT_PATHS_CACHE_KEY, paths, version=SITE_ROOT_PATHS_CACHE_VERSION)
+
+        return main_language_only
+
+    def test_a_translated_page_still_opens_without_the_switcher(
+        self, client, hamro_barema, stale_list
+    ):
+        stale_list()
+
+        response = client.get("/about/")
+
+        assert response.status_code == 200
+        assert "language-switcher" not in response.content.decode()
+
+    def test_the_home_page_still_opens(self, client, home_page, nepali_home_page, stale_list):
+        stale_list()
+
+        assert client.get("/").status_code == 200
+
+    def test_a_page_in_one_language_has_no_link_to_nowhere(
+        self, client, about, nepali_home_page, stale_list
+    ):
+        stale_list()
+
+        assert "language-switcher" not in client.get("/about/").content.decode()
+
+    def test_search_has_no_link_to_nowhere(self, client, home_page, nepali_home_page, stale_list):
+        stale_list()
+
+        assert "language-switcher" not in client.get("/search/?query=water").content.decode()
+
+    def test_leaves_the_language_out_of_the_alternates(self, client, hamro_barema, stale_list):
+        stale_list()
+
+        assert alternates(client, "/about/") == {}
 
 
 class TestAlternates:

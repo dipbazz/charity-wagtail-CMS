@@ -1,4 +1,6 @@
 ID,Step,Section,Question,Help,Answer type,Options,In form,Owner,Notes
+NM01,1 Go live,Home page / गृहपृष्ठ,"Your organisation's name, as it should appear on the website, in Nepali and English / वेबसाइटमा देखिने संस्थाको नाम, नेपाली र अंग्रेजीमा","Shown at the top and bottom of every page.
+हरेक पृष्ठको माथि र तल देखिन्छ।",short,,Yes,Charity,Site name; new_site command
 HP01,1 Go live,Home page / गृहपृष्ठ,Your mission in one sentence (up to 20 words) / एक वाक्यमा तपाईंको उद्देश्य (२० शब्दसम्म),"Shown in large letters at the top of the home page, next to the Donate button. Say what you do and for whom. Not sure? Send a few ideas and we will help you choose.
 गृहपृष्ठको सबैभन्दा माथि, दान बटनसँगै ठूलो अक्षरमा देखिन्छ। तपाईं के गर्नुहुन्छ र कसका लागि, भन्नुहोस्। निश्चित हुनुहुन्न भने केही विचार पठाउनुहोस्, हामी छान्न सहयोग गर्छौं।",long,,Yes,Charity,ne+en
 HP02,1 Go live,Home page / गृहपृष्ठ,Banner photo / ब्यानर फोटो,"One wide photo (phone held sideways) that shows your work, with the important part in the middle.

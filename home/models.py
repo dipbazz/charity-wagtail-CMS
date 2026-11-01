@@ -8,10 +8,10 @@ from wagtail.fields import StreamField
 from wagtail.models import Page, Site
 from wagtail.search import index
 
-from campaigns.models import CampaignPage
+from campaigns.models import CampaignPage, phone_link
 from core.blocks import BaseStreamBlock
 from core.images import with_card_images
-from core.models import SocialMetaMixin
+from core.models import SiteSettings, SocialMetaMixin
 from core.publishing import PublishGuardMixin
 
 
@@ -69,8 +69,16 @@ class HomePage(PublishGuardMixin, SocialMetaMixin, Page):
             raise Http404
         return super().route(request, path_components)
 
+    @property
+    def on_day_one(self):
+        """Whether nothing has been written yet, so the page says the site is on its way. A hero
+        image alone doesn't end it: a photo says nothing about the charity."""
+        return not (self.hero_heading or self.hero_text or self.body)
+
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
+        if self.on_day_one:
+            context["phone_link"] = phone_link(SiteSettings.for_request(request))
         context["featured_campaigns"] = with_card_images(
             CampaignPage.objects.live()
             .public()

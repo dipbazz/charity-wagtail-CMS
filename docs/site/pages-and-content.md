@@ -24,6 +24,16 @@ The **main menu** is the home page's children with "Show in menus" ticked, in th
 read, marking the current page and section for screen readers (`{% main_menu %}`,
 `core/templatetags/navigation_tags.py`).
 
+## A new site's home page
+
+While a home page's hero heading, hero text and body are all empty, in any language, it shows
+only the charity's name, "Our new website is on its way." and the main email and phone as links,
+and it stays out of search results. A hero image alone doesn't end this. Writing any of the three
+does, at once. `new_site` leaves both home pages this way ([Hosting](../hosting.md#management-commands)).
+
+The other standard pages start as drafts, so the menu starts empty and fills as each is published,
+and the header has no Donate button until the Donate page is live.
+
 ## What stops a page going live
 
 A few mistakes would put something untrue or unlawful on a live site, so the admin refuses to
@@ -42,7 +52,7 @@ Drafts always save. Every way a page goes live asks the same check:
 
 | Route | When it's refused |
 |---|---|
-| Publish, or Submit for moderation, in the editor | The error is on the field, or on the block in a body |
+| Publish, or Submit for moderation, in the editor | The error is on the field, or on the block in a body, and the banner says the page can't go live yet, the changes are still there and it can be saved as a draft, in place of Wagtail's "could not be saved" or, on a new page, "could not be created" |
 | Approving a workflow task | The page's edit view says why; the task waits to be approved again |
 | Bulk publish | The chosen pages, and their subpages when included, are checked first: one refusal and nothing is published, with each page named. Each is checked as the site is now, so a form chosen with the privacy notice is refused: publish the notice on its own first |
 | A go-live time | The page stays a draft with its go-live time cleared, from its draft too; its History and the server log say why, and the pages after it still go live |
