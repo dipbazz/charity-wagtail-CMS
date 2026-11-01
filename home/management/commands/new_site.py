@@ -6,6 +6,7 @@ from django.db import transaction
 from django.utils import translation
 from django.utils.translation import get_language_info
 from django.utils.translation import gettext as _
+from wagtail.log_actions import log
 from wagtail.models import Locale, Site
 
 from campaigns.forms import PledgeForm
@@ -13,6 +14,7 @@ from campaigns.models import CampaignIndexPage, DonatePage
 from contact.models import FormField, FormPage
 from core.models import SiteSettings, SiteSettingsText
 from home.models import HomePage, StandardPage
+from home.standard_site import NEW_SITE_BUILT
 from news.models import NewsIndexPage
 
 NOT_NEW = (
@@ -272,6 +274,9 @@ class Command(BaseCommand):
         site.site_name = names[main]
         site.save()
         self.write_settings(site, names, by_slug, email, phone)
+        # What lets the dashboard panel say this site's standard pages are done; a hand-built
+        # site is never told that.
+        log(instance=home, action=NEW_SITE_BUILT)
         return homes, pages
 
     def name_home(self, home, name):

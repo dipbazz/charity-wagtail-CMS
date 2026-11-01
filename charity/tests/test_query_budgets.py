@@ -8,6 +8,7 @@ and say why; if it saves queries, lower the budget.
 import pytest
 
 from campaigns.models import Pledge
+from home.wagtail_hooks import still_to_write
 
 pytestmark = pytest.mark.django_db
 
@@ -57,6 +58,16 @@ def test_page_stays_within_its_query_budget(
 
     with django_assert_max_num_queries(budget):
         client.get(path)
+
+
+def test_the_still_to_write_panel_stays_within_its_query_budget(
+    demo_site, django_user_model, django_assert_max_num_queries
+):
+    # It reads a fixed list of standard pages in each language, so this doesn't grow with the site.
+    user = django_user_model.objects.create_superuser("budget", password="pw")
+
+    with django_assert_max_num_queries(30):
+        still_to_write(user, demo_site)
 
 
 # The demo's shared gift (#100), whose addresses are random. Both pages spend three more than

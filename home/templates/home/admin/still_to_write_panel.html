@@ -1,0 +1,52 @@
+{% load i18n wagtailadmin_tags %}
+{% if result.groups %}
+    {% blocktrans asvar heading with left=result.left total=result.total %}Pages still to write: {{ left }} of {{ total }}{% endblocktrans %}
+{% elif result.all_done %}
+    {% trans "Standard pages" as heading %}
+{% else %}
+    {% trans "Still to do" as heading %}
+{% endif %}
+{% panel id="still-to-write" heading=heading classname="w-panel--dashboard" %}
+    {% if result.all_done %}
+        <p>{% trans "Every standard page is written and published." %}</p>
+    {% endif %}
+    {% if result.add_registration_url is not None %}
+        <p>
+            {% if result.add_registration_url %}
+                <a href="{{ result.add_registration_url }}">{% trans "Add your registration details" %}</a>
+            {% else %}
+                {% trans "Add your registration details" %}
+            {% endif %}
+        </p>
+    {% endif %}
+    {% for group in result.groups %}
+        <h3>{{ group.language }}</h3>
+        <table class="listing listing--dashboard">
+            <thead class="w-sr-only">
+                <tr>
+                    <th>{% trans "Page" %}</th>
+                    <th>{% trans "Status" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in group.rows %}
+                    <tr>
+                        <td class="title">
+                            {% if row.edit_url %}<a href="{{ row.edit_url }}">{{ row.title }}</a>{% else %}{{ row.title }}{% endif %}{% if row.why %} ({{ row.why }}){% endif %}
+                        </td>
+                        <td>
+                            {% if row.settings_url %}
+                                <a href="{{ row.settings_url }}">{{ row.status }}</a>
+                            {% else %}
+                                {{ row.status }}
+                            {% endif %}
+                            {% if row.translate_url %}
+                                <a href="{{ row.translate_url }}">{% trans "Translate" %}</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
+{% endpanel %}
