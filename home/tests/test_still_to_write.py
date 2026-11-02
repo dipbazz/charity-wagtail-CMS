@@ -4,6 +4,7 @@ from datetime import timedelta
 from io import StringIO
 
 import pytest
+from django.contrib.auth.models import Permission
 from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
@@ -283,6 +284,19 @@ class TestOnTheDashboard:
 
         assert "Pages still to write: 12 of 12" in html
         assert html.index("Pages still to write") < html.index("Fundraising overview")
+
+    def test_not_shown_to_someone_who_can_change_no_page_or_settings(
+        self, home_page, django_user_model, client
+    ):
+        built_site(home_page)
+        user = django_user_model.objects.create_user("pledges", password="pw")
+        user.user_permissions.add(Permission.objects.get(codename="access_admin"))
+        client.force_login(user)
+
+        response = client.get(reverse("wagtailadmin_home"))
+
+        assert response.status_code == 200
+        assert b"still-to-write" not in response.content
 
     def test_a_site_with_nothing_to_say_shows_no_panel(self, home_page, admin, client):
         site = built_site(home_page)

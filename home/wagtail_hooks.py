@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 from wagtail import hooks
 from wagtail.admin.ui.components import Component
 from wagtail.models import Locale, PageLogEntry, Site
+from wagtail.permissions import page_permission_policy
 
 from core.models import SiteSettings
 from core.publishing import has_placeholders
@@ -157,10 +158,18 @@ class StillToWritePanel(Component):
         return context
 
 
+def can_act_on_it(user):
+    """Someone who can change no page and no settings, such as a pledges-only user, can do
+    nothing the panel asks."""
+    return user.has_perm(
+        "core.change_sitesettings"
+    ) or page_permission_policy.user_has_any_permission(user, {"add", "change", "publish"})
+
+
 @hooks.register("construct_homepage_panels")
 def add_still_to_write_panel(request, panels):
     site = Site.find_for_request(request)
-    if site is None:
+    if site is None or not can_act_on_it(request.user):
         return
     result = still_to_write(request.user, site)
     if result.groups or result.all_done or result.add_registration_url is not None:

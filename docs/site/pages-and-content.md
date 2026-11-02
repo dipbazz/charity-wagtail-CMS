@@ -47,6 +47,9 @@ set links there); the others are found by their address under the home page unti
 choosers of their own. A line above the list asks for the registration details while Site settings
 has none.
 
+Only someone who can change a page or Site settings sees the panel; a pledges-only user can do
+nothing it asks.
+
 Nothing is stored: unpublishing a page, or an upgrade adding a standard page, brings its row back.
 With nothing left, a site `new_site` built says "Every standard page is written and published." for
 7 days after the last one first went live (republishing a page later doesn't bring it back); it
