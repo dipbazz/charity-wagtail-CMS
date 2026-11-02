@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: charity-cms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-30 11:13+0000\n"
+"POT-Creation-Date: 2026-11-01 10:23+0000\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Charity CMS\n"
 "Language-Team: Nepali\n"
@@ -880,11 +880,57 @@ msgstr "[लेख्नुहोस्: दानले के गर्छ, �
 msgid "How we use the details you give us."
 msgstr "तपाईंले दिएको विवरण हामी कसरी प्रयोग गर्छौं।"
 
+msgid "needed before any form goes live"
+msgstr "कुनै पनि फारम प्रकाशित गर्नुअघि चाहिन्छ"
+
+msgid "brings back the Donate button"
+msgstr "दान दिनुहोस् बटन फर्काउँछ"
+
+#, python-format
+msgid "Pages still to write: %(left)s of %(total)s"
+msgstr "लेख्न बाँकी पृष्ठहरू: %(total)s मध्ये %(left)s"
+
+msgid "Standard pages"
+msgstr "मानक पृष्ठहरू"
+
+msgid "Still to do"
+msgstr "गर्न बाँकी"
+
+msgid "Every standard page is written and published."
+msgstr "सबै मानक पृष्ठहरू लेखिएका र प्रकाशित भएका छन्।"
+
+msgid "Add your registration details"
+msgstr "आफ्नो दर्ता विवरण थप्नुहोस्"
+
+msgid "Page"
+msgstr "पृष्ठ"
+
+msgid "Status"
+msgstr "स्थिति"
+
+msgid "Translate"
+msgstr "अनुवाद गर्नुहोस्"
+
 msgid "Our new website is on its way."
 msgstr "हाम्रो नयाँ वेबसाइट बन्दै छ।"
 
 msgid "Current appeals"
 msgstr "हालका अपिलहरू"
+
+msgid "Has [Write: …] text"
+msgstr "[लेख्नुहोस्: …] पाठ बाँकी छ"
+
+msgid "Draft"
+msgstr "मस्यौदा"
+
+msgid "Not set"
+msgstr "छानिएको छैन"
+
+msgid "Translate after publishing"
+msgstr "प्रकाशित गरेपछि अनुवाद गर्नुहोस्"
+
+msgid "Not translated yet"
+msgstr "अनुवाद भएको छैन"
 
 msgid "News categories"
 msgstr "समाचारका वर्गहरू"

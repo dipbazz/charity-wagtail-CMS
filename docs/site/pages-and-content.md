@@ -34,6 +34,28 @@ does, at once. `new_site` leaves both home pages this way ([Hosting](../hosting.
 The other standard pages start as drafts, so the menu starts empty and fills as each is published,
 and the header has no Donate button until the Donate page is live.
 
+## Pages still to write
+
+The top of the admin's dashboard lists what's left of the [standard](standard.md#pages-every-site-has)
+on the site, on every site, however it was built: "Pages still to write: 4 of 12", counting each
+standard page with a page type today once per language. Rows are grouped by language, main
+language first: the privacy notice, Donate, the menu sections in the standard's order. Each is the
+page's title, linked to edit it if you may, and one status: **Not set**, **Draft**, **Has [Write:
+…] text**, **Not translated yet** with a Translate link, or **Translate after publishing** while
+the main page isn't set or live. The privacy notice and Donate are the pages chosen in Site settings (Not
+set links there); the others are found by their address under the home page until they have
+choosers of their own. A line above the list asks for the registration details while Site settings
+has none.
+
+Only someone who can change a page or Site settings sees the panel; a pledges-only user can do
+nothing it asks.
+
+Nothing is stored: unpublishing a page, or an upgrade adding a standard page, brings its row back.
+With nothing left, a site `new_site` built says "Every standard page is written and published." for
+7 days after the last one first went live (republishing a page later doesn't bring it back); it
+knows from an entry `new_site` writes in the home page's History. Any other site shows no panel, so
+it's never told it's done.
+
 ## What stops a page going live
 
 A few mistakes would put something untrue or unlawful on a live site, so the admin refuses to

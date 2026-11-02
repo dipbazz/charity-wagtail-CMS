@@ -5,15 +5,12 @@ from django.core.validators import validate_email
 from django.db import transaction
 from django.utils import translation
 from django.utils.translation import get_language_info
-from django.utils.translation import gettext as _
+from wagtail.log_actions import log
 from wagtail.models import Locale, Site
 
-from campaigns.forms import PledgeForm
-from campaigns.models import CampaignIndexPage, DonatePage
-from contact.models import FormField, FormPage
 from core.models import SiteSettings, SiteSettingsText
-from home.models import HomePage, StandardPage
-from news.models import NewsIndexPage
+from home.models import HomePage
+from home.standard_site import NEW_SITE_BUILT, STANDARD_PAGES
 
 NOT_NEW = (
     "This site already has pages under its home page, so nothing was changed. This command only "
@@ -21,135 +18,21 @@ NOT_NEW = (
 )
 
 
-def privacy_notice_body():
-    """The notice is written for the charity, in the shape of the demo's: only how long it keeps
-    details and who to contact are for it to fill in. It names the tick boxes as the pledge form
-    labels them."""
-    tick_boxes = PledgeForm.Meta.labels
-
-    def section(heading, paragraph):
-        return [
-            ("heading", {"heading_text": heading, "size": "h2"}),
-            ("paragraph", paragraph),
-        ]
-
-    return [
-        *section(
-            _("What we collect"),
-            _(
-                "<p>When you pledge a gift, we keep your name, email address and the message you "
-                "write, and your home address and postcode if you give them. For a monthly gift "
-                "you can also give a mobile number. If you pay by scanning our QR code, you can "
-                "send us a screenshot of your app's receipt. When you sign up to volunteer, we "
-                "keep the answers you give on the form.</p>"
-            ),
-        ),
-        *section(
-            _("What we use it for"),
-            _(
-                "<ul><li>To arrange your gift or your volunteering, and to thank you.</li><li>Your "
-                "mobile number only to remind you each month to give, on WhatsApp or by text."
-                "</li><li>Your email address for stories and appeals only if you ticked "
-                "<b>%(email_updates)s</b>.</li><li>Your name, the appeal and the date on a page "
-                "you can share and in our list of recent supporters only if you ticked "
-                "<b>%(show_on_website)s</b>, once you've told us you've paid, and the amount once "
-                "your gift has arrived.</li></ul><p>Your message is for our team only and never "
-                "appears on the website.</p>"
-            )
-            % {
-                "email_updates": tick_boxes["email_updates"],
-                "show_on_website": tick_boxes["show_on_website"],
-            },
-        ),
-        *section(
-            _("Who can see it"),
-            _(
-                "<p>Only the members of our team who manage gifts and volunteers. We don't sell "
-                "your details or share them with anyone else.</p>"
-            ),
-        ),
-        *section(
-            _("How long we keep it"),
-            _("<p>[Write: how long you keep pledges and volunteer sign-ups, and why.]</p>")
-            + _(
-                "<p>A screenshot of a receipt is seen only by the team members who check payments. "
-                "We keep it until we've checked your payment, and 30 days at most, then delete it; "
-                "it isn't kept in our backups.</p>"
-            ),
-        ),
-        *section(
-            _("Seeing or deleting your details"),
-            _(
-                "<p>[Write: which role to contact, and how, to see, correct or delete the details "
-                "you hold about someone.]</p>"
-            ),
-        ),
-    ]
-
-
-def volunteer_form():
-    form = FormPage(
-        title=_("Volunteer with us"),
-        slug="volunteer",
-        show_in_menus=True,
-        intro=_("<p>[Write: what volunteers do with you, and how much time it takes.]</p>"),
-        thank_you_text=_("<p>[Write: what happens next, and when you'll be in touch.]</p>"),
-        subject=_("New volunteer sign-up"),
-    )
-    form.form_fields = [
-        FormField(label=_("Your name"), field_type="singleline", required=True),
-        FormField(label=_("Phone number"), field_type="singleline", required=False),
-        FormField(label=_("Email address"), field_type="email", required=False),
-        FormField(label=_("When are you free?"), field_type="singleline", required=False),
-        FormField(label=_("How would you like to help?"), field_type="multiline", required=False),
-    ]
-    return form
-
-
 def standard_pages():
     """The standard pages that have a page type today, in the language being read and in the
-    standard's order. #167, #168, #169, #170 and #171 each add theirs."""
-    return [
-        StandardPage(
-            title=_("About us"),
-            slug="about",
-            show_in_menus=True,
-            introduction=_("[Write: who you are, where you work and who you help.]"),
-        ),
-        CampaignIndexPage(
-            title=_("Appeals"),
-            slug="appeals",
-            show_in_menus=True,
-            introduction=_("[Write: one sentence on what your appeals pay for.]"),
-        ),
-        NewsIndexPage(
-            title=_("Stories"),
-            slug="stories",
-            show_in_menus=True,
-            introduction=_("[Write: one sentence on the stories you share here.]"),
-        ),
-        volunteer_form(),
-        DonatePage(
-            title=_("Donate"),
-            slug="donate",
-            introduction=_("[Write: one sentence on what a gift does.]"),
-            thank_you_text=_("<p>[Write: what happens next, and when you'll be in touch.]</p>"),
-        ),
-        StandardPage(
-            title=_("Privacy notice"),
-            slug="privacy",
-            introduction=_("How we use the details you give us."),
-            body=privacy_notice_body(),
-        ),
-    ]
+    dashboard panel's order."""
+    return [standard.build() for standard in STANDARD_PAGES]
 
 
 def still_to_do():
-    """What's left once the command has run: first the pages, in the dashboard panel's order."""
+    """What's left once the command has run: first the pages, in the dashboard panel's order. In
+    English, like the rest of what the command prints."""
+    with translation.override("en"):
+        first = [f"{standard.name}: {standard.why}." for standard in STANDARD_PAGES if standard.why]
+        menu = [str(standard.name) for standard in STANDARD_PAGES if not standard.why]
     return [
-        "Privacy notice: needed before any form goes live.",
-        "Donate: brings back the Donate button.",
-        "About us, Appeals, Stories and Volunteer with us: each joins the menu once it's live.",
+        *first,
+        f"{', '.join(menu[:-1])} and {menu[-1]}: each joins the menu once it's live.",
         "Site settings: address, registration and payment details.",
         "DNS: point the charity's domain at this server.",
         "Email: set up sending, and add each form's address to send messages to.",
@@ -272,6 +155,9 @@ class Command(BaseCommand):
         site.site_name = names[main]
         site.save()
         self.write_settings(site, names, by_slug, email, phone)
+        # What lets the dashboard panel say this site's standard pages are done; a hand-built
+        # site is never told that.
+        log(instance=home, action=NEW_SITE_BUILT)
         return homes, pages
 
     def name_home(self, home, name):
