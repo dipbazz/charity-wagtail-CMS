@@ -59,10 +59,10 @@ def finish_every_page(site):
             write_and_publish(page.specific.copy_for_translation(locale, alias=False))
 
 
-def test_the_panel_lists_the_pages_new_site_builds():
-    assert {standard.slug for standard in STANDARD_PAGES} == {
-        page.slug for page in standard_pages()
-    }
+def test_each_standard_page_builds_the_page_the_panel_looks_for():
+    assert [page.slug for page in standard_pages()] == [
+        standard.slug for standard in STANDARD_PAGES
+    ]
 
 
 class TestTheCommandsDrafts:
