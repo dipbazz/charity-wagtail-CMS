@@ -150,6 +150,18 @@ class TestStatuses:
             "wagtailsettings:edit", args=["core", "sitesettings", site.pk]
         )
 
+    def test_a_setting_left_empty_is_still_to_translate_and_counted(self, home_page, admin):
+        site = built_site(home_page)
+        settings = SiteSettings.for_site(site)
+        settings.privacy_page = None
+        settings.save()
+
+        result = panel(admin, site)
+
+        row = result.groups[1].rows[0]
+        assert (row.title, row.status) == ("Privacy notice", "Translate after publishing")
+        assert (result.left, result.total) == (12, 12)
+
 
 class TestWhoCanFollowTheLinks:
     def test_an_editor_gets_edit_links(self, home_page, editor):

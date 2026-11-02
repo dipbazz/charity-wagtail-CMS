@@ -87,6 +87,8 @@ def row_in_second_language(standard, main_page, translation, user):
     if translation is not None:
         status = what_is_left(translation)
         return status and row_for(standard, translation, status, user)
+    if main_page is None:
+        return Row(standard.name, _("Translate after publishing"), standard.why)
     if not main_page.live:
         return Row(main_page.title, _("Translate after publishing"), standard.why)
     translate_url = None
@@ -109,9 +111,8 @@ def still_to_write(user, site):
     translations = []
     for locale in others:
         found = [
-            (standard, page, page.get_translation_or_none(locale))
+            (standard, page, page and page.get_translation_or_none(locale))
             for standard, page in pages
-            if page is not None
         ]
         translations += [translation for _standard, _page, translation in found]
         rows = [row_in_second_language(*each, user) for each in found]

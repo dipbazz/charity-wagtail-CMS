@@ -42,7 +42,7 @@ standard page with a page type today once per language. Rows are grouped by lang
 language first: the privacy notice, Donate, the menu sections in the standard's order. Each is the
 page's title, linked to edit it if you may, and one status: **Not set**, **Draft**, **Has [Write:
 …] text**, **Not translated yet** with a Translate link, or **Translate after publishing** while
-the main page isn't live. The privacy notice and Donate are the pages chosen in Site settings (Not
+the main page isn't set or live. The privacy notice and Donate are the pages chosen in Site settings (Not
 set links there); the others are found by their address under the home page until they have
 choosers of their own. A line above the list asks for the registration details while Site settings
 has none.
