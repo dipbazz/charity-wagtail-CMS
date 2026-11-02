@@ -130,14 +130,14 @@ def still_to_write(user, site):
 
 
 def recently_finished(site, pages, locales):
-    """On a site `new_site` built, for a week after its last standard page went live. A hand-built
-    site isn't told it's done: the standard may ask for more than these pages show."""
+    """On a site `new_site` built, for a week after its last standard page first went live. A
+    hand-built site isn't told it's done: the standard may ask for more than these pages show."""
     if not PageLogEntry.objects.filter(page=site.root_page, action=NEW_SITE_BUILT).exists():
         return False
     if any(page is None for page in pages):
         return False
     every_version = pages + [page.get_translation(locale) for page in pages for locale in locales]
-    published = [page.last_published_at for page in every_version if page.last_published_at]
+    published = [page.first_published_at for page in every_version if page.first_published_at]
     return bool(published) and timezone.now() - max(published) < timedelta(days=DONE_LINE_DAYS)
 
 

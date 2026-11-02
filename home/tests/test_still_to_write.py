@@ -223,8 +223,18 @@ class TestWhenEveryPageIsDone:
     def test_the_line_goes_seven_days_after_the_last_page_went_live(self, home_page, admin):
         site = self.finished(home_page)
         Page.objects.exclude(pk=site.root_page.pk).update(
-            last_published_at=timezone.now() - timedelta(days=8)
+            first_published_at=timezone.now() - timedelta(days=8)
         )
+
+        assert not panel(admin, site).all_done
+
+    def test_republishing_a_page_later_does_not_bring_the_line_back(self, home_page, admin):
+        site = self.finished(home_page)
+        weeks_ago = timezone.now() - timedelta(days=30)
+        Page.objects.exclude(pk=site.root_page.pk).update(
+            first_published_at=weeks_ago, last_published_at=weeks_ago
+        )
+        write_and_publish(Page.objects.get(slug="about", locale=site.root_page.locale))
 
         assert not panel(admin, site).all_done
 

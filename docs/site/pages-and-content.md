@@ -49,8 +49,9 @@ has none.
 
 Nothing is stored: unpublishing a page, or an upgrade adding a standard page, brings its row back.
 With nothing left, a site `new_site` built says "Every standard page is written and published." for
-7 days after the last one went live; it knows from an entry `new_site` writes in the home page's
-History. Any other site shows no panel, so it's never told it's done.
+7 days after the last one first went live (republishing a page later doesn't bring it back); it
+knows from an entry `new_site` writes in the home page's History. Any other site shows no panel, so
+it's never told it's done.
 
 ## What stops a page going live
 
