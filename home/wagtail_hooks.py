@@ -82,8 +82,7 @@ def row_for(standard, page, status, user):
     return Row(page.title, status, standard.why, edit_url=edit_url)
 
 
-def row_in_second_language(standard, main_page, locale, user):
-    translation = main_page.get_translation_or_none(locale)
+def row_in_second_language(standard, main_page, translation, user):
     if translation is not None:
         status = what_is_left(translation)
         return status and row_for(standard, translation, status, user)
@@ -106,12 +105,15 @@ def still_to_write(user, site):
     pages = [(standard, find_page(standard, site, site_settings)) for standard in STANDARD_PAGES]
     main_rows = [row_for_main_page(standard, page, user, site) for standard, page in pages]
     groups = [Group(main.get_display_name(), [row for row in main_rows if row])]
+    translations = []
     for locale in others:
-        rows = [
-            row_in_second_language(standard, page, locale, user)
+        found = [
+            (standard, page, page.get_translation_or_none(locale))
             for standard, page in pages
             if page is not None
         ]
+        translations += [translation for _standard, _page, translation in found]
+        rows = [row_in_second_language(*each, user) for each in found]
         groups.append(Group(locale.get_display_name(), [row for row in rows if row]))
 
     add_registration_url = None
@@ -124,19 +126,19 @@ def still_to_write(user, site):
         total=len(STANDARD_PAGES) * (1 + len(others)),
         all_done=not groups
         and add_registration_url is None
-        and recently_finished(site, [page for _standard, page in pages], others),
+        and recently_finished(site, [page for _standard, page in pages] + translations),
         add_registration_url=add_registration_url,
     )
 
 
-def recently_finished(site, pages, locales):
-    """On a site `new_site` built, for a week after its last standard page first went live. A
-    hand-built site isn't told it's done: the standard may ask for more than these pages show."""
+def recently_finished(site, every_version):
+    """On a site `new_site` built, for a week after its last standard page first went live, in
+    any language. A hand-built site isn't told it's done: the standard may ask for more than these
+    pages show."""
+    if any(page is None for page in every_version):
+        return False
     if not PageLogEntry.objects.filter(page=site.root_page, action=NEW_SITE_BUILT).exists():
         return False
-    if any(page is None for page in pages):
-        return False
-    every_version = pages + [page.get_translation(locale) for page in pages for locale in locales]
     published = [page.first_published_at for page in every_version if page.first_published_at]
     return bool(published) and timezone.now() - max(published) < timedelta(days=DONE_LINE_DAYS)
 

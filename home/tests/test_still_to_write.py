@@ -220,6 +220,15 @@ class TestWhenEveryPageIsDone:
         assert result.all_done
         assert not result.groups
 
+    def test_finding_it_done_reads_each_translation_once(
+        self, home_page, admin, django_assert_max_num_queries
+    ):
+        site = self.finished(home_page)
+
+        # 40 when the done check looked each translation up again.
+        with django_assert_max_num_queries(34):
+            panel(admin, site)
+
     def test_the_line_goes_seven_days_after_the_last_page_went_live(self, home_page, admin):
         site = self.finished(home_page)
         Page.objects.exclude(pk=site.root_page.pk).update(
