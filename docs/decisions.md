@@ -771,7 +771,8 @@ can't be found.
 
 Every outside contributor signs a contributor licence agreement once, before their first pull
 request is merged. They keep their copyright and grant the maintainer, and anyone the project
-passes to, the right to license their contribution on any terms. The text is based on the
+passes to, the right to license their contribution on any terms.
+[The text](https://gist.github.com/dipbazz/9ac6488512242af0f1d767ebebc4f057) is based on the
 [Apache Individual CLA](https://www.apache.org/licenses/contributor-agreements.html#clas).
 [CLA Assistant](https://github.com/cla-assistant/cla-assistant) (cla-assistant.io, maintained by
 SAP) asks on each pull request, keeps the signatures, and reports a `license/cla` check that
