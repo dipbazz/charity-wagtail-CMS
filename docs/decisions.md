@@ -746,8 +746,10 @@ site's users the changed source. The demo photos stay under their own licences
 - A host who changes the code publishes the changes, so improvements can come back to every
   charity. An unchanged copy owes nothing more.
 - The licence binds others, not the copyright holder, who can still license the code on other
-  terms, but only while holding all of it. Accepting outside contributions would first need a
-  contributor licence agreement, or the right to relicense is lost.
+  terms, but only for the parts they hold the copyright to. Outside contributions stay their
+  authors' and come in under the AGPL alone, so before accepting any, contributors sign a
+  contributor licence agreement, or each contribution can't be relicensed without its author's
+  consent.
 - Versions already published stay under the AGPL if the repository goes private later
   ([Choices that work whether the repo is public or private](#choices-that-work-whether-the-repo-is-public-or-private)).
 - Some companies won't use AGPL code internally.
