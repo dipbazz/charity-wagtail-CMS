@@ -626,7 +626,7 @@ class Command(BaseCommand):
         banner.save()
 
         self.add_nepali_pages(home, donate, campaigns, flood, news, flood_story, testimonial)
-        self.add_nepali_snippets(settings, banner, testimonial, [successes, updates])
+        self.add_nepali_snippets(banner, testimonial, [successes, updates])
         self.add_qr_code()
         self.add_shared_gift(donate, kisumu)
 
@@ -791,9 +791,8 @@ class Command(BaseCommand):
         )
         gift.start_payment("esewa", live=False).record(PaymentStatus.PAID, "000DEMO")
 
-    def add_nepali_snippets(self, settings, banner, testimonial, categories):
-        """Translate the banner, the testimonial and the news categories. The settings' Nepali
-        text is written with the English, before the forms are published.
+    def add_nepali_snippets(self, banner, testimonial, categories):
+        """Translate the banner, the testimonial and the news categories.
 
         The partners stay in English: their names are in their logos, and they show a snippet
         with no translation falling back to the main language.
