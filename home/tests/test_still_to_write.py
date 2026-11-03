@@ -9,9 +9,9 @@ from django.contrib.auth.models import Permission
 from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
-from wagtail.models import Page, PageLogEntry, Site
+from wagtail.models import Locale, Page, PageLogEntry, Site
 
-from core.models import SiteSettings
+from core.models import SiteSettings, SiteSettingsText
 from home.management.commands.new_site import standard_pages
 from home.models import StandardPage
 from home.standard_site import NEW_SITE_BUILT, STANDARD_PAGES
@@ -52,7 +52,21 @@ def write_and_publish(page):
     return Page.objects.get(pk=page.pk).specific
 
 
+def register(site, languages=("en", "ne")):
+    """The registration line written in Site settings in `languages`."""
+    settings = SiteSettings.for_site(site)
+    for code in languages:
+        SiteSettingsText.objects.update_or_create(
+            settings=settings,
+            locale=Locale.objects.get(language_code=code),
+            defaults={"registration_line": "Registered charity no. 123"},
+        )
+
+
 def finish_every_page(site):
+    """Every standard page written and live in each language, after the registration line that
+    Donate and the forms need."""
+    register(site)
     main_pages = [Page.objects.get(slug=standard.slug) for standard in STANDARD_PAGES]
     for page in main_pages:
         write_and_publish(page)
@@ -209,9 +223,6 @@ class TestAHandBuiltSite:
         site = built_site(home_page)
         PageLogEntry.objects.filter(action=NEW_SITE_BUILT).delete()
         finish_every_page(site)
-        settings = SiteSettings.for_site(site)
-        settings.charity_number = "123"
-        settings.save()
 
         result = panel(admin, site)
 
@@ -223,9 +234,6 @@ class TestWhenEveryPageIsDone:
     def finished(self, home_page):
         site = built_site(home_page)
         finish_every_page(site)
-        settings = SiteSettings.for_site(site)
-        settings.charity_number = "123"
-        settings.save()
         return site
 
     def test_a_site_the_command_built_says_so(self, home_page, admin):
@@ -239,8 +247,9 @@ class TestWhenEveryPageIsDone:
     ):
         site = self.finished(home_page)
 
-        # 40 when the done check looked each translation up again.
-        with django_assert_max_num_queries(34):
+        # 40 when the done check looked each translation up again; one more since the
+        # registration line is read from each language's row (#172).
+        with django_assert_max_num_queries(35):
             panel(admin, site)
 
     def test_the_line_goes_seven_days_after_the_last_page_went_live(self, home_page, admin):
@@ -279,13 +288,17 @@ class TestRegistrationReminder:
             "wagtailsettings:edit", args=["core", "sitesettings", site.pk]
         )
 
-    def test_gone_once_settings_have_it(self, home_page, admin):
+    def test_gone_once_settings_have_it_in_every_language(self, home_page, admin):
         site = built_site(home_page)
-        settings = SiteSettings.for_site(site)
-        settings.charity_number = "123"
-        settings.save()
+        register(site)
 
         assert panel(admin, site).add_registration_url is None
+
+    def test_asks_while_one_language_has_none(self, home_page, admin):
+        site = built_site(home_page)
+        register(site, languages=["en"])
+
+        assert panel(admin, site).add_registration_url is not None
 
 
 class TestOnTheDashboard:
@@ -329,9 +342,6 @@ class TestOnTheDashboard:
         site = built_site(home_page)
         finish_every_page(site)
         PageLogEntry.objects.filter(action=NEW_SITE_BUILT).delete()
-        settings = SiteSettings.for_site(site)
-        settings.charity_number = "123"
-        settings.save()
         client.force_login(admin)
 
         assert b"still-to-write" not in client.get(reverse("wagtailadmin_home")).content

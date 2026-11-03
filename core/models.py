@@ -100,6 +100,8 @@ class TextInEachLanguage(models.Model):
     # Fields that, once filled in for one language, the admin requires in every language
     # (`TextInEachLanguageForm`), because they must say the same to every reader.
     in_every_language = ()
+    # Fields the admin requires in every language, even when none is filled in.
+    required_in_every_language = ()
 
     class Meta:
         abstract = True
@@ -123,16 +125,27 @@ class TextInEachLanguageMixin:
         """The language `text_in_reading_language(field)` is written in, or "" if it's blank."""
         return self._language_and_text(field)[0]
 
+    def languages_without(self, field):
+        """The site's languages whose row has no `field`, or no row at all, by language code."""
+        texts = self._texts()
+        return [
+            code for code in language_codes() if not getattr(texts.get(code), field, "").strip()
+        ]
+
     def _language_and_text(self, field):
+        texts = self._texts()
+        for language in (reading_language(), main_language()):
+            value = getattr(texts.get(language), field, "")
+            if value:
+                return language, value
+        return "", ""
+
+    def _texts(self):
         if not hasattr(self, "_texts_by_language"):
             self._texts_by_language = {
                 text.locale.language_code: text for text in self.texts.select_related("locale")
             }
-        for language in (reading_language(), main_language()):
-            value = getattr(self._texts_by_language.get(language), field, "")
-            if value:
-                return language, value
-        return "", ""
+        return self._texts_by_language
 
 
 @register_setting(icon="cog")
@@ -146,7 +159,6 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     # in queries of their own.
     select_related = ("logo", "site")
 
-    charity_number = models.CharField(max_length=20, blank=True)
     contact_email = models.EmailField(blank=True)
     phone = models.CharField(max_length=30, blank=True)
     takes_gifts_in_person = models.BooleanField(
@@ -248,7 +260,6 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     organisation_panels = [
         MultiFieldPanel(
             [
-                FieldPanel("charity_number"),
                 FieldPanel("contact_email"),
                 FieldPanel("phone"),
                 FieldPanel("takes_gifts_in_person"),
@@ -267,9 +278,9 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
             "texts",
             heading="Text in each language",
             label="Language",
-            help_text="Shown to readers of that language. The address and refund policy must be "
-            "written for every language or none; a language without a name shows the main "
-            "language's.",
+            help_text="Shown to readers of that language. The registration line must be written "
+            "for every language; the address and refund policy for every language or none; a "
+            "language without a name shows the main language's.",
         ),
     ]
     brand_panels = [
@@ -369,6 +380,19 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         return self.language_of_text("name") or main_language()
 
     @property
+    def registration_line(self):
+        """Where the charity is registered, and its numbers, under its name in the footer (#172).
+
+        Blank until Site settings are next saved, on a site `new_site` built or one upgraded
+        without a charity number (the migration had nothing to move).
+        """
+        return self.text_in_reading_language("registration_line")
+
+    @property
+    def registration_line_language(self):
+        return self.language_of_text("registration_line")
+
+    @property
     def address(self):
         return self.text_in_reading_language("address")
 
@@ -400,6 +424,18 @@ class SiteSettingsText(TextInEachLanguage):
         help_text="Shown in the footer of every page. Once it's written for one language, write "
         "it for every language.",
     )
+    registration_line = models.TextField(
+        max_length=500,
+        blank=True,
+        help_text="Shown under your charity's name at the bottom of every page, so donors can "
+        "check it's registered. Copy the numbers from your registration certificates, each on its "
+        "own line, and leave out any you don't have. In Nepal, for example: “Registered with the "
+        "District Administration Office, Kathmandu, no. 1234”, then “Social Welfare Council "
+        "affiliation no. 5678”, then “PAN 301234567”; in Nepali, the first line could read "
+        "“जिल्ला प्रशासन कार्यालय, काठमाडौंमा दर्ता नं. 1234”. It must be written for every "
+        "language before these settings can be saved. Don't type a placeholder such as “TBC”: "
+        "every page shows it.",
+    )
     refund_policy = models.TextField(
         blank=True,
         help_text="Whether and how you refund a gift, shown before someone pays a pledge. Once "
@@ -411,10 +447,13 @@ class SiteSettingsText(TextInEachLanguage):
     # A name may stay in the main language alone: a proper noun reads the same, and the Site's
     # name stands in until one is written.
     in_every_language = ("address", "refund_policy")
+    # A charity mustn't go live without showing it's registered (#172).
+    required_in_every_language = ("registration_line",)
 
     panels = [
         FieldPanel("locale"),
         FieldPanel("name"),
+        FieldPanel("registration_line"),
         FieldPanel("address"),
         FieldPanel("refund_policy"),
     ]

@@ -25,8 +25,10 @@ from wagtail.test.utils.form_data import inline_formset, nested_form_data, rich_
 from campaigns.models import DonatePage
 from contact.models import FormField, FormPage
 from core.middleware import PublishRefusedMiddleware
+from core.models import SiteSettings
 from core.publishing import (
     ADD_RECIPIENT,
+    ADD_REGISTRATION_LINE,
     CANT_GO_LIVE_YET,
     PUBLISH_NOTICE_ALONE,
     PUBLISH_PRIVACY_NOTICE,
@@ -37,6 +39,7 @@ from core.publishing import (
     UnpublishRefused,
     has_placeholder,
     reasons_not_to_publish,
+    what_a_form_lacks,
 )
 from home.models import StandardPage
 
@@ -144,12 +147,12 @@ class TestForms:
         assert reasons_not_to_publish(volunteer_form(home_page)) == [PUBLISH_PRIVACY_NOTICE]
 
     def test_need_a_privacy_notice_chosen(self, home_page):
-        assert reasons_not_to_publish(volunteer_form(home_page)) == [PUBLISH_PRIVACY_NOTICE]
+        assert PUBLISH_PRIVACY_NOTICE in reasons_not_to_publish(volunteer_form(home_page))
 
     def test_the_donate_page_is_a_form_too(self, home_page):
         donate = draft(home_page, DonatePage(title="Donate", slug="donate"))
 
-        assert reasons_not_to_publish(donate) == [PUBLISH_PRIVACY_NOTICE]
+        assert PUBLISH_PRIVACY_NOTICE in reasons_not_to_publish(donate)
 
     def test_a_nepali_form_needs_the_chosen_notice_live(
         self, home_page, nepali_home_page, privacy_notice
@@ -176,6 +179,7 @@ class TestForms:
         assert reasons_not_to_publish(page) == [
             REPLACE_PLACEHOLDERS,
             PUBLISH_PRIVACY_NOTICE,
+            ADD_REGISTRATION_LINE,
             ADD_RECIPIENT,
         ]
 
@@ -258,7 +262,7 @@ class TestTheEditor:
         )
         return client.post(reverse("wagtailadmin_pages:edit", args=[page.pk]), data | action)
 
-    def add_form_page(self, client, user, home_page, **fields):
+    def add_form_page(self, client, user, home_page, action=PUBLISH, **fields):
         client.force_login(user)
         url = reverse("wagtailadmin_pages:add", args=("contact", "formpage", home_page.pk))
         data = nested_form_data(
@@ -276,7 +280,7 @@ class TestTheEditor:
                 **fields,
             }
         )
-        return client.post(url, data | PUBLISH)
+        return client.post(url, data | action)
 
     def test_publish_puts_the_error_on_the_field(self, client, moderator, home_page):
         page = draft(home_page, StandardPage(title="About us", slug="about"))
@@ -401,7 +405,7 @@ class TestTheEditor:
     def test_a_form_needs_the_privacy_notice_live(self, client, moderator, home_page):
         response = self.add_form_page(client, moderator, home_page)
 
-        assert response.context["form"].non_field_errors() == [PUBLISH_PRIVACY_NOTICE]
+        assert PUBLISH_PRIVACY_NOTICE in response.context["form"].non_field_errors()
         assert not FormPage.objects.exists()
 
     def test_a_form_needs_an_address_to_send_to(self, client, moderator, home_page, privacy_notice):
@@ -573,7 +577,8 @@ class TestBulkPublishing:
         assert messages == [
             "Nothing was published.",
             f"“About us” wasn't published. {REPLACE_PLACEHOLDERS}",
-            f"“Volunteer with us” wasn't published. {PUBLISH_PRIVACY_NOTICE}",
+            f"“Volunteer with us” wasn't published. {PUBLISH_PRIVACY_NOTICE} "
+            f"{ADD_REGISTRATION_LINE}",
         ]
         assert live(ready, about, volunteer) == []
 
@@ -620,6 +625,105 @@ class TestBulkPublishing:
         bulk(client, moderator, "publish", [about])
 
         assert live(about, team) == ["About us"]
+
+
+def blank_registration_line(site, language="ne"):
+    SiteSettings.for_site(site).texts.filter(locale__language_code=language).update(
+        registration_line=""
+    )
+
+
+class TestTheRegistrationLine:
+    """The Donate page and every form can't go live while the registration line is blank in any
+    language (#172): a page asking for gifts or details shows the charity is registered. Pages
+    already live stay live."""
+
+    def test_a_form_needs_it_in_every_language(self, home_page, privacy_notice):
+        blank_registration_line(home_page.get_site())
+
+        assert reasons_not_to_publish(volunteer_form(home_page)) == [ADD_REGISTRATION_LINE]
+
+    def test_the_donate_page_needs_it(self, home_page, privacy_notice):
+        blank_registration_line(home_page.get_site(), "en")
+        donate = draft(home_page, DonatePage(title="Donate", slug="donate"))
+
+        assert reasons_not_to_publish(donate) == [ADD_REGISTRATION_LINE]
+
+    def test_settings_never_saved_lack_it(self, home_page):
+        """As on a site straight after `new_site`."""
+        assert reasons_not_to_publish(volunteer_form(home_page)) == [
+            PUBLISH_PRIVACY_NOTICE,
+            ADD_REGISTRATION_LINE,
+        ]
+
+    def test_the_settings_are_loaded_once(
+        self, home_page, privacy_notice, django_assert_max_num_queries
+    ):
+        """A bulk or scheduled publish checks every form: the settings, their privacy notice and
+        their texts, one query each."""
+        page = volunteer_form(home_page)
+        site = home_page.get_site()
+
+        with django_assert_max_num_queries(3):
+            what_a_form_lacks(page, site)
+
+    def test_plain_pages_and_home_pages_still_go_live(self, home_page, privacy_notice):
+        blank_registration_line(home_page.get_site())
+        about = draft(home_page, StandardPage(title="About us", slug="about"))
+
+        about.save_revision().publish()
+        home_page.save_revision().publish()
+
+        assert sorted(live(about, home_page)) == sorted(["About us", home_page.title])
+
+    def test_a_live_form_stays_live(self, home_page, privacy_notice):
+        page = volunteer_form(home_page)
+        page.save_revision().publish()
+
+        blank_registration_line(home_page.get_site())
+
+        page.refresh_from_db()
+        assert page.live
+
+    def test_the_editor_refuses_it(self, client, moderator, home_page, privacy_notice):
+        blank_registration_line(home_page.get_site())
+
+        response = TestTheEditor().add_form_page(client, moderator, home_page)
+
+        assert response.context["form"].non_field_errors() == [ADD_REGISTRATION_LINE]
+        assert not FormPage.objects.exists()
+
+    def test_an_editor_is_told_a_moderator_writes_it(
+        self, client, editor, home_page, privacy_notice
+    ):
+        """Submitting for moderation is refused too, and only moderators can edit Site settings."""
+        blank_registration_line(home_page.get_site())
+
+        response = TestTheEditor().add_form_page(client, editor, home_page, action=SUBMIT)
+
+        [error] = response.context["form"].non_field_errors()
+        assert "a moderator can" in error
+
+    def test_bulk_publish_refuses_it(self, client, moderator, home_page, privacy_notice):
+        blank_registration_line(home_page.get_site())
+        volunteer = volunteer_form(home_page)
+
+        messages = bulk(client, moderator, "publish", [volunteer])
+
+        assert messages == [
+            "Nothing was published.",
+            f"“Volunteer with us” wasn't published. {ADD_REGISTRATION_LINE}",
+        ]
+        assert live(volunteer) == []
+
+    def test_scheduled_publishing_refuses_it(self, home_page, privacy_notice):
+        page = volunteer_form(home_page)
+        schedule(page, minutes_ago=10)
+        blank_registration_line(home_page.get_site())
+
+        call_command("publish_scheduled")
+
+        assert live(page) == []
 
 
 @pytest.fixture

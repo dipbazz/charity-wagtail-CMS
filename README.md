@@ -44,10 +44,10 @@ workflow. [The site](docs/site/index.md) describes each part, and
 
 ## Notes
 
-- Brightwell Water Trust, its people, figures and charity number are fictional. The flood appeal
-  describes a real flood and links to the Government of Nepal's relief fund instead of taking
-  donations. [Demo content](docs/contributing/demo-content.md) has the details and the photo
-  credits.
+- Brightwell Water Trust, its people, figures and registration numbers are fictional. The flood
+  appeal describes a real flood and links to the Government of Nepal's relief fund instead of
+  taking donations. [Demo content](docs/contributing/demo-content.md) has the details and the
+  photo credits.
 - Built with a feature-branch workflow; see the merged pull requests for the history of each
   feature.
 

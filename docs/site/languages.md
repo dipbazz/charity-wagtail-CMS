@@ -54,7 +54,8 @@ each language), settings in `charity/settings/base.py`, and the site's own Nepal
   to change; the name and address are in Site settings, which only moderators change. Until a
   name is written, the site shows the one in **Settings → Sites**, which only admins can change.
   The address and the refund policy are written for every language or for none: Site settings
-  won't save one that's filled in for some languages only, so every reader is told the same.
+  won't save one that's filled in for some languages only, so every reader is told the same. The
+  registration line must be written for every language: Site settings won't save without it.
 - **Promote a search result in each language**: a promoted page shows only in its own language,
   so add one promotion per language. A promoted link to another website shows in both.
 - **The admin stays in English**: Wagtail has no Nepali translation of its admin.
@@ -139,7 +140,7 @@ else in the main language; a snippet only in another language is left out, as a 
 language is. A page that was translated keeps the snippets chosen for the original (its
 testimonial block, a story's categories), so those are looked up by `translation_key`.
 
-**Settings text** (the charity's name, its address and refund policy, and the banner's message) can't be translated
+**Settings text** (the charity's name, its registration line, address and refund policy, and the banner's message) can't be translated
 that way:
 Wagtail keeps exactly one Site settings record per Site, with no Translate action. The settings
 keep everything that's the same in every language; the text that differs is in a table of rows
@@ -173,8 +174,11 @@ being read, else the main language's (`TextInEachLanguageMixin`); a blank field 
 A row model's `in_every_language` names the fields that must say the same to every reader
 (`SiteSettingsText`: the address and the refund policy). The setting's form
 (`TextInEachLanguageForm`, `core/forms.py`) refuses one that's filled in for some languages
-and not others, or with no row at all for a language the site has. The fallback then only
-covers a language added after the text was written.
+and not others, or with no row at all for a language the site has. Its
+`required_in_every_language` names the fields that must be filled in for every language even
+when none is (`SiteSettingsText`: the registration line); a preview doesn't check them, so a new
+charity can see its colours first. The fallback then only covers a language added after the text
+was written.
 Both settings are per Site, as all Wagtail settings are; each charity has its own installation
 ([Decisions](../decisions.md#one-installation-per-charity-on-a-shared-server)).
 

@@ -338,9 +338,26 @@ class Command(BaseCommand):
                 ],
             ),
         )
-        # A form can't be published until the privacy notice it links to is chosen and live.
+        # A form can't be published until the privacy notice it links to is chosen and live, and
+        # the registration line is written in every language.
         settings = SiteSettings.for_site(site)
         settings.privacy_page = privacy
+        settings.texts = [
+            SiteSettingsText(
+                locale=Locale.get_default(),
+                name=SITE_NAME,
+                registration_line="Registered charity number 1234567 (fictional)\n"
+                "PAN 301234567 (fictional)",
+                address="1 Example Street\nBirmingham\nB1 1AA",
+            ),
+            SiteSettingsText(
+                locale=Locale.objects.get_or_create(language_code="ne")[0],
+                name="ब्राइटवेल जल ट्रस्ट",
+                registration_line="दर्ता भएको परोपकारी संस्था नम्बर 1234567 (काल्पनिक)\n"
+                "प्यान नं. 301234567 (काल्पनिक)",
+                address="1 एक्जाम्पल स्ट्रिट\nबर्मिङ्घम\nB1 1AA",
+            ),
+        ]
         settings.save()
 
         donate = DonatePage(
@@ -587,17 +604,9 @@ class Command(BaseCommand):
         home.save_revision().publish()
 
         settings = SiteSettings.for_site(site)
-        settings.charity_number = "1234567 (fictional)"
         settings.contact_email = "hello@brightwell.example"
         settings.phone = "0123 456 7890"
         settings.takes_gifts_in_person = True
-        settings.texts = [
-            SiteSettingsText(
-                locale=Locale.get_default(),
-                name=SITE_NAME,
-                address="1 Example Street\nBirmingham\nB1 1AA",
-            )
-        ]
         settings.donate_page = donate
         settings.logo = make_charity_logo()
         settings.currency = "NPR"
@@ -617,7 +626,7 @@ class Command(BaseCommand):
         banner.save()
 
         self.add_nepali_pages(home, donate, campaigns, flood, news, flood_story, testimonial)
-        self.add_nepali_snippets(settings, banner, testimonial, [successes, updates])
+        self.add_nepali_snippets(banner, testimonial, [successes, updates])
         self.add_qr_code()
         self.add_shared_gift(donate, kisumu)
 
@@ -782,22 +791,13 @@ class Command(BaseCommand):
         )
         gift.start_payment("esewa", live=False).record(PaymentStatus.PAID, "000DEMO")
 
-    def add_nepali_snippets(self, settings, banner, testimonial, categories):
-        """Translate the banner, the charity's name and address, the testimonial and the news
-        categories.
+    def add_nepali_snippets(self, banner, testimonial, categories):
+        """Translate the banner, the testimonial and the news categories.
 
         The partners stay in English: their names are in their logos, and they show a snippet
         with no translation falling back to the main language.
         """
         nepali = Locale.objects.get(language_code="ne")
-        settings.texts.add(
-            SiteSettingsText(
-                locale=nepali,
-                name="ब्राइटवेल जल ट्रस्ट",
-                address="1 एक्जाम्पल स्ट्रिट\nबर्मिङ्घम\nB1 1AA",
-            )
-        )
-        settings.save()
         banner.texts.add(
             AnnouncementBannerText(
                 locale=nepali,

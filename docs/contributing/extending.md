@@ -56,7 +56,8 @@ permissions**, or editors can't see the new item in the admin.
    subclasses `BaseSiteSetting` (one per site) with `@register_setting`, and templates read it as
    `settings.<app>.<ModelName>`; text it shows readers goes in a `TextInEachLanguage` row model, as
    the banner's message does. Text that must say the same to every reader (an address, a refund
-   policy) is listed in the row model's `in_every_language`, and the setting uses
+   policy) is listed in the row model's `in_every_language`, text every language must have even
+   when none does (the registration line) in its `required_in_every_language`, and the setting uses
    `base_form_class = TextInEachLanguageForm`. Shared ones go in `core`, feature ones in their app. Then
    `makemigrations`.
 3. **Grant the permissions in a data migration**, modelled on

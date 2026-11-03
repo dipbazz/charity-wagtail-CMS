@@ -25,15 +25,16 @@ def standard_pages():
 
 
 def still_to_do():
-    """What's left once the command has run: first the pages, in the dashboard panel's order. In
-    English, like the rest of what the command prints."""
+    """What's left once the command has run: first Site settings, since Donate and forms can't go
+    live without their registration line (#172), then the pages, in the dashboard panel's order.
+    In English, like the rest of what the command prints."""
     with translation.override("en"):
         first = [f"{standard.name}: {standard.why}." for standard in STANDARD_PAGES if standard.why]
         menu = [str(standard.name) for standard in STANDARD_PAGES if not standard.why]
     return [
+        "Site settings: the registration line in every language, the address and payment details.",
         *first,
         f"{', '.join(menu[:-1])} and {menu[-1]}: each joins the menu once it's live.",
-        "Site settings: address, registration and payment details.",
         "DNS: point the charity's domain at this server.",
         "Email: set up sending, and add each form's address to send messages to.",
     ]

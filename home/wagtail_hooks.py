@@ -119,7 +119,7 @@ def still_to_write(user, site):
         groups.append(Group(locale.get_display_name(), [row for row in rows if row]))
 
     add_registration_url = None
-    if not site_settings.charity_number.strip():
+    if site_settings.languages_without("registration_line"):
         add_registration_url = settings_link(user, site) or ""
     groups = [group for group in groups if group.rows]
     return StillToWrite(

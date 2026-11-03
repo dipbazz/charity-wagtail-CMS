@@ -56,6 +56,11 @@ REPLACE_PLACEHOLDERS = "Replace the text in [square brackets] with your own befo
 PUBLISH_PRIVACY_NOTICE = "Publish the privacy notice first: this form collects personal details."
 PUBLISH_NOTICE_ALONE = "Publish the privacy notice on its own first, then the rest."
 ADD_RECIPIENT = "Add the email address that gets each message before publishing."
+ADD_REGISTRATION_LINE = (
+    "The registration line must be written in Site settings first, in every language (a "
+    "moderator can do this): a page asking for gifts or details must show your charity is "
+    "registered."
+)
 UNPUBLISH_FORMS_FIRST = "Unpublish these forms first: {forms}."
 CANT_GO_LIVE_YET = (
     "This page can't go live yet. Your changes are still here: fix the errors below and try "
@@ -113,18 +118,28 @@ def has_placeholders(page):
     )
 
 
-def privacy_notice_is_live(site):
+def privacy_notice_is_live(site_settings):
     """Whether the privacy notice chosen in the site's settings is published."""
-    notice = site and SiteSettings.for_site(site).privacy_page
+    notice = site_settings and site_settings.privacy_page
     return notice is not None and notice.live
+
+
+def registration_line_written(site_settings):
+    """Whether the site's registration line is written in every language (#172)."""
+    return bool(site_settings) and not site_settings.languages_without("registration_line")
 
 
 def what_a_form_lacks(page, site):
     """What a page with a form lacks to go live, as (field, message) pairs: a live privacy notice
-    (no field of the page's) and an address to send messages to."""
+    and the registration line in every language (no field of the page's), and an address to
+    send messages to."""
     lacks = []
-    if getattr(page, "collects_personal_details", False) and not privacy_notice_is_live(site):
-        lacks.append((None, PUBLISH_PRIVACY_NOTICE))
+    if getattr(page, "collects_personal_details", False):
+        site_settings = site and SiteSettings.for_site(site)
+        if not privacy_notice_is_live(site_settings):
+            lacks.append((None, PUBLISH_PRIVACY_NOTICE))
+        if not registration_line_written(site_settings):
+            lacks.append((None, ADD_REGISTRATION_LINE))
     if isinstance(page, AbstractEmailForm) and not page.to_address.strip():
         lacks.append(("to_address", ADD_RECIPIENT))
     return lacks

@@ -19,7 +19,9 @@ pytestmark = [pytest.mark.browser, pytest.mark.django_db]
 
 # Regression: a refused brand colour reloaded Site settings on the Organisation tab, so the
 # message on the Brand tab was out of sight. Found by the owner while testing #152.
-def test_a_refused_brand_colour_shows_its_message(site_page, client, moderator, site):
+def test_a_refused_brand_colour_shows_its_message(
+    site_page, client, moderator, site, registration_line
+):
     client.force_login(moderator)
     site_page.goto(SITE + reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk]))
     site_page.get_by_role("tab", name="Brand").click()

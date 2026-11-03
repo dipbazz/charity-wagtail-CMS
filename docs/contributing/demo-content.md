@@ -11,7 +11,8 @@ the Site at `SITE_URL`). It refuses a Nepali-first site, because the demo is Eng
 
 ## The charity is fictional
 
-- Brightwell Water Trust, its people, figures and charity number are fictional. Amounts are in
+- Brightwell Water Trust, its people, figures and registration numbers are fictional, and its
+  registration line says so in both languages. Amounts are in
   Nepalese rupees (Site settings → Currency).
 - Every address in tests, demo data, CI and examples is a reserved domain that never reaches a
   real inbox or site: `brightwell.example` for the charity's own addresses (its site, email and
@@ -47,7 +48,8 @@ of a real charity's site would be at first, so QA has pages in both languages an
 The Nepali appeal is as honest as the English one: Brightwell takes no donations, and it links to
 the same relief fund.
 
-The banner, the footer's address, the testimonial and both news categories are translated too.
+The banner, the footer's registration line and address, the testimonial and both news categories
+are translated too.
 The partners aren't, because their names are in their logos, so the Nepali home page shows how a
 snippet with no translation falls back to English.
 

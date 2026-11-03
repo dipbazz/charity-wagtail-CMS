@@ -109,8 +109,8 @@ uv run ruff check . && uv run ruff format --check .
 ## Make a first change
 
 A small change that touches a model, a template and a test, the way every change here is made.
-Say UK charities want a short "registered in England and Wales" line under their charity number
-in the footer: a field every charity can fill in, or leave blank.
+Say charities want a link to their YouTube channel in the footer, beside Facebook and Instagram:
+a field every charity can fill in, or leave blank.
 
 1. **Find where it lives.** Site-wide organisation details are in `SiteSettings`
    (`core/models.py`), and the footer template is `charity/templates/includes/footer.html`.

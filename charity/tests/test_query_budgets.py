@@ -64,9 +64,10 @@ def test_the_still_to_write_panel_stays_within_its_query_budget(
     demo_site, django_user_model, django_assert_max_num_queries
 ):
     # It reads a fixed list of standard pages in each language, so this doesn't grow with the site.
+    # One more reads Site settings' text in each language, for the registration line (#172).
     user = django_user_model.objects.create_superuser("budget", password="pw")
 
-    with django_assert_max_num_queries(30):
+    with django_assert_max_num_queries(31):
         still_to_write(user, demo_site)
 
 

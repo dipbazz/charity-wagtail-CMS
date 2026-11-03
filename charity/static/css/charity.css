@@ -858,11 +858,13 @@ body:lang(ne) {
 }
 
 /* Footer */
+/* Breaks a long registration number or email anywhere, so it never widens a phone's page. */
 .site-footer {
     margin-top: 4rem;
     padding: 2.5rem 0;
     background: var(--colour-primary-dark);
     color: var(--colour-footer-text);
+    overflow-wrap: anywhere;
 }
 
 .site-footer a {
