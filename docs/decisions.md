@@ -721,3 +721,67 @@ judgement calls. A rule CI already checks (the changelog entry, the docs build) 
   (about a tenth of a second). A stylesheet edit also runs its test, about eight seconds, in the
   background.
 - The hooks need `uv`, as everything else in the project does.
+
+## The code is licensed under the AGPL
+
+**Status:** in use (since November 2026)
+
+**Context**
+
+The repository was public with no licence, so nobody could legally run, copy or change the code.
+The maintainer runs charities' sites and may later charge for hosting and support, alone or
+through a company. A permissive licence (BSD-3-Clause, as Wagtail and Django use, or MIT) would
+let anyone host a closed, changed copy for charities without sharing what they changed.
+
+**Decision**
+
+The code is under the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.html)
+or any later version (`AGPL-3.0-or-later`), in `LICENSE` at the root. Anyone may use, change,
+host and sell it. Section 13 adds that whoever changes it and runs it as a website offers that
+site's users the changed source. The demo photos, and the docs screenshots that show them, stay
+under their own licences ([Demo content](contributing/demo-content.md#demo-photos)); the
+payment providers' logos belong to those providers.
+
+**Consequences**
+
+- A host who changes the code publishes the changes, so improvements can come back to every
+  charity. An unchanged copy owes nothing more.
+- The licence binds others, not the copyright holder, who can still license the code on other
+  terms, but only for the parts they hold the copyright to. Outside contributions stay their
+  authors' and come in under the AGPL alone, so contributors sign a contributor licence agreement
+  first ([below](#outside-contributions-need-a-signed-cla)).
+- Versions already published stay under the AGPL if the repository goes private later
+  ([Choices that work whether the repo is public or private](#choices-that-work-whether-the-repo-is-public-or-private)).
+- Some companies won't use AGPL code internally.
+
+## Outside contributions need a signed CLA
+
+**Status:** in use (since November 2026)
+
+**Context**
+
+Whoever writes code keeps its copyright, and a merged pull request gives the project only the
+repository's licence for it ([GitHub's terms](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#6-contributions-under-repository-license),
+"inbound = outbound"). Under the AGPL alone, the maintainer couldn't offer an outside
+contribution under other terms, such as a commercial licence or a later change of licence,
+without asking its author. That gets harder with every contributor, and impossible for one who
+can't be found.
+
+**Decision**
+
+Every outside contributor signs a contributor licence agreement once, before their first pull
+request is merged. They keep their copyright and grant the maintainer, and anyone the project
+passes to, the right to license their contribution on any terms.
+[The text](https://gist.github.com/dipbazz/9ac6488512242af0f1d767ebebc4f057) is based on the
+[Apache Individual CLA](https://www.apache.org/licenses/contributor-agreements.html#clas).
+[CLA Assistant](https://github.com/cla-assistant/cla-assistant) (cla-assistant.io, maintained by
+SAP) asks on each pull request, keeps the signatures, and reports a `license/cla` check that
+`main` requires. The maintainer and bots are allowlisted. The CLA Assistant Lite GitHub Action,
+which would keep signatures in the repository, was passed over: it's archived.
+
+**Consequences**
+
+- The project can be relicensed or dual-licensed later without tracking down each contributor.
+- Some developers won't sign a CLA, so they won't contribute.
+- The signatures live on CLA Assistant's service, and its GitHub app reads pull requests.
+- The text should be reviewed by a lawyer before a company takes the project over.

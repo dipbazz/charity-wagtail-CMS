@@ -50,3 +50,18 @@ workflow. [The site](docs/site/index.md) describes each part, and
   credits.
 - Built with a feature-branch workflow; see the merged pull requests for the history of each
   feature.
+
+## Licence
+
+Copyright (C) 2026 Dipesh Bajgain.
+
+The code is free software under the [GNU Affero General Public License v3.0](LICENSE) or any
+later version. You may use, change and host it, for a fee too. If you change it and run it as a
+website, offer its users your changed source. Two kinds of file aren't covered. The demo photos
+in `home/management/commands/demo_images/`, and the screenshots in `docs/screenshots/` that
+show them, stay under their Unsplash and Pexels licences, listed in
+[Demo content](docs/contributing/demo-content.md#demo-photos). The eSewa and Khalti logos in
+`nepal_payments/static/payment-logos/` belong to those companies.
+[Decisions](docs/decisions.md#the-code-is-licensed-under-the-agpl) says why this licence.
+Contributors sign a [contributor licence agreement](docs/decisions.md#outside-contributions-need-a-signed-cla)
+once, when the bot asks on their first pull request.
