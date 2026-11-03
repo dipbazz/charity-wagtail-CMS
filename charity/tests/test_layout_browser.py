@@ -290,6 +290,21 @@ def test_footer_and_form_links_are_big_enough_to_tap(site_page, home_page, priva
         assert box["height"] >= 44
 
 
+# A registration line or an email with no space to break at widened the page on a phone: QA
+# measured a long email at 376px wide on a 320px phone (#172, #234).
+def test_long_unbroken_footer_text_wraps_on_a_phone(site_page, site, home_page):
+    settings = SiteSettings.for_site(site)
+    settings.contact_email = "volunteer-coordinator.kathmandu-valley@brightwell-water-trust.example"
+    settings.texts = [
+        SiteSettingsText(locale=Locale.get_default(), registration_line="PAN" + "3" * 80)
+    ]
+    settings.save()
+    site_page.set_viewport_size({"width": 320, "height": 800})
+    site_page.goto(SITE + "/")
+
+    assert site_page.evaluate("document.documentElement.scrollWidth") <= 320
+
+
 WHITE = "rgb(255, 255, 255)"
 NO_FILL = "rgba(0, 0, 0, 0)"
 
