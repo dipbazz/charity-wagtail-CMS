@@ -2,6 +2,8 @@
 name = "charity-cms"
 version = "0.5.0"
 requires-python = ">=3.13"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 dependencies = [
     "phonenumbers>=9.0.40",
     "wagtail>=8.0",

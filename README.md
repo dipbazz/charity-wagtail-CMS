@@ -50,3 +50,12 @@ workflow. [The site](docs/site/index.md) describes each part, and
   credits.
 - Built with a feature-branch workflow; see the merged pull requests for the history of each
   feature.
+
+## Licence
+
+The code is free software under the [GNU Affero General Public License v3.0](LICENSE) or any
+later version. You may use, change and host it, for a fee too. If you change it and run it as a
+website, offer its users your changed source. The demo photos in
+`home/management/commands/demo_images/` aren't covered: they stay under their Unsplash and
+Pexels licences, listed in [Demo content](docs/contributing/demo-content.md#demo-photos).
+[Decisions](docs/decisions.md#the-code-is-licensed-under-the-agpl) says why this licence.

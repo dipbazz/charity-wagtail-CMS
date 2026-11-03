@@ -721,3 +721,33 @@ judgement calls. A rule CI already checks (the changelog entry, the docs build) 
   (about a tenth of a second). A stylesheet edit also runs its test, about eight seconds, in the
   background.
 - The hooks need `uv`, as everything else in the project does.
+
+## The code is licensed under the AGPL
+
+**Status:** in use (since November 2026)
+
+**Context**
+
+The repository was public with no licence, so nobody could legally run, copy or change the code.
+The maintainer runs charities' sites and may later charge for hosting and support, alone or
+through a company. A permissive licence (BSD-3-Clause, as Wagtail and Django use, or MIT) would
+let anyone host a closed, changed copy for charities without sharing what they changed.
+
+**Decision**
+
+The code is under the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.html)
+or any later version (`AGPL-3.0-or-later`), in `LICENSE` at the root. Anyone may use, change,
+host and sell it. Section 13 adds that whoever changes it and runs it as a website offers that
+site's users the changed source. The demo photos stay under their own licences
+([Demo content](contributing/demo-content.md#demo-photos)).
+
+**Consequences**
+
+- A host who changes the code publishes the changes, so improvements can come back to every
+  charity. An unchanged copy owes nothing more.
+- The licence binds others, not the copyright holder, who can still license the code on other
+  terms, but only while holding all of it. Accepting outside contributions would first need a
+  contributor licence agreement, or the right to relicense is lost.
+- Versions already published stay under the AGPL if the repository goes private later
+  ([Choices that work whether the repo is public or private](#choices-that-work-whether-the-repo-is-public-or-private)).
+- Some companies won't use AGPL code internally.
