@@ -738,8 +738,9 @@ let anyone host a closed, changed copy for charities without sharing what they c
 The code is under the [GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.html)
 or any later version (`AGPL-3.0-or-later`), in `LICENSE` at the root. Anyone may use, change,
 host and sell it. Section 13 adds that whoever changes it and runs it as a website offers that
-site's users the changed source. The demo photos stay under their own licences
-([Demo content](contributing/demo-content.md#demo-photos)).
+site's users the changed source. The demo photos, and the docs screenshots that show them, stay
+under their own licences ([Demo content](contributing/demo-content.md#demo-photos)); the
+payment providers' logos belong to those providers.
 
 **Consequences**
 
