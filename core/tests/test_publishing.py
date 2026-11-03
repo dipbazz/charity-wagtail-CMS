@@ -261,7 +261,7 @@ class TestTheEditor:
         )
         return client.post(reverse("wagtailadmin_pages:edit", args=[page.pk]), data | action)
 
-    def add_form_page(self, client, user, home_page, **fields):
+    def add_form_page(self, client, user, home_page, action=PUBLISH, **fields):
         client.force_login(user)
         url = reverse("wagtailadmin_pages:add", args=("contact", "formpage", home_page.pk))
         data = nested_form_data(
@@ -279,7 +279,7 @@ class TestTheEditor:
                 **fields,
             }
         )
-        return client.post(url, data | PUBLISH)
+        return client.post(url, data | action)
 
     def test_publish_puts_the_error_on_the_field(self, client, moderator, home_page):
         page = draft(home_page, StandardPage(title="About us", slug="about"))
@@ -680,6 +680,17 @@ class TestTheRegistrationLine:
 
         assert response.context["form"].non_field_errors() == [ADD_REGISTRATION_LINE]
         assert not FormPage.objects.exists()
+
+    def test_an_editor_is_told_a_moderator_writes_it(
+        self, client, editor, home_page, privacy_notice
+    ):
+        """Submitting for moderation is refused too, and only moderators can edit Site settings."""
+        blank_registration_line(home_page.get_site())
+
+        response = TestTheEditor().add_form_page(client, editor, home_page, action=SUBMIT)
+
+        [error] = response.context["form"].non_field_errors()
+        assert "a moderator can" in error
 
     def test_bulk_publish_refuses_it(self, client, moderator, home_page, privacy_notice):
         blank_registration_line(home_page.get_site())

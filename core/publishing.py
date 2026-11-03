@@ -57,8 +57,9 @@ PUBLISH_PRIVACY_NOTICE = "Publish the privacy notice first: this form collects p
 PUBLISH_NOTICE_ALONE = "Publish the privacy notice on its own first, then the rest."
 ADD_RECIPIENT = "Add the email address that gets each message before publishing."
 ADD_REGISTRATION_LINE = (
-    "Write the registration line in Site settings first, in every language: a page asking for "
-    "gifts or details must show your charity is registered."
+    "The registration line must be written in Site settings first, in every language (a "
+    "moderator can do this): a page asking for gifts or details must show your charity is "
+    "registered."
 )
 UNPUBLISH_FORMS_FIRST = "Unpublish these forms first: {forms}."
 CANT_GO_LIVE_YET = (
