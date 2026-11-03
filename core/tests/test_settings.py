@@ -515,10 +515,11 @@ class TestRegistrationLineInTheFooter:
         return page.select("footer .container > p")
 
     def test_nothing_shows_while_it_isnt_written(self, client, home_page, site):
-        """As on a site straight after `new_site`, whose settings were never saved."""
+        """As on a site straight after `new_site`, whose settings were never saved: the name,
+        then straight to the copyright, with no registration paragraph between."""
         name, copyright = self.footer_lines(client, "/")
 
-        assert "Registered" not in copyright.get_text()
+        assert copyright["class"] == ["meta"]
 
     def test_shows_under_the_name_each_number_on_its_own_line(
         self, client, nepali_home_page, site_settings
