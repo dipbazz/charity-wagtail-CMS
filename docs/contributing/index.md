@@ -93,7 +93,9 @@ bundle it into a fix.
    stacked on each other. Straight after opening it, check its changelog file (or the
    `no changelog` label), that it has a milestone, its issue's board card in *In review*, the
    docs pages it describes and, if what a charity sends or decides has changed, the onboarding
-   pack.
+   pack. On your first pull request, the CLA Assistant bot asks you to sign the contributor
+   licence agreement, once; until you do, its `license/cla` check fails and the pull request
+   can't be merged ([why](../decisions.md#outside-contributions-need-a-signed-cla)).
 8. **QA:** CI checks every page layout at six widths; the pull request lists what a person must
    check in the browser ([QA](testing.md#qa)).
 9. **Reviews:** the pull request gets `needs: code review`, and `needs: qa` or

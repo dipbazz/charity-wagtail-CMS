@@ -747,9 +747,39 @@ site's users the changed source. The demo photos stay under their own licences
   charity. An unchanged copy owes nothing more.
 - The licence binds others, not the copyright holder, who can still license the code on other
   terms, but only for the parts they hold the copyright to. Outside contributions stay their
-  authors' and come in under the AGPL alone, so before accepting any, contributors sign a
-  contributor licence agreement, or each contribution can't be relicensed without its author's
-  consent.
+  authors' and come in under the AGPL alone, so contributors sign a contributor licence agreement
+  first ([below](#outside-contributions-need-a-signed-cla)).
 - Versions already published stay under the AGPL if the repository goes private later
   ([Choices that work whether the repo is public or private](#choices-that-work-whether-the-repo-is-public-or-private)).
 - Some companies won't use AGPL code internally.
+
+## Outside contributions need a signed CLA
+
+**Status:** in use (since November 2026)
+
+**Context**
+
+Whoever writes code keeps its copyright, and a merged pull request gives the project only the
+repository's licence for it ([GitHub's terms](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#6-contributions-under-repository-license),
+"inbound = outbound"). Under the AGPL alone, the maintainer couldn't offer an outside
+contribution under other terms, such as a commercial licence or a later change of licence,
+without asking its author. That gets harder with every contributor, and impossible for one who
+can't be found.
+
+**Decision**
+
+Every outside contributor signs a contributor licence agreement once, before their first pull
+request is merged. They keep their copyright and grant the maintainer, and anyone the project
+passes to, the right to license their contribution on any terms. The text is based on the
+[Apache Individual CLA](https://www.apache.org/licenses/contributor-agreements.html#clas).
+[CLA Assistant](https://github.com/cla-assistant/cla-assistant) (cla-assistant.io, maintained by
+SAP) asks on each pull request, keeps the signatures, and reports a `license/cla` check that
+`main` requires. The maintainer and bots are allowlisted. The CLA Assistant Lite GitHub Action,
+which would keep signatures in the repository, was passed over: it's archived.
+
+**Consequences**
+
+- The project can be relicensed or dual-licensed later without tracking down each contributor.
+- Some developers won't sign a CLA, so they won't contribute.
+- The signatures live on CLA Assistant's service, and its GitHub app reads pull requests.
+- The text should be reviewed by a lawyer before a company takes the project over.

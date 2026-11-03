@@ -59,3 +59,5 @@ website, offer its users your changed source. The demo photos in
 `home/management/commands/demo_images/` aren't covered: they stay under their Unsplash and
 Pexels licences, listed in [Demo content](docs/contributing/demo-content.md#demo-photos).
 [Decisions](docs/decisions.md#the-code-is-licensed-under-the-agpl) says why this licence.
+Contributors sign a [contributor licence agreement](docs/decisions.md#outside-contributions-need-a-signed-cla)
+once, when the bot asks on their first pull request.
