@@ -18,11 +18,17 @@ from home.models import StandardPage
 
 pytestmark = pytest.mark.django_db
 
+REGISTRATION = (
+    "Registered with the District Administration Office, Kathmandu, no. 1234\nPAN 301234567"
+)
+NEPALI_REGISTRATION = "जिल्ला प्रशासन कार्यालय, काठमाडौंमा दर्ता नं. 1234\nप्यान 301234567"
+# A row's fields every save of Site settings needs (#172).
+REGISTERED = {"registration_line": REGISTRATION}
+
 
 @pytest.fixture
 def site_settings(site):
     settings = SiteSettings.for_site(site)
-    settings.charity_number = "1234567"
     settings.contact_email = "hello@brightwell.example"
     settings.instagram_url = "https://instagram.example/brightwell"
     settings.save()
@@ -32,7 +38,6 @@ def site_settings(site):
 def test_footer_shows_charity_details_from_site_settings(client, home_page, site_settings):
     html = client.get("/").content.decode()
 
-    assert "Registered charity number 1234567" in html
     assert 'href="mailto:hello@brightwell.example"' in html
     assert 'href="https://instagram.example/brightwell"' in html
 
@@ -324,8 +329,14 @@ class TestTextInEachLanguageInTheAdmin:
             client,
             moderator,
             site,
-            (Locale.get_default(), {"name": "Brightwell Water Trust", "address": "1 Example St"}),
-            (nepali_locale, {"name": "ब्राइटवेल जल ट्रस्ट", "address": "1 एक्जाम्पल स्ट्रिट"}),
+            (
+                Locale.get_default(),
+                {"name": "Brightwell Water Trust", "address": "1 Example St", **REGISTERED},
+            ),
+            (
+                nepali_locale,
+                {"name": "ब्राइटवेल जल ट्रस्ट", "address": "1 एक्जाम्पल स्ट्रिट", **REGISTERED},
+            ),
         )
 
         assert response.status_code == 302
@@ -359,24 +370,189 @@ class TestTextInEachLanguageInTheAdmin:
         self, client, moderator, site, nepali_locale
     ):
         response = self.save_site_settings(
-            client, moderator, site, (nepali_locale, {"address": "1 एक्जाम्पल स्ट्रिट"})
+            client,
+            moderator,
+            site,
+            (nepali_locale, {"address": "1 एक्जाम्पल स्ट्रिट", **REGISTERED}),
         )
 
         assert response.status_code == 200
-        assert response.context["form"].non_field_errors() == [
+        assert response.context["form"].non_field_errors()[0] == (
             "Add a row for English too, with its address: readers of every language must be "
             "told the same."
-        ]
+        )
         assert "Add a row for English too, with its address" in response.content.decode()
         assert not SiteSettings.for_site(site).texts.exists()
 
     def test_the_name_can_be_in_one_language_only(self, client, moderator, site, nepali_locale):
         """A language without a name shows the main language's."""
         response = self.save_site_settings(
-            client, moderator, site, (Locale.get_default(), {"name": "Brightwell Water Trust"})
+            client,
+            moderator,
+            site,
+            (Locale.get_default(), {"name": "Brightwell Water Trust", **REGISTERED}),
+            (nepali_locale, REGISTERED),
         )
 
         assert response.status_code == 302
+
+
+class TestRegistrationLineInTheAdmin:
+    """The registration line must be written in every language before Site settings save
+    (#172): a charity mustn't go live without showing it's registered."""
+
+    def save(self, client, moderator, site, *texts):
+        return TestTextInEachLanguageInTheAdmin().save_site_settings(
+            client, moderator, site, *texts
+        )
+
+    def test_saved_in_every_language(self, client, moderator, site, nepali_locale):
+        response = self.save(
+            client,
+            moderator,
+            site,
+            (Locale.get_default(), {"registration_line": REGISTRATION}),
+            (nepali_locale, {"registration_line": NEPALI_REGISTRATION}),
+        )
+
+        assert response.status_code == 302
+        assert sorted(
+            SiteSettings.for_site(site).texts.values_list("registration_line", flat=True)
+        ) == sorted([REGISTRATION, NEPALI_REGISTRATION])
+
+    def test_blank_in_every_language_cant_be_saved(self, client, moderator, site, nepali_locale):
+        response = self.save(
+            client, moderator, site, (Locale.get_default(), {}), (nepali_locale, {})
+        )
+
+        assert response.status_code == 200
+        english_row, nepali_row = response.context["form"].formsets["texts"].forms
+        assert english_row.errors["registration_line"] == [
+            "Write this in English: it's needed in every language before these settings can be "
+            "saved."
+        ]
+        assert nepali_row.errors["registration_line"] == [
+            "Write this in Nepali: it's needed in every language before these settings can be "
+            "saved."
+        ]
+        assert not SiteSettings.for_site(site).texts.exists()
+
+    def test_blank_in_one_language_cant_be_saved(self, client, moderator, site, nepali_locale):
+        response = self.save(
+            client,
+            moderator,
+            site,
+            (Locale.get_default(), {"registration_line": REGISTRATION}),
+            (nepali_locale, {"registration_line": " "}),
+        )
+
+        assert response.status_code == 200
+        english_row, nepali_row = response.context["form"].formsets["texts"].forms
+        assert "registration_line" not in english_row.errors
+        assert nepali_row.errors["registration_line"]
+        assert "Write this in Nepali" in response.content.decode()
+
+    def test_a_language_without_a_row_cant_be_saved(self, client, moderator, site, nepali_locale):
+        response = self.save(
+            client, moderator, site, (Locale.get_default(), {"registration_line": REGISTRATION})
+        )
+
+        assert response.status_code == 200
+        assert response.context["form"].non_field_errors() == [
+            "Add a row for Nepali with its registration line, needed in every language before "
+            "these settings can be saved."
+        ]
+        assert not SiteSettings.for_site(site).texts.exists()
+
+    def test_no_rows_at_all_cant_be_saved(self, client, moderator, site, nepali_locale):
+        response = self.save(client, moderator, site)
+
+        assert response.status_code == 200
+        assert len(response.context["form"].non_field_errors()) == 2
+
+    @pytest.mark.parametrize(("length", "saved"), [(500, True), (501, False)])
+    def test_at_most_500_characters(self, client, moderator, site, nepali_locale, length, saved):
+        line = "1" * length
+
+        response = self.save(
+            client,
+            moderator,
+            site,
+            (Locale.get_default(), {"registration_line": line}),
+            (nepali_locale, {"registration_line": line}),
+        )
+
+        assert (response.status_code == 302) is saved
+        if not saved:
+            english_row = response.context["form"].formsets["texts"].forms[0]
+            assert english_row.errors["registration_line"] == [
+                "Ensure this value has at most 500 characters (it has 501)."
+            ]
+
+    def test_the_help_text_says_where_it_shows_and_warns_against_placeholders(self):
+        help_text = SiteSettingsText._meta.get_field("registration_line").help_text
+
+        assert "bottom of every page" in help_text
+        assert "registration certificates" in help_text
+        assert "TBC" in help_text
+        assert "District Administration Office" in help_text
+
+    def test_the_panel_help_names_the_rule(self, client, moderator, site):
+        client.force_login(moderator)
+        url = reverse("wagtailsettings:edit", args=["core", "sitesettings", site.pk])
+
+        assert "The registration line must be written for every language" in (
+            client.get(url).content.decode()
+        )
+
+
+class TestRegistrationLineInTheFooter:
+    """Under the charity's name, in the reader's language (#172)."""
+
+    def footer_lines(self, client, path):
+        """The footer's paragraphs: the name, the registration line if any, then the copyright."""
+        page = BeautifulSoup(client.get(path).content, "html.parser")
+        return page.select("footer .container > p")
+
+    def test_nothing_shows_while_it_isnt_written(self, client, home_page, site):
+        """As on a site straight after `new_site`, whose settings were never saved."""
+        name, copyright = self.footer_lines(client, "/")
+
+        assert "Registered" not in copyright.get_text()
+
+    def test_shows_under_the_name_each_number_on_its_own_line(
+        self, client, nepali_home_page, site_settings
+    ):
+        add_texts(site_settings, REGISTRATION, NEPALI_REGISTRATION, field="registration_line")
+
+        name, line, copyright = self.footer_lines(client, "/")
+        assert line.decode_contents() == REGISTRATION.replace("\n", "<br/>")
+        assert line["lang"] == "en"
+        assert "class" not in line.attrs
+
+    def test_a_nepali_page_shows_the_nepali_line(self, client, nepali_home_page, site_settings):
+        add_texts(site_settings, REGISTRATION, NEPALI_REGISTRATION, field="registration_line")
+
+        name, line, copyright = self.footer_lines(client, "/ne/")
+        assert line.get_text() == NEPALI_REGISTRATION.replace("\n", "")
+        assert line["lang"] == "ne"
+
+    def test_a_language_without_one_shows_the_main_languages_marked_as_such(
+        self, client, nepali_home_page, site_settings
+    ):
+        add_texts(site_settings, REGISTRATION, "", field="registration_line")
+
+        name, line, copyright = self.footer_lines(client, "/ne/")
+        assert line.get_text() == REGISTRATION.replace("\n", "")
+        assert line["lang"] == "en"
+
+    @pytest.mark.parametrize("footer_style", ["dark", "light"])
+    def test_shows_in_a_dark_or_light_footer(self, client, home_page, site_settings, footer_style):
+        site_settings.footer_style = footer_style
+        add_texts(site_settings, REGISTRATION, field="registration_line")
+
+        name, line, copyright = self.footer_lines(client, "/")
+        assert "PAN 301234567" in line.get_text()
 
 
 class TestBrandColours:
@@ -394,7 +570,7 @@ class TestBrandColours:
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
             "font_style": "modern",
-            "texts": inline_formset([]),
+            "texts": registered_texts(site),
         }
         return client.post(url, nested_form_data(form))
 
@@ -474,7 +650,7 @@ class TestHeaderAndFooter:
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": footer,
             "font_style": "modern",
-            "texts": inline_formset([]),
+            "texts": registered_texts(site),
         }
         return client.post(url, nested_form_data(form))
 
@@ -551,7 +727,7 @@ class TestFontStyle:
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
             "font_style": font_style,
-            "texts": inline_formset([]),
+            "texts": registered_texts(site),
         }
         return client.post(url, nested_form_data(form))
 
@@ -624,7 +800,7 @@ class TestLogo:
             "footer_style": "dark",
             "font_style": "modern",
             "logo": logo.pk if logo else "",
-            "texts": inline_formset([]),
+            "texts": registered_texts(site),
         }
         return client.post(url, nested_form_data(form))
 
@@ -778,7 +954,7 @@ class TestLogoSize:
             "footer_style": "dark",
             "font_style": "modern",
             "logo_size": size,
-            "texts": inline_formset([]),
+            "texts": registered_texts(site),
         }
         return client.post(url, nested_form_data(form))
 
@@ -878,7 +1054,7 @@ class TestTabsAfterARefusedSave:
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
             "font_style": "modern",
-            "texts": inline_formset([]),
+            "texts": registered_texts(site),
             **changes,
         }
         return client.post(url, nested_form_data(form))
@@ -1041,10 +1217,40 @@ class TestPreview:
             "logo_size": DEFAULT_LOGO_SIZE,
             "footer_style": "dark",
             "font_style": "modern",
-            "texts": inline_formset([]),
+            "texts": registered_texts(site),
         }
 
         assert client.post(url, nested_form_data(form)).json()["is_valid"] is False
+
+    def test_an_unwritten_registration_line_doesnt_stop_the_preview(
+        self, client, moderator, site, home_page
+    ):
+        """So a new charity can preview its colours before it has sent its registration: the
+        error would be on a box on the other tab."""
+        response = self.preview(client, moderator, site, main_colour="#8e1b3b")
+
+        assert response.status_code == 200
+        assert "--colour-primary:#8e1b3b;" in response.content.decode()
+
+    def test_the_same_form_cant_be_saved(self, client, moderator, site):
+        response = TestTabsAfterARefusedSave().save(
+            client, moderator, site, texts=inline_formset([])
+        )
+
+        assert response.status_code == 200
+        assert "Add a row for English with its registration line" in response.content.decode()
+
+    def test_a_bad_colour_and_no_registration_line_show_both_errors_on_the_first_tab(
+        self, client, moderator, site
+    ):
+        response = TestTabsAfterARefusedSave().save(
+            client, moderator, site, main_colour="#f2b134", texts=texts_in_every_language(site)
+        )
+
+        html = response.content.decode()
+        assert "Too light to read easily" in html
+        assert "Write this in English" in html
+        assert 'data-w-tabs-active-panel-id-value="tab-organisation"' in html
 
     def test_the_pages_to_preview(self, demo_site):
         """A long page (the home page), the Donate form and a page in the other language."""
@@ -1100,6 +1306,25 @@ def show_banner(site, message, nepali=None, link_page=None):
             AnnouncementBannerText(locale=Locale.objects.get(language_code="ne"), message=nepali)
         )
     banner.save()
+
+
+def registered_texts(site):
+    """Site settings' `texts` with only the registration line, which every save needs (#172)."""
+    return texts_in_every_language(site, **REGISTERED)
+
+
+def texts_in_every_language(site, **fields):
+    """Site settings' `texts` as the admin sends them: a row for each language with only
+    `fields`. A row the site has keeps its id: the demo's, in a module that has used
+    `demo_site`."""
+    saved = {row.locale_id: row.pk for row in SiteSettings.for_site(site).texts.all()}
+    rows = [
+        {"locale": locale.pk, **fields, **({"id": saved[locale.pk]} if locale.pk in saved else {})}
+        for locale in Locale.objects.order_by("pk")
+    ]
+    # The saved rows come first, as the admin sends them.
+    rows.sort(key=lambda row: "id" not in row)
+    return inline_formset(rows, initial=len(saved))
 
 
 def add_texts(site_settings, english, nepali=None, field="address"):

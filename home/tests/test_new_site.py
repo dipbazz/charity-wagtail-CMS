@@ -234,7 +234,10 @@ class TestSiteSettings:
         settings_ = SiteSettings.for_site(site)
         assert settings_.contact_email == ""
         assert settings_.phone == ""
-        assert not any(text.address or text.refund_policy for text in settings_.texts.all())
+        assert not any(
+            text.address or text.refund_policy or text.registration_line
+            for text in settings_.texts.all()
+        )
 
     def test_refuses_an_email_that_isnt_one(self, home_page):
         with pytest.raises(CommandError, match="email"):
@@ -407,10 +410,18 @@ class TestWhatItPrints:
         assert "Live   English   Bright Future" in printed
         assert "Live   नेपाली   उज्यालो भविष्य" in printed
         assert "Draft  English   About us" in printed
-        order = [printed.index(name) for name in ("Still to do", "1. Privacy notice", "2. Donate")]
+        order = [
+            printed.index(name)
+            for name in ("Still to do", "1. Site settings", "2. Privacy notice", "3. Donate")
+        ]
         assert order == sorted(order)
-        for still_to_do in ("Site settings", "DNS", "Email"):
+        for still_to_do in ("DNS", "Email"):
             assert still_to_do in printed
+
+    def test_site_settings_come_before_donate_which_needs_their_registration_line(self):
+        printed = new_site()
+
+        assert "1. Site settings: the registration line" in printed
 
     def test_says_to_restart_the_site_first(self):
         printed = new_site()

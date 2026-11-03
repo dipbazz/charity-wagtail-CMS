@@ -747,10 +747,6 @@ msgstr "मुख्य सामग्रीमा जानुहोस्"
 msgid "Privacy notice"
 msgstr "गोपनीयता सूचना"
 
-#, python-format
-msgid "Registered charity number %(number)s."
-msgstr "दर्ता भएको परोपकारी संस्था नम्बर %(number)s।"
-
 msgid "Announcement"
 msgstr "घोषणा"
 

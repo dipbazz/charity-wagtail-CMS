@@ -31,7 +31,7 @@ def test_creates_a_complete_charity_site(seeded):
 
 def test_configures_site_settings_and_menu(seeded, client):
     settings = SiteSettings.for_site(seeded)
-    assert settings.charity_number
+    assert settings.languages_without("registration_line") == []
     assert settings.donate_page is not None
     assert AnnouncementBanner.for_site(seeded).enabled
     assert seeded.root_page.get_children().live().in_menu().count() >= 3

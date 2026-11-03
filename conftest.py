@@ -109,14 +109,33 @@ def nepali_home_page(home_page, nepali_locale):
 
 
 @pytest.fixture
-def privacy_notice(home_page):
-    """A published privacy notice, chosen in Site settings so the footer and forms link to it."""
-    from core.models import SiteSettings
+def registration_line(site):
+    """Site settings with a registration line in every language, which the admin needs to save
+    them and the Donate page and forms need to go live (#172)."""
+    from core.models import SiteSettings, SiteSettingsText
+
+    settings = SiteSettings.for_site(site)
+    for locale in Locale.objects.all():
+        SiteSettingsText.objects.update_or_create(
+            settings=settings,
+            locale=locale,
+            defaults={"registration_line": "Registered charity no. 1234567 (fictional)"},
+        )
+    return settings
+
+
+@pytest.fixture
+def privacy_notice(home_page, registration_line):
+    """A published privacy notice, chosen in Site settings so the footer and forms link to it.
+
+    The settings have a registration line in every language too, the other thing they need for
+    the Donate page and forms to go live.
+    """
     from home.models import StandardPage
 
     page = StandardPage(title="Privacy notice", slug="privacy")
     home_page.add_child(instance=page)
-    settings = SiteSettings.for_site(home_page.get_site())
+    settings = registration_line
     settings.privacy_page = page
     settings.save()
     return page

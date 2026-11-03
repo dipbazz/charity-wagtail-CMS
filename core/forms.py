@@ -13,7 +13,12 @@ class TextInEachLanguageForm(WagtailAdminModelForm):
 
     A field the row model lists in `in_every_language`, once filled in for one language, must be
     filled in for every language the site has: a refund policy for English readers alone would
-    tell Nepali readers something else (#202). The other fields fall back to the main language's.
+    tell Nepali readers something else (#202). A field it lists in `required_in_every_language`
+    must be filled in for every language even when none is: the registration line (#172). The
+    other fields fall back to the main language's.
+
+    The required fields aren't checked for a preview (`is_deferred_validation`), so a new charity
+    can preview its colours before its registration is written.
     """
 
     def is_valid(self):
@@ -50,14 +55,46 @@ class TextInEachLanguageForm(WagtailAdminModelForm):
                     )
                     agree = False
         for code, fields in missing_rows.items():
-            names = [str(texts.model._meta.get_field(field).verbose_name) for field in fields]
             self.add_error(
                 None,
                 f"Add a row for {language_name(code)} too, with its "
-                f"{get_text_list(names, 'and')}: readers of every language must be told the same.",
+                f"{field_names(texts.model, fields)}: readers of every language must be told the "
+                "same.",
             )
             agree = False
+        if not self.is_deferred_validation:
+            agree = self.required_texts_written(texts.model, rows, languages) and agree
         return agree
+
+    def required_texts_written(self, model, rows, languages):
+        required = model.required_in_every_language
+        written = True
+        for code in languages:
+            if code not in rows:
+                if required:
+                    self.add_error(
+                        None,
+                        f"Add a row for {language_name(code)} with its "
+                        f"{field_names(model, required)}, needed in every language before these "
+                        "settings can be saved.",
+                    )
+                    written = False
+                continue
+            for field in required:
+                if not rows[code].cleaned_data.get(field, "").strip():
+                    rows[code].add_error(
+                        field,
+                        f"Write this in {language_name(code)}: it's needed in every language "
+                        "before these settings can be saved.",
+                    )
+                    written = False
+        return written
+
+
+def field_names(model, fields):
+    """The fields' names as the admin labels them, such as "address and refund policy"."""
+    names = [str(model._meta.get_field(field).verbose_name) for field in fields]
+    return get_text_list(names, "and")
 
 
 def language_name(code):

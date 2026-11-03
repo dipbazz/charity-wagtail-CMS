@@ -48,9 +48,14 @@ class TestPagesInNepali:
         assert 'aria-label="मुख्य"' in html
 
     def test_the_footer_in_nepali(self, client, nepali_home_page, privacy_notice, home_page):
+        """The registration line is the charity's own words in each language (#172)."""
         settings = SiteSettings.for_site(home_page.get_site())
-        settings.charity_number = "1234567"
-        settings.save()
+        settings.texts.filter(locale__language_code="en").update(
+            registration_line="Registered charity number 1234567."
+        )
+        settings.texts.filter(locale__language_code="ne").update(
+            registration_line="दर्ता भएको परोपकारी संस्था नम्बर 1234567।"
+        )
 
         text = visible_text(client.get("/ne/"))
 
