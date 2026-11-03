@@ -53,6 +53,8 @@ workflow. [The site](docs/site/index.md) describes each part, and
 
 ## Licence
 
+Copyright (C) 2026 Dipesh Bajgain.
+
 The code is free software under the [GNU Affero General Public License v3.0](LICENSE) or any
 later version. You may use, change and host it, for a fee too. If you change it and run it as a
 website, offer its users your changed source. Two kinds of file aren't covered. The demo photos
