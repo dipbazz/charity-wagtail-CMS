@@ -383,7 +383,8 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
     def registration_line(self):
         """Where the charity is registered, and its numbers, under its name in the footer (#172).
 
-        Blank only on a site whose settings were never saved, such as one `new_site` built.
+        Blank until Site settings are next saved, on a site `new_site` built or one upgraded
+        without a charity number (the migration had nothing to move).
         """
         return self.text_in_reading_language("registration_line")
 
