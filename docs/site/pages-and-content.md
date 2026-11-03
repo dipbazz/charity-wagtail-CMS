@@ -12,9 +12,10 @@ Every page shares one layout (`charity/templates/base.html`):
   its own, then Menu, the main menu and search, the language switch and Donate
   ([Look and feel](look-and-feel.md#header)).
 - **Main content**, with a "Skip to content" link before the header.
-- **Footer**: the charity's name, address, email, phone and social links, the privacy notice
-  link, and "© year, name. Registered charity number …", all from Site settings. On a short page
-  it sits at the bottom of the window.
+- **Footer**: the charity's name, its registration line (each line as the charity typed it, left
+  out while there's none), address, email, phone and social links, the privacy notice link, and
+  "© year, name.", all from Site settings. A long number or email breaks to fit a phone. On a
+  short page it sits at the bottom of the window.
 - In `<head>`: the title (the page's SEO title or title, then "| the charity's name" in the
   language being read, [Languages](languages.md#snippets-and-settings-text)), its search
   description, social sharing tags and links to its translations
@@ -44,8 +45,8 @@ page's title, linked to edit it if you may, and one status: **Not set**, **Draft
 …] text**, **Not translated yet** with a Translate link, or **Translate after publishing** while
 the main page isn't set or live. The privacy notice and Donate are the pages chosen in Site settings (Not
 set links there); the others are found by their address under the home page until they have
-choosers of their own. A line above the list asks for the registration details while Site settings
-has none.
+choosers of their own. A line above the list asks for the registration details while Site
+settings' registration line is blank in any language.
 
 Only someone who can change a page or Site settings sees the panel; a pledges-only user can do
 nothing it asks.
@@ -68,6 +69,9 @@ publish a page (`core/publishing.py`):
 - **while it's a form or the Donate page and the privacy notice chosen in Site settings isn't
   published**, because a page that collects personal details must say how they're used
   ([Appeals and giving](appeals-and-giving.md#privacy-notice));
+- **while it's a form or the Donate page and Site settings' registration line is blank in any
+  language**, because a page asking for gifts or details must show the charity is registered.
+  Pages already live stay live, and other pages, home pages included, still publish;
 - **while it's a form with no email address to send each message to**, or nobody would read them.
 
 Drafts always save. Every way a page goes live asks the same check:
@@ -149,9 +153,12 @@ main language ([Languages](languages.md#snippets-and-settings-text)).
 Settings that apply to every page, under **Settings** in the admin (`core/models.py`):
 
 - **Site settings** (moderators only, because they hold the charity's identity): the charity's
-  **name** (in the header, the footer and the tab title), its address and its **refund policy**
+  **name** (in the header, the footer and the tab title), its **registration line** (under the
+  name in the footer: where it's registered and its numbers, typed by the charity), its address
+  and its **refund policy**
   ([Appeals and giving](appeals-and-giving.md#paying-a-pledge)), each written in each
-  language (the address and refund policy in every language or none); charity number, contact email and phone (shown in the footer); **We take gifts at our office**, which offers paying in person after a pledge, with that address and phone ([Appeals and giving](appeals-and-giving.md#paying-a-pledge)); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
+  language (the registration line in every language before the settings can be saved, though a
+  preview works without it; the address and refund policy in every language or none); contact email and phone (shown in the footer); **We take gifts at our office**, which offers paying in person after a pledge, with that address and phone ([Appeals and giving](appeals-and-giving.md#paying-a-pledge)); the **Donate page** the header's button goes to; the **privacy notice** ([Appeals and giving](appeals-and-giving.md#privacy-notice));
   the **currency** every amount is shown in ([Money](appeals-and-giving.md#money)); the
   **default phone country** for mobile numbers on forms; Facebook, Instagram and LinkedIn
   links (each shown in the footer only when set); and, on the **Brand** tab, the charity's

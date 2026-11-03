@@ -52,9 +52,15 @@ still to be checked with charities.
 
 On every page: the charity's name; one **registration line** (in Nepal, the District
 Administration Office registration number and district, the Social Welfare Council affiliation
-number and the PAN; in the UK, the registered charity number); the address, phone and email;
-social links; and links to Reports and accounts, the privacy notice, the accessibility statement
-and Contact.
+number and the PAN; in the UK, the registered charity number), under the name; the address,
+phone and email; social links; and links to Reports and accounts, the privacy notice, the
+accessibility statement and Contact.
+
+For now the charity types its registration line itself, in each language, in Site settings, so
+nothing checks which numbers it includes; entering each number in its own box is
+[#274](https://github.com/dipbazz/Charity-wagtail-CMS/issues/274). Settings can't be saved without
+the line in every language, and the Donate page and forms can't go live without it
+([Pages and content](pages-and-content.md#what-stops-a-page-going-live)).
 
 ## Pages every site has
 
@@ -115,7 +121,7 @@ Delete this section once [#191](https://github.com/dipbazz/Charity-wagtail-CMS/i
 |---|---|---|
 | Header | The name on a row of its own above the controls row; it scrolls away | [#176](https://github.com/dipbazz/Charity-wagtail-CMS/issues/176), [#139](https://github.com/dipbazz/Charity-wagtail-CMS/issues/139) |
 | Menu | Whichever pages an editor ticks "Show in menus" for, in tree order, named by their titles | [#171](https://github.com/dipbazz/Charity-wagtail-CMS/issues/171) |
-| Footer | Name, address, contact details, social links, privacy link and a UK charity number | [#172](https://github.com/dipbazz/Charity-wagtail-CMS/issues/172), [#167](https://github.com/dipbazz/Charity-wagtail-CMS/issues/167), [#170](https://github.com/dipbazz/Charity-wagtail-CMS/issues/170) |
+| Footer | Name, the registration line the charity types, address, contact details, social links and privacy link | [#172](https://github.com/dipbazz/Charity-wagtail-CMS/issues/172), [#167](https://github.com/dipbazz/Charity-wagtail-CMS/issues/167), [#170](https://github.com/dipbazz/Charity-wagtail-CMS/issues/170) |
 | About us | A standard page, written freely | [#169](https://github.com/dipbazz/Charity-wagtail-CMS/issues/169), [#170](https://github.com/dipbazz/Charity-wagtail-CMS/issues/170) |
 | Appeals and Stories | Built | |
 | Get involved | A volunteer form at `/volunteer/` | [#168](https://github.com/dipbazz/Charity-wagtail-CMS/issues/168) |
