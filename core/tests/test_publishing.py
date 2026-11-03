@@ -39,6 +39,7 @@ from core.publishing import (
     UnpublishRefused,
     has_placeholder,
     reasons_not_to_publish,
+    what_a_form_lacks,
 )
 from home.models import StandardPage
 
@@ -654,6 +655,17 @@ class TestTheRegistrationLine:
             PUBLISH_PRIVACY_NOTICE,
             ADD_REGISTRATION_LINE,
         ]
+
+    def test_the_settings_are_loaded_once(
+        self, home_page, privacy_notice, django_assert_max_num_queries
+    ):
+        """A bulk or scheduled publish checks every form: the settings, their privacy notice and
+        their texts, one query each."""
+        page = volunteer_form(home_page)
+        site = home_page.get_site()
+
+        with django_assert_max_num_queries(3):
+            what_a_form_lacks(page, site)
 
     def test_plain_pages_and_home_pages_still_go_live(self, home_page, privacy_notice):
         blank_registration_line(home_page.get_site())

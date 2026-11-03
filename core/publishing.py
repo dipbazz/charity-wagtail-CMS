@@ -118,15 +118,15 @@ def has_placeholders(page):
     )
 
 
-def privacy_notice_is_live(site):
+def privacy_notice_is_live(site_settings):
     """Whether the privacy notice chosen in the site's settings is published."""
-    notice = site and SiteSettings.for_site(site).privacy_page
+    notice = site_settings and site_settings.privacy_page
     return notice is not None and notice.live
 
 
-def registration_line_written(site):
+def registration_line_written(site_settings):
     """Whether the site's registration line is written in every language (#172)."""
-    return bool(site) and not SiteSettings.for_site(site).languages_without("registration_line")
+    return bool(site_settings) and not site_settings.languages_without("registration_line")
 
 
 def what_a_form_lacks(page, site):
@@ -135,9 +135,10 @@ def what_a_form_lacks(page, site):
     send messages to."""
     lacks = []
     if getattr(page, "collects_personal_details", False):
-        if not privacy_notice_is_live(site):
+        site_settings = site and SiteSettings.for_site(site)
+        if not privacy_notice_is_live(site_settings):
             lacks.append((None, PUBLISH_PRIVACY_NOTICE))
-        if not registration_line_written(site):
+        if not registration_line_written(site_settings):
             lacks.append((None, ADD_REGISTRATION_LINE))
     if isinstance(page, AbstractEmailForm) and not page.to_address.strip():
         lacks.append(("to_address", ADD_RECIPIENT))
