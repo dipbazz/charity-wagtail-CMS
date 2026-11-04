@@ -189,7 +189,8 @@ them.
 
 - After a send, the page goes on to `?sent` at the address the form was sent to (a 303
   redirect), which shows the thank-you message. Reloading it can't send the message twice, and
-  opening `?sent` directly saves and sends nothing.
+  opening `?sent` directly saves and sends nothing. The thank-you carries `noindex`, so search
+  engines list only the form.
 - The email's **Reply-To** is the sender's email field, so the team can answer directly.
 - If the email can't be sent, the error is logged and the visitor still sees the thank-you page:
   the submission is already saved, and the team reads and exports submissions (CSV or Excel) in the admin. Anything a visitor typed

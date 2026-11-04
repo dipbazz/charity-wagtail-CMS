@@ -181,6 +181,13 @@ class TestAfterASend:
         assert response.status_code == 200
         assert "contact/form_page_landing.html" in [t.name for t in response.templates]
 
+    def test_sent_is_kept_out_of_search_results(self, client, volunteer_form):
+        """The thank-you is the form's address again; only the form belongs in search."""
+        noindex = '<meta name="robots" content="noindex">'
+
+        assert noindex in client.get(f"{volunteer_form.url}?sent").content.decode()
+        assert noindex not in client.get(volunteer_form.url).content.decode()
+
     def test_the_landing_preview_still_shows_the_thanks(self, rf, volunteer_form):
         response = volunteer_form.serve_preview(rf.get("/"), "landing")
 
