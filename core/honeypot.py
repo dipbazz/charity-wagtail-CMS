@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 # word in it is one a password manager fills by name.
 NAME = "hp-leave-blank"
 
+# The window this worker last said the cache broke in: the cache can't remember it.
+broken_logged_in = None
+
 
 def filled(data):
     """Whether a send has the box filled. A missing box is empty: a page cached from before it."""
@@ -25,13 +28,18 @@ def filled(data):
 
 def dropped(page):
     """Say a send to `page` was dropped, once per window, never with what was typed or from where,
-    so a flood can't fill the logs. A broken cache only loses the line."""
+    so a flood can't fill the logs. A broken cache still drops, and says so once per window."""
     window = settings.LIMITS_WINDOW
+    window_number = int(time.time() // window)
     try:
-        first = caches["limits"].add(
-            f"honeypot:{page.pk}:{int(time.time() // window)}", True, timeout=window
-        )
+        first = caches["limits"].add(f"honeypot:{page.pk}:{window_number}", True, timeout=window)
     except Exception:
+        global broken_logged_in
+        if broken_logged_in != window_number:
+            broken_logged_in = window_number
+            logger.exception(
+                "Couldn't note a dropped send; this window's drops go unsaid in this worker."
+            )
         return
     if first:
         logger.warning(

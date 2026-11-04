@@ -208,7 +208,8 @@ bot, which can read the page and leave the box alone.
   them.
 - **Logged once:** the first dropped send to a page in each `LIMITS_WINDOW` is one WARNING on the
   `core` logger naming the page, never the address or what was typed. If the limits' cache
-  breaks, the line is lost and the send is still dropped.
+  breaks, the send is still dropped and each worker logs one ERROR per window instead, as the
+  limits do.
 
 ## Production refuses to start half-configured
 

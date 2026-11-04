@@ -42,13 +42,28 @@ class TestLog:
         assert [r.levelname for r in caplog.records] == ["WARNING"]
         assert str(home_page.pk) in caplog.text
 
-    def test_a_broken_cache_doesn_t_raise(self, home_page, monkeypatch):
+    def test_a_broken_cache_doesn_t_raise_and_says_so_once_per_window(
+        self, home_page, monkeypatch, caplog
+    ):
+        """As core/limits.py does: drops that go unsaid must still leave a trace."""
+
         def broken(*args, **kwargs):
             raise OSError("disk full")
 
         monkeypatch.setattr(caches["limits"], "add", broken)
+        monkeypatch.setattr(honeypot, "broken_logged_in", None)
+        monkeypatch.setattr(honeypot.time, "time", lambda: 1000.0)
+        with caplog.at_level(logging.ERROR, logger="core"):
+            honeypot.dropped(home_page)
+            honeypot.dropped(home_page)
 
-        honeypot.dropped(home_page)
+        assert [r.levelname for r in caplog.records] == ["ERROR"]
+
+        monkeypatch.setattr(honeypot.time, "time", lambda: 1300.0)
+        with caplog.at_level(logging.ERROR, logger="core"):
+            honeypot.dropped(home_page)
+
+        assert len(caplog.records) == 2
 
 
 def template_source(name):
