@@ -181,8 +181,12 @@ form, and links to chosen pages go to their translation in the language being re
 
 Editors build forms themselves, such as volunteer sign-up or an enquiry form, with Wagtail's form
 builder (`contact/models.py`, `FormPage`): an introduction, the fields, a thank-you message, and
-who is emailed about each submission.
+who is emailed about each submission. What every form page does lives once in the abstract
+`EmailFormPage`, which `FormPage` inherits; a new form page type inherits it too.
 
+- After a send, the page goes on to `?sent` (a 303 redirect), which shows the thank-you message.
+  Reloading it can't send the message twice, and opening `?sent` directly saves and sends
+  nothing.
 - The email's **Reply-To** is the sender's email field, so the team can answer directly.
 - If the email can't be sent, the error is logged and the visitor still sees the thank-you page:
   the submission is already saved, and the team reads and exports submissions (CSV or Excel) in the admin. Anything a visitor typed

@@ -82,7 +82,7 @@ class TestFormPage:
         assert "How we use your details" not in client.get(volunteer_form.url).content.decode()
 
     def test_valid_submission_is_stored_and_shows_thank_you(self, client, volunteer_form):
-        response = client.post(volunteer_form.url, VALID_DATA)
+        response = client.post(volunteer_form.url, VALID_DATA, follow=True)
 
         assert response.status_code == 200
         assert "Our volunteer team will be in touch." in response.content.decode()
@@ -109,7 +109,7 @@ class TestFormPage:
 
         monkeypatch.setattr("contact.models.send_mail", mail_server_down)
 
-        response = client.post(volunteer_form.url, VALID_DATA)
+        response = client.post(volunteer_form.url, VALID_DATA, follow=True)
 
         assert response.status_code == 200
         assert "Our volunteer team will be in touch." in response.content.decode()
@@ -123,6 +123,37 @@ class TestFormPage:
         assert "This field is required." in response.content.decode()
         assert not FormSubmission.objects.exists()
         assert mail.outbox == []
+
+
+class TestAfterASend:
+    """A send goes on to ?sent (#167), so reloading the thank-you can't send it twice."""
+
+    def test_a_valid_send_goes_on_to_sent(self, client, volunteer_form):
+        response = client.post(volunteer_form.url, VALID_DATA)
+
+        assert response.status_code == 303
+        assert response["Location"] == f"{volunteer_form.url}?sent"
+
+    def test_a_filled_hidden_box_goes_on_to_sent_too(self, client, volunteer_form):
+        """A script sees what a person sees, so it can't tell its send was dropped."""
+        response = client.post(volunteer_form.url, {**VALID_DATA, "hp-leave-blank": "x"})
+
+        assert response.status_code == 303
+        assert response["Location"] == f"{volunteer_form.url}?sent"
+
+    def test_opening_sent_shows_thanks_and_keeps_and_sends_nothing(self, client, volunteer_form):
+        response = client.get(f"{volunteer_form.url}?sent")
+
+        assert response.status_code == 200
+        assert "Our volunteer team will be in touch." in response.content.decode()
+        assert not FormSubmission.objects.exists()
+        assert mail.outbox == []
+
+    def test_the_landing_preview_still_shows_the_thanks(self, rf, volunteer_form):
+        response = volunteer_form.serve_preview(rf.get("/"), "landing")
+
+        assert response.status_code == 200
+        assert "Our volunteer team will be in touch." in response.render().content.decode()
 
 
 class TestTheHiddenBox:
@@ -139,6 +170,7 @@ class TestTheHiddenBox:
             volunteer_form.url,
             {**VALID_DATA, "hp-leave-blank": "Buy cheap watches"},
             REMOTE_ADDR="203.0.113.7",
+            follow=True,
         )
 
         assert response.status_code == 200
@@ -155,7 +187,9 @@ class TestTheHiddenBox:
 
         monkeypatch.setattr(caches["limits"], "add", broken)
 
-        response = client.post(volunteer_form.url, {**VALID_DATA, "hp-leave-blank": "x"})
+        response = client.post(
+            volunteer_form.url, {**VALID_DATA, "hp-leave-blank": "x"}, follow=True
+        )
 
         assert response.status_code == 200
         assert not FormSubmission.objects.exists()

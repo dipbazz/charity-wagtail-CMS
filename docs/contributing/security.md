@@ -202,8 +202,8 @@ bot, which can read the page and leave the box alone.
 - **The name** has a hyphen, so no editor's field can share it, and no word a password manager
   fills by name. A send without the box (a page cached from before it) counts as empty.
 - **In code:** `core/honeypot.py`; the box is `{% honeypot %}` in `campaigns/donate_page.html`
-  and `contact/form_page.html`, and form page types list `HoneypotFormMixin` before Wagtail's
-  form classes. `core/tests/test_honeypot.py` fails for a form page type, or its template,
+  and `contact/form_page.html`, and `contact`'s `EmailFormPage`, which every form page type
+  inherits, lists `HoneypotFormMixin` before Wagtail's form classes. `core/tests/test_honeypot.py` fails for a form page type, or its template,
   without them. The pay flow's forms don't carry it: the pledge's reference and the limits guard
   them.
 - **Logged once:** the first dropped send to a page in each `LIMITS_WINDOW` is one WARNING on the
