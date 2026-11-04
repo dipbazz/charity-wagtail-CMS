@@ -6,6 +6,7 @@ and always run in CI.
 """
 
 import gettext
+import os
 import re
 import shutil
 import subprocess
@@ -25,6 +26,15 @@ NOTHING = "\x00"  # stands in for something the template fills in or marks for t
 
 # Header lines that one gettext version compiles into the .mo file and another leaves out.
 VERSION_DEPENDENT = ("POT-Creation-Date:",)
+
+
+def need(tool):
+    """Skip without a GNU gettext tool, except in CI, where a missing one means the setup broke."""
+    if shutil.which(tool):
+        return
+    if os.environ.get("CI"):
+        pytest.fail(f"GNU gettext isn't installed in CI: {tool} not found")
+    pytest.skip("GNU gettext isn't installed")
 
 
 def messages(catalog):
@@ -139,8 +149,7 @@ class TestNoVisibleTextIsLeftUnmarked:
 
 class TestTheNepaliCatalog:
     def test_every_message_is_translated(self):
-        if not shutil.which("msgattrib"):
-            pytest.skip("GNU gettext isn't installed")
+        need("msgattrib")
         po = LOCALE / "django.po"
 
         untranslated = subprocess.run(
@@ -159,6 +168,13 @@ class TestTheNepaliCatalog:
         assert re.findall(r'^msgid "(.+)"$', untranslated, flags=re.MULTILINE) == []
         assert re.findall(r'^msgid "(.+)"$', fuzzy, flags=re.MULTILINE) == []
 
+    def test_without_gettext_ci_fails_instead_of_skipping(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda tool: None)
+        monkeypatch.setenv("CI", "true")
+
+        with pytest.raises(pytest.fail.Exception, match="msgfmt"):
+            need("msgfmt")
+
     def test_a_header_line_only_some_gettext_versions_compile_is_no_difference(self):
         # gettext 0.19 keeps POT-Creation-Date in the compiled file; 0.21 leaves it out.
         older = {"": "Language: ne\nPOT-Creation-Date: 2026-11-04 10:54+0000\n", "Home": "गृह"}
@@ -173,8 +189,7 @@ class TestTheNepaliCatalog:
         assert messages(committed) != messages(compiled_now)
 
     def test_the_compiled_file_matches_the_po_file(self, tmp_path):
-        if not shutil.which("msgfmt"):
-            pytest.skip("GNU gettext isn't installed")
+        need("msgfmt")
         compiled_now = tmp_path / "django.mo"
         subprocess.run(
             ["msgfmt", "--check", "-o", str(compiled_now), str(LOCALE / "django.po")],
