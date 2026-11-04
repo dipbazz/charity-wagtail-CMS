@@ -155,8 +155,9 @@ Release a version as soon as the last issue in its milestone is closed.
      ([Version numbers](#version-numbers));
    - run `uv run python -m charity.changelog X.Y.Z`. It adds the `changelog.d/` entries to
      `CHANGELOG.md`'s `Unreleased` section, renames that to `## [X.Y.Z] - YYYY-MM-DD` (today),
-     starts a new empty `Unreleased`, updates the links at the bottom and deletes the files; read
-     the result once, since it's what people will read;
+     starts a new empty `Unreleased`, updates the links at the bottom (to the `Repository` address
+     under `[project.urls]` in `pyproject.toml`) and deletes the files; read the result once, since
+     it's what people will read;
    - set `version = "X.Y.Z"` in `pyproject.toml`, then run `uv lock`;
    - **check every docs page against the code.** Pull requests update the pages they change,
      but they miss things, so read every page in `docs/`, the README and every screenshot

@@ -9,6 +9,7 @@ import pytest
 from charity.changelog import GROUPS, Fragment, load_fragments, release
 
 ROOT = Path(__file__).resolve().parents[2]
+REPO = "https://github.com/o/r"
 
 CHANGELOG = """# Changelog
 
@@ -45,7 +46,7 @@ def fragments():
 
 
 def test_release_turns_unreleased_into_the_version_and_adds_an_empty_unreleased():
-    text = release(CHANGELOG, fragments(), "0.3.0", date(2026, 10, 13))
+    text = release(CHANGELOG, fragments(), "0.3.0", date(2026, 10, 13), REPO)
 
     assert text.index("## [Unreleased]") < text.index("## [0.3.0] - 2026-10-13")
     assert text.index("## [0.3.0] - 2026-10-13") < text.index("## [0.2.0]")
@@ -54,7 +55,7 @@ def test_release_turns_unreleased_into_the_version_and_adds_an_empty_unreleased(
 
 
 def test_release_merges_fragments_into_their_groups_in_a_fixed_order():
-    text = release(CHANGELOG, fragments(), "0.3.0", date(2026, 10, 13))
+    text = release(CHANGELOG, fragments(), "0.3.0", date(2026, 10, 13), REPO)
     section = text.split("## [0.3.0] - 2026-10-13")[1].split("## [0.2.0]")[0]
 
     assert re.findall(r"^### (.+)$", section, re.MULTILINE) == ["Upgrade notes", "Added", "Fixed"]
@@ -64,15 +65,23 @@ def test_release_merges_fragments_into_their_groups_in_a_fixed_order():
 
 
 def test_release_updates_the_comparison_links():
-    text = release(CHANGELOG, fragments(), "0.3.0", date(2026, 10, 13))
+    text = release(CHANGELOG, fragments(), "0.3.0", date(2026, 10, 13), REPO)
 
     assert "[Unreleased]: https://github.com/o/r/compare/v0.3.0...HEAD" in text
     assert "[0.3.0]: https://github.com/o/r/compare/v0.2.0...v0.3.0" in text
     assert "[0.2.0]: https://github.com/o/r/compare/v0.1.0...v0.2.0" in text
 
 
+def test_release_links_to_the_repository_it_is_given_after_a_rename():
+    text = release(CHANGELOG, fragments(), "0.3.0", date(2026, 10, 13), "https://github.com/o/new")
+
+    assert "[Unreleased]: https://github.com/o/new/compare/v0.3.0...HEAD" in text
+    assert "[0.3.0]: https://github.com/o/new/compare/v0.2.0...v0.3.0" in text
+    assert "[0.2.0]: https://github.com/o/r/compare/v0.1.0...v0.2.0" in text
+
+
 def test_release_without_fragments_still_dates_the_unreleased_section():
-    text = release(CHANGELOG, [], "0.3.0", date(2026, 10, 13))
+    text = release(CHANGELOG, [], "0.3.0", date(2026, 10, 13), REPO)
 
     assert "## [0.3.0] - 2026-10-13\n\n### Added\n\n- Existing feature" in text
 
