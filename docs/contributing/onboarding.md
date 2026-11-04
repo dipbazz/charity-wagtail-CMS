@@ -1,7 +1,7 @@
 # Onboarding a charity
 
 What we ask a new charity for, and how they send it, comes from one place: the pack in
-[`onboarding/`](https://github.com/dipbazz/Charity-wagtail-CMS/tree/main/onboarding). Each charity
+[`onboarding/`](https://github.com/dipbazz/trayi/tree/main/onboarding). Each charity
 gets its own copy in Google Drive, made from the pack, and is sent **two links**: its guide and its
 form. Both links stay the same while the pack changes underneath them, so a charity never holds an
 old copy, and we never send a guide or form as a file.

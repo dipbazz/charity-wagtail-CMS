@@ -8,6 +8,7 @@ section, renames it to the version, starts a fresh `Unreleased` and deletes the 
 
 import re
 import sys
+import tomllib
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -51,8 +52,14 @@ def bullet(text: str) -> str:
     return "\n".join([f"- {first}", *(f"  {line.strip()}" for line in rest)])
 
 
-def release(changelog: str, fragments: list[Fragment], version: str, released: date) -> str:
-    """The changelog with its Unreleased section (plus the fragments) released as `version`."""
+def release(
+    changelog: str, fragments: list[Fragment], version: str, released: date, repo: str
+) -> str:
+    """The changelog with its Unreleased section (plus the fragments) released as `version`.
+
+    The new comparison links go to `repo`, not to the one in the old Unreleased link, so they
+    follow the repository when it's renamed.
+    """
     head, _, rest = changelog.partition("## [Unreleased]\n")
     unreleased, _, older = rest.partition("\n## [")
     older = "## [" + older
@@ -69,9 +76,9 @@ def release(changelog: str, fragments: list[Fragment], version: str, released: d
     body = "\n".join(sections)
     text = f"{head}## [Unreleased]\n\n## [{version}] - {released.isoformat()}\n\n{body}\n{older}"
 
-    link = re.search(r"^\[Unreleased\]: (\S+)/compare/(v[\w.]+)\.\.\.HEAD$", text, re.M)
+    link = re.search(r"^\[Unreleased\]: \S+/compare/(v[\w.]+)\.\.\.HEAD$", text, re.M)
     if link:
-        repo, previous = link.groups()
+        (previous,) = link.groups()
         text = text.replace(
             link.group(0),
             f"[Unreleased]: {repo}/compare/v{version}...HEAD\n"
@@ -82,9 +89,11 @@ def release(changelog: str, fragments: list[Fragment], version: str, released: d
 
 def main(version: str) -> None:
     fragments = load_fragments(ROOT / "changelog.d")
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    repo = pyproject["project"]["urls"]["Repository"]
     path = ROOT / "CHANGELOG.md"
     path.write_text(
-        release(path.read_text(encoding="utf-8"), fragments, version, date.today()),
+        release(path.read_text(encoding="utf-8"), fragments, version, date.today(), repo),
         encoding="utf-8",
     )
     for path in (ROOT / "changelog.d").glob("*.md"):

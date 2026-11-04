@@ -3,11 +3,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: charity-cms\n"
+"Project-Id-Version: trayi\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-11-01 10:23+0000\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
-"Last-Translator: Charity CMS\n"
+"Last-Translator: Trayi\n"
 "Language-Team: Nepali\n"
 "Language: ne\n"
 "MIME-Version: 1.0\n"

@@ -63,7 +63,7 @@ modelsearch==1.3.2
 openpyxl==3.1.5
     # via wagtail
 phonenumbers==9.0.40
-    # via charity-cms
+    # via trayi
 pillow==12.3.0
     # via
     #   pillow-heif
@@ -101,8 +101,8 @@ tzdata==2026.4 ; sys_platform == 'win32'
 urllib3==2.8.0
     # via requests
 wagtail==8.0
-    # via charity-cms
+    # via trayi
 whitenoise==6.12.0
-    # via charity-cms
+    # via trayi
 willow==1.12.0
     # via wagtail

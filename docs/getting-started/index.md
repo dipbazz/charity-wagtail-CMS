@@ -16,8 +16,8 @@ stylesheets and two small scripts (the second of each only on the Donate page an
 ## Run the site
 
 ```bash
-git clone https://github.com/dipbazz/Charity-wagtail-CMS.git
-cd Charity-wagtail-CMS
+git clone https://github.com/dipbazz/trayi.git
+cd trayi
 uv sync
 uv run pre-commit install                  # once: checks ruff, the branch name, CLAUDE.md's length and the commit subject on each commit
 uv run python manage.py migrate

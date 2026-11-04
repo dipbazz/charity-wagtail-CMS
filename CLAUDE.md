@@ -1,4 +1,4 @@
-# Charity Wagtail CMS
+# Trayi
 
 The project's documentation is in `docs/` (Sphinx with MyST Markdown; plain Markdown you can read
 directly). Read `docs/project-context.md` before exploring the code: it's a one-page map that

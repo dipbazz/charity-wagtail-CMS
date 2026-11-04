@@ -4,9 +4,16 @@ Build once with `uv run --group docs sphinx-build -W --keep-going docs docs/_bui
 while writing with `uv run --group docs sphinx-autobuild docs docs/_build/html`.
 """
 
-project = "Charity Wagtail CMS"
-author = "Charity Wagtail CMS contributors"
-copyright = "2026, Charity Wagtail CMS contributors"
+import tomllib
+from pathlib import Path
+
+# The repository's address is kept once, in pyproject.toml.
+PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
+repository = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))["project"]["urls"]["Repository"]
+
+project = "Trayi"
+author = "Trayi contributors"
+copyright = "2026, Trayi contributors"
 
 extensions = [
     "myst_parser",
@@ -28,19 +35,19 @@ exclude_patterns = [
 ]
 
 html_theme = "sphinx_wagtail_theme"
-html_title = "Charity Wagtail CMS"
+html_title = "Trayi"
 html_static_path = ["_static"]
 html_show_sphinx = False
 html_theme_options = {
-    "project_name": "Charity Wagtail CMS",
+    "project_name": "Trayi",
     "logo": "img/logo.svg",
-    "logo_alt": "Charity Wagtail CMS",
+    "logo_alt": "Trayi",
     "logo_height": 48,
     "logo_width": 48,
-    "github_url": "https://github.com/dipbazz/Charity-wagtail-CMS/blob/main/docs/",
-    "header_links": "GitHub|https://github.com/dipbazz/Charity-wagtail-CMS",
+    "github_url": f"{repository}/blob/main/docs/",
+    "header_links": f"GitHub|{repository}",
     "footer_links": (
-        "Issues|https://github.com/dipbazz/Charity-wagtail-CMS/issues,"
+        f"Issues|{repository}/issues,"
         "Project board|https://github.com/users/dipbazz/projects/1,"
         "Wagtail docs|https://docs.wagtail.org/"
     ),

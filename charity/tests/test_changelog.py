@@ -47,6 +47,14 @@ def test_the_newest_release_is_the_version_in_pyproject():
     assert pyproject["project"]["version"] == newest
 
 
+def test_pyproject_names_the_repository_the_release_links_go_to():
+    """`python -m charity.changelog` reads it, and adds `/compare/…` straight after it."""
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    repo = pyproject["project"]["urls"]["Repository"]
+
+    assert re.fullmatch(r"https://github\.com/[\w-]+/[\w-]+", repo)
+
+
 def test_every_version_heading_links_to_its_changes():
     """Keep a Changelog's reference links turn each heading into a link to the diff or tag."""
     links = set(re.findall(r"^\[([^\]]+)\]: https://\S+$", changelog(), flags=re.MULTILINE))
