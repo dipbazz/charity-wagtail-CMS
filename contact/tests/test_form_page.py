@@ -2,13 +2,15 @@ import io
 
 import pytest
 from bs4 import BeautifulSoup
+from django.apps import apps
 from django.core import mail
 from django.core.cache import caches
+from django.template.loader import get_template
 from django.urls import reverse
 from openpyxl import load_workbook
-from wagtail.contrib.forms.models import FormSubmission
+from wagtail.contrib.forms.models import AbstractFormField, FormSubmission
 
-from contact.models import FormField, FormPage
+from contact.models import EmailFormPage, FormField, FormPage
 from core.models import SiteSettings
 from home.models import StandardPage
 
@@ -52,6 +54,22 @@ class TestPageTreeRules:
         assert FormPage.can_create_at(home_page)
         assert FormPage.can_create_at(about)
 
+    def test_every_form_page_type_has_its_own_fields_and_templates(self):
+        """EmailFormPage can't hold a field model or templates for its types (#167): each type
+        declares a field model with related_name="form_fields", and its own two templates."""
+        form_types = [
+            model
+            for model in apps.get_models()
+            if issubclass(model, EmailFormPage) and not model._meta.abstract
+        ]
+        assert form_types
+        for model in form_types:
+            fields = model._meta.get_field("form_fields")
+            assert issubclass(fields.related_model, AbstractFormField), model.__name__
+            page = model()
+            get_template(page.template)
+            get_template(page.landing_page_template)
+
 
 class TestFormPage:
     def test_renders_intro_and_editor_defined_fields(self, client, volunteer_form):
@@ -82,7 +100,7 @@ class TestFormPage:
         assert "How we use your details" not in client.get(volunteer_form.url).content.decode()
 
     def test_valid_submission_is_stored_and_shows_thank_you(self, client, volunteer_form):
-        response = client.post(volunteer_form.url, VALID_DATA)
+        response = client.post(volunteer_form.url, VALID_DATA, follow=True)
 
         assert response.status_code == 200
         assert "Our volunteer team will be in touch." in response.content.decode()
@@ -109,7 +127,7 @@ class TestFormPage:
 
         monkeypatch.setattr("contact.models.send_mail", mail_server_down)
 
-        response = client.post(volunteer_form.url, VALID_DATA)
+        response = client.post(volunteer_form.url, VALID_DATA, follow=True)
 
         assert response.status_code == 200
         assert "Our volunteer team will be in touch." in response.content.decode()
@@ -123,6 +141,58 @@ class TestFormPage:
         assert "This field is required." in response.content.decode()
         assert not FormSubmission.objects.exists()
         assert mail.outbox == []
+
+
+class TestAfterASend:
+    """A send goes on to ?sent (#167), so reloading the thank-you can't send it twice."""
+
+    def test_a_valid_send_goes_on_to_sent(self, client, volunteer_form):
+        response = client.post(volunteer_form.url, VALID_DATA)
+
+        assert response.status_code == 303
+        assert response["Location"] == f"{volunteer_form.url}?sent"
+
+    def test_a_filled_hidden_box_goes_on_to_sent_too(self, client, volunteer_form):
+        """A script sees what a person sees, so it can't tell its send was dropped."""
+        response = client.post(volunteer_form.url, {**VALID_DATA, "hp-leave-blank": "x"})
+
+        assert response.status_code == 303
+        assert response["Location"] == f"{volunteer_form.url}?sent"
+
+    def test_opening_sent_shows_thanks_and_keeps_and_sends_nothing(self, client, volunteer_form):
+        response = client.get(f"{volunteer_form.url}?sent")
+
+        assert response.status_code == 200
+        assert "Our volunteer team will be in touch." in response.content.decode()
+        assert not FormSubmission.objects.exists()
+        assert mail.outbox == []
+
+    def test_goes_on_to_the_address_it_was_sent_to(self, client, volunteer_form, monkeypatch):
+        """Not the page's own URL, which is None when no site routes to it."""
+        monkeypatch.setattr(FormPage, "get_url", lambda self, request=None: None)
+
+        response = client.post(f"{volunteer_form.url}?utm_source=newsletter", VALID_DATA)
+
+        assert response["Location"] == f"{volunteer_form.url}?sent"
+
+    def test_a_head_for_sent_matches_the_get(self, client, volunteer_form):
+        response = client.head(f"{volunteer_form.url}?sent")
+
+        assert response.status_code == 200
+        assert "contact/form_page_landing.html" in [t.name for t in response.templates]
+
+    def test_sent_is_kept_out_of_search_results(self, client, volunteer_form):
+        """The thank-you is the form's address again; only the form belongs in search."""
+        noindex = '<meta name="robots" content="noindex">'
+
+        assert noindex in client.get(f"{volunteer_form.url}?sent").content.decode()
+        assert noindex not in client.get(volunteer_form.url).content.decode()
+
+    def test_the_landing_preview_still_shows_the_thanks(self, rf, volunteer_form):
+        response = volunteer_form.serve_preview(rf.get("/"), "landing")
+
+        assert response.status_code == 200
+        assert "Our volunteer team will be in touch." in response.render().content.decode()
 
 
 class TestTheHiddenBox:
@@ -139,6 +209,7 @@ class TestTheHiddenBox:
             volunteer_form.url,
             {**VALID_DATA, "hp-leave-blank": "Buy cheap watches"},
             REMOTE_ADDR="203.0.113.7",
+            follow=True,
         )
 
         assert response.status_code == 200
@@ -155,7 +226,9 @@ class TestTheHiddenBox:
 
         monkeypatch.setattr(caches["limits"], "add", broken)
 
-        response = client.post(volunteer_form.url, {**VALID_DATA, "hp-leave-blank": "x"})
+        response = client.post(
+            volunteer_form.url, {**VALID_DATA, "hp-leave-blank": "x"}, follow=True
+        )
 
         assert response.status_code == 200
         assert not FormSubmission.objects.exists()
