@@ -785,3 +785,45 @@ which would keep signatures in the repository, was passed over: it's archived.
 - Some developers won't sign a CLA, so they won't contribute.
 - The signatures live on CLA Assistant's service, and its GitHub app reads pull requests.
 - The text should be reviewed by a lawyer before a company takes the project over.
+
+## The project is called Trayi
+
+**Status:** in use (since November 2026)
+
+**Context**
+
+The project was called "Charity Wagtail CMS", which says what it's built with rather than what it
+is, and can't be the name of a hosted service. A rename costs more the later it comes: more links
+to the repository, more signed CLAs and more charities that know the old name.
+
+**Decision**
+
+The project is called **Trayi** (त्रयी, Sanskrit for "the triad": one whole made of three): the
+charity, its supporters and the people they help. The repository is `dipbazz/trayi` and the
+Python package `trayi`. The domain is `trayi.app`, registered with Cloudflare Registrar:
+`trayi.org` was taken, and `.app` was chosen over `.dev` because the site is for charities, not
+developers.
+
+Checked on 3 November 2026:
+
+- **Nepal:** ipsewa.com lists no registered "Trayi".
+- **UK:** the UK IPO's own search ([trademarks.ipo.gov.uk](https://trademarks.ipo.gov.uk)) has no
+  "Trayi". The nearest mark, TRAYY (UK00004397909), covers class 20 only (furniture, seating,
+  cabinets, partitions), with no overlap with software, hosting or charity services (classes 9,
+  35, 36 and 42). Marcaria's third-party search found no exact mark either.
+
+Names considered and dropped: Chautari (chautari.org is a Nepali student-support initiative),
+Prapa, Sadas, Ashraya, Tribhuj and others; no English one-word name had a free domain.
+
+**Consequences**
+
+- No server needs a step: the Docker Compose project stays `charity` (`deploy/aws/compose.yaml`),
+  so the live volumes keep their names, and so do the Django apps, each server's directory and its
+  `.env`.
+- Links to the old repository address, including those in released `CHANGELOG.md` entries, work
+  through GitHub's redirect, which lasts only until a repository with the old name exists again
+  under the account. Every other file links to `dipbazz/trayi`.
+- The name was checked as free, not registered as a trademark, so nothing stops someone else
+  using it for other goods or services.
+- After the repository is renamed, a pull request has to show CLA Assistant's `license/cla` check
+  still reporting, since `main` requires it ([above](#outside-contributions-need-a-signed-cla)).
