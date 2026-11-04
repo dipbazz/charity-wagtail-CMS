@@ -72,7 +72,7 @@ def pytest_arguments(words):
 def failures_recorded():
     try:
         return bool(json.loads(LAST_FAILED.read_text(encoding="utf-8")))
-    except (OSError, ValueError):
+    except OSError, ValueError:
         return False
 
 

@@ -14,7 +14,7 @@ class SMTPBackend(EmailBackend):
     def open(self):
         try:
             return super().open()
-        except (TimeoutError, ConnectionError):
+        except TimeoutError, ConnectionError:
             raise
         except OSError as error:
             message = f"Could not connect to {self.host}:{self.port}: {error}"

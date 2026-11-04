@@ -49,7 +49,7 @@ Some tests guard the whole project rather than one feature:
 | `core/tests/test_permissions.py` | What editors and moderators can do |
 | `charity/tests/test_query_budgets.py` | The most queries each kind of page may run |
 | `charity/tests/test_workflows.py` | Every workflow action is pinned to a commit; every `Reviews` run labels the pull request before it checks |
-| `charity/tests/test_deploy.py` | `.env` stays out of git and the image, and reaches the app; images pinned; logs capped |
+| `charity/tests/test_deploy.py` | `.env` stays out of git and the image, and reaches the app; images pinned; tests run on the image's Python; logs capped |
 | `charity/tests/test_production_settings.py` | Production refuses to start half-configured; every app's warnings are logged |
 | `home/tests/test_seed_demo.py` | Every demo page renders |
 | `charity/tests/test_demo_layout_browser.py` | Each kind of demo page at six widths: no sideways scrolling, no tap target under 44px; readable text in every light or dark name bar and footer; each font style fits; a pledge's page in the admin fits ([QA](#qa)) |

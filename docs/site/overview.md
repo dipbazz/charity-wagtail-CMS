@@ -27,8 +27,8 @@ Three things shape every decision:
 
 ## Stack
 
-Django 6.1 and Wagtail 8.0 on Python 3.13 or newer (the Docker image uses 3.14), with SQLite and
-Wagtail's database search. uv manages dependencies, ruff formats and lints, pytest tests (with
+Django 6.1 and Wagtail 8.0 on Python 3.14, the Docker image's version, which `.python-version`
+repeats for uv; with SQLite and Wagtail's database search. uv manages dependencies, ruff formats and lints, pytest tests (with
 pytest-django, wagtail-factories and Playwright for browser tests). In production, gunicorn serves
 the app and WhiteNoise its static files.
 

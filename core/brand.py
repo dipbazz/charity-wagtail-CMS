@@ -63,7 +63,7 @@ class LogoSizeInput(forms.NumberInput):
         span = LOGO_MAX - LOGO_MIN
         try:
             size = min(max(int(value), LOGO_MIN), LOGO_MAX)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             size = DEFAULT_LOGO_SIZE
         along = round((size - LOGO_MIN) / span * 100)
         attrs = {
