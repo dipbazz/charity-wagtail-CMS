@@ -175,6 +175,12 @@ class TestAfterASend:
 
         assert response["Location"] == f"{volunteer_form.url}?sent"
 
+    def test_a_head_for_sent_matches_the_get(self, client, volunteer_form):
+        response = client.head(f"{volunteer_form.url}?sent")
+
+        assert response.status_code == 200
+        assert "contact/form_page_landing.html" in [t.name for t in response.templates]
+
     def test_the_landing_preview_still_shows_the_thanks(self, rf, volunteer_form):
         response = volunteer_form.serve_preview(rf.get("/"), "landing")
 

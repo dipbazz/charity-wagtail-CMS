@@ -40,7 +40,7 @@ class EmailFormPage(HoneypotFormMixin, PublishGuardMixin, AbstractEmailForm):
         abstract = True
 
     def serve(self, request, *args, **kwargs):
-        if request.method == "GET" and "sent" in request.GET:
+        if request.method in ("GET", "HEAD") and "sent" in request.GET:
             return self.render_landing_page(request, None, *args, **kwargs)
         return super().serve(request, *args, **kwargs)
 
