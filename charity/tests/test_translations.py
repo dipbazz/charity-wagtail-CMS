@@ -196,7 +196,8 @@ class TestTheNepaliCatalog:
         need("msgfmt")
 
     def test_a_header_line_only_some_gettext_versions_compile_is_no_difference(self):
-        # gettext 0.19 keeps POT-Creation-Date in the compiled file; 0.21 leaves it out.
+        # Seen in #287: gettext 0.19.8 keeps POT-Creation-Date in the compiled file, and Ubuntu
+        # 24.04's 0.21 leaves it out. Which release changed it isn't known.
         older = {"": "Language: ne\nPOT-Creation-Date: 2026-11-04 10:54+0000\n", "Home": "गृह"}
         newer = {"": "Language: ne\n", "Home": "गृह"}
 
