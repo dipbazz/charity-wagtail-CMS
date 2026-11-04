@@ -171,13 +171,14 @@ def _chromium_can_start():
 
 
 def pytest_collection_modifyitems(config, items):
-    """Prepare for browser tests, or skip them where Chromium isn't installed (never in CI)."""
+    """Prepare for browser tests, or skip them where Chromium can't start (never in CI)."""
     browser_tests = [item for item in items if item.get_closest_marker("browser")]
     if not browser_tests:
         return
     if not os.environ.get("CI") and not _chromium_can_start():
+        # On Linux a downloaded Chromium still needs system libraries, which --with-deps installs.
         skip = pytest.mark.skip(
-            reason="Chromium isn't installed: run `uv run playwright install chromium` once"
+            reason="Chromium can't start: run `uv run playwright install --with-deps chromium` once"
         )
         for item in browser_tests:
             item.add_marker(skip)
