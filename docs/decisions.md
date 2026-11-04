@@ -817,12 +817,15 @@ Prapa, Sadas, Ashraya, Tribhuj and others; no English one-word name had a free d
 
 **Consequences**
 
-- No server needs a step: the Docker Compose project stays `charity` (`deploy/aws/compose.yaml`),
-  so the live volumes keep their names, and so do the Django apps, each server's directory and its
-  `.env`.
-- Links to the old repository address, including those in released `CHANGELOG.md` entries, work
-  through GitHub's redirect, which lasts only until a repository with the old name exists again
-  under the account. Every other file links to `dipbazz/trayi`.
+- No server needs a step: the Docker Compose project stays `charity` and its image `charity-web`
+  (`deploy/aws/compose.yaml`), so the live volumes keep their names, and so do the Django apps,
+  each server's directory and its `.env`. Local Docker keeps `charity-local` for the same reason.
+  Only CI's throwaway image is tagged `trayi`.
+- `CHANGELOG.md` keeps the old address in its released entries and the links at its bottom, which
+  work through GitHub's redirect only until a repository with the old name exists again under the
+  account. From the next release on, its links go to the `Repository` address under
+  `[project.urls]` in `pyproject.toml`, which the docs' header and footer use too. The Markdown
+  pages link to `dipbazz/trayi` directly, so they still read on GitHub without a build.
 - The name was checked as free, not registered as a trademark, so nothing stops someone else
   using it for other goods or services.
 - After the repository is renamed, a pull request has to show CLA Assistant's `license/cla` check
