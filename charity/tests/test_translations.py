@@ -176,9 +176,14 @@ class TestTheNepaliCatalog:
         with pytest.raises(pytest.fail.Exception, match="msgfmt"):
             need("msgfmt")
 
-    def test_without_gettext_a_local_run_skips(self, monkeypatch):
+    @pytest.mark.parametrize("ci", [None, "", "false", "0"])
+    def test_without_gettext_a_local_run_skips(self, monkeypatch, ci):
         monkeypatch.setattr(shutil, "which", lambda tool: None)
-        monkeypatch.delenv("CI", raising=False)
+        if ci is None:
+            monkeypatch.delenv("CI", raising=False)
+        else:
+            # Some tools and shells turn CI mode off by setting CI=false.
+            monkeypatch.setenv("CI", ci)
 
         with pytest.raises(pytest.skip.Exception, match="GNU gettext isn't installed"):
             need("msgfmt")

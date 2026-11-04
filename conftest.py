@@ -161,7 +161,8 @@ def moderator(django_user_model):
 
 def in_ci():
     """Whether the tests run in CI, where a check that can't run means the setup broke."""
-    return bool(os.environ.get("CI"))
+    # Some tools and shells set CI=false or CI=0 to turn CI mode off.
+    return os.environ.get("CI", "").strip().lower() not in {"", "0", "false", "no"}
 
 
 def _chromium_can_start():
