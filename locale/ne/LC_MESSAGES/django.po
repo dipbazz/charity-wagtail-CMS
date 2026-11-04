@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: trayi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-01 10:23+0000\n"
+"POT-Creation-Date: 2026-11-04 10:54+0000\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Trayi\n"
 "Language-Team: Nepali\n"
@@ -762,6 +762,9 @@ msgstr "भाषा"
 msgid "Donate"
 msgstr "दान दिनुहोस्"
 
+msgid "Leave this blank"
+msgstr "यो खाली छोड्नुहोस्"
+
 msgid "Main"
 msgstr "मुख्य"
 
@@ -831,26 +834,14 @@ msgstr "तपाईंको विवरण हेर्ने वा मे�
 msgid "<p>[Write: which role to contact, and how, to see, correct or delete the details you hold about someone.]</p>"
 msgstr "<p>[लेख्नुहोस्: आफ्नो विवरण हेर्न, सच्याउन वा मेटाउन कुन पदमा रहेका व्यक्तिलाई कसरी सम्पर्क गर्ने।]</p>"
 
-msgid "Volunteer with us"
-msgstr "हामीसँग स्वयंसेवा गर्नुहोस्"
+msgid "How we use the details you give us."
+msgstr "तपाईंले दिएको विवरण हामी कसरी प्रयोग गर्छौं।"
 
-msgid "<p>[Write: what volunteers do with you, and how much time it takes.]</p>"
-msgstr "<p>[लेख्नुहोस्: स्वयंसेवकले तपाईंसँग के गर्छन्, र कति समय लाग्छ।]</p>"
+msgid "[Write: one sentence on what a gift does.]"
+msgstr "[लेख्नुहोस्: दानले के गर्छ, एक वाक्यमा।]"
 
 msgid "<p>[Write: what happens next, and when you'll be in touch.]</p>"
 msgstr "<p>[लेख्नुहोस्: अब के हुन्छ, र तपाईंले कहिले सम्पर्क गर्नुहुन्छ।]</p>"
-
-msgid "New volunteer sign-up"
-msgstr "नयाँ स्वयंसेवक दर्ता"
-
-msgid "Phone number"
-msgstr "फोन नम्बर"
-
-msgid "When are you free?"
-msgstr "तपाईं कहिले फुर्सदमा हुनुहुन्छ?"
-
-msgid "How would you like to help?"
-msgstr "तपाईं कसरी सहयोग गर्न चाहनुहुन्छ?"
 
 msgid "About us"
 msgstr "हाम्रो बारेमा"
@@ -870,11 +861,23 @@ msgstr "कथाहरू"
 msgid "[Write: one sentence on the stories you share here.]"
 msgstr "[लेख्नुहोस्: यहाँ कस्ता कथा सेयर गर्नुहुन्छ, एक वाक्यमा।]"
 
-msgid "[Write: one sentence on what a gift does.]"
-msgstr "[लेख्नुहोस्: दानले के गर्छ, एक वाक्यमा।]"
+msgid "Volunteer with us"
+msgstr "हामीसँग स्वयंसेवा गर्नुहोस्"
 
-msgid "How we use the details you give us."
-msgstr "तपाईंले दिएको विवरण हामी कसरी प्रयोग गर्छौं।"
+msgid "<p>[Write: what volunteers do with you, and how much time it takes.]</p>"
+msgstr "<p>[लेख्नुहोस्: स्वयंसेवकले तपाईंसँग के गर्छन्, र कति समय लाग्छ।]</p>"
+
+msgid "New volunteer sign-up"
+msgstr "नयाँ स्वयंसेवक दर्ता"
+
+msgid "Phone number"
+msgstr "फोन नम्बर"
+
+msgid "When are you free?"
+msgstr "तपाईं कहिले फुर्सदमा हुनुहुन्छ?"
+
+msgid "How would you like to help?"
+msgstr "तपाईं कसरी सहयोग गर्न चाहनुहुन्छ?"
 
 msgid "needed before any form goes live"
 msgstr "कुनै पनि फारम प्रकाशित गर्नुअघि चाहिन्छ"

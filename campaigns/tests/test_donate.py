@@ -491,6 +491,33 @@ class TestPledging:
         assert shows in response.content.decode()
 
 
+class TestTheHiddenBox:
+    """A script that fills every box (#104) is thanked as if it pledged, and nothing is kept."""
+
+    def test_the_form_has_the_box(self, client, donate_page):
+        form = soup(client.get(donate_page.url)).find("form", class_="pledge-form")
+
+        assert form.find("input", attrs={"name": "hp-leave-blank"}) is not None
+
+    @pytest.mark.parametrize("changes", [{}, {"email": "not an address", "amount": ""}])
+    def test_filled_is_thanked_and_saves_nothing(self, client, donate_page, changes):
+        """Checked before the form, so even a send with mistakes shows no errors to learn from."""
+        response = pledge(client, donate_page, **changes, **{"hp-leave-blank": "x"})
+
+        assert response.status_code == 303
+        assert response["Location"] == f"{donate_page.url}thank-you/"
+        assert not Pledge.objects.exists()
+
+    def test_filled_isn_t_counted_toward_the_limit(self, client, donate_page, settings):
+        settings.LIMITS = {**settings.LIMITS, "pledge": 1}
+
+        pledge(client, donate_page, **{"hp-leave-blank": "x"})
+        response = pledge(client, donate_page)
+
+        assert response.status_code == 303
+        assert Pledge.objects.filter(page=donate_page).count() == 1
+
+
 class TestOwnAmountField:
     """Only "Other amount" reveals "Your own amount"; donate.css hides it otherwise."""
 

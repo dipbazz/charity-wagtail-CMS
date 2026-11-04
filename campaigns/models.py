@@ -51,7 +51,7 @@ from campaigns.payments import (
     providers_for,
     ways_to_pay,
 )
-from core import limits
+from core import honeypot, limits
 from core.blocks import BaseStreamBlock
 from core.images import UPLOAD_EXTENSIONS, check_upload, clean_image, with_card_images
 from core.languages import main_language
@@ -428,6 +428,11 @@ class DonatePage(PublishGuardMixin, RoutablePageMixin, SocialMetaMixin, Page):
         site_settings = SiteSettings.for_request(request)
         waiting = False
         if request.method == "POST":
+            # A script's send (#104) is thanked before the form or the limit sees it: no errors
+            # to learn from, and no count against the visitor.
+            if honeypot.filled(request.POST):
+                honeypot.dropped(self)
+                return self.redirect_to(request, "thank_you")
             form = self.get_form(request.POST, site_settings=site_settings)
             # Only a new pledge counts (#226): sending the same copy again updates the pledge it
             # saved, so "hasn't been sent yet" is always true.
