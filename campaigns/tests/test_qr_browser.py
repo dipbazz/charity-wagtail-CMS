@@ -1,7 +1,7 @@
 """The QR page in a real browser: what only happens there (CSS choosing a code, the copy buttons).
 
-pytest's HTML checks in test_qr.py can't see these. Run `uv run playwright install chromium`
-once; `uv run pytest -m "not browser"` leaves them out.
+pytest's HTML checks in test_qr.py can't see these. Run `uv run playwright install --with-deps
+chromium` once; `uv run pytest -m "not browser"` leaves them out.
 """
 
 import pytest

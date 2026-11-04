@@ -1,8 +1,8 @@
 """Sharing that you've given (#100) in a real browser: what only happens there (the phone's share
 sheet, copying the link, where focus goes once the box is saved).
 
-pytest's HTML checks in test_share_after_paying.py can't see these. Run
-`uv run playwright install chromium` once; `uv run pytest -m "not browser"` leaves them out.
+pytest's HTML checks in test_share_after_paying.py can't see these. Run `uv run playwright install
+--with-deps chromium` once; `uv run pytest -m "not browser"` leaves them out.
 """
 
 import pytest

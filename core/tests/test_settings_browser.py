@@ -1,6 +1,7 @@
 """Site settings in the Wagtail admin, in a real browser.
 
-Run `uv run playwright install chromium` once; `uv run pytest -m "not browser"` leaves these out.
+Run `uv run playwright install --with-deps chromium` once; `uv run pytest -m "not browser"` leaves
+these out.
 """
 
 import re
