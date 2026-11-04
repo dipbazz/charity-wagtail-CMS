@@ -175,6 +175,19 @@ class TestTheNepaliCatalog:
         with pytest.raises(pytest.fail.Exception, match="msgfmt"):
             need("msgfmt")
 
+    def test_without_gettext_a_local_run_skips(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda tool: None)
+        monkeypatch.delenv("CI", raising=False)
+
+        with pytest.raises(pytest.skip.Exception, match="GNU gettext isn't installed"):
+            need("msgfmt")
+
+    def test_with_gettext_the_check_runs(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda tool: f"/usr/bin/{tool}")
+        monkeypatch.delenv("CI", raising=False)
+
+        need("msgfmt")
+
     def test_a_header_line_only_some_gettext_versions_compile_is_no_difference(self):
         # gettext 0.19 keeps POT-Creation-Date in the compiled file; 0.21 leaves it out.
         older = {"": "Language: ne\nPOT-Creation-Date: 2026-11-04 10:54+0000\n", "Home": "गृह"}
