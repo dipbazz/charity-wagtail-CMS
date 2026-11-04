@@ -23,6 +23,16 @@ READ_ATTRIBUTES = {"aria-label", "placeholder", "title", "alt"}
 
 NOTHING = "\x00"  # stands in for something the template fills in or marks for translation
 
+# Header lines that one gettext version compiles into the .mo file and another leaves out.
+VERSION_DEPENDENT = ("POT-Creation-Date:",)
+
+
+def messages(catalog):
+    """A compiled catalog without the header lines that depend on which gettext compiled it."""
+    header = catalog.get("", "").splitlines(keepends=True)
+    kept = "".join(line for line in header if not line.startswith(VERSION_DEPENDENT))
+    return {**catalog, "": kept}
+
 
 def templates():
     root = settings.BASE_DIR
@@ -149,6 +159,19 @@ class TestTheNepaliCatalog:
         assert re.findall(r'^msgid "(.+)"$', untranslated, flags=re.MULTILINE) == []
         assert re.findall(r'^msgid "(.+)"$', fuzzy, flags=re.MULTILINE) == []
 
+    def test_a_header_line_only_some_gettext_versions_compile_is_no_difference(self):
+        # gettext 0.19 keeps POT-Creation-Date in the compiled file; 0.21 leaves it out.
+        older = {"": "Language: ne\nPOT-Creation-Date: 2026-11-04 10:54+0000\n", "Home": "गृह"}
+        newer = {"": "Language: ne\n", "Home": "गृह"}
+
+        assert messages(older) == messages(newer)
+
+    def test_a_changed_translation_is_still_a_difference(self):
+        committed = {"": "Language: ne\n", "Home": "गृह"}
+        compiled_now = {"": "Language: ne\n", "Home": "घर"}
+
+        assert messages(committed) != messages(compiled_now)
+
     def test_the_compiled_file_matches_the_po_file(self, tmp_path):
         if not shutil.which("msgfmt"):
             pytest.skip("GNU gettext isn't installed")
@@ -158,11 +181,11 @@ class TestTheNepaliCatalog:
             check=True,
         )
 
-        def messages(mo):
+        def catalog(mo):
             with mo.open("rb") as file:
                 return gettext.GNUTranslations(file)._catalog
 
-        assert messages(LOCALE / "django.mo") == messages(compiled_now), (
+        assert messages(catalog(LOCALE / "django.mo")) == messages(catalog(compiled_now)), (
             "locale/ne/LC_MESSAGES/django.mo is out of date: run `python manage.py compilemessages`"
             " and commit it."
         )
