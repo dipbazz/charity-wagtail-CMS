@@ -6,4 +6,4 @@ PAN, each on its own line. Site settings can't be saved without it in every lang
 Donate page and forms can't go live without it; pages already live stay live. A long number or
 email in the footer now breaks to fit a phone. A site upgraded with a charity number keeps showing
 just that number, in each language's words: add the rest the standard asks for
-([#172](https://github.com/dipbazz/Charity-wagtail-CMS/issues/172)).
+([#172](https://github.com/dipbazz/trayi/issues/172)).

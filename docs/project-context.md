@@ -62,7 +62,7 @@ pytest, styled mobile first, and budgeted for queries and page weight in CI.
 | How do I write or build these docs? | [Writing docs](contributing/writing-docs.md) |
 | Why SQLite, one server, `.live().public()`, pinned actions, permission migrations, Playwright, no parallel tests, whole-sentence Nepali tests? Can I use a public-only service? | [Decisions](decisions.md) |
 | What licence is the code under? Do I sign anything before contributing? | [Decisions: the AGPL](decisions.md#the-code-is-licensed-under-the-agpl), [the CLA](decisions.md#outside-contributions-need-a-signed-cla) |
-| What changed in each version? What's planned? | [Changelog](changelog.md), [milestones](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) |
+| What changed in each version? What's planned? | [Changelog](changelog.md), [milestones](https://github.com/dipbazz/trayi/milestones) |
 
 ## Rules that catch people out
 

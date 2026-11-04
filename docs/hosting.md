@@ -6,7 +6,7 @@ restoring a backup.
 
 ## The live server
 
-[`deploy/aws/`](https://github.com/dipbazz/Charity-wagtail-CMS/tree/main/deploy/aws) runs the
+[`deploy/aws/`](https://github.com/dipbazz/trayi/tree/main/deploy/aws) runs the
 site on one Linux server (an AWS EC2 instance) with Docker Compose. Why one server:
 [Decisions](decisions.md#one-ec2-server-with-docker-compose).
 

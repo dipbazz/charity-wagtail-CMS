@@ -6,7 +6,7 @@ or a plain script. It needs nothing but the standard library.
 Each gateway is a **provider**: one class in its own file in `providers/`, which the package finds
 by itself. Adding a gateway means adding one file.
 
-> **Status:** built inside [Trayi](https://github.com/dipbazz/Charity-wagtail-CMS)
+> **Status:** built inside [Trayi](https://github.com/dipbazz/trayi)
 > and moving to a repository of its own, published on PyPI (#196). Until then the name and API
 > may change.
 

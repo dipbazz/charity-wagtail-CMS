@@ -37,10 +37,10 @@ html_theme_options = {
     "logo_alt": "Trayi",
     "logo_height": 48,
     "logo_width": 48,
-    "github_url": "https://github.com/dipbazz/Charity-wagtail-CMS/blob/main/docs/",
-    "header_links": "GitHub|https://github.com/dipbazz/Charity-wagtail-CMS",
+    "github_url": "https://github.com/dipbazz/trayi/blob/main/docs/",
+    "header_links": "GitHub|https://github.com/dipbazz/trayi",
     "footer_links": (
-        "Issues|https://github.com/dipbazz/Charity-wagtail-CMS/issues,"
+        "Issues|https://github.com/dipbazz/trayi/issues,"
         "Project board|https://github.com/users/dipbazz/projects/1,"
         "Wagtail docs|https://docs.wagtail.org/"
     ),

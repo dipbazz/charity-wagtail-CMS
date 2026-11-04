@@ -89,7 +89,7 @@ The version lives in one place, `version` in `pyproject.toml`, and
 
 ## The changelog
 
-[`CHANGELOG.md`](https://github.com/dipbazz/Charity-wagtail-CMS/blob/main/CHANGELOG.md) uses the
+[`CHANGELOG.md`](https://github.com/dipbazz/trayi/blob/main/CHANGELOG.md) uses the
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
 **Every pull request adds one small file to `changelog.d/`,** named `<slug>.<group>.md` (for
@@ -121,7 +121,7 @@ check. Dependabot's pull requests are skipped automatically.
 
 ## What goes into which version
 
-Each version is a [milestone](https://github.com/dipbazz/Charity-wagtail-CMS/milestones) for one
+Each version is a [milestone](https://github.com/dipbazz/trayi/milestones) for one
 kind of feature, such as "brand the site from the admin". Its goal says what the version is for,
 and its due date is a rough target, not a deadline. One version is built at a time, and it's
 released as soon as it's done, whatever the day: a version is usually a few days' work.
