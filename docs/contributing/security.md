@@ -147,7 +147,7 @@ on Django's cache API, with no package.
 
 | Action (`LIMITS` key) | Counted when | Default per window |
 |---|---|---|
-| `pledge` | The form is valid and would save a new pledge (not a mistake, not the same copy sent again) | 10 |
+| `pledge` | The form is valid and would save a new pledge (not a mistake, not the same copy sent again, not a send with the [hidden box](#a-hidden-box-drops-simple-scripts-sends) filled) | 10 |
 | `start_payment` | A new attempt would start (not a paid or held pledge, not going back to the attempt just started) | 10 |
 | `qr_paid` | "I've paid" is valid and would be saved | 5 |
 | `payment_return` | Coming back from a provider again, or Check my payment, would ask the provider (not for a paid payment, and never a payment's first time back: each has one, starting one is counted, and others on the payer's connection could otherwise leave a real payment unconfirmed) | 30 |
@@ -182,8 +182,34 @@ on Django's cache API, with no package.
 - **If the counters break,** the try goes through, so giving keeps working, and one ERROR per
   window in each worker names the action, with its traceback. So does an action a `LIMITS`
   override leaves out.
-- **Not covered here:** other forms (#231) and the public check's provider calls per payment
-  (#232). The team's Check now in the admin has its own limit per payment.
+- **Not covered here:** how often a connection sends a form page (#231; their scripts' sends are
+  dropped by the [hidden box](#a-hidden-box-drops-simple-scripts-sends)) and the public check's
+  provider calls per payment (#232). The team's Check now in the admin has its own limit per
+  payment.
+
+## A hidden box drops simple scripts' sends
+
+The pledge form and every form page carry a box named `hp-leave-blank` that people never see and
+scripts that fill every box fill in (#104). A send with it filled is answered as a success (the
+Donate page's thank-you, a form page's landing page), and nothing is saved, emailed or counted
+toward the [limits](#one-connection-can-only-try-so-often). It stops simple scripts, not a careful
+bot, which can read the page and leave the box alone.
+
+- **Hidden with `hidden`, not CSS,** with `tabindex="-1"`, `autocomplete="off"` and the label
+  "Leave this blank": out of sight, out of the Tab order and the accessibility tree, and browsers
+  don't autofill a box that isn't rendered. A box moved off-screen with CSS can be autofilled,
+  which would silently drop a real supporter's pledge.
+- **The name** has a hyphen, so no editor's field can share it, and no word a password manager
+  fills by name. A send without the box (a page cached from before it) counts as empty.
+- **In code:** `core/honeypot.py`; the box is `{% honeypot %}` in `campaigns/donate_page.html`
+  and `contact/form_page.html`, and form page types list `HoneypotFormMixin` before Wagtail's
+  form classes. `core/tests/test_honeypot.py` fails for a form page type, or its template,
+  without them. The pay flow's forms don't carry it: the pledge's reference and the limits guard
+  them.
+- **Logged once:** the first dropped send to a page in each `LIMITS_WINDOW` is one WARNING on the
+  `core` logger naming the page, never the address or what was typed. If the limits' cache
+  breaks, the send is still dropped and each worker logs one ERROR per window instead, as the
+  limits do.
 
 ## Production refuses to start half-configured
 

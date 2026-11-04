@@ -13,6 +13,7 @@ from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 from wagtail.contrib.forms.panels import FormSubmissionsPanel
 from wagtail.fields import RichTextField
 
+from core.honeypot import HoneypotFormMixin
 from core.publishing import FormPageForm, PublishGuardMixin
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ class FormField(AbstractFormField):
     page = ParentalKey("FormPage", on_delete=models.CASCADE, related_name="form_fields")
 
 
-class FormPage(PublishGuardMixin, AbstractEmailForm):
+class FormPage(HoneypotFormMixin, PublishGuardMixin, AbstractEmailForm):
     """A form editors build themselves, e.g. volunteer sign-up or general enquiries."""
 
     collects_personal_details = True

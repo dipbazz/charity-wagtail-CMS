@@ -1,0 +1,6 @@
+{% load i18n %}
+{% comment %}`hidden`, not CSS: a box moved off-screen can still be autofilled (core/honeypot.py).{% endcomment %}
+<div hidden>
+    <label for="id_{{ name }}">{% translate "Leave this blank" %}</label>
+    <input type="text" name="{{ name }}" id="id_{{ name }}" tabindex="-1" autocomplete="off">
+</div>

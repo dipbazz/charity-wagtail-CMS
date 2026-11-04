@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n static wagtailcore_tags %}
+{% load honeypot_tags i18n static wagtailcore_tags %}
 
 {% block body_class %}template-donatepage form-page{% endblock %}
 
@@ -46,6 +46,7 @@
         <form class="pledge-form" action="{% pageurl page %}" method="post" novalidate>
             {% csrf_token %}
             {{ form.submission_id }}
+            {% honeypot %}
 
             <fieldset class="amount-options"{% if form.amount.errors %} aria-describedby="{{ form.amount.auto_id }}_error"{% endif %}>
                 <legend>{% translate "How much would you like to give?" %}</legend>

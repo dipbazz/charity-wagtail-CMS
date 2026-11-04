@@ -3,6 +3,7 @@ import io
 import pytest
 from bs4 import BeautifulSoup
 from django.core import mail
+from django.core.cache import caches
 from django.urls import reverse
 from openpyxl import load_workbook
 from wagtail.contrib.forms.models import FormSubmission
@@ -124,6 +125,48 @@ class TestFormPage:
         assert mail.outbox == []
 
 
+class TestTheHiddenBox:
+    """A script that fills every box (#104) sees the thank-you, and nothing is kept or sent."""
+
+    def test_the_form_has_the_box(self, client, volunteer_form):
+        html = client.get(volunteer_form.url).content.decode()
+        form = BeautifulSoup(html, "html.parser").find("form", method="post")
+
+        assert form.find("input", attrs={"name": "hp-leave-blank"}) is not None
+
+    def test_filled_shows_thanks_and_keeps_and_sends_nothing(self, client, volunteer_form, caplog):
+        response = client.post(
+            volunteer_form.url,
+            {**VALID_DATA, "hp-leave-blank": "Buy cheap watches"},
+            REMOTE_ADDR="203.0.113.7",
+        )
+
+        assert response.status_code == 200
+        assert "Our volunteer team will be in touch." in response.content.decode()
+        assert not FormSubmission.objects.exists()
+        assert mail.outbox == []
+        assert str(volunteer_form.pk) in caplog.text
+        for private in ("Buy cheap watches", "sam@example.com", "203.0.113.7"):
+            assert private not in caplog.text
+
+    def test_filled_is_dropped_when_the_cache_is_broken(self, client, volunteer_form, monkeypatch):
+        def broken(*args, **kwargs):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(caches["limits"], "add", broken)
+
+        response = client.post(volunteer_form.url, {**VALID_DATA, "hp-leave-blank": "x"})
+
+        assert response.status_code == 200
+        assert not FormSubmission.objects.exists()
+
+    def test_an_empty_box_sends_as_before(self, client, volunteer_form):
+        client.post(volunteer_form.url, {**VALID_DATA, "hp-leave-blank": ""})
+
+        assert FormSubmission.objects.filter(page=volunteer_form).exists()
+        assert len(mail.outbox) == 1
+
+
 class TestSubmissionsInTheAdmin:
     def test_editors_can_view_submissions(self, admin_client, client, volunteer_form):
         client.post(volunteer_form.url, VALID_DATA)
@@ -142,6 +185,14 @@ class TestSubmissionsInTheAdmin:
 
         assert response["Content-Type"].startswith("text/csv")
         assert "sam@example.com" in b"".join(response.streaming_content).decode()
+
+    def test_the_hidden_box_is_never_a_column(self, admin_client, client, volunteer_form):
+        client.post(volunteer_form.url, {**VALID_DATA, "hp-leave-blank": ""})
+
+        url = reverse("wagtailforms:list_submissions", args=[volunteer_form.pk])
+        header = b"".join(admin_client.get(url, {"export": "csv"}).streaming_content)
+
+        assert "hp-leave-blank" not in header.decode().splitlines()[0]
 
     # Regression: ISSUE-003 — a sign-up "named" =HYPERLINK(…) was exported as a live formula,
     # which could send the other sign-ups away when opened. Found by /qa on 2026-10-12.
