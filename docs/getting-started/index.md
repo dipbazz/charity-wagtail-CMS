@@ -4,7 +4,8 @@ From a fresh clone to the site running on your computer with demo content, then 
 
 ## What you need
 
-- Python 3.13 or newer (the Docker image uses 3.14)
+- Python 3.14, the Docker image's version, named in `.python-version`: uv uses it, and
+  downloads it if it isn't installed
 - [uv](https://docs.astral.sh/uv/), which installs everything else
 - git 2.31 or newer (older versions break `pre-commit run --all-files`)
 - to run the reviews as this project does: Claude Code and the gstack skills (optional; see

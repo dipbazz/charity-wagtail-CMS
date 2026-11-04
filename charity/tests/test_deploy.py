@@ -40,6 +40,17 @@ def test_caddy_sends_the_visitor_s_address_in_its_own_header(config):
     assert "header_up X-Real-IP {client_ip}" in config.read_text(encoding="utf-8")
 
 
+def test_tests_run_on_the_image_s_python():
+    """uv reads .python-version; without it each machine and CI runner picks its own (#289)."""
+    dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    image_versions = set(re.findall(r"^FROM python:(\d+\.\d+)", dockerfile, flags=re.MULTILINE))
+    pinned = ROOT / ".python-version"
+
+    assert len(image_versions) == 1, f"expected one Python in the Dockerfile, got {image_versions}"
+    assert pinned.exists(), ".python-version is missing"
+    assert pinned.read_text(encoding="utf-8").strip() == image_versions.pop()
+
+
 def test_logs_cant_fill_the_disk():
     """Docker keeps container logs forever by default; the server has a 20 GB disk."""
     compose = (DEPLOY / "compose.yaml").read_text(encoding="utf-8")
