@@ -34,7 +34,9 @@ class TestFilled:
 
 
 class TestLog:
-    def test_says_once_per_window_which_page(self, home_page, caplog):
+    def test_says_once_per_window_which_page(self, home_page, monkeypatch, caplog):
+        # Both drops in one window, even when the clock is about to start the next.
+        monkeypatch.setattr(honeypot.time, "time", lambda: 1000.0)
         with caplog.at_level(logging.WARNING, logger="core"):
             honeypot.dropped(home_page)
             honeypot.dropped(home_page)
