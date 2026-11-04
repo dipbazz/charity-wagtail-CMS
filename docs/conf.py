@@ -4,6 +4,13 @@ Build once with `uv run --group docs sphinx-build -W --keep-going docs docs/_bui
 while writing with `uv run --group docs sphinx-autobuild docs docs/_build/html`.
 """
 
+import tomllib
+from pathlib import Path
+
+# The repository's address is kept once, in pyproject.toml.
+PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
+repository = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))["project"]["urls"]["Repository"]
+
 project = "Trayi"
 author = "Trayi contributors"
 copyright = "2026, Trayi contributors"
@@ -37,10 +44,10 @@ html_theme_options = {
     "logo_alt": "Trayi",
     "logo_height": 48,
     "logo_width": 48,
-    "github_url": "https://github.com/dipbazz/trayi/blob/main/docs/",
-    "header_links": "GitHub|https://github.com/dipbazz/trayi",
+    "github_url": f"{repository}/blob/main/docs/",
+    "header_links": f"GitHub|{repository}",
     "footer_links": (
-        "Issues|https://github.com/dipbazz/trayi/issues,"
+        f"Issues|{repository}/issues,"
         "Project board|https://github.com/users/dipbazz/projects/1,"
         "Wagtail docs|https://docs.wagtail.org/"
     ),
