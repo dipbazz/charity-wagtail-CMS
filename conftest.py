@@ -159,6 +159,11 @@ def moderator(django_user_model):
     return _user_in_group(django_user_model, "Moderators")
 
 
+def in_ci():
+    """Whether the tests run in CI, where a check that can't run means the setup broke."""
+    return bool(os.environ.get("CI"))
+
+
 def _chromium_can_start():
     from playwright.sync_api import Error, sync_playwright
 
@@ -175,7 +180,7 @@ def pytest_collection_modifyitems(config, items):
     browser_tests = [item for item in items if item.get_closest_marker("browser")]
     if not browser_tests:
         return
-    if not os.environ.get("CI") and not _chromium_can_start():
+    if not in_ci() and not _chromium_can_start():
         # On Linux a downloaded Chromium still needs system libraries, which --with-deps installs.
         skip = pytest.mark.skip(
             reason="Chromium can't start: run `uv run playwright install --with-deps chromium` once"

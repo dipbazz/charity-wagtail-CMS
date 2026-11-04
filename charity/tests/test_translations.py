@@ -6,7 +6,6 @@ and always run in CI.
 """
 
 import gettext
-import os
 import re
 import shutil
 import subprocess
@@ -14,6 +13,8 @@ from html.parser import HTMLParser
 
 import pytest
 from django.conf import settings
+
+from conftest import in_ci
 
 LOCALE = settings.BASE_DIR / "locale" / "ne" / "LC_MESSAGES"
 
@@ -32,7 +33,7 @@ def need(tool):
     """Skip without a GNU gettext tool, except in CI, where a missing one means the setup broke."""
     if shutil.which(tool):
         return
-    if os.environ.get("CI"):
+    if in_ci():
         pytest.fail(f"GNU gettext isn't installed in CI: {tool} not found")
     pytest.skip("GNU gettext isn't installed")
 
