@@ -235,9 +235,9 @@ to that list.
 **The compiled `.mo` file is committed,** so running the site, the tests and building the Docker
 image need no GNU gettext tools; only whoever edits the `.po` file does. A test compares the two
 and fails if the `.mo` is out of date (it skips where gettext isn't installed, and runs in CI).
-It compares the translations, not the header lines that differ between gettext versions (0.19
-keeps `POT-Creation-Date` in the `.mo`, 0.21 leaves it out), so a `.mo` compiled on another
-computer still passes.
+It compares the translations and the header's `Language`, `Content-Type` and `Plural-Forms`,
+not the other header lines (dates, translator), which some gettext versions compile differently,
+so a `.mo` compiled on another computer still passes.
 
 **A test fails if visible text isn't marked.** `charity/tests/test_translations.py` reads every
 public template and fails on a word outside `{% translate %}` / `{% blocktranslate %}`, or in an

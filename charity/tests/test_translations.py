@@ -25,8 +25,9 @@ READ_ATTRIBUTES = {"aria-label", "placeholder", "title", "alt"}
 
 NOTHING = "\x00"  # stands in for something the template fills in or marks for translation
 
-# Header lines that one gettext version compiles into the .mo file and another leaves out.
-VERSION_DEPENDENT = ("POT-Creation-Date:",)
+# The header fields that change how a compiled catalog reads: its language, encoding and plural
+# rule. The rest (dates, translator, generator) change nothing, and gettext versions differ there.
+HEADER_FIELDS = ("Language", "Content-Type", "Plural-Forms")
 
 
 def need(tool):
@@ -39,9 +40,9 @@ def need(tool):
 
 
 def messages(catalog):
-    """A compiled catalog without the header lines that depend on which gettext compiled it."""
-    header = catalog.get("", "").splitlines(keepends=True)
-    kept = "".join(line for line in header if not line.startswith(VERSION_DEPENDENT))
+    """A compiled catalog with only the header fields the site reads."""
+    header = dict(line.split(":", 1) for line in catalog.get("", "").splitlines() if ":" in line)
+    kept = {field: header[field].strip() for field in HEADER_FIELDS if field in header}
     return {**catalog, "": kept}
 
 
@@ -200,6 +201,18 @@ class TestTheNepaliCatalog:
         newer = {"": "Language: ne\n", "Home": "गृह"}
 
         assert messages(older) == messages(newer)
+
+    def test_a_header_line_the_site_doesnt_read_is_no_difference(self):
+        committed = {"": "Language: ne\nPO-Revision-Date: 2026-10-08 00:00+0000\n", "Home": "गृह"}
+        compiled_now = {"": "Language: ne\nX-Generator: Poedit 3.4\n", "Home": "गृह"}
+
+        assert messages(committed) == messages(compiled_now)
+
+    def test_a_changed_plural_rule_is_still_a_difference(self):
+        committed = {"": "Plural-Forms: nplurals=2; plural=(n != 1);\n", "Home": "गृह"}
+        compiled_now = {"": "Plural-Forms: nplurals=1; plural=0;\n", "Home": "गृह"}
+
+        assert messages(committed) != messages(compiled_now)
 
     def test_a_changed_translation_is_still_a_difference(self):
         committed = {"": "Language: ne\n", "Home": "गृह"}
