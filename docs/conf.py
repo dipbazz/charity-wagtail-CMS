@@ -4,9 +4,9 @@ Build once with `uv run --group docs sphinx-build -W --keep-going docs docs/_bui
 while writing with `uv run --group docs sphinx-autobuild docs docs/_build/html`.
 """
 
-project = "Charity Wagtail CMS"
-author = "Charity Wagtail CMS contributors"
-copyright = "2026, Charity Wagtail CMS contributors"
+project = "Trayi"
+author = "Trayi contributors"
+copyright = "2026, Trayi contributors"
 
 extensions = [
     "myst_parser",
@@ -28,13 +28,13 @@ exclude_patterns = [
 ]
 
 html_theme = "sphinx_wagtail_theme"
-html_title = "Charity Wagtail CMS"
+html_title = "Trayi"
 html_static_path = ["_static"]
 html_show_sphinx = False
 html_theme_options = {
-    "project_name": "Charity Wagtail CMS",
+    "project_name": "Trayi",
     "logo": "img/logo.svg",
-    "logo_alt": "Charity Wagtail CMS",
+    "logo_alt": "Trayi",
     "logo_height": 48,
     "logo_width": 48,
     "github_url": "https://github.com/dipbazz/Charity-wagtail-CMS/blob/main/docs/",
