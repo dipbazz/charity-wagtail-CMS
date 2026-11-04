@@ -27,7 +27,11 @@ class FormField(AbstractFormField):
 class EmailFormPage(HoneypotFormMixin, PublishGuardMixin, AbstractEmailForm):
     """What every form page does (#167): drop a filled hidden box, email the team with Reply-To
     set to the sender, keep the send when the mail server is down, go on to `?sent` after it, and
-    export what visitors typed as text. Abstract, so it has no table of its own."""
+    export what visitors typed as text. Abstract, so it has no table of its own.
+
+    A type declares what the base can't: its field model, with a ParentalKey to it and
+    related_name="form_fields", and its own form and landing templates, since what the page shows
+    around the form is the type's."""
 
     collects_personal_details = True
     base_form_class = FormPageForm

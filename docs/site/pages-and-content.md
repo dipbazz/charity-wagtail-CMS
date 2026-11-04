@@ -182,7 +182,10 @@ form, and links to chosen pages go to their translation in the language being re
 Editors build forms themselves, such as volunteer sign-up or an enquiry form, with Wagtail's form
 builder (`contact/models.py`, `FormPage`): an introduction, the fields, a thank-you message, and
 who is emailed about each submission. What every form page does lives once in the abstract
-`EmailFormPage`, which `FormPage` inherits; a new form page type inherits it too.
+`EmailFormPage`, which `FormPage` inherits; a new form page type inherits it too, and declares
+what the base can't: its own field model (a `ParentalKey` with `related_name="form_fields"`) and
+its own form and thank-you templates. `contact/tests/test_form_page.py` fails for a type without
+them.
 
 - After a send, the page goes on to `?sent` (a 303 redirect), which shows the thank-you message.
   Reloading it can't send the message twice, and opening `?sent` directly saves and sends

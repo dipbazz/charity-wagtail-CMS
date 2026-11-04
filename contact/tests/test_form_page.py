@@ -2,13 +2,15 @@ import io
 
 import pytest
 from bs4 import BeautifulSoup
+from django.apps import apps
 from django.core import mail
 from django.core.cache import caches
+from django.template.loader import get_template
 from django.urls import reverse
 from openpyxl import load_workbook
-from wagtail.contrib.forms.models import FormSubmission
+from wagtail.contrib.forms.models import AbstractFormField, FormSubmission
 
-from contact.models import FormField, FormPage
+from contact.models import EmailFormPage, FormField, FormPage
 from core.models import SiteSettings
 from home.models import StandardPage
 
@@ -51,6 +53,22 @@ class TestPageTreeRules:
 
         assert FormPage.can_create_at(home_page)
         assert FormPage.can_create_at(about)
+
+    def test_every_form_page_type_has_its_own_fields_and_templates(self):
+        """EmailFormPage can't hold a field model or templates for its types (#167): each type
+        declares a field model with related_name="form_fields", and its own two templates."""
+        form_types = [
+            model
+            for model in apps.get_models()
+            if issubclass(model, EmailFormPage) and not model._meta.abstract
+        ]
+        assert form_types
+        for model in form_types:
+            fields = model._meta.get_field("form_fields")
+            assert issubclass(fields.related_model, AbstractFormField), model.__name__
+            page = model()
+            get_template(page.template)
+            get_template(page.landing_page_template)
 
 
 class TestFormPage:
