@@ -1,1 +1,0 @@
-The project now pins Python 3.14, the version the Docker image runs, so tests on your computer and in CI run on the same Python as the live sites; uv downloads it on your next `uv sync` if you don't have it ([#289](https://github.com/dipbazz/trayi/issues/289))

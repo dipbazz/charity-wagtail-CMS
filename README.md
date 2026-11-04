@@ -16,7 +16,7 @@ running the live site, how to contribute, and the decisions behind it. **What ch
 
 ## Quick start
 
-Requires Python 3.13+ and [uv](https://docs.astral.sh/uv/).
+Requires [uv](https://docs.astral.sh/uv/), which installs Python 3.14 if you don't have it.
 
 ```bash
 uv sync
