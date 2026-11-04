@@ -1,7 +1,7 @@
 """The Donate form in a real browser: what only happens there (CSS show and hide, scripts).
 
-pytest's HTML checks in test_donate.py can't see these. Run `uv run playwright install chromium`
-once; `uv run pytest -m "not browser"` leaves them out.
+pytest's HTML checks in test_donate.py can't see these. Run `uv run playwright install --with-deps
+chromium` once; `uv run pytest -m "not browser"` leaves them out.
 """
 
 import re

@@ -1,7 +1,7 @@
 """An appeal page in a real browser: where its parts end up on screen.
 
 pytest's HTML checks in test_campaigns.py can't see these. Run `uv run playwright install
-chromium` once; `uv run pytest -m "not browser"` leaves them out.
+--with-deps chromium` once; `uv run pytest -m "not browser"` leaves them out.
 """
 
 import pytest

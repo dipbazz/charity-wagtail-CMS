@@ -1,7 +1,7 @@
 """The page layout every template shares (base.html), in a real browser.
 
-pytest's HTML checks can't see where things end up on screen. Run
-`uv run playwright install chromium` once; `uv run pytest -m "not browser"` leaves them out.
+pytest's HTML checks can't see where things end up on screen. Run `uv run playwright install
+--with-deps chromium` once; `uv run pytest -m "not browser"` leaves them out.
 """
 
 import pytest

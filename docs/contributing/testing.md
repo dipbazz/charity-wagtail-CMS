@@ -145,8 +145,10 @@ next to the app's other tests, e.g. `campaigns/tests/test_donate_browser.py`:
   instead of back to `site_page`; like a redirect, the refresh replaces the history entry.
 - assert with `playwright.sync_api.expect`, which waits for the page to settle.
 
-Install Chromium once with `uv run playwright install chromium`. Without it, browser tests are
-skipped locally with that hint; in CI they always run. Each takes about a second.
+Install Chromium once with `uv run playwright install --with-deps chromium`; on Linux,
+`--with-deps` also installs the system libraries it needs to start, and asks for your password.
+Where Chromium can't start, browser tests are skipped locally with that hint; in CI they always
+run. Each takes about a second.
 
 Once Playwright has started, its event loop stays in the main thread for the rest of the run, so
 the root `conftest.py` sets `DJANGO_ALLOW_ASYNC_UNSAFE` whenever browser tests are collected.

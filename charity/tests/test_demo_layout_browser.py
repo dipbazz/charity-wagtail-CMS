@@ -2,8 +2,8 @@
 
 This is the mechanical half of QA: a page that scrolls sideways, or a control too small to tap,
 fails here on every pull request. What needs eyes (wording, whether a page looks right) is listed
-under "Check before merging" in the pull request. Run `uv run playwright install chromium` once;
-`uv run pytest -m "not browser"` leaves these out.
+under "Check before merging" in the pull request. Run `uv run playwright install --with-deps
+chromium` once; `uv run pytest -m "not browser"` leaves these out.
 """
 
 import re

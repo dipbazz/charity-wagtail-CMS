@@ -50,6 +50,11 @@ jobs:
       - name: Install Chromium for the browser tests
         run: uv run playwright install --with-deps chromium
 
+      - name: Install GNU gettext for the Nepali catalog checks
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends gettext
+
       - name: Test
         run: uv run pytest --cov --cov-report=term-missing:skip-covered
 

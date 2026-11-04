@@ -14,6 +14,8 @@ from html.parser import HTMLParser
 import pytest
 from django.conf import settings
 
+from conftest import in_ci
+
 LOCALE = settings.BASE_DIR / "locale" / "ne" / "LC_MESSAGES"
 
 # Folders whose templates aren't part of the public site, or aren't ours.
@@ -22,6 +24,26 @@ NOT_PUBLIC = {".venv", "node_modules", "docs", "static", "media", "previews", "a
 READ_ATTRIBUTES = {"aria-label", "placeholder", "title", "alt"}
 
 NOTHING = "\x00"  # stands in for something the template fills in or marks for translation
+
+# The header fields that change how a compiled catalog reads: its language, encoding and plural
+# rule. The rest (dates, translator, generator) change nothing, and gettext versions differ there.
+HEADER_FIELDS = ("Language", "Content-Type", "Plural-Forms")
+
+
+def need(tool):
+    """Skip without a GNU gettext tool, except in CI, where a missing one means the setup broke."""
+    if shutil.which(tool):
+        return
+    if in_ci():
+        pytest.fail(f"GNU gettext isn't installed in CI: {tool} not found")
+    pytest.skip("GNU gettext isn't installed")
+
+
+def messages(catalog):
+    """A compiled catalog with only the header fields the site reads."""
+    header = dict(line.split(":", 1) for line in catalog.get("", "").splitlines() if ":" in line)
+    kept = {field: header[field].strip() for field in HEADER_FIELDS if field in header}
+    return {**catalog, "": kept}
 
 
 def templates():
@@ -129,8 +151,7 @@ class TestNoVisibleTextIsLeftUnmarked:
 
 class TestTheNepaliCatalog:
     def test_every_message_is_translated(self):
-        if not shutil.which("msgattrib"):
-            pytest.skip("GNU gettext isn't installed")
+        need("msgattrib")
         po = LOCALE / "django.po"
 
         untranslated = subprocess.run(
@@ -149,20 +170,70 @@ class TestTheNepaliCatalog:
         assert re.findall(r'^msgid "(.+)"$', untranslated, flags=re.MULTILINE) == []
         assert re.findall(r'^msgid "(.+)"$', fuzzy, flags=re.MULTILINE) == []
 
+    def test_without_gettext_ci_fails_instead_of_skipping(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda tool: None)
+        monkeypatch.setenv("CI", "true")
+
+        with pytest.raises(pytest.fail.Exception, match="msgfmt"):
+            need("msgfmt")
+
+    @pytest.mark.parametrize("ci", [None, "", "false", "0"])
+    def test_without_gettext_a_local_run_skips(self, monkeypatch, ci):
+        monkeypatch.setattr(shutil, "which", lambda tool: None)
+        if ci is None:
+            monkeypatch.delenv("CI", raising=False)
+        else:
+            # Some tools and shells turn CI mode off by setting CI=false.
+            monkeypatch.setenv("CI", ci)
+
+        with pytest.raises(pytest.skip.Exception, match="GNU gettext isn't installed"):
+            need("msgfmt")
+
+    def test_with_gettext_the_check_runs(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda tool: f"/usr/bin/{tool}")
+        monkeypatch.delenv("CI", raising=False)
+
+        need("msgfmt")
+
+    def test_a_header_line_only_some_gettext_versions_compile_is_no_difference(self):
+        # Seen in #287: gettext 0.19.8 keeps POT-Creation-Date in the compiled file, and Ubuntu
+        # 24.04's 0.21 leaves it out. Which release changed it isn't known.
+        older = {"": "Language: ne\nPOT-Creation-Date: 2026-11-04 10:54+0000\n", "Home": "गृह"}
+        newer = {"": "Language: ne\n", "Home": "गृह"}
+
+        assert messages(older) == messages(newer)
+
+    def test_a_header_line_the_site_doesnt_read_is_no_difference(self):
+        committed = {"": "Language: ne\nPO-Revision-Date: 2026-10-08 00:00+0000\n", "Home": "गृह"}
+        compiled_now = {"": "Language: ne\nX-Generator: Poedit 3.4\n", "Home": "गृह"}
+
+        assert messages(committed) == messages(compiled_now)
+
+    def test_a_changed_plural_rule_is_still_a_difference(self):
+        committed = {"": "Plural-Forms: nplurals=2; plural=(n != 1);\n", "Home": "गृह"}
+        compiled_now = {"": "Plural-Forms: nplurals=1; plural=0;\n", "Home": "गृह"}
+
+        assert messages(committed) != messages(compiled_now)
+
+    def test_a_changed_translation_is_still_a_difference(self):
+        committed = {"": "Language: ne\n", "Home": "गृह"}
+        compiled_now = {"": "Language: ne\n", "Home": "घर"}
+
+        assert messages(committed) != messages(compiled_now)
+
     def test_the_compiled_file_matches_the_po_file(self, tmp_path):
-        if not shutil.which("msgfmt"):
-            pytest.skip("GNU gettext isn't installed")
+        need("msgfmt")
         compiled_now = tmp_path / "django.mo"
         subprocess.run(
             ["msgfmt", "--check", "-o", str(compiled_now), str(LOCALE / "django.po")],
             check=True,
         )
 
-        def messages(mo):
+        def catalog(mo):
             with mo.open("rb") as file:
                 return gettext.GNUTranslations(file)._catalog
 
-        assert messages(LOCALE / "django.mo") == messages(compiled_now), (
+        assert messages(catalog(LOCALE / "django.mo")) == messages(catalog(compiled_now)), (
             "locale/ne/LC_MESSAGES/django.mo is out of date: run `python manage.py compilemessages`"
             " and commit it."
         )
