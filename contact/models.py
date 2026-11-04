@@ -46,9 +46,10 @@ class EmailFormPage(HoneypotFormMixin, PublishGuardMixin, AbstractEmailForm):
 
     def render_landing_page(self, request, form_submission=None, *args, **kwargs):
         """After a send, go on to `?sent` (303, so the browser asks for it again with GET): a
-        reload then can't send it twice. Opening `?sent`, or the admin's preview, only thanks."""
+        reload then can't send it twice. Opening `?sent`, or the admin's preview, only thanks.
+        The address is the one the form was sent to, which works where get_url() gives None."""
         if request.method == "POST":
-            return HttpResponseRedirect(f"{self.get_url(request)}?sent", status=303)
+            return HttpResponseRedirect(f"{request.path}?sent", status=303)
         return super().render_landing_page(request, form_submission, *args, **kwargs)
 
     def get_submissions_list_view_class(self):

@@ -167,6 +167,14 @@ class TestAfterASend:
         assert not FormSubmission.objects.exists()
         assert mail.outbox == []
 
+    def test_goes_on_to_the_address_it_was_sent_to(self, client, volunteer_form, monkeypatch):
+        """Not the page's own URL, which is None when no site routes to it."""
+        monkeypatch.setattr(FormPage, "get_url", lambda self, request=None: None)
+
+        response = client.post(f"{volunteer_form.url}?utm_source=newsletter", VALID_DATA)
+
+        assert response["Location"] == f"{volunteer_form.url}?sent"
+
     def test_the_landing_preview_still_shows_the_thanks(self, rf, volunteer_form):
         response = volunteer_form.serve_preview(rf.get("/"), "landing")
 

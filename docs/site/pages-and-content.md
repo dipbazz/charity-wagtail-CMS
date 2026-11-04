@@ -187,9 +187,9 @@ what the base can't: its own field model (a `ParentalKey` with `related_name="fo
 its own form and thank-you templates. `contact/tests/test_form_page.py` fails for a type without
 them.
 
-- After a send, the page goes on to `?sent` (a 303 redirect), which shows the thank-you message.
-  Reloading it can't send the message twice, and opening `?sent` directly saves and sends
-  nothing.
+- After a send, the page goes on to `?sent` at the address the form was sent to (a 303
+  redirect), which shows the thank-you message. Reloading it can't send the message twice, and
+  opening `?sent` directly saves and sends nothing.
 - The email's **Reply-To** is the sender's email field, so the team can answer directly.
 - If the email can't be sent, the error is logged and the visitor still sees the thank-you page:
   the submission is already saved, and the team reads and exports submissions (CSV or Excel) in the admin. Anything a visitor typed
