@@ -35,7 +35,10 @@ whose start date is still to come counts as open.)
 Editors fill an appeal in on four tabs: Content (summary of at most 300 characters, photo, body),
 Fundraising (target, amount raised, start and end dates, suggested amounts), Promote and
 Settings. An end date before the start date can't be saved. Previews show the page and the
-listing card. Progress is the amount raised as a share of the target, capped at 100%.
+listing card. Progress is the amount raised as a share of the target, capped at 100%. Every
+amount in the admin (target, amount raised, a suggested amount, a pledge's amount) is a text box
+with a number keypad that accepts "1,00,000" as well as "100000", not a number input, which a
+scroll over it would change (#97; `core/number_fields.py`).
 
 The admin's dashboard shows a **fundraising panel**: how many appeals are open, their total raised
 of their total target, and those closing within 14 days, so fundraisers see where things stand
@@ -321,7 +324,8 @@ page (`STATE_ROUTES`).
 (the supporter said they paid, marked paid by …). Someone with **Can confirm payments**
 (`campaigns.confirm_payment`, given to Moderators; editors still only read pledges) sees two
 actions on a QR payment, and only on one: **Mark as paid** takes the date received, the amount
-received and the reference from the statement (the supporter's transaction ID to start with), set
+received (a text box that accepts "1,00,000", as every admin amount does) and the reference from
+the statement (the supporter's transaction ID to start with), set
 once, as the payment becomes paid. The date can't be after today or before the pledge was sent (a
 Bikram Sambat year such as 2083 is refused), and the amount can't be more than a pledge can be (999,999). A different amount marks the pledge paid and makes the pay page
 say it received that amount. **Not found** fails the payment; it can still be marked paid later
