@@ -5,7 +5,9 @@ from decimal import Decimal
 
 import pytest
 from django import forms
+from django.apps import apps
 from django.db import models
+from django.test.utils import isolate_apps
 from wagtail.admin.panels import FieldPanel, ObjectList, get_edit_handler
 
 from core.models import SiteSettings
@@ -45,20 +47,23 @@ class TestDecimalNumberField:
             DecimalNumberField(max_digits=12, decimal_places=2).clean(typed)
 
 
-class Counted(models.Model):
-    """A model with every kind of number field, to build an admin form for."""
+with isolate_apps("core"):
 
-    whole = models.IntegerField()
-    positive = models.PositiveIntegerField()
-    small = models.PositiveSmallIntegerField()
-    decimal = models.DecimalField(max_digits=12, decimal_places=2)
+    class Counted(models.Model):
+        """A model with every kind of number field, to build an admin form for. Declared in its
+        own app registry, so it never joins the site's models or the test database."""
 
-    class Meta:
-        app_label = "core"
-        managed = False
+        whole = models.IntegerField()
+        positive = models.PositiveIntegerField()
+        small = models.PositiveSmallIntegerField()
+        decimal = models.DecimalField(max_digits=12, decimal_places=2)
 
-    def __str__(self):
-        return str(self.whole)
+        class Meta:
+            app_label = "core"
+            managed = False
+
+        def __str__(self):
+            return str(self.whole)
 
 
 def admin_form(model, fields):
@@ -66,6 +71,11 @@ def admin_form(model, fields):
 
 
 class TestEveryAdminNumberField:
+    def test_the_test_model_stays_out_of_the_site_s_models(self):
+        """Else the test database gets a `core | counted` content type and its permissions."""
+        with pytest.raises(LookupError):
+            apps.get_model("core", "counted")
+
     @pytest.mark.parametrize("name", ["whole", "positive", "small"])
     def test_a_whole_number_is_a_text_box_with_the_number_keypad(self, name):
         field = admin_form(Counted, [name])().fields[name]
