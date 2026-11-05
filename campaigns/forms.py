@@ -374,7 +374,7 @@ class MarkPaidForm(forms.Form):
     pledges are."""
 
     received_on = forms.DateField(label="Date received")
-    amount = forms.IntegerField(label="Amount received", min_value=1, max_value=MAX_AMOUNT)
+    amount = WholeNumberField(label="Amount received", min_value=1, max_value=MAX_AMOUNT)
     reference = forms.CharField(label="Reference from the statement", max_length=100, strip=True)
 
     def __init__(self, *args, pledge, **kwargs):

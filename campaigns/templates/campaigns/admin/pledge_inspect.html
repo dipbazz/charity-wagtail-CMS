@@ -186,7 +186,8 @@
                                 </p>
                                 <p>
                                     <label for="amount-{{ payment.pk }}">Amount received</label>
-                                    <input type="number" id="amount-{{ payment.pk }}" name="amount" min="1" max="{{ max_amount }}" value="{{ payment.amount }}" required>
+                                    {# A text box with the number keypad: a number input changes when scrolled over (#97). #}
+                                    <input type="text" inputmode="numeric" id="amount-{{ payment.pk }}" name="amount" value="{{ payment.amount }}" autocomplete="off" required>
                                 </p>
                                 <p>
                                     <label for="reference-{{ payment.pk }}">Reference from the statement</label>
