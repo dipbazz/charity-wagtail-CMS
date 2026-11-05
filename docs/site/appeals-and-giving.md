@@ -42,7 +42,9 @@ scroll over it would change (#97; `core/number_fields.py`).
 
 The admin's dashboard shows a **fundraising panel**: how many appeals are open, their total raised
 of their total target, and those closing within 14 days, so fundraisers see where things stand
-as soon as they log in.
+as soon as they log in. It counts each appeal once, whatever languages it's published in: its
+copy in the site's main language, else its copy in the other language, so its figures are the
+main language's (#195).
 
 ## Donate page
 
