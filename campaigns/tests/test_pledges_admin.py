@@ -361,6 +361,20 @@ def test_a_pledge_nobody_has_started_paying_can_still_be_changed(admin_client, s
     assert sent_pledge.amount == 3000
 
 
+def test_a_pledge_s_amount_is_a_text_box_with_the_number_keypad(admin_client, sent_pledge):
+    """Not a number input, whose value a scroll over it changes (#97)."""
+    response = admin_client.get(reverse("pledges:edit", args=[sent_pledge.pk]))
+
+    box = BeautifulSoup(response.content, "html.parser").find("input", attrs={"name": "amount"})
+    assert (box["type"], box["inputmode"]) == ("text", "numeric")
+
+
+def test_a_pledge_s_amount_can_be_written_the_way_the_site_shows_it(admin_client, sent_pledge):
+    edit(admin_client, sent_pledge, amount="1,00,000")
+
+    assert sent_pledge.amount == 100000
+
+
 def test_permission_migration_gives_view_only_and_creates_no_duplicates(
     django_user_model, editor, moderator
 ):

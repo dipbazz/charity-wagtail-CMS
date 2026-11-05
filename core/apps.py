@@ -22,4 +22,7 @@ class CoreConfig(AppConfig):
     verbose_name = "Core"
 
     def ready(self):
+        from core.number_fields import use_text_boxes_for_admin_numbers
+
         post_migrate.connect(create_content_locales, sender=self)
+        use_text_boxes_for_admin_numbers()
