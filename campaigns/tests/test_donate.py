@@ -951,3 +951,14 @@ class TestDonatePageInTheAdmin:
         page = DonatePage.objects.get(slug="donate")
         draft = page.get_latest_revision_as_object()
         assert draft.donation_amounts.get().impact == "Safe water for one person for a year"
+
+    def test_a_suggested_amount_is_a_text_box_with_the_number_keypad(
+        self, client, editor, donate_page
+    ):
+        """Not a number input, whose value a scroll over it changes (#97)."""
+        client.force_login(editor)
+
+        response = client.get(reverse("wagtailadmin_pages:edit", args=[donate_page.pk]))
+
+        box = soup(response).find("input", attrs={"name": "donation_amounts-0-amount"})
+        assert (box["type"], box["inputmode"]) == ("text", "numeric")

@@ -897,6 +897,12 @@ class TestTheMarkPaidForm:
 
         assert form.errors["received_on"] == ["It can't be before the pledge was sent."]
 
+    def test_takes_an_amount_written_the_way_the_site_shows_it(self, pledge):
+        form = self.form(pledge, timezone.localdate(), amount="1,00,000")
+
+        assert form.is_valid()
+        assert form.cleaned_data["amount"] == 100000
+
     def test_takes_up_to_the_most_a_pledge_can_be(self, pledge):
         assert self.form(pledge, timezone.localdate(), amount=999_999).is_valid()
 
@@ -929,6 +935,17 @@ class TestConfirmingInTheAdmin:
         claimed.refresh_from_db()
         assert (claimed.status, claimed.provider_reference) == ("paid", "RBB-77")
         assert claimed.steps.last().by == moderator
+
+    def test_the_amount_received_is_a_text_box_with_the_number_keypad(
+        self, client, moderator, claimed
+    ):
+        """Not a number input, whose value a scroll over it changes (#97)."""
+        client.force_login(moderator)
+
+        response = client.get(reverse("pledges:inspect", args=[claimed.pledge_id]))
+
+        box = soup(response).find("input", attrs={"name": "amount"})
+        assert (box["type"], box["inputmode"], box["value"]) == ("text", "numeric", "2500")
 
     def test_a_moderator_marks_it_not_found(self, client, moderator, claimed):
         client.force_login(moderator)

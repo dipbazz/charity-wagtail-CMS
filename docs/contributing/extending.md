@@ -74,6 +74,14 @@ permissions**, or editors can't see the new item in the admin.
    Why it's a migration: [Decisions](../decisions.md#group-permissions-granted-in-data-migrations).
 4. **Document it** on the page of [The site](../site/index.md) it belongs to.
 
+A number field on any model (an `IntegerField` or `DecimalField`, or a subclass) is a text box
+with a number keypad in every admin form built from panels, never `<input type="number">`, which a
+scroll over it changes; it accepts "1,00,000" too (`core/number_fields.py`, #97). A
+`ModelViewSet` with `form_fields` instead of panels gets it by returning `number_formfield()` from
+its `formfield_for_dbfield`, as `PledgeViewSet` does; a form written by hand uses
+`WholeNumberField` or `DecimalNumberField`. A panel's own widget still wins, as the logo size
+slider's does.
+
 ## Add a content block
 
 Every page body uses `BaseStreamBlock` (`core/blocks.py`), so a block added there is offered on

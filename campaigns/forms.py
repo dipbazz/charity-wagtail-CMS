@@ -11,6 +11,7 @@ from django.utils.translation import gettext, gettext_lazy
 from campaigns.models import RECEIPT_MAX_PIXELS, RECEIPT_WIDTH, Frequency, PaymentStatus, Pledge
 from core.images import clean_image
 from core.money import CURRENCIES, format_money
+from core.number_fields import WholeNumberField
 from core.phone import normalise_mobile, phone_country_choices
 
 NEEDED_MOST = gettext_lazy("Wherever it's needed most")
@@ -45,15 +46,6 @@ class AmountLabel:
         return f"{self.amount}: {self.impact}" if self.impact else self.amount
 
 
-class WholeAmountField(forms.IntegerField):
-    """A whole amount, also written the way the site shows amounts: "1,00,000" or "4 000"."""
-
-    def to_python(self, value):
-        if isinstance(value, str):
-            value = value.replace(",", "").replace(" ", "")
-        return super().to_python(value)
-
-
 class TextareaField(forms.CharField):
     """Text from a <textarea>, with line breaks counted as one character, as the browser counts
     them against maxlength while the supporter types.
@@ -83,9 +75,8 @@ class PledgeForm(forms.ModelForm):
         widget=forms.RadioSelect,
         error_messages={"invalid_choice": CHOOSE_AN_AMOUNT},
     )
-    # A text box, not type="number": scrolling over a number input changes its value, so a donor
-    # could pledge an amount they never meant. inputmode still brings up the number keypad.
-    other_amount = WholeAmountField(
+    # A text box, not type="number" (core/number_fields.py), with the number keypad.
+    other_amount = WholeNumberField(
         required=False,
         max_value=MAX_AMOUNT,
         widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}),
@@ -383,7 +374,7 @@ class MarkPaidForm(forms.Form):
     pledges are."""
 
     received_on = forms.DateField(label="Date received")
-    amount = forms.IntegerField(label="Amount received", min_value=1, max_value=MAX_AMOUNT)
+    amount = WholeNumberField(label="Amount received", min_value=1, max_value=MAX_AMOUNT)
     reference = forms.CharField(label="Reference from the statement", max_length=100, strip=True)
 
     def __init__(self, *args, pledge, **kwargs):

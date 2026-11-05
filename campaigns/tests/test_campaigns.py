@@ -212,6 +212,87 @@ class TestCampaignPage:
         assert campaign.donation_amounts.get().impact == "A hygiene kit for a family"
 
 
+def admin_input(response, name):
+    return BeautifulSoup(response.content, "html.parser").find("input", attrs={"name": name})
+
+
+class TestAmountsInTheAdmin:
+    """Text boxes with a number keypad, not number inputs, whose value a scroll over them
+    changes: an editor scrolling the page could change a target or a suggested gift (#97)."""
+
+    def test_target_and_raised_take_the_decimal_keypad(self, client, editor, campaign_index):
+        campaign = CampaignPageFactory(parent=campaign_index)
+        client.force_login(editor)
+
+        response = client.get(reverse("wagtailadmin_pages:edit", args=[campaign.pk]))
+
+        for name in ("target_amount", "amount_raised"):
+            box = admin_input(response, name)
+            assert (box["type"], box["inputmode"]) == ("text", "decimal")
+
+    def test_a_suggested_gift_takes_the_number_keypad(self, client, editor, campaign_index):
+        campaign = CampaignPageFactory(parent=campaign_index)
+        campaign.donation_amounts.create(amount=2500, impact="A hygiene kit for a family")
+        campaign.save_revision()
+        client.force_login(editor)
+
+        response = client.get(reverse("wagtailadmin_pages:edit", args=[campaign.pk]))
+
+        box = admin_input(response, "donation_amounts-0-amount")
+        assert (box["type"], box["inputmode"]) == ("text", "numeric")
+
+    def test_amounts_written_the_way_the_site_shows_them(self, client, editor, campaign_index):
+        client.force_login(editor)
+        url = reverse(
+            "wagtailadmin_pages:add", args=("campaigns", "campaignpage", campaign_index.pk)
+        )
+        data = nested_form_data(
+            {
+                "title": "Emergency flood appeal",
+                "slug": "flood-appeal",
+                "summary": "Families have lost their homes.",
+                "body": streamfield([]),
+                "target_amount": "1,00,000.50",
+                "amount_raised": "25,000",
+                "start_date": TODAY.isoformat(),
+                "donation_amounts": inline_formset(
+                    [{"amount": "2,500", "impact": "A hygiene kit for a family"}]
+                ),
+            }
+        )
+
+        response = client.post(url, data)
+
+        assert response.status_code == 302
+        draft = CampaignPage.objects.get(slug="flood-appeal").get_latest_revision_as_object()
+        assert (draft.target_amount, draft.amount_raised) == (Decimal("100000.50"), 25000)
+        assert draft.donation_amounts.get().amount == 2500
+
+    @pytest.mark.parametrize("target", ["fifty thousand", "-1"])
+    def test_still_refuses_what_isnt_an_amount(self, client, editor, campaign_index, target):
+        client.force_login(editor)
+        url = reverse(
+            "wagtailadmin_pages:add", args=("campaigns", "campaignpage", campaign_index.pk)
+        )
+        data = nested_form_data(
+            {
+                "title": "Emergency flood appeal",
+                "slug": "flood-appeal",
+                "summary": "Families have lost their homes.",
+                "body": streamfield([]),
+                "target_amount": target,
+                "amount_raised": "0",
+                "start_date": TODAY.isoformat(),
+                "donation_amounts": inline_formset([]),
+            }
+        )
+
+        response = client.post(url, data)
+
+        assert "target_amount" in response.context["form"].errors
+        assert not CampaignPage.objects.filter(slug="flood-appeal").exists()
+
+
 class TestCampaignIndexPage:
     def test_lists_live_campaigns_only(self, client, campaign_index):
         CampaignPageFactory(parent=campaign_index, title="Published appeal")

@@ -23,10 +23,11 @@ from wagtail.snippets.views.snippets import IndexView as SnippetIndexView
 from wagtail.snippets.views.snippets import SnippetViewSet
 
 from campaigns import sharing
-from campaigns.forms import MAX_AMOUNT, MarkPaidForm
+from campaigns.forms import MarkPaidForm
 from campaigns.models import ASK_AGAIN_AFTER, Payment, PaymentStatus, Pledge, QRCode
 from core.exports import VisitorTextExportMixin
 from core.images import UPLOAD_CONTENT_TYPES
+from core.number_fields import number_formfield
 
 
 class PledgeIndexView(VisitorTextExportMixin, IndexView):
@@ -188,7 +189,6 @@ class PledgeInspectView(InspectView):
             time_zone=time_zone_name(),
             can_confirm=self.request.user.has_perm(CONFIRM_PERMISSION),
             today=timezone.localdate(),
-            max_amount=MAX_AMOUNT,
         )
         return context
 
@@ -369,6 +369,10 @@ class PledgeViewSet(ModelViewSet):
         response = FileResponse(file, content_type=UPLOAD_CONTENT_TYPES[extension])
         add_never_cache_headers(response)
         return response
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        """The amount is a text box with the number keypad, as on a page's form (#97)."""
+        return number_formfield(db_field, **kwargs)
 
     # Wagtail needs these for its add and edit views, which only a superuser can open.
     form_fields = [
