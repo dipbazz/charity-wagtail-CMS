@@ -146,6 +146,17 @@ class TestTheErrorSummary:
         assert "id_email_address_error" in field["aria-describedby"].split()
         assert page.select_one("#id_availability option[selected]")["value"] == "Weekends"
 
+    def test_each_mistake_sits_with_its_own_field(self, client, volunteer_form):
+        """Under the label and above the box it's about, never under the field before it."""
+        page = BeautifulSoup(client.post(volunteer_form.url, {}).content, "html.parser")
+
+        for name in ("your_name", "email_address"):
+            error = page.select_one(f"#id_{name}_error")
+            group = error.find_parent(class_="field")
+            label, box = group.select_one(f"label[for=id_{name}]"), group.select_one(f"#id_{name}")
+            ordered = [tag for tag in group.descendants if tag in (label, error, box)]
+            assert ordered == [label, error, box], name
+
     def test_the_form_on_its_own_has_no_summary(self, client, volunteer_form):
         page = BeautifulSoup(client.get(volunteer_form.url).content, "html.parser")
 
