@@ -8,6 +8,7 @@ import pytest
 from playwright.sync_api import expect
 
 from conftest import SITE
+from contact.models import FormField
 
 pytestmark = [pytest.mark.browser, pytest.mark.django_db]
 
@@ -33,3 +34,30 @@ def test_a_summary_link_shows_the_question_and_its_mistake_on_a_phone(site_page,
     field = site_page.locator(".field").filter(has=site_page.get_by_label("Email address"))
     expect(field.locator("label")).to_be_in_viewport(ratio=1)
     expect(field.locator(".errorlist")).to_be_in_viewport(ratio=1)
+
+
+def test_a_group_of_choices_leaves_the_same_space_as_any_other_field(site_page, volunteer_form):
+    """The choices' fieldset sits in a .field group; their two margins added up to 2.75rem."""
+    for order, (label, field_type) in enumerate(
+        [("How would you like to help?", "checkboxes"), ("I agree to be contacted", "checkbox")],
+        start=10,
+    ):
+        FormField.objects.create(
+            page=volunteer_form,
+            sort_order=order,
+            label=label,
+            field_type=field_type,
+            choices="Events\nShops" if field_type == "checkboxes" else "",
+        )
+    volunteer_form.save_revision().publish()
+    site_page.goto(SITE + volunteer_form.url)
+
+    # From the end of what each group shows (its last box or fieldset) to the next group's top.
+    gaps = site_page.evaluate(
+        """() => [...document.querySelectorAll("form > .field")].map((group) => [
+            group.getBoundingClientRect().top,
+            group.lastElementChild.getBoundingClientRect().bottom,
+        ]).map(([, end], i, all) => all[i + 1] && Math.round(all[i + 1][0] - end)).slice(0, -1)"""
+    )
+
+    assert len(set(gaps)) == 1, gaps
