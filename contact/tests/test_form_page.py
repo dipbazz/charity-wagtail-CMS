@@ -10,37 +10,11 @@ from django.urls import reverse
 from openpyxl import load_workbook
 from wagtail.contrib.forms.models import AbstractFormField, FormSubmission
 
-from contact.models import EmailFormPage, FormField, FormPage
+from contact.models import EmailFormPage, FormPage
 from core.models import SiteSettings
 from home.models import StandardPage
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def volunteer_form(home_page, privacy_notice):
-    page = FormPage(
-        title="Volunteer with us",
-        slug="volunteer",
-        intro="<p>Give a few hours a month.</p>",
-        thank_you_text="<p>Thanks! Our volunteer team will be in touch.</p>",
-        to_address="volunteers@brightwell.example",
-        from_address="website@brightwell.example",
-        subject="New volunteer sign-up",
-    )
-    page.form_fields = [
-        FormField(label="Your name", field_type="singleline", required=True),
-        FormField(label="Email address", field_type="email", required=True),
-        FormField(
-            label="Availability",
-            field_type="dropdown",
-            choices="Weekdays\nWeekends",
-            required=False,
-        ),
-    ]
-    home_page.add_child(instance=page)
-    page.save_revision().publish()
-    return page
 
 
 VALID_DATA = {"your_name": "Sam", "email_address": "sam@example.com", "availability": "Weekends"}
