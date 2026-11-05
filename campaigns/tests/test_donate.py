@@ -384,6 +384,14 @@ class TestPledging:
         assert "Enter your email address." in html
         assert "This field is required." not in html
 
+    def test_each_mistake_links_to_its_field_and_what_was_typed_is_kept(self, client, donate_page):
+        """A radio group's line links to its first choice; a box's to the box."""
+        page = soup(pledge(client, donate_page, amount="", frequency="", name=""))
+
+        links = [link["href"] for link in page.select(".error-summary a")]
+        assert links == ["#id_amount_0", "#id_frequency_0", "#id_name"]
+        assert page.select_one("#id_email")["value"] == "sita@example.com"
+
     def test_a_closed_appeal_cannot_be_chosen(self, client, donate_page):
         response = pledge(client, donate_page, appeal="last-year")
 

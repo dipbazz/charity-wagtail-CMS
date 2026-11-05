@@ -96,6 +96,24 @@ class PledgeForm(forms.ModelForm):
     # a new ID, so donate.js puts back the ID that was sent.
     submission_id = forms.CharField(required=False, initial=uuid.uuid4, widget=forms.HiddenInput)
 
+    # The page's order, which the template sets field by field: the error summary lists the
+    # mistakes in it, so they read top to bottom like the form.
+    field_order = [
+        "amount",
+        "other_amount",
+        "frequency",
+        "phone_country",
+        "phone",
+        "appeal",
+        "message",
+        "name",
+        "email",
+        "address",
+        "postcode",
+        "email_updates",
+        "show_on_website",
+    ]
+
     class Meta:
         model = Pledge
         fields = [
