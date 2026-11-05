@@ -10,7 +10,7 @@ from django.urls import reverse
 from openpyxl import load_workbook
 from wagtail.contrib.forms.models import AbstractFormField, FormSubmission
 
-from contact.models import EmailFormPage, FormPage
+from contact.models import EmailFormPage, FormField, FormPage
 from core.models import SiteSettings
 from home.models import StandardPage
 
@@ -156,6 +156,24 @@ class TestTheErrorSummary:
             label, box = group.select_one(f"label[for=id_{name}]"), group.select_one(f"#id_{name}")
             ordered = [tag for tag in group.descendants if tag in (label, error, box)]
             assert ordered == [label, error, box], name
+
+    def test_a_tick_box_sits_inside_its_label_with_its_mistake(self, client, volunteer_form):
+        """The shared tick box (campaigns/forms/checkbox.html): the whole row can be tapped."""
+        FormField.objects.create(
+            page=volunteer_form,
+            label="I agree to be contacted",
+            field_type="checkbox",
+            required=True,
+        )
+
+        page = BeautifulSoup(client.post(volunteer_form.url, {}).content, "html.parser")
+
+        box = page.select_one("#id_i_agree_to_be_contacted")
+        assert box.find_parent("label")["for"] == "id_i_agree_to_be_contacted"
+        group = box.find_parent(class_="checkbox")
+        assert group.select_one("#id_i_agree_to_be_contacted_error")
+        assert "id_i_agree_to_be_contacted_error" in box["aria-describedby"].split()
+        assert page.select_one(".error-summary a[href='#id_i_agree_to_be_contacted']")
 
     def test_the_form_on_its_own_has_no_summary(self, client, volunteer_form):
         page = BeautifulSoup(client.get(volunteer_form.url).content, "html.parser")

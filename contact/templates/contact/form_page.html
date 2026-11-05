@@ -12,11 +12,15 @@
         {% include "includes/error_summary.html" %}
         <form action="{% pageurl page %}" method="post" novalidate>
             {% csrf_token %}
-            {# Each field's label, mistake and box in one group (#167), as on the Donate form: form.as_p put a mistake under the field before it. #}
+            {# Each field's label, mistake and box in one group (#167), and the shared tick box, as on the Donate form: form.as_p put a mistake under the field before it. #}
             {{ form.non_field_errors }}
             {% for field in form.hidden_fields %}{{ field }}{% endfor %}
             {% for field in form.visible_fields %}
-                <div class="field">{{ field.as_field_group }}</div>
+                {% if field.widget_type == "checkbox" %}
+                    {% include "campaigns/forms/checkbox.html" %}
+                {% else %}
+                    <div class="field">{{ field.as_field_group }}</div>
+                {% endif %}
             {% endfor %}
             {% honeypot %}
             {% include "includes/privacy_link.html" %}
