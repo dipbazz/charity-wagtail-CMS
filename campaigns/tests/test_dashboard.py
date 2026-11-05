@@ -5,6 +5,7 @@ import pytest
 from bs4 import BeautifulSoup
 from django.urls import reverse
 
+from campaigns.models import CampaignPage
 from campaigns.tests.factories import CampaignIndexPageFactory, CampaignPageFactory
 
 TODAY = datetime.date.today()
@@ -103,6 +104,17 @@ class TestTranslatedAppealsCountOnce:
         assert "Rs 13,000</strong> raised of Rs 30,000" in html
         assert "3 open appeals" in html
         assert closing_soon(html) == ["भूकम्प राहत", "Flood relief"]
+
+    def test_an_appeal_unpublished_in_the_main_language_counts_its_other_copy(
+        self, admin_client, appeals
+    ):
+        CampaignPage.objects.get(title="Flood relief").unpublish()
+
+        html = admin_client.get(reverse("wagtailadmin_home")).content.decode()
+
+        assert "Rs 12,500</strong> raised of Rs 20,000" in html
+        assert "2 open appeals" in html
+        assert closing_soon(html) == ["बाढी राहत"]
 
     def test_the_main_language_is_counted_when_it_is_nepali(self, admin_client, appeals, settings):
         settings.LANGUAGE_CODE = "ne"
