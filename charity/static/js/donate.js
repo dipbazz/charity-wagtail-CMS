@@ -86,10 +86,6 @@ document.querySelectorAll("[data-countdown]").forEach((countdown) => {
     timer = setInterval(show, 1000);
 });
 
-// The pay page's message, what became of paying (didn't go through, check first, thank you):
-// focused as the page opens, so a screen reader reads it before the rest of the page.
-document.querySelector("[data-focus-on-load]")?.focus();
-
 // Tell your friends (#100): the phone's own share sheet, so every app the supporter has
 // (WhatsApp, Viber, Messenger, Instagram) is there. Shown only where the browser has one (most
 // phones, few desktops); without it, the WhatsApp, Facebook and Copy link options are the way.

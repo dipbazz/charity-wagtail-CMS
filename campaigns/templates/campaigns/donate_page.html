@@ -30,18 +30,8 @@
                 {% include "campaigns/includes/countdown.html" %}
             </div>
         {% endif %}
-        {% if form.errors %}
-            <div class="error-summary" role="alert" aria-labelledby="error-summary-heading" tabindex="-1">
-                <h2 id="error-summary-heading">{% translate "Please check your pledge" %}</h2>
-                <ul>
-                    {% for field in form %}
-                        {% for error in field.errors %}
-                            <li><a href="#{% if field.name == 'amount' or field.name == 'frequency' %}{{ field.auto_id }}_0{% else %}{{ field.auto_id }}{% endif %}">{{ error }}</a></li>
-                        {% endfor %}
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
+        {% translate "Please check your pledge" as heading %}
+        {% include "includes/error_summary.html" %}
 
         <form class="pledge-form" action="{% pageurl page %}" method="post" novalidate>
             {% csrf_token %}

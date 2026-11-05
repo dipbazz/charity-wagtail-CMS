@@ -149,6 +149,7 @@ class TestThePledgeFormInNepali:
         assert "आफ्नो इमेल ठेगाना लेख्नुहोस्।" in text
         assert "Please check" not in text
         assert "Enter your" not in text
+        assert soup(response).title.get_text(strip=True).startswith("त्रुटि: ")
 
     def test_a_choice_of_two_amounts_is_refused_in_nepali(self, client, nepali_donate_page):
         response = client.post(

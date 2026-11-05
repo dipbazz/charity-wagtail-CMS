@@ -667,6 +667,17 @@ class TestSayingIvePaid:
         assert "Check the transaction ID below." in alert.get_text()
         assert "Enter the transaction ID" not in alert.get_text()
 
+    def test_a_mistake_says_error_first_in_the_title(self, client, donate_page, pledge, esewa_qr):
+        """#167: as on every form, the title is the first thing a screen reader says."""
+        page = soup(say_paid(client, donate_page, pledge, esewa_qr, transaction_id="  "))
+
+        assert page.title.get_text(strip=True).startswith("Error: Paid? Tell us here")
+
+    def test_the_form_on_its_own_has_no_error_title(self, client, donate_page, pledge, esewa_qr):
+        page = soup(client.get(qr_url(donate_page, pledge, "paid/")))
+
+        assert page.title.get_text(strip=True).startswith("Paid? Tell us here")
+
     def test_the_field_has_no_error_before_anything_is_sent(
         self, client, donate_page, pledge, esewa_qr
     ):

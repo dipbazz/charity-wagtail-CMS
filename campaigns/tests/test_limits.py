@@ -109,7 +109,7 @@ class TestThePledgeForm:
 
         response = send_pledge(client, donate_page, email="not-an-email")
 
-        assert response.status_code == 200
+        assert response.status_code == 422
         assert notice(response) is None
 
     def test_sending_the_same_copy_again_updates_its_pledge_without_counting(

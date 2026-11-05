@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: trayi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-04 10:54+0000\n"
+"POT-Creation-Date: 2026-11-05 07:17+0000\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Trayi\n"
 "Language-Team: Nepali\n"
@@ -681,6 +681,9 @@ msgstr "चरण २ मा जानुहोस्"
 msgid "Paid? Tell us here"
 msgstr "भुक्तानी गर्नुभयो? यहाँ हामीलाई बताउनुहोस्"
 
+msgid "Error:"
+msgstr "त्रुटि:"
+
 #, python-format
 msgid "We haven't got your message yet: we've had a lot of tries from your internet connection just now. Wait %(minutes)s minute, then choose your screenshot again if you're sending one, and press I've paid."
 msgid_plural "We haven't got your message yet: we've had a lot of tries from your internet connection just now. Wait %(minutes)s minutes, then choose your screenshot again if you're sending one, and press I've paid."
@@ -783,6 +786,9 @@ msgstr "अर्को"
 
 msgid "How we use your details"
 msgstr "हामी तपाईंको विवरण कसरी प्रयोग गर्छौं"
+
+msgid "Please check your answers"
+msgstr "कृपया आफ्ना उत्तरहरू जाँच्नुहोस्"
 
 msgid "Send"
 msgstr "पठाउनुहोस्"

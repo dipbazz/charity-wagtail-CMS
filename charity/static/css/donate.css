@@ -32,23 +32,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-.error-summary {
-    margin-block: 1.5rem;
-    padding: 1rem 1.25rem;
-    border: 3px solid var(--colour-error);
-    border-radius: var(--radius);
-}
-
-.error-summary h2 {
-    margin-top: 0;
-    font-size: 1.25rem;
-}
-
-.error-summary a {
-    color: var(--colour-error);
-    font-weight: 600;
-}
-
 /* One column on phones; as many 14rem cards as fit on wider screens, with no breakpoint. */
 .amount-options {
     display: grid;

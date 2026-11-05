@@ -3,6 +3,7 @@
 
 {# Step 2 of paying by QR, a page of its own: which app they paid with, and the transaction ID from its receipt, a screenshot of the receipt, or both. Once they've told us, the checking page says thank you. #}
 {% block pay_title %}{% translate "Paid? Tell us here" %}{% endblock %}
+{% block error_title %}{% if paid_form.errors %}{% translate "Error:" %} {% endif %}{% endblock %}
 
 {# A form page too, for its field and radio styles. #}
 {% block body_class %}template-donatepage pay-page form-page{% endblock %}
@@ -18,7 +19,7 @@
             {% if site_settings.phone %}<p><a href="{{ phone_link }}">{{ site_settings.phone }}</a></p>{% endif %}
         </div>
     {% endif %}
-    {# What is wrong with what was sent, first: donate.js moves focus to it, and each line links to its field. #}
+    {# What is wrong with what was sent, first: charity.js moves focus to it, and each line links to its field. #}
     {% if paid_form.errors %}
         <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
             {% if paid_form.code.errors %}<p><a href="#{% if qr_codes|length > 1 %}id_code_0{% else %}id_transaction_id{% endif %}">{% translate "Check which app you paid with below." %}</a></p>{% endif %}

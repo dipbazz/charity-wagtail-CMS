@@ -53,6 +53,11 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
     });
 });
 
+// What a page has to say first, marked data-focus-on-load: a form's error summary, or what
+// became of paying (didn't go through, check first, thank you). Focused as the page opens, so a
+// screen reader reads it before the rest of the page.
+document.querySelector("[data-focus-on-load]")?.focus();
+
 // Menu button: on narrow screens it opens and closes the menu and search (see charity.css).
 // The CSS shows it only once base.html has marked the page with the "js" class; without
 // JavaScript the menu stays open so every link can be reached.

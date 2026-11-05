@@ -99,6 +99,14 @@ def test_only_the_main_stylesheet_defines_tokens(stylesheet):
 
 
 @each_stylesheet
+def test_only_the_main_stylesheet_styles_the_error_summary(stylesheet):
+    """Every form shows it (#167), and only the Donate page loads donate.css."""
+    styled = [selector for selector, _ in rules(stylesheet) if ".error-summary" in selector]
+
+    assert bool(styled) == (stylesheet == MAIN)
+
+
+@each_stylesheet
 def test_letter_spacing_and_capitals_are_kept_off_nepali_text(stylesheet):
     """Letter spacing splits Devanagari conjuncts, and Devanagari has no capitals (#118).
 

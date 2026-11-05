@@ -111,10 +111,46 @@ class TestFormPage:
     def test_invalid_submission_shows_errors_and_stores_nothing(self, client, volunteer_form):
         response = client.post(volunteer_form.url, {"your_name": "Sam"})
 
-        assert response.status_code == 200
+        assert response.status_code == 422
         assert "This field is required." in response.content.decode()
         assert not FormSubmission.objects.exists()
         assert mail.outbox == []
+
+
+class TestTheErrorSummary:
+    """A send with mistakes (#167): "Error: " first in the title, and a summary focused as the
+    page opens, each line linking to its field, with everything typed kept."""
+
+    def test_says_error_first_and_the_summary_takes_focus(self, client, volunteer_form):
+        page = BeautifulSoup(client.post(volunteer_form.url, {}).content, "html.parser")
+
+        assert page.title.get_text(strip=True).startswith("Error: Volunteer with us")
+        summary = page.select_one(".error-summary")
+        assert summary["role"] == "alert"
+        assert summary.has_attr("data-focus-on-load")
+        assert summary.h2.get_text(strip=True) == "Please check your answers"
+
+    def test_each_mistake_links_to_its_field_and_what_was_typed_is_kept(
+        self, client, volunteer_form
+    ):
+        response = client.post(volunteer_form.url, {"availability": "Weekends"})
+
+        page = BeautifulSoup(response.content, "html.parser")
+        summary = page.select_one(".error-summary")
+        assert [link["href"] for link in summary.select("a")] == [
+            "#id_your_name",
+            "#id_email_address",
+        ]
+        assert summary.select_one("a").get_text(strip=True) == "This field is required."
+        field = page.select_one("#id_email_address")
+        assert "id_email_address_error" in field["aria-describedby"].split()
+        assert page.select_one("#id_availability option[selected]")["value"] == "Weekends"
+
+    def test_the_form_on_its_own_has_no_summary(self, client, volunteer_form):
+        page = BeautifulSoup(client.get(volunteer_form.url).content, "html.parser")
+
+        assert page.title.get_text(strip=True).startswith("Volunteer with us")
+        assert page.select(".error-summary") == []
 
 
 class TestAfterASend:

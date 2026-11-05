@@ -9,7 +9,7 @@
 
 {% block pay %}
     <h1>{% translate "Scan our QR code" %}</h1>
-    {# What became of paying first: donate.js moves focus to it. #}
+    {# What became of paying first: charity.js moves focus to it. #}
     {% if state == "not-found" %}
         <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
             <p>{% translate "We haven't found your payment yet. If money has left your account, don't pay again." %}{% if site_settings.phone %} {% translate "Call us:" %}{% endif %}</p>

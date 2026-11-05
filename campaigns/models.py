@@ -467,7 +467,12 @@ class DonatePage(PublishGuardMixin, RoutablePageMixin, SocialMetaMixin, Page):
                 "wait_seconds": left and left.seconds,
             },
         )
-        return limits.too_many(response, left) if waiting else response
+        if waiting:
+            return limits.too_many(response, left)
+        # Not sent: what is wrong with it (422), as on every form (#167).
+        if form.errors:
+            response.status_code = 422
+        return response
 
     def how_to_pay(self, providers, ways):
         """The ways as a phrase after "you can pay": "with eSewa or Khalti, by scanning our QR

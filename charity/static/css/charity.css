@@ -751,6 +751,24 @@ body:lang(ne) {
     color: var(--colour-error);
 }
 
+/* What's wrong with a sent form, above it (includes/error_summary.html), on every form. */
+.error-summary {
+    margin-block: 1.5rem;
+    padding: 1rem 1.25rem;
+    border: 3px solid var(--colour-error);
+    border-radius: var(--radius);
+}
+
+.error-summary h2 {
+    margin-top: 0;
+    font-size: 1.25rem;
+}
+
+.error-summary a {
+    color: var(--colour-error);
+    font-weight: 600;
+}
+
 .form-page main .field {
     display: flex;
     flex-direction: column;
