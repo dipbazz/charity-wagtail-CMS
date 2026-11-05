@@ -58,6 +58,19 @@ document.querySelectorAll("[data-copy]").forEach((button) => {
 // screen reader reads it before the rest of the page.
 document.querySelector("[data-focus-on-load]")?.focus();
 
+// A link to a form's box, such as each line of the error summary: the browser's own jump puts the
+// box at the top of the screen, its label and mistake above it out of sight. Show the box's whole
+// group (label or legend, mistake, box) instead, then put the cursor in it. Without JavaScript
+// the plain jump still reaches the box.
+document.addEventListener("click", (event) => {
+    const link = event.target.closest('a[href^="#"]');
+    const box = link && document.getElementById(decodeURIComponent(link.hash.slice(1)));
+    if (!box || !box.matches("input, select, textarea")) return;
+    event.preventDefault();
+    (box.closest(".field, fieldset") ?? box).scrollIntoView();
+    box.focus({ preventScroll: true });
+});
+
 // Menu button: on narrow screens it opens and closes the menu and search (see charity.css).
 // The CSS shows it only once base.html has marked the page with the "js" class; without
 // JavaScript the menu stays open so every link can be reached.

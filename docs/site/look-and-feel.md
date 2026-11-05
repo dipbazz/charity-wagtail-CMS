@@ -333,6 +333,8 @@ A form sent with mistakes says so the same way, on every form (the Donate and fo
   such as "Please check your pledge";
 - each line of the summary links to its field (a group of radio buttons or checkboxes to its
   first choice), in the form's order, and a message for the whole form comes first, shown once;
+  following one shows the field's whole group, its label or legend and its mistake above the box,
+  and puts the cursor in the box (`charity.js`, for any link to a form's box);
 - each field's own error beside it, tied to it with `aria-describedby`;
 - everything typed is kept.
 

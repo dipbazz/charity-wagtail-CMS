@@ -19,3 +19,17 @@ def test_a_send_with_mistakes_focuses_the_error_summary(site_page, volunteer_for
     site_page.get_by_role("button", name="Send").click()
 
     expect(site_page.locator(".error-summary")).to_be_focused()
+
+
+def test_a_summary_link_shows_the_question_and_its_mistake_on_a_phone(site_page, volunteer_form):
+    """A plain #id jump puts the box at the top of the screen, its label and mistake above it."""
+    site_page.set_viewport_size({"width": 320, "height": 700})
+    site_page.goto(SITE + volunteer_form.url)
+    site_page.get_by_role("button", name="Send").click()
+
+    site_page.locator(".error-summary a").nth(1).click()
+
+    expect(site_page.get_by_label("Email address")).to_be_focused()
+    field = site_page.locator(".field").filter(has=site_page.get_by_label("Email address"))
+    expect(field.locator("label")).to_be_in_viewport(ratio=1)
+    expect(field.locator(".errorlist")).to_be_in_viewport(ratio=1)

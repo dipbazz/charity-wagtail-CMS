@@ -769,6 +769,13 @@ body:lang(ne) {
     font-weight: 600;
 }
 
+/* A summary link scrolls its field's group to the top (charity.js): leave a little room above
+   the label, so its first line isn't cut by the screen's edge. */
+.field,
+fieldset {
+    scroll-margin-top: 1rem;
+}
+
 .form-page main .field {
     display: flex;
     flex-direction: column;
