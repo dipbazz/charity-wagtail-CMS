@@ -6,7 +6,7 @@
 
 {% block pay %}
     <h1>{% translate "Pay online" %}</h1>
-    {# What became of paying, first: donate.js moves focus to it, so it's read before the rest. #}
+    {# What became of paying, first: charity.js moves focus to it, so it's read before the rest. #}
     {% if state == "failed" or state == "not-started" %}
         <div class="payment-message is-problem" role="alert" tabindex="-1" data-focus-on-load>
             {% if result == "not-started" %}

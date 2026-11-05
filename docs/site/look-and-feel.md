@@ -321,9 +321,22 @@ A page that changes with what happened says so first. The pay page has a title f
 ("Pay your gift", "Check your payment", "Try paying again", "Thank you"), as does each way's page
 (such as "Pay online", "Scan our QR code" and "Checking your payment"), and its message
 ("didn't go through", "check first", the thanks) comes straight after the heading with
-`tabindex="-1"` and `data-focus-on-load`, so `donate.js` focuses it and a screen reader reads it
+`tabindex="-1"` and `data-focus-on-load`, so `charity.js` focuses it and a screen reader reads it
 before the rest. The page that sends eSewa's form says where it's taking the payer in a
 `role="status"` line.
+
+A form sent with mistakes says so the same way, on every form (the Donate and form pages share
+`includes/error_summary.html`; the "I've paid" step of paying by QR has its own, in its words):
+
+- the answer is status 422, and the page title starts "Error: ";
+- an error summary above the form, with `role="alert"` and `data-focus-on-load`, under an H2
+  such as "Please check your pledge";
+- each line of the summary links to its field (a group of radio buttons or checkboxes to its
+  first choice), in the form's order, and a message for the whole form comes first, shown once;
+  following one shows the field's whole group, its label or legend and its mistake above the box,
+  and puts the cursor in the box (`charity.js`, for any link to a form's box);
+- each field's own error beside it, tied to it with `aria-describedby`;
+- everything typed is kept.
 
 ## Images in templates
 

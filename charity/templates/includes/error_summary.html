@@ -1,0 +1,13 @@
+{% load form_tags %}
+{# What's wrong with a sent form (#167), above it, for every form: focused as the page opens (charity.js), so a screen reader reads it first; each line links to its field. heading: the H2, such as "Please check your pledge". #}
+{% if form.errors %}
+    {% error_summary form as entries %}
+    <div class="error-summary" role="alert" aria-labelledby="error-summary-heading" tabindex="-1" data-focus-on-load>
+        <h2 id="error-summary-heading">{{ heading }}</h2>
+        <ul>
+            {% for entry in entries %}
+                <li>{% if entry.target %}<a href="#{{ entry.target }}">{{ entry.message }}</a>{% else %}{{ entry.message }}{% endif %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}

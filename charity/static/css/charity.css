@@ -751,6 +751,31 @@ body:lang(ne) {
     color: var(--colour-error);
 }
 
+/* What's wrong with a sent form, above it (includes/error_summary.html), on every form. */
+.error-summary {
+    margin-block: 1.5rem;
+    padding: 1rem 1.25rem;
+    border: 3px solid var(--colour-error);
+    border-radius: var(--radius);
+}
+
+.error-summary h2 {
+    margin-top: 0;
+    font-size: 1.25rem;
+}
+
+.error-summary a {
+    color: var(--colour-error);
+    font-weight: 600;
+}
+
+/* A summary link scrolls its field's group to the top (charity.js): leave a little room above
+   the label, so its first line isn't cut by the screen's edge. */
+.field,
+fieldset {
+    scroll-margin-top: 1rem;
+}
+
 .form-page main .field {
     display: flex;
     flex-direction: column;
@@ -758,9 +783,10 @@ body:lang(ne) {
     margin-bottom: 1.25rem;
 }
 
+/* A group of choices sits in a .field like any other field, which spaces it (#167). */
 .form-page main fieldset {
     min-width: 0;
-    margin: 0 0 1.5rem;
+    margin: 0;
     padding: 0;
     border: 0;
 }

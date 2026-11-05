@@ -369,7 +369,7 @@ class TestPledging:
     def test_a_missing_amount_shows_an_error_and_saves_nothing(self, client, donate_page, amount):
         response = pledge(client, donate_page, **amount)
 
-        assert response.status_code == 200
+        assert response.status_code == 422
         assert "Choose an amount or enter your own." in response.content.decode()
         assert not Pledge.objects.exists()
 
@@ -383,6 +383,46 @@ class TestPledging:
         assert "Enter your name." in html
         assert "Enter your email address." in html
         assert "This field is required." not in html
+
+    def test_a_mistake_says_error_first_and_the_summary_takes_focus(self, client, donate_page):
+        """#167: 422, "Error: " first in the title, and the summary focused as the page opens,
+        so a screen reader says what's wrong before anything else."""
+        response = pledge(client, donate_page, amount="", name="")
+
+        page = soup(response)
+        assert response.status_code == 422
+        assert page.title.get_text(strip=True).startswith("Error: ")
+        summary = page.select_one(".error-summary")
+        assert summary.has_attr("data-focus-on-load")
+        assert summary.h2.get_text(strip=True) == "Please check your pledge"
+
+    def test_each_mistake_links_to_its_field_and_what_was_typed_is_kept(self, client, donate_page):
+        """A radio group's line links to its first choice; a box's to the box."""
+        page = soup(pledge(client, donate_page, amount="", frequency="", name=""))
+
+        links = [link["href"] for link in page.select(".error-summary a")]
+        assert links == ["#id_amount_0", "#id_frequency_0", "#id_name"]
+        assert page.select_one("#id_email")["value"] == "sita@example.com"
+
+    def test_the_summary_order_is_the_page_order(self, client, donate_page):
+        """PledgeForm.field_order copies the template's order by hand: moving a field in one
+        and not the other lists the mistakes out of order again."""
+        response = client.get(donate_page.url)
+        form = response.context["form"]
+
+        shown = [field.name for field in form.visible_fields()]
+        on_the_page = []
+        for box in soup(response).select("form[method=post] [name]"):
+            if box["name"] in shown and box["name"] not in on_the_page:
+                on_the_page.append(box["name"])
+        assert set(on_the_page) == set(shown)
+        assert shown == on_the_page
+
+    def test_the_form_on_its_own_has_no_error_title(self, client, donate_page):
+        page = soup(client.get(donate_page.url))
+
+        assert not page.title.get_text(strip=True).startswith("Error")
+        assert page.select(".error-summary") == []
 
     def test_a_closed_appeal_cannot_be_chosen(self, client, donate_page):
         response = pledge(client, donate_page, appeal="last-year")

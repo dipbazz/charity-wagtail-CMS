@@ -620,7 +620,7 @@ class TestPayPage:
 
 class TestWhatScreenReadersHearFirst:
     """Each state has its own page title, and its message comes straight after the heading,
-    ready for donate.js to move focus to it, so it's the first thing read."""
+    ready for charity.js to move focus to it, so it's the first thing read."""
 
     STATES = {
         "ready": "Pay online",

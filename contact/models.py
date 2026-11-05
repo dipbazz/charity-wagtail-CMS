@@ -26,8 +26,9 @@ class FormField(AbstractFormField):
 
 class EmailFormPage(HoneypotFormMixin, PublishGuardMixin, AbstractEmailForm):
     """What every form page does (#167): drop a filled hidden box, email the team with Reply-To
-    set to the sender, keep the send when the mail server is down, go on to `?sent` after it, and
-    export what visitors typed as text. Abstract, so it has no table of its own.
+    set to the sender, keep the send when the mail server is down, go on to `?sent` after it,
+    answer a send with mistakes with 422, and export what visitors typed as text. Abstract, so
+    it has no table of its own.
 
     A type declares what the base can't: its field model, with a ParentalKey to it and
     related_name="form_fields", and its own form and landing templates, since what the page shows
@@ -42,7 +43,11 @@ class EmailFormPage(HoneypotFormMixin, PublishGuardMixin, AbstractEmailForm):
     def serve(self, request, *args, **kwargs):
         if request.method in ("GET", "HEAD") and "sent" in request.GET:
             return self.render_landing_page(request, None, *args, **kwargs)
-        return super().serve(request, *args, **kwargs)
+        response = super().serve(request, *args, **kwargs)
+        # Not sent: the form again, with what is wrong with it (422), as on every form.
+        if request.method == "POST" and response.status_code == 200:
+            response.status_code = 422
+        return response
 
     def render_landing_page(self, request, form_submission=None, *args, **kwargs):
         """After a send, go on to `?sent` (303, so the browser asks for it again with GET): a

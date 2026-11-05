@@ -236,6 +236,23 @@ class TestPayPage:
 
         expect(site_page.locator(".payment-message")).to_be_focused()
 
+    def test_what_happened_is_focused_once(self, site_page, pay_page):
+        """charity.js focuses it for every page (#167); donate.js no longer does it again."""
+        Pledge.objects.get().start_payment("fakepay", live=False)
+        site_page.add_init_script(
+            "window.focusCalls = 0;"
+            "const focus = HTMLElement.prototype.focus;"
+            "HTMLElement.prototype.focus = function (...args) {"
+            "    if (this.hasAttribute('data-focus-on-load')) window.focusCalls += 1;"
+            "    return focus.apply(this, args);"
+            "};"
+        )
+
+        site_page.goto(SITE + pay_page)
+
+        expect(site_page.locator(".payment-message")).to_be_focused()
+        assert site_page.evaluate("window.focusCalls") == 1
+
     def test_a_pay_button_says_its_busy_and_a_second_tap_does_nothing(
         self, site_page, pay_page, fake_provider
     ):

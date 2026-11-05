@@ -17,32 +17,6 @@ from home.models import StandardPage
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def volunteer_form(home_page, privacy_notice):
-    page = FormPage(
-        title="Volunteer with us",
-        slug="volunteer",
-        intro="<p>Give a few hours a month.</p>",
-        thank_you_text="<p>Thanks! Our volunteer team will be in touch.</p>",
-        to_address="volunteers@brightwell.example",
-        from_address="website@brightwell.example",
-        subject="New volunteer sign-up",
-    )
-    page.form_fields = [
-        FormField(label="Your name", field_type="singleline", required=True),
-        FormField(label="Email address", field_type="email", required=True),
-        FormField(
-            label="Availability",
-            field_type="dropdown",
-            choices="Weekdays\nWeekends",
-            required=False,
-        ),
-    ]
-    home_page.add_child(instance=page)
-    page.save_revision().publish()
-    return page
-
-
 VALID_DATA = {"your_name": "Sam", "email_address": "sam@example.com", "availability": "Weekends"}
 
 
@@ -137,10 +111,75 @@ class TestFormPage:
     def test_invalid_submission_shows_errors_and_stores_nothing(self, client, volunteer_form):
         response = client.post(volunteer_form.url, {"your_name": "Sam"})
 
-        assert response.status_code == 200
+        assert response.status_code == 422
         assert "This field is required." in response.content.decode()
         assert not FormSubmission.objects.exists()
         assert mail.outbox == []
+
+
+class TestTheErrorSummary:
+    """A send with mistakes (#167): "Error: " first in the title, and a summary focused as the
+    page opens, each line linking to its field, with everything typed kept."""
+
+    def test_says_error_first_and_the_summary_takes_focus(self, client, volunteer_form):
+        page = BeautifulSoup(client.post(volunteer_form.url, {}).content, "html.parser")
+
+        assert page.title.get_text(strip=True).startswith("Error: Volunteer with us")
+        summary = page.select_one(".error-summary")
+        assert summary["role"] == "alert"
+        assert summary.has_attr("data-focus-on-load")
+        assert summary.h2.get_text(strip=True) == "Please check your answers"
+
+    def test_each_mistake_links_to_its_field_and_what_was_typed_is_kept(
+        self, client, volunteer_form
+    ):
+        response = client.post(volunteer_form.url, {"availability": "Weekends"})
+
+        page = BeautifulSoup(response.content, "html.parser")
+        summary = page.select_one(".error-summary")
+        assert [link["href"] for link in summary.select("a")] == [
+            "#id_your_name",
+            "#id_email_address",
+        ]
+        assert summary.select_one("a").get_text(strip=True) == "This field is required."
+        field = page.select_one("#id_email_address")
+        assert "id_email_address_error" in field["aria-describedby"].split()
+        assert page.select_one("#id_availability option[selected]")["value"] == "Weekends"
+
+    def test_each_mistake_sits_with_its_own_field(self, client, volunteer_form):
+        """Under the label and above the box it's about, never under the field before it."""
+        page = BeautifulSoup(client.post(volunteer_form.url, {}).content, "html.parser")
+
+        for name in ("your_name", "email_address"):
+            error = page.select_one(f"#id_{name}_error")
+            group = error.find_parent(class_="field")
+            label, box = group.select_one(f"label[for=id_{name}]"), group.select_one(f"#id_{name}")
+            ordered = [tag for tag in group.descendants if tag in (label, error, box)]
+            assert ordered == [label, error, box], name
+
+    def test_a_tick_box_sits_inside_its_label_with_its_mistake(self, client, volunteer_form):
+        """The shared tick box (campaigns/forms/checkbox.html): the whole row can be tapped."""
+        FormField.objects.create(
+            page=volunteer_form,
+            label="I agree to be contacted",
+            field_type="checkbox",
+            required=True,
+        )
+
+        page = BeautifulSoup(client.post(volunteer_form.url, {}).content, "html.parser")
+
+        box = page.select_one("#id_i_agree_to_be_contacted")
+        assert box.find_parent("label")["for"] == "id_i_agree_to_be_contacted"
+        group = box.find_parent(class_="checkbox")
+        assert group.select_one("#id_i_agree_to_be_contacted_error")
+        assert "id_i_agree_to_be_contacted_error" in box["aria-describedby"].split()
+        assert page.select_one(".error-summary a[href='#id_i_agree_to_be_contacted']")
+
+    def test_the_form_on_its_own_has_no_summary(self, client, volunteer_form):
+        page = BeautifulSoup(client.get(volunteer_form.url).content, "html.parser")
+
+        assert page.title.get_text(strip=True).startswith("Volunteer with us")
+        assert page.select(".error-summary") == []
 
 
 class TestAfterASend:
