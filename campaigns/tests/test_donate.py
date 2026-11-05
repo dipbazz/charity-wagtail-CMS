@@ -404,6 +404,20 @@ class TestPledging:
         assert links == ["#id_amount_0", "#id_frequency_0", "#id_name"]
         assert page.select_one("#id_email")["value"] == "sita@example.com"
 
+    def test_the_summary_order_is_the_page_order(self, client, donate_page):
+        """PledgeForm.field_order copies the template's order by hand: moving a field in one
+        and not the other lists the mistakes out of order again."""
+        response = client.get(donate_page.url)
+        form = response.context["form"]
+
+        shown = [field.name for field in form.visible_fields()]
+        on_the_page = []
+        for box in soup(response).select("form[method=post] [name]"):
+            if box["name"] in shown and box["name"] not in on_the_page:
+                on_the_page.append(box["name"])
+        assert set(on_the_page) == set(shown)
+        assert shown == on_the_page
+
     def test_the_form_on_its_own_has_no_error_title(self, client, donate_page):
         page = soup(client.get(donate_page.url))
 
