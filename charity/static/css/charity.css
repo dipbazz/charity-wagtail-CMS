@@ -8,7 +8,7 @@
     --colour-on-dark: #fff;
     --colour-on-accent: var(--colour-text);
     /* The ring round what has the keyboard's focus: the text colour of the area it sits in, which
-       passes on that area's fill for any brand. Each dark or coloured area sets its own. */
+       passes on that area's fill for any brand. The areas are listed after :focus-visible. */
     --colour-focus: var(--colour-text);
     --colour-muted: #5b6b72;
     --colour-background: #fff;
@@ -154,6 +154,19 @@ body:lang(ne) {
     outline-offset: 2px;
 }
 
+/* Each dark or coloured area's ring, in the text colour it takes. A new one joins this list. */
+:is(.brand-bar, .hero, .block-cta, .site-footer) {
+    --colour-focus: var(--colour-on-dark);
+}
+
+:is(.brand-bar, .site-footer).is-light {
+    --colour-focus: var(--colour-text);
+}
+
+.announcement {
+    --colour-focus: var(--colour-on-accent);
+}
+
 /* Buttons */
 .button {
     display: inline-flex;
@@ -225,7 +238,6 @@ body:lang(ne) {
     padding: 0.375rem 1rem;
     /* The footer's colour, so the header and footer frame the page. */
     background: var(--colour-primary-dark);
-    --colour-focus: var(--colour-on-dark);
 }
 
 /* Light, for a logo drawn for a white background: white like the controls row below, so a
@@ -233,7 +245,6 @@ body:lang(ne) {
 .brand-bar.is-light {
     border-bottom: 1px solid var(--colour-border);
     background: var(--colour-background);
-    --colour-focus: var(--colour-text);
 }
 
 .brand {
@@ -488,7 +499,6 @@ body:lang(ne) {
     min-height: 26rem;
     background: var(--colour-primary-dark);
     color: var(--colour-on-dark);
-    --colour-focus: var(--colour-on-dark);
 }
 
 .hero-image {
@@ -573,7 +583,6 @@ body:lang(ne) {
     border-radius: var(--radius);
     background: var(--colour-primary);
     color: var(--colour-on-dark);
-    --colour-focus: var(--colour-on-dark);
 }
 
 .block-cta h2 {
@@ -910,7 +919,6 @@ fieldset {
     background: var(--colour-primary-dark);
     color: var(--colour-footer-text);
     overflow-wrap: anywhere;
-    --colour-focus: var(--colour-on-dark);
 }
 
 .site-footer a {
@@ -926,7 +934,6 @@ fieldset {
     border-top: 1px solid var(--colour-border);
     background: var(--colour-surface);
     color: var(--colour-text);
-    --colour-focus: var(--colour-text);
 }
 
 .site-footer.is-light a {
@@ -960,7 +967,6 @@ fieldset {
     color: var(--colour-on-accent);
     font-weight: 700;
     text-align: center;
-    --colour-focus: var(--colour-on-accent);
 }
 
 .announcement a {
