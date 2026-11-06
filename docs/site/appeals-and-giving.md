@@ -161,8 +161,8 @@ nothing about refunds: no site states a policy its charity hasn't.
 - **Scan our QR code:** see [Paying by QR code](#paying-by-qr-code) below.
 - **Pay in person:** what to do at the counter, as numbered steps: come to the office (the
   address from Site settings, with "Call us before you come" and the phone), pay in cash and give
-  the pledge number, and ask for a receipt. The setting is off until a charity says on the
-onboarding form (DO01) that it takes gifts at its office: many show their office in the footer
+  the pledge number, and ask for a receipt. The setting is off until a charity says that it
+takes gifts at its office: many show their office in the footer
 but take no money there. With a phone but no address, the first step is "Call
   us to arrange paying". It then says "This page won't change after you pay: your receipt is your
   record" and "There's nothing more to do here", with a link to the appeals. It promises nothing

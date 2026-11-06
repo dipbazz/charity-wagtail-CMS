@@ -191,8 +191,6 @@ Release a version as soon as the last issue in its milestone is closed.
 6. **Deploy it** ([Deploy a change](../hosting.md#deploy-a-version)). The tag says exactly which
    code is live. Then check the live site against the version before it
    ([Reviews](reviews.md#at-each-release)).
-7. **Update each charity still sending content** to this version's onboarding pack
-   ([Onboarding a charity](onboarding.md#updating-a-charitys-guide-and-form)).
 
 ## Patch releases
 
