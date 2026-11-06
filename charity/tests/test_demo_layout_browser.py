@@ -327,3 +327,14 @@ def test_the_focus_ring_can_be_seen_on_everything_tab_reaches(site_page, demo_si
         problems += focus_ring_problems(site_page, path)
 
     assert not problems, "\n".join(problems)
+
+
+# And on each pay page: the amount cards on the QR step and the steps' links.
+@pytest.mark.parametrize("width", [320, 1440])
+def test_the_focus_ring_can_be_seen_on_each_pay_page(site_page, pay_pages, width):
+    site_page.set_viewport_size({"width": width, "height": 800})
+    problems = []
+    for path in pay_pages:
+        problems += focus_ring_problems(site_page, path)
+
+    assert not problems, "\n".join(problems)
