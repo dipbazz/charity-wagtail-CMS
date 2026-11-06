@@ -58,7 +58,7 @@ only the first:
 
 - [ ] A `changelog.d/<slug>.<group>.md` file, or the `no changelog` label.
 - [ ] A milestone: the `Milestone` workflow copies the closing issue's; set it by hand if not.
-- [ ] Its issue's board card is in *In review*.
+- [ ] Its issue's board card moved to *In review* by itself (`releases.md`, "The project board").
 - [ ] Each docs page the change describes is updated.
 
 Then whatever `CLAUDE.local.md` lists for this maintainer's own files, if there is one.

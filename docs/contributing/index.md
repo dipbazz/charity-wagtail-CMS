@@ -90,8 +90,8 @@ bundle it into a fix.
    and follows the template: what changed, what to check in the browser before merging, and
    anything the reviewer must act on; the why goes in the commit messages. Pull requests aren't
    stacked on each other. Straight after opening it, check its changelog file (or the
-   `no changelog` label), that it has a milestone, its issue's board card in *In review* and the
-   docs pages it describes. On your first pull request, the CLA Assistant bot asks you to sign the
+   `no changelog` label), that it has a milestone, that its issue's board card moved to
+   *In review* by itself ([how](releases.md#the-project-board)) and the docs pages it describes. On your first pull request, the CLA Assistant bot asks you to sign the
    [contributor licence agreement](https://gist.github.com/dipbazz/9ac6488512242af0f1d767ebebc4f057),
    once; until you do, its `license/cla` check fails and the pull request
    can't be merged ([why](../decisions.md#outside-contributions-need-a-signed-cla)).
