@@ -467,6 +467,16 @@ body:lang(ne) {
     .language-switcher li + li a {
         margin-inline-start: -2px;
     }
+
+    /* The halves touch, so a ring outside one would run over the other: it goes just inside the
+       focused half's border, on that half's own fill. */
+    .language-switcher a:focus-visible {
+        outline-offset: -0.375rem;
+    }
+
+    .language-switcher a[aria-current] {
+        --colour-focus: var(--colour-on-dark);
+    }
 }
 
 /* Hero */
