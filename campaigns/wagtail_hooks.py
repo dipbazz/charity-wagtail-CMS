@@ -1,14 +1,24 @@
 import datetime
 
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from wagtail import hooks
 from wagtail.admin.ui.components import Component
 from wagtail.snippets.models import register_snippet
 
 from campaigns.models import CampaignPage
 from campaigns.views import PledgeViewSet, QRCodeViewSet
+from core.languages import main_language
 
 CLOSING_SOON_DAYS = 14
+
+
+def once_each(appeals):
+    """`appeals` with each appeal once, whatever languages it's published in (#195): its copy in
+    the site's main language, else its copy in the other language, so an appeal published in one
+    language only still counts. The site has two languages (`LANGUAGES`)."""
+    in_main_language = Q(locale__language_code=main_language())
+    counted = appeals.filter(in_main_language).values("translation_key")
+    return appeals.filter(in_main_language | ~Q(translation_key__in=counted))
 
 
 class FundraisingPanel(Component):
@@ -21,7 +31,7 @@ class FundraisingPanel(Component):
     def get_context_data(self, parent_context):
         context = super().get_context_data(parent_context)
         today = datetime.date.today()
-        open_appeals = CampaignPage.objects.live().active()
+        open_appeals = once_each(CampaignPage.objects.live().active())
         totals = open_appeals.aggregate(raised=Sum("amount_raised"), target=Sum("target_amount"))
         context.update(
             {
