@@ -68,6 +68,12 @@
     outline-offset: 2px;
 }
 
+/* The card's ring stands in for the radio's. A browser without :has() drops this rule too,
+   so the radio keeps its own ring there. */
+.amount-option:has(input:focus-visible) input {
+    outline: none;
+}
+
 .amount-figure {
     font-size: 1.25rem;
     font-weight: 700;
