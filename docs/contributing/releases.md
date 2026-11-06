@@ -47,7 +47,9 @@ docs page, under that feature's epic.
 ## The project board
 
 The [project board](https://github.com/users/dipbazz/projects/1) plans the work. New and
-updated issues in the repo are added to it automatically.
+updated issues in the repo are added to it automatically; pull requests aren't, since each one
+shows on the card of the issue it closes. A pull request that closes no issue, such as a
+release's, isn't on the board: find it in the repo's pull requests.
 
 | Field | |
 |---|---|
@@ -61,11 +63,13 @@ The **Current version** view shows the version being built, in a column for each
 The board's Iteration field is no longer used: versions set the pace instead
 ([Decisions](../decisions.md#release-each-version-when-its-done)).
 
-- Move an issue to *In progress* when you start it, and to *In review* when its pull request is
-  open.
+- Move an issue to *In progress* when you start it.
+- The board moves an issue to *In review* by itself when a pull request that closes it opens
+  (`Closes #142` in its description). Check it did; if not, fix the link or move the card. If
+  the pull request is closed without merging, move the card back to *In progress*.
 - An epic is *In progress* while any of its sub-issues is being worked on or done, and *Done*
   when all of them are closed.
-- Merged pull requests and closed issues go to *Done*.
+- The board moves closed issues to *Done* by itself.
 
 ## Version numbers
 
