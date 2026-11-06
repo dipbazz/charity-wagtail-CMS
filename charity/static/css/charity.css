@@ -145,6 +145,8 @@ body:lang(ne) {
     z-index: 100;
     padding: 0.5rem 1rem;
     background: var(--colour-background);
+    /* It sits over the name bar, dark or light: the ring goes inside its own white box. */
+    outline-offset: -3px;
 }
 
 :focus-visible {

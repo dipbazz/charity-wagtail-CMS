@@ -251,8 +251,9 @@ def test_each_font_style_fits_and_can_be_tapped_at_every_width(site_page, demo_s
     assert not problems, "\n".join(problems)
 
 
-# The ring round what has the keyboard's focus, and the fill it's drawn on: its parent's laid over
-# their ancestors', since the ring sits outside the element. An amount card draws the ring for its
+# The ring round what has the keyboard's focus, and the fills it's drawn on: what's on screen
+# under the middle of each side of the ring, so a control placed over another area, such as the
+# skip link over the name bar, is checked on that area. An amount card draws the ring for its
 # hidden radio button. Nothing once Tab has gone past the last control, back to the page.
 FOCUS_RING = f"""
 () => {{
@@ -260,10 +261,14 @@ FOCUS_RING = f"""
     if (document.activeElement === document.body) return null;
     const ringed = document.activeElement.closest(".amount-option") || document.activeElement;
     const ring = getComputedStyle(ringed);
-    return [
-        named(ringed), ring.outlineStyle, ring.outlineColor,
-        [seenFill(withAncestors(ringed.parentElement))],
-    ];
+    const box = ringed.getBoundingClientRect();
+    const out = parseFloat(ring.outlineOffset) + parseFloat(ring.outlineWidth) / 2;
+    const [x, y] = [box.left + box.width / 2, box.top + box.height / 2];
+    const fills = [[box.left - out, y], [box.right + out, y], [x, box.top - out],
+                   [x, box.bottom + out]]
+        .filter(([px, py]) => px >= 0 && py >= 0 && px < innerWidth && py < innerHeight)
+        .map(([px, py]) => seenFill(document.elementsFromPoint(px, py)));
+    return [named(ringed), ring.outlineStyle, ring.outlineColor, fills];
 }}
 """
 
