@@ -228,6 +228,21 @@ class TestMenuInTheAdmin:
         )
         assert "about_page" not in self.errors(response)
 
+    def test_a_page_and_its_translation_cant_be_two_sections(
+        self, client, moderator, site, home_page, nepali_home_page
+    ):
+        page = add_page(home_page, "Who we are")
+        hamro_barema = page.copy_for_translation(nepali_home_page.locale)
+
+        response = self.save(
+            client, moderator, site, about_page=page, get_involved_page=hamro_barema
+        )
+
+        assert response.status_code == 200
+        assert self.errors(response)["get_involved_page"] == [
+            "This page is already About us. Choose another one."
+        ]
+
     def test_the_home_page_cant_be_a_section(self, client, moderator, site, home_page):
         response = self.save(client, moderator, site, about_page=home_page)
 

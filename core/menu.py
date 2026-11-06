@@ -120,9 +120,10 @@ def wrong_choices(site_settings):
             errors[section.setting] = (
                 "Choose a page under the home page: the site's name links to it already."
             )
-        elif section is not DONATE and page.pk in earlier:
-            name = earlier[page.pk].name
+        elif section is not DONATE and page.translation_key in earlier:
+            name = earlier[page.translation_key].name
             errors[section.setting] = f"This page is already {name}. Choose another one."
         if section is not DONATE:
-            earlier.setdefault(page.pk, section)
+            # By translation key: a page and its translations are one page in each language.
+            earlier.setdefault(page.translation_key, section)
     return errors
