@@ -1,8 +1,10 @@
 {% load i18n wagtailcore_tags %}
-<nav class="main-nav" aria-label="{% translate "Main" %}">
-    <ul>
-        {% for item in menu_items %}
-            <li><a href="{% pageurl item.page %}"{% if item.aria_current %} aria-current="{{ item.aria_current }}"{% endif %}>{{ item.page.title }}</a></li>
-        {% endfor %}
-    </ul>
-</nav>
+{% if menu_items %}
+    <nav class="main-nav" aria-label="{% translate "Main" %}">
+        <ul>
+            {% for item in menu_items %}
+                <li><a href="{% pageurl item.page %}"{% if item.aria_current %} aria-current="{{ item.aria_current }}"{% endif %}>{{ item.name }}</a></li>
+            {% endfor %}
+        </ul>
+    </nav>
+{% endif %}

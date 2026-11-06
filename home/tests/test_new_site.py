@@ -113,16 +113,14 @@ class TestTheTree:
         # What's left is the sentence around the names, so a page added to the list shows here.
         assert re.sub(r"\W|\b(and|the|with|who|runs|charity|under|it)\b", "", left) == ""
 
-    def test_menu_sections_show_once_live(self, home_page):
+    def test_menu_sections_show_once_live(self, client, home_page):
         new_site()
-
         pages = pages_under(home_page)
-        assert {slug for slug, page in pages.items() if page.show_in_menus} == {
-            "about",
-            "appeals",
-            "stories",
-            "volunteer",
-        }
+        # As once written and published: their placeholders keep them from being published here.
+        Page.objects.filter(slug__in=["about", "appeals", "stories"]).update(live=True)
+
+        nav = client.get("/").content.decode().split('<nav class="main-nav"')[1].split("</nav>")[0]
+        assert [pages[slug].url in nav for slug in ("about", "appeals", "stories")] == [True] * 3
 
     def test_the_second_language_has_only_its_home_page(self, home_page):
         new_site()
@@ -227,6 +225,14 @@ class TestSiteSettings:
         pages = pages_under(home_page)
         assert settings_.donate_page_id == pages["donate"].pk
         assert settings_.privacy_page_id == pages["privacy"].pk
+        assert settings_.about_page_id == pages["about"].pk
+        assert settings_.appeals_page_id == pages["appeals"].pk
+        assert settings_.stories_page_id == pages["stories"].pk
+
+    def test_its_choices_are_ones_site_settings_accept(self, site):
+        new_site()
+
+        SiteSettings.for_site(site).clean()
 
     def test_writes_nothing_made_up(self, site):
         new_site()

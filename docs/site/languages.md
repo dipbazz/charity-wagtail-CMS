@@ -93,11 +93,11 @@ each language), settings in `charity/settings/base.py`, and the site's own Nepal
 
 **Any page query visitors see, other than a page's own children, filters by the page's language**
 (`locale_id`), or Nepali and English pages mix. Children (`child_of`) are already in one
-language; the home page's appeals, the Donate page's appeal list and the menu filter explicitly.
+language; the home page's appeals and the Donate page's appeal list filter explicitly.
 This rule has caused a bug before.
 
 **A link to a chosen page follows the reader's language**: the Donate buttons (in the header and
-on an appeal), the banner's link and the privacy notice links go to the chosen page's published
+on an appeal), the banner's link, the privacy notice links and the menu's sections go to the chosen page's published
 translation in the language being read, else to the page itself. The context processor
 `core.context_processors.chosen_pages` finds all of them in one query, and only when a template
 uses one; Wagtail's `.localized` would cost a query for each.

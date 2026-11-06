@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy
 from campaigns.forms import PledgeForm
 from campaigns.models import CampaignIndexPage, DonatePage
 from contact.models import FormField, FormPage
+from core.menu import SECTIONS
 from home.models import StandardPage
 from news.models import NewsIndexPage
 
@@ -17,13 +18,18 @@ NEW_SITE_BUILT = "charity.new_site"
 class StandardPageEntry:
     """A page every site has. `build` makes `new_site`'s draft of it, in the language being read.
     `setting` names its chooser in Site settings; without one it's found by its slug under the
-    home page, until #171 and #167 add theirs."""
+    home page, until #167 and #168 add theirs."""
 
     name: str
     slug: str
     build: Callable[[], object]
     setting: str = ""
     why: str = ""
+
+    @property
+    def in_menu(self):
+        """Whether it's one of the menu's sections (#171)."""
+        return self.setting in {section.setting for section in SECTIONS}
 
 
 def privacy_notice_body():
@@ -114,7 +120,6 @@ def about():
     return StandardPage(
         title=_("About us"),
         slug="about",
-        show_in_menus=True,
         introduction=_("[Write: who you are, where you work and who you help.]"),
     )
 
@@ -123,7 +128,6 @@ def appeals():
     return CampaignIndexPage(
         title=_("Appeals"),
         slug="appeals",
-        show_in_menus=True,
         introduction=_("[Write: one sentence on what your appeals pay for.]"),
     )
 
@@ -132,7 +136,6 @@ def stories():
     return NewsIndexPage(
         title=_("Stories"),
         slug="stories",
-        show_in_menus=True,
         introduction=_("[Write: one sentence on the stories you share here.]"),
     )
 
@@ -141,7 +144,6 @@ def volunteer_form():
     form = FormPage(
         title=_("Volunteer with us"),
         slug="volunteer",
-        show_in_menus=True,
         intro=_("<p>[Write: what volunteers do with you, and how much time it takes.]</p>"),
         thank_you_text=_("<p>[Write: what happens next, and when you'll be in touch.]</p>"),
         subject=_("New volunteer sign-up"),
@@ -157,7 +159,7 @@ def volunteer_form():
 
 
 # The one list of them, in the dashboard panel's order: the pages with a `why` first, then the menu
-# sections in the standard's order. #167, #168, #169, #170 and #171 each add theirs.
+# sections in the standard's order. #167, #168, #169 and #170 each add theirs.
 STANDARD_PAGES = (
     StandardPageEntry(
         gettext_lazy("Privacy notice"),
@@ -173,8 +175,8 @@ STANDARD_PAGES = (
         setting="donate_page",
         why=gettext_lazy("brings back the Donate button"),
     ),
-    StandardPageEntry(gettext_lazy("About us"), "about", about),
-    StandardPageEntry(gettext_lazy("Appeals"), "appeals", appeals),
-    StandardPageEntry(gettext_lazy("Stories"), "stories", stories),
+    StandardPageEntry(gettext_lazy("About us"), "about", about, setting="about_page"),
+    StandardPageEntry(gettext_lazy("Appeals"), "appeals", appeals, setting="appeals_page"),
+    StandardPageEntry(gettext_lazy("Stories"), "stories", stories, setting="stories_page"),
     StandardPageEntry(gettext_lazy("Volunteer with us"), "volunteer", volunteer_form),
 )

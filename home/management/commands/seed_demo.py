@@ -608,6 +608,12 @@ class Command(BaseCommand):
         settings.phone = "0123 456 7890"
         settings.takes_gifts_in_person = True
         settings.donate_page = donate
+        # The menu's sections. The volunteer form stands in for Get involved until #168 builds it;
+        # the demo has no Contact page yet (#167), so the menu leaves it out.
+        settings.about_page = about
+        settings.appeals_page = campaigns
+        settings.stories_page = news
+        settings.get_involved_page = volunteer
         settings.logo = make_charity_logo()
         settings.currency = "NPR"
         settings.phone_country = "NP"

@@ -9,11 +9,12 @@ from playwright.sync_api import expect
 from wagtail.models import Locale
 from wagtail_factories import ImageFactory
 
-from campaigns.models import Pledge
+from campaigns.models import CampaignIndexPage, Pledge
 from campaigns.tests.factories import CampaignIndexPageFactory, DonatePageFactory
 from conftest import SITE
 from core.models import SiteSettings, SiteSettingsText
 from home.models import StandardPage
+from news.models import NewsIndexPage
 
 pytestmark = [pytest.mark.browser, pytest.mark.django_db]
 
@@ -46,16 +47,25 @@ def test_footer_reaches_the_bottom_of_the_window_on_a_short_page(site_page, widt
 
 @pytest.fixture
 def demo_header(site, home_page, nepali_home_page):
-    """The demo site's header: its name, a Donate button, and pages in both languages."""
+    """The demo site's header: its name, a Donate button, and all five menu sections, whose
+    names are the standard's in each language (#171)."""
     site.site_name = "Brightwell Water Trust"
     site.save()
     donate = StandardPage(title="Donate", slug="donate")
     home_page.add_child(instance=donate)
     site_settings = SiteSettings.for_site(site)
     site_settings.donate_page = donate
+    sections = {
+        "about_page": StandardPage(title="About us"),
+        "appeals_page": CampaignIndexPage(title="Appeals"),
+        "stories_page": NewsIndexPage(title="Stories"),
+        "get_involved_page": StandardPage(title="Get involved"),
+        "contact_page": StandardPage(title="Contact"),
+    }
+    for setting, page in sections.items():
+        home_page.add_child(instance=page)
+        setattr(site_settings, setting, page)
     site_settings.save()
-    for title in ("About us", "Appeals", "Stories", "Volunteer with us"):
-        home_page.add_child(instance=StandardPage(title=title, show_in_menus=True))
     return site
 
 

@@ -34,7 +34,10 @@ def test_configures_site_settings_and_menu(seeded, client):
     assert settings.languages_without("registration_line") == []
     assert settings.donate_page is not None
     assert AnnouncementBanner.for_site(seeded).enabled
-    assert seeded.root_page.get_children().live().in_menu().count() >= 3
+    settings.clean()
+    menu = client.get("/").content.decode().split('<nav class="main-nav"')[1].split("</nav>")[0]
+    for name in ("About us", "Appeals", "Stories", "Get involved"):
+        assert f">{name}</a>" in menu
 
 
 def test_gives_the_charity_a_logo_in_the_header(seeded, client):

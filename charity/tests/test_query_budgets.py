@@ -26,8 +26,10 @@ pytestmark = pytest.mark.django_db
 # Every page and search spend one query on the language switcher and hreflang links: the live home
 # page and the live translations of the page being read, in every language (#115).
 # Every page with a header spends one query on the pages chosen in settings that it links to (the
-# Donate page, the banner's page and the privacy notice) with their translations in the language
-# being read, one on the footer's address and one on the banner's message in each language (#117).
+# Donate page, the banner's page, the privacy notice and the menu's sections) with their
+# translations in the language being read, one on the footer's address and one on the banner's
+# message in each language (#117). The menu spends one reading the page privacy restrictions, so a
+# section behind a password or login stays out of it (#171).
 # A page with a testimonial spends one finding its translation, and a partners block one finding
 # the partners (#117): the home page in both languages.
 BUDGETS = {
@@ -64,10 +66,12 @@ def test_the_still_to_write_panel_stays_within_its_query_budget(
     demo_site, django_user_model, django_assert_max_num_queries
 ):
     # It reads a fixed list of standard pages in each language, so this doesn't grow with the site.
-    # One more reads Site settings' text in each language, for the registration line (#172).
+    # One more reads Site settings' text in each language, for the registration line (#172). The
+    # pages chosen in Site settings (Donate, the privacy notice and the menu's sections, #171) are
+    # read in one query.
     user = django_user_model.objects.create_superuser("budget", password="pw")
 
-    with django_assert_max_num_queries(31):
+    with django_assert_max_num_queries(30):
         still_to_write(user, demo_site)
 
 
