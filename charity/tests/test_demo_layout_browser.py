@@ -254,12 +254,16 @@ def test_each_font_style_fits_and_can_be_tapped_at_every_width(site_page, demo_s
 # The ring round what has the keyboard's focus, and the fills it's drawn on: what's on screen
 # under the middle of each side of the ring, so a control placed over another area, such as the
 # skip link over the name bar, is checked on that area. An amount card draws the ring for its
-# hidden radio button. Nothing once Tab has gone past the last control, back to the page.
+# hidden radio button. Nothing once Tab has gone past the last control, back to the page or to a
+# control it has already reached (two can share a name, such as two Donate buttons).
 FOCUS_RING = f"""
 () => {{
     {SEEN_FILL}
-    if (document.activeElement === document.body) return null;
-    const ringed = document.activeElement.closest(".amount-option") || document.activeElement;
+    const focused = document.activeElement;
+    window.ringed ??= new WeakSet();
+    if (focused === document.body || window.ringed.has(focused)) return null;
+    window.ringed.add(focused);
+    const ringed = focused.closest(".amount-option") || focused;
     const ring = getComputedStyle(ringed);
     const box = ringed.getBoundingClientRect();
     const out = parseFloat(ring.outlineOffset) + parseFloat(ring.outlineWidth) / 2;
@@ -277,16 +281,13 @@ def focus_ring_problems(site_page, path):
     """Each link, button and field on `path` that Tab reaches with no ring, or a ring under 3:1
     on a fill it's drawn on."""
     site_page.goto(SITE + path)
-    problems, seen = [], set()
+    problems = []
     for _ in range(300):
         site_page.keyboard.press("Tab")
         found = site_page.evaluate(FOCUS_RING)
         if found is None:
             break
         name, style, colour, fills = found
-        if name in seen:
-            break
-        seen.add(name)
         ratio, fill = min((contrast(hex_colour(colour), hex_colour(fill)), fill) for fill in fills)
         if style == "none" or ratio < 3:
             problems.append(f"{path} {name}: ring {style} {colour} on {fill}, {ratio:.1f}:1")
