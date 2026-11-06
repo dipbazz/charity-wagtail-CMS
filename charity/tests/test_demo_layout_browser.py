@@ -255,13 +255,14 @@ def test_each_font_style_fits_and_can_be_tapped_at_every_width(site_page, demo_s
 # under the middle of each side of the ring, so a control placed over another area, such as the
 # skip link over the name bar, is checked on that area. An amount card draws the ring for its
 # hidden radio button. Nothing once Tab has gone past the last control, back to the page or to a
-# control it has already reached (two can share a name, such as two Donate buttons).
+# control it has already reached (two can share a name, such as two Donate buttons), unless
+# `again` asks for that control a second time. `opens` is true for a closed Menu button.
 FOCUS_RING = f"""
-() => {{
+(again) => {{
     {SEEN_FILL}
     const focused = document.activeElement;
     window.ringed ??= new WeakSet();
-    if (focused === document.body || window.ringed.has(focused)) return null;
+    if (focused === document.body || (window.ringed.has(focused) && !again)) return null;
     window.ringed.add(focused);
     const ringed = focused.closest(".amount-option") || focused;
     const ring = getComputedStyle(ringed);
@@ -272,38 +273,55 @@ FOCUS_RING = f"""
                    [x, box.bottom + out]]
         .filter(([px, py]) => px >= 0 && py >= 0 && px < innerWidth && py < innerHeight)
         .map(([px, py]) => seenFill(document.elementsFromPoint(px, py)));
-    return [named(ringed), ring.outlineStyle, ring.outlineColor, fills];
+    return {{
+        name: named(ringed), style: ring.outlineStyle, colour: ring.outlineColor, fills,
+        opens: focused.matches(".menu-toggle[aria-expanded=false]"),
+    }};
 }}
 """
 
 
+def ring_problems(path, ring):
+    """The ring found by FOCUS_RING, as a problem if it's missing or under 3:1 on a fill."""
+    ratio, fill = min(
+        (contrast(hex_colour(ring["colour"]), hex_colour(fill)), fill) for fill in ring["fills"]
+    )
+    if ring["style"] == "none" or ratio < 3:
+        return [
+            f"{path} {ring['name']}: ring {ring['style']} {ring['colour']} on {fill}, {ratio:.1f}:1"
+        ]
+    return []
+
+
 def focus_ring_problems(site_page, path):
     """Each link, button and field on `path` that Tab reaches with no ring, or a ring under 3:1
-    on a fill it's drawn on."""
+    on a fill it's drawn on. A phone's Menu button is opened, so the menu is checked too, and
+    the button again once it shows as open."""
     site_page.goto(SITE + path)
     problems = []
     for _ in range(300):
         site_page.keyboard.press("Tab")
-        found = site_page.evaluate(FOCUS_RING)
-        if found is None:
+        ring = site_page.evaluate(FOCUS_RING, False)
+        if ring is None:
             break
-        name, style, colour, fills = found
-        ratio, fill = min((contrast(hex_colour(colour), hex_colour(fill)), fill) for fill in fills)
-        if style == "none" or ratio < 3:
-            problems.append(f"{path} {name}: ring {style} {colour} on {fill}, {ratio:.1f}:1")
+        problems += ring_problems(path, ring)
+        if ring["opens"]:
+            site_page.keyboard.press("Enter")
+            problems += ring_problems(path, site_page.evaluate(FOCUS_RING, True))
     return problems
 
 
 # The ring that shows where the keyboard is (#211) can be seen on every page, on whatever it
-# sits on, with the name bar and footer dark and again light. A dark area added later that
-# doesn't set --colour-focus fails here.
+# sits on, with the name bar and footer dark and again light, on a phone (with its menu) and a
+# wide screen. A dark area added later that doesn't set --colour-focus fails here.
+@pytest.mark.parametrize("width", [320, 1440])
 @pytest.mark.parametrize("style", ["dark", "light"])
-def test_the_focus_ring_can_be_seen_on_everything_tab_reaches(site_page, demo_site, style):
+def test_the_focus_ring_can_be_seen_on_everything_tab_reaches(site_page, demo_site, style, width):
     site_settings = SiteSettings.for_site(demo_site)
     site_settings.name_bar_style = style
     site_settings.footer_style = style
     site_settings.save()
-    site_page.set_viewport_size({"width": 1440, "height": 800})
+    site_page.set_viewport_size({"width": width, "height": 800})
     problems = []
     for path in PATHS:
         problems += focus_ring_problems(site_page, path)
