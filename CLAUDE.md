@@ -15,9 +15,7 @@ several into one (`docs/decisions.md`), and never offer a template, CSS, code or
 charity only. Before proposing a fix, feature or design, answer the questions in the Principles
 section of `docs/contributing/index.md` in the proposal. Follow the standards (WCAG 2.2 AA, web
 conventions, `docs/site/standard.md`, the law) before modern styling, and add modern styling only
-through the design tokens and shared components. A change to what a charity must send or decide
-updates the onboarding pack in `onboarding/` in the same PR (`docs/contributing/onboarding.md`);
-a charity only ever gets links to its guide and form, never a file.
+through the design tokens and shared components.
 
 ## Reviews before code and before merge
 

@@ -60,7 +60,6 @@ only the first:
 - [ ] A milestone: the `Milestone` workflow copies the closing issue's; set it by hand if not.
 - [ ] Its issue's board card is in *In review*.
 - [ ] Each docs page the change describes is updated.
-- [ ] The onboarding pack (`onboarding/`), if what a charity sends or decides has changed.
 
 Then whatever `CLAUDE.local.md` lists for this maintainer's own files, if there is one.
 

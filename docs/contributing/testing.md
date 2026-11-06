@@ -16,7 +16,6 @@ uv run pytest --cov              # with coverage
 uv run pytest -m "not browser"   # without the browser tests (quicker)
 uv run ruff check . && uv run ruff format --check .
 uv run python manage.py makemigrations --check --dry-run
-node --test onboarding/tests/form-script.test.js   # the onboarding form script (JavaScript)
 ```
 
 pytest uses `charity.settings.test` (set in `pyproject.toml`).
@@ -27,9 +26,7 @@ failed last time ([Decisions](../decisions.md#claude-code-hooks-for-rules-a-mach
 
 ## Where tests live
 
-Each app has a `tests/` package. The one exception is the onboarding form script, which runs in
-Google Sheets: its tests are JavaScript, in `onboarding/tests/`
-([Changing the script](onboarding.md#changing-the-script)). A module's own logic is tested in its own test file
+Each app has a `tests/` package. A module's own logic is tested in its own test file
 (`core/tests/test_mail.py` tests `core/mail.py`); code that uses it tests that use in its own
 files. A regression test goes with the behaviour it tests, not with whichever caller happened to
 show the bug.
@@ -56,7 +53,6 @@ Some tests guard the whole project rather than one feature:
 | `charity/tests/test_lighthouse_budgets.py` | Each page's total weight budget is its image budget plus the fixed allowance ([Performance](performance.md)) |
 | `charity/tests/test_changelog.py`, `test_changelog_fragments.py` | The changelog is well-formed, its newest version matches `pyproject.toml`, and `changelog.d/` files are named `<slug>.<group>.md` |
 | `charity/tests/test_docs.py` | The docs sidebar menu isn't hidden |
-| `charity/tests/test_onboarding_pack.py` | The onboarding pack keeps up with the charity site standard, uses only the placeholders we fill in, and stays readable by `form-script.gs` |
 
 ## How to write them
 
@@ -191,7 +187,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and every
 
 | Job | What it checks |
 |---|---|
-| `test` | ruff, `makemigrations --check`, the onboarding form script's Node tests, Django's `check --deploy --fail-level WARNING` against production settings, the test suite with coverage, including the browser tests in Chromium and the layout check at six widths |
+| `test` | ruff, `makemigrations --check`, Django's `check --deploy --fail-level WARNING` against production settings, the test suite with coverage, including the browser tests in Chromium and the layout check at six widths |
 | `lighthouse` | Page weight and layout shift on a phone ([Performance](performance.md)) |
 | `docker` | The image builds and passes `check --deploy` inside it; the AWS Compose file and Caddyfile parse, and so does the local `compose.yaml` |
 | `docs` | These docs build with warnings as errors; the built site is uploaded as the `docs-html` artifact |
