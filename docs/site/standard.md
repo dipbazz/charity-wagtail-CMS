@@ -45,7 +45,8 @@ Nepali names are still to be checked with charities.
 - The names come from the standard and are translated in `locale/ne`, not taken from page titles,
   so an editor can't rename, reorder or add a section.
 - **Which page each section links to** is chosen in **Site settings → Menu**. Appeals takes only
-  the appeals page and Stories only the stories page; one page can't be two sections. A section
+  the appeals page and Stories only the stories page; one page can't be two sections, and the home
+  page can't be one, since the site's name links to it. A section
   with no page chosen, or whose page isn't published or is behind a password or login, is left
   out, and the others keep their order. The Menu tab names each one left out, and why.
 - **A charity's own pages go under About us or Get involved** and show in that section's list, at

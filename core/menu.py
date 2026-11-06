@@ -99,9 +99,14 @@ def menu_sections(site_settings, found, private):
     return sections
 
 
+# A home page's depth in the tree, under the root: a section's page is below one, since the
+# site's name links to the home page and a home page holds every page of its site.
+HOME_DEPTH = 2
+
+
 def wrong_choices(site_settings):
     """Errors for SiteSettings.clean(), by field: a page chosen for two sections, on the later
-    one, and a page of the wrong kind for a chooser that takes one kind."""
+    one, a home page, and a page of the wrong kind for a chooser that takes one kind."""
     errors = {}
     earlier = {}
     for section in (*SECTIONS, DONATE):
@@ -111,6 +116,10 @@ def wrong_choices(site_settings):
         model = page.specific_class
         if section.page_type and (model is None or model._meta.label_lower != section.page_type):
             errors[section.setting] = section.wrong_type
+        elif section is not DONATE and page.depth <= HOME_DEPTH:
+            errors[section.setting] = (
+                "Choose a page under the home page: the site's name links to it already."
+            )
         elif section is not DONATE and page.pk in earlier:
             name = earlier[page.pk].name
             errors[section.setting] = f"This page is already {name}. Choose another one."

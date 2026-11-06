@@ -228,6 +228,14 @@ class TestMenuInTheAdmin:
         )
         assert "about_page" not in self.errors(response)
 
+    def test_the_home_page_cant_be_a_section(self, client, moderator, site, home_page):
+        response = self.save(client, moderator, site, about_page=home_page)
+
+        assert response.status_code == 200
+        assert self.errors(response)["about_page"] == [
+            "Choose a page under the home page: the site's name links to it already."
+        ]
+
     @pytest.mark.parametrize(
         "field, wanted",
         [
