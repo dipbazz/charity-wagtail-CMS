@@ -233,3 +233,62 @@ def test_each_font_style_fits_and_can_be_tapped_at_every_width(site_page, demo_s
             problems.append(f"{path} is drawn in {font}, not the {font_style} style")
 
     assert not problems, "\n".join(problems)
+
+
+# The ring round what has the keyboard's focus, and the fill it's drawn on: the nearest filled
+# ancestor's, since the ring sits outside the element. An amount card draws the ring for its
+# hidden radio button.
+FOCUS_RING = """
+() => {
+    const ringed = document.activeElement.closest(".amount-option") || document.activeElement;
+    const ring = getComputedStyle(ringed);
+    let filled = ringed.parentElement;
+    const clear = (el) => getComputedStyle(el).backgroundColor === "rgba(0, 0, 0, 0)";
+    while (filled.parentElement && clear(filled)) {
+        filled = filled.parentElement;
+    }
+    return [
+        `${ringed.tagName.toLowerCase()}.${ringed.className}`.trim()
+            + ` "${ringed.textContent.trim().slice(0, 30)}"`,
+        ring.outlineStyle,
+        ring.outlineColor,
+        getComputedStyle(filled).backgroundColor,
+    ];
+}
+"""
+
+
+def focus_ring_problems(site_page, path):
+    """Each link, button and field on `path` that Tab reaches with no ring, or a ring under 3:1
+    on the fill around it."""
+    site_page.goto(SITE + path)
+    problems, seen = [], set()
+    for _ in range(300):
+        site_page.keyboard.press("Tab")
+        if site_page.evaluate("document.activeElement === document.body"):
+            break
+        name, style, colour, fill = site_page.evaluate(FOCUS_RING)
+        if name in seen:
+            break
+        seen.add(name)
+        ratio = contrast(hex_colour(colour), hex_colour(fill))
+        if style == "none" or ratio < 3:
+            problems.append(f"{path} {name}: ring {style} {colour} on {fill}, {ratio:.1f}:1")
+    return problems
+
+
+# The ring that shows where the keyboard is (#211) can be seen on every page, on whatever it
+# sits on, with the name bar and footer dark and again light. A dark area added later that
+# doesn't set --colour-focus fails here.
+@pytest.mark.parametrize("style", ["dark", "light"])
+def test_the_focus_ring_can_be_seen_on_everything_tab_reaches(site_page, demo_site, style):
+    site_settings = SiteSettings.for_site(demo_site)
+    site_settings.name_bar_style = style
+    site_settings.footer_style = style
+    site_settings.save()
+    site_page.set_viewport_size({"width": 1440, "height": 800})
+    problems = []
+    for path in PATHS:
+        problems += focus_ring_problems(site_page, path)
+
+    assert not problems, "\n".join(problems)
