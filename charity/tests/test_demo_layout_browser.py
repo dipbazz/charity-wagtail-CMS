@@ -170,20 +170,36 @@ def test_a_pledges_page_in_the_admin_fits_and_can_be_tapped_at_every_width(
     assert not problems, "\n".join(problems)
 
 
-# Each text in the name bar and the footer, its colour, and the fill behind it: its own, or the
-# nearest ancestor's.
-TEXT_AND_FILL = """
-(selector) => [...document.querySelectorAll(selector)].map((el) => {
-    let filled = el;
-    while (getComputedStyle(filled).backgroundColor === "rgba(0, 0, 0, 0)") {
-        filled = filled.parentElement;
+# The fill the eye sees where `layers` (topmost first) overlap: each one's background laid over
+# those below it and the white page, so a see-through fill counts as the colour it shows.
+SEEN_FILL = r"""
+const seenFill = (layers) => {
+    let [r, g, b] = [255, 255, 255];
+    for (const el of [...layers].reverse()) {
+        const [lr, lg, lb, a = 1] = getComputedStyle(el).backgroundColor.match(/[\d.]+/g)
+            .map(Number);
+        [r, g, b] = [r + (lr - r) * a, g + (lg - g) * a, b + (lb - b) * a];
     }
-    return [
-        `${el.tagName.toLowerCase()} "${el.textContent.trim().slice(0, 30)}"`,
-        getComputedStyle(el).color,
-        getComputedStyle(filled).backgroundColor,
-    ];
-})
+    return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+};
+const withAncestors = (el) => {
+    const all = [];
+    for (; el; el = el.parentElement) all.push(el);
+    return all;
+};
+const named = (el) => `${el.tagName.toLowerCase()}.${el.className}`.trim()
+    + ` "${el.textContent.trim().slice(0, 30)}"`;
+"""
+
+# Each text in the name bar and the footer, its colour, and the fill behind it: its own laid over
+# its ancestors'.
+TEXT_AND_FILL = f"""
+(selector) => {{
+    {SEEN_FILL}
+    return [...document.querySelectorAll(selector)].map((el) => [
+        named(el), getComputedStyle(el).color, seenFill(withAncestors(el)),
+    ]);
+}}
 """
 NAME_BAR_AND_FOOTER_TEXT = ".brand, .site-footer :is(p, address, li, a)"
 
@@ -235,43 +251,38 @@ def test_each_font_style_fits_and_can_be_tapped_at_every_width(site_page, demo_s
     assert not problems, "\n".join(problems)
 
 
-# The ring round what has the keyboard's focus, and the fill it's drawn on: the nearest filled
-# ancestor's, since the ring sits outside the element. An amount card draws the ring for its
-# hidden radio button.
-FOCUS_RING = """
-() => {
+# The ring round what has the keyboard's focus, and the fill it's drawn on: its parent's laid over
+# their ancestors', since the ring sits outside the element. An amount card draws the ring for its
+# hidden radio button. Nothing once Tab has gone past the last control, back to the page.
+FOCUS_RING = f"""
+() => {{
+    {SEEN_FILL}
+    if (document.activeElement === document.body) return null;
     const ringed = document.activeElement.closest(".amount-option") || document.activeElement;
     const ring = getComputedStyle(ringed);
-    let filled = ringed.parentElement;
-    const clear = (el) => getComputedStyle(el).backgroundColor === "rgba(0, 0, 0, 0)";
-    while (filled.parentElement && clear(filled)) {
-        filled = filled.parentElement;
-    }
     return [
-        `${ringed.tagName.toLowerCase()}.${ringed.className}`.trim()
-            + ` "${ringed.textContent.trim().slice(0, 30)}"`,
-        ring.outlineStyle,
-        ring.outlineColor,
-        getComputedStyle(filled).backgroundColor,
+        named(ringed), ring.outlineStyle, ring.outlineColor,
+        [seenFill(withAncestors(ringed.parentElement))],
     ];
-}
+}}
 """
 
 
 def focus_ring_problems(site_page, path):
     """Each link, button and field on `path` that Tab reaches with no ring, or a ring under 3:1
-    on the fill around it."""
+    on a fill it's drawn on."""
     site_page.goto(SITE + path)
     problems, seen = [], set()
     for _ in range(300):
         site_page.keyboard.press("Tab")
-        if site_page.evaluate("document.activeElement === document.body"):
+        found = site_page.evaluate(FOCUS_RING)
+        if found is None:
             break
-        name, style, colour, fill = site_page.evaluate(FOCUS_RING)
+        name, style, colour, fills = found
         if name in seen:
             break
         seen.add(name)
-        ratio = contrast(hex_colour(colour), hex_colour(fill))
+        ratio, fill = min((contrast(hex_colour(colour), hex_colour(fill)), fill) for fill in fills)
         if style == "none" or ratio < 3:
             problems.append(f"{path} {name}: ring {style} {colour} on {fill}, {ratio:.1f}:1")
     return problems
