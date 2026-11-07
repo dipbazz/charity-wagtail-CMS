@@ -81,13 +81,16 @@ with placeholder text can't be published. The charity's own pages go alongside.
 
 In this order:
 
-1. The charity's mission in one sentence, with Donate.
+1. The charity's mission in one sentence, with a button whose words and page the charity
+   chooses; a new site starts it as Donate.
 2. Open appeals.
 3. What a gift does, and where the money goes.
 4. Stories.
 5. Recent supporters.
 6. Get involved.
-7. Partners and the registration line.
+7. Partners, if the charity wants them.
+
+The registration line is in the footer only.
 
 ## The Donate page
 
