@@ -27,27 +27,27 @@ pytestmark = pytest.mark.django_db
 # page and the live translations of the page being read, in every language (#115).
 # Every page with a header spends one query on the pages chosen in settings that it links to (the
 # Donate page, the banner's page, the privacy notice and the menu's sections) with their
-# translations in the language being read, one on the footer's address and one on the banner's
-# message in each language (#117). The menu spends one reading the page privacy restrictions, so a
-# section behind a password or login stays out of it (#171).
+# translations in the language being read, and whether each is behind a password or login, so a
+# menu section that is stays out of it (#171); one on the footer's address and one on the
+# banner's message in each language (#117).
 # A page with a testimonial spends one finding its translation, and a partners block one finding
 # the partners (#117): the home page in both languages.
 BUDGETS = {
-    "/": 21,
-    "/appeals/": 18,
-    "/appeals/flood-relief/": 18,
-    "/stories/": 21,
+    "/": 20,
+    "/appeals/": 17,
+    "/appeals/flood-relief/": 17,
+    "/stories/": 20,
     "/stories/feed/": 11,
-    "/about/": 14,
-    "/volunteer/": 15,
-    "/donate/": 18,
-    "/donate/?appeal=flood-relief&amount=2500": 19,
-    "/search/?query=water": 23,
+    "/about/": 13,
+    "/volunteer/": 14,
+    "/donate/": 17,
+    "/donate/?appeal=flood-relief&amount=2500": 18,
+    "/search/?query=water": 22,
     "/api/v2/pages/?type=campaigns.CampaignPage&fields=*": 19,
-    "/ne/": 21,
-    "/ne/appeals/": 19,
-    "/ne/appeals/flood-relief/": 19,
-    "/ne/stories/": 22,
+    "/ne/": 20,
+    "/ne/appeals/": 18,
+    "/ne/appeals/flood-relief/": 18,
+    "/ne/stories/": 21,
 }
 
 

@@ -3,7 +3,7 @@ from django.utils.functional import SimpleLazyObject
 from wagtail.models import Page
 
 from core.languages import reading_language
-from core.menu import SECTIONS, SHOWN, menu_sections, private_paths
+from core.menu import SECTIONS, SHOWN, menu_sections, with_privacy
 from core.models import AnnouncementBanner, SiteSettings
 
 
@@ -17,8 +17,8 @@ def chosen_pages(request):
     in the language being read, else the chosen page.
 
     Looked up only when a template uses one, and then all together in one query: the chosen pages
-    and their published translations in the language being read. The menu's sections add one, for
-    the pages behind a password or login, when any section has a page.
+    and their published translations in the language being read, each with whether it's behind a
+    password or login.
     """
 
     def find():
@@ -35,10 +35,9 @@ def chosen_pages(request):
         sections = [section.setting for section in SECTIONS]
         in_menu = {name: by_id.get(chosen[name]) for name in sections}
         links = {name: found.pop(name) for name in sections}
-        private = private_paths() if any(page is not None for page in in_menu.values()) else []
         found["menu_sections"] = [
             section
-            for section in menu_sections(site_settings, in_menu, links, private)
+            for section in menu_sections(site_settings, in_menu, links)
             if section.status == SHOWN
         ]
         return found
@@ -49,12 +48,14 @@ def chosen_pages(request):
         if not ids:
             return dict.fromkeys(chosen), {}
         language = reading_language()
-        pages = Page.objects.filter(
-            Q(pk__in=ids)
-            | Q(
-                translation_key__in=Page.objects.filter(pk__in=ids).values("translation_key"),
-                locale__language_code=language,
-                live=True,
+        pages = with_privacy(
+            Page.objects.filter(
+                Q(pk__in=ids)
+                | Q(
+                    translation_key__in=Page.objects.filter(pk__in=ids).values("translation_key"),
+                    locale__language_code=language,
+                    live=True,
+                )
             )
         ).select_related("locale")
         by_id = {page.pk: page for page in pages}

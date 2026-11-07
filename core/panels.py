@@ -6,7 +6,7 @@ from django.utils.text import get_text_list
 from wagtail.admin.panels import HelpPanel, TabbedInterface
 from wagtail.models import Page
 
-from core.menu import NOT_PUBLIC, NOT_PUBLISHED, NOT_SET, SECTIONS, menu_sections, private_paths
+from core.menu import NOT_PUBLIC, NOT_PUBLISHED, NOT_SET, SECTIONS, menu_sections, with_privacy
 
 # What the Menu tab says about the sections the menu leaves out, by status: for one, for several.
 MENU_NOTICES = {
@@ -35,12 +35,11 @@ class MenuNoticesPanel(HelpPanel):
 
         def notices(self):
             ids = [getattr(self.instance, f"{section.setting}_id") for section in SECTIONS]
-            pages = Page.objects.in_bulk([pk for pk in ids if pk is not None])
+            pages = with_privacy(Page.objects.all()).in_bulk([pk for pk in ids if pk is not None])
             found = {
                 section.setting: pages.get(pk) for section, pk in zip(SECTIONS, ids, strict=True)
             }
-            private = private_paths() if pages else []
-            sections = menu_sections(self.instance, found, found, private)
+            sections = menu_sections(self.instance, found, found)
             lines = []
             for status, (one, several) in MENU_NOTICES.items():
                 names = [each.section.admin_name for each in sections if each.status == status]

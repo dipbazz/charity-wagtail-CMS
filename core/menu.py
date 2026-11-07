@@ -8,6 +8,7 @@ left out is what the menu leaves out.
 
 from dataclasses import dataclass
 
+from django.db.models import CharField, Exists, ExpressionWrapper, F, OuterRef
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from wagtail.models import PageViewRestriction
@@ -78,21 +79,25 @@ class MenuSection:
         return self.section.name
 
 
-def private_paths():
-    """The tree paths of the pages behind a password, a login or a group: each page under one is
-    private too."""
-    return list(PageViewRestriction.objects.values_list("page__path", flat=True))
+def with_privacy(pages):
+    """`pages`, a Page queryset, each with `private`: whether it's behind a password, a login or
+    a group, or under a page that is. Read in the same query as the pages."""
+    page_path = ExpressionWrapper(OuterRef("path"), output_field=CharField())
+    over_it = PageViewRestriction.objects.annotate(page_path=page_path).filter(
+        page_path__startswith=F("page__path")
+    )
+    return pages.annotate(private=Exists(over_it))
 
 
-def menu_sections(site_settings, chosen, found, private):
+def menu_sections(site_settings, chosen, found):
     """Each section, in the standard's order, with the page it links to and its status.
 
     `chosen` maps a section's setting to its chosen page, or None, and `found` to the page it
     links to in the language being read: its published, public translation, else the chosen page.
-    `private` is `private_paths()`, read only when a section has a page. Only the chosen page
-    decides whether a section is shown, in every language, so the Menu tab, which reads only the
-    chosen pages, says what each language's menu does. It's shown when its chosen page is live and
-    public, as public listings are (`.live().public()`).
+    Each page is read `with_privacy`. Only the chosen page decides whether a section is shown, in
+    every language, so the Menu tab, which reads only the chosen pages, says what each language's
+    menu does. It's shown when its chosen page is live and public, as public listings are
+    (`.live().public()`).
     """
     sections = []
     for section in SECTIONS:
@@ -101,7 +106,7 @@ def menu_sections(site_settings, chosen, found, private):
             status = NOT_SET
         elif page is None or not page.live:
             status = NOT_PUBLISHED
-        elif is_private(page, private):
+        elif page.private:
             status = NOT_PUBLIC
         else:
             status = SHOWN
@@ -110,14 +115,10 @@ def menu_sections(site_settings, chosen, found, private):
             link = found.get(section.setting)
             # A translation behind a password or login falls back to the chosen page, as a draft
             # translation does.
-            if link is None or is_private(link, private):
+            if link is None or link.private:
                 link = page
         sections.append(MenuSection(section, link, status))
     return sections
-
-
-def is_private(page, private):
-    return any(page.path.startswith(path) for path in private)
 
 
 # A home page's depth in the tree, under the root: a section's page is below one, since the
