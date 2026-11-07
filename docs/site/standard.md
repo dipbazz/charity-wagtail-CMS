@@ -97,11 +97,31 @@ organisation the Inland Revenue Department has approved can be deducted from the
 income, up to Rs 1,00,000 or 5% of it (Income Tax Act 2058, section 12); in the UK, Gift Aid. It
 links to Reports and accounts.
 
+## Forms
+
+A form that asks a visitor to get in touch (Contact is the first) has a **fixed core** of
+questions, then the charity's **extra questions**:
+
+- **The core is fixed in code and translated.** Contact's is Your name (required), Email,
+  Phone (its country picker starts on the site's phone country) and Your message (required).
+  Email or phone must be filled in so the charity can reply; with neither, the error says so once,
+  at the top of the error summary and under Email. An editor can't rename, remove or
+  move a core question, or add one of their own with the same name.
+- **Extra questions come below the core.** The editor adds the charity's own with the form
+  builder, labelled in each language; each language's page has its own. A charity that wants to
+  ask something the core doesn't never gets a field coded for it alone.
+- **A form without a core,** such as the volunteer sign-up, is still all the editor's questions.
+- **Every form-builder form behaves the same:** the privacy link before Send, a thank-you page
+  that a reload can't send twice, a Reply-To set to the sender's email when they gave one, and
+  submissions kept and exported in the admin ([Pages and content](pages-and-content.md#forms)).
+  The error summary ([Look and feel](look-and-feel.md#accessibility)) is the same on every form,
+  the Donate page's included.
+
 ## What's fixed and what each charity sets
 
 | The same for every charity | Each charity's own | Never for one charity |
 |---|---|---|
-| Page types and where they go; menu sections, names and order; where Donate sits and its colour role; what the footer shows; forms and their consent wording; accessibility; the page-weight budget; the language switch | Name, logo and its size, main and accent colours, light or dark name bar and footer, font style, photos, every word, which optional parts are on (volunteering, partners), domain, payment details | Its own templates, CSS or code; menu items outside the standard and its own pages; a branch or a version of its own |
+| Page types and where they go; menu sections, names and order; where Donate sits and its colour role; what the footer shows; a form's core questions, how forms behave and their consent wording; accessibility; the page-weight budget; the language switch | Name, logo and its size, main and accent colours, light or dark name bar and footer, font style, photos, every word, a form's extra questions, which optional parts are on (volunteering, partners), domain, payment details | Its own templates, CSS or code; menu items outside the standard and its own pages; a form field coded for one charity; a branch or a version of its own |
 
 ## How it's kept
 
@@ -127,6 +147,7 @@ Delete this section once [#191](https://github.com/dipbazz/trayi/issues/191) is 
 | About us | A standard page, written freely | [#169](https://github.com/dipbazz/trayi/issues/169), [#170](https://github.com/dipbazz/trayi/issues/170) |
 | Appeals and Stories | Built | |
 | Get involved | A volunteer form at `/volunteer/` | [#168](https://github.com/dipbazz/trayi/issues/168) |
+| Forms | Every question is the editor's; no fixed core yet. Mistakes, the redirect after a send and the Reply-To work as described | [#167](https://github.com/dipbazz/trayi/issues/167) |
 | Contact and accessibility statement | Missing | [#167](https://github.com/dipbazz/trayi/issues/167) |
 | Home page | Banner, current appeals, then any blocks | [#173](https://github.com/dipbazz/trayi/issues/173) |
 | Donate page | Introduction, payment notice, pledge form, then any blocks | [#174](https://github.com/dipbazz/trayi/issues/174) |
