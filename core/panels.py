@@ -1,5 +1,6 @@
 """Admin panels for the site's own models."""
 
+from django.utils import translation
 from django.utils.html import format_html, format_html_join
 from django.utils.text import get_text_list
 from wagtail.admin.panels import HelpPanel, TabbedInterface
@@ -42,11 +43,13 @@ class MenuNoticesPanel(HelpPanel):
             sections = menu_sections(self.instance, found, found, private)
             lines = []
             for status, (one, several) in MENU_NOTICES.items():
-                names = [str(each.name) for each in sections if each.status == status]
+                names = [each.section.admin_name for each in sections if each.status == status]
                 if names:
                     label = status[0].upper() + status[1:]
                     why = one if len(names) == 1 else several
-                    lines.append((label, get_text_list(names, "and"), why))
+                    with translation.override("en"):
+                        listed = get_text_list(names, "and")
+                    lines.append((label, listed, why))
             return format_html_join(
                 "", '<p class="help-block help-warning">{}: {}. {}</p>', lines
             ) or format_html("<p>{}</p>", "Every section is in the menu.")

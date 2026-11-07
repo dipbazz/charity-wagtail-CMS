@@ -8,6 +8,7 @@ left out is what the menu leaves out.
 
 from dataclasses import dataclass
 
+from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from wagtail.models import PageViewRestriction
 
@@ -28,6 +29,13 @@ class Section:
     name: str
     page_type: str = ""
     wrong_type: str = ""
+
+    @property
+    def admin_name(self):
+        """Its name in the admin's own messages, in English even on a site that opens in another
+        language."""
+        with translation.override("en"):
+            return str(self.name)
 
 
 SECTIONS = (
@@ -134,7 +142,7 @@ def wrong_choices(site_settings):
                 "Choose a page under the home page: the site's name links to it already."
             )
         elif section is not DONATE and page.translation_key in earlier:
-            name = earlier[page.translation_key].name
+            name = earlier[page.translation_key].admin_name
             errors[section.setting] = f"This page is already {name}. Choose another one."
         if section is not DONATE:
             # By translation key: a page and its translations are one page in each language.

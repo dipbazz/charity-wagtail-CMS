@@ -252,6 +252,23 @@ class TestMenuInTheAdmin:
         )
         assert "about_page" not in self.errors(response)
 
+    def test_the_admin_names_sections_in_english_on_a_site_that_opens_in_nepali(
+        self, client, moderator, site, home_page, settings
+    ):
+        """Production opens in Nepali, but the admin stays in English (`languages.md`)."""
+        settings.LANGUAGE_CODE = "ne"
+        page = add_page(home_page, "Who we are")
+
+        response = self.save(client, moderator, site, about_page=page, contact_page=page)
+
+        assert self.errors(response)["contact_page"] == [
+            "This page is already About us. Choose another one."
+        ]
+        choose(site, about_page=page)
+        assert "Not set: Appeals, Stories, Get involved and Contact." in self.menu_tab(
+            client, moderator, site
+        )
+
     def test_a_page_and_its_translation_cant_be_two_sections(
         self, client, moderator, site, home_page, nepali_home_page
     ):
