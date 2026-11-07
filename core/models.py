@@ -371,9 +371,8 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
                 for section in SECTIONS
             ],
             heading="Sections",
-            help_text="The menu shows these sections in this order and with these names, the "
-            "same on every charity's site. Choose the page each one links to; your other pages "
-            "go under About us or Get involved.",
+            help_text="The menu shows these sections in this order and with these names. Choose "
+            "the page each one links to; your other pages go under About us or Get involved.",
         ),
     ]
     edit_handler = TabsOpeningOnErrors(
