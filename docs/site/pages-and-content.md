@@ -25,8 +25,9 @@ The **main menu** is the standard's five sections, About us, Appeals, Stories, G
 Contact, named by the standard in the language being read, never by page titles
 ([Standard](standard.md#the-menu)). A moderator chooses the page each one links to in **Site
 settings → Menu**, which names each section the menu leaves out: not set, not published, or not
-public (behind a password or login). Each links to its page's published translation in the
-language being read, else to the chosen page, and the current page and section are marked for
+public (behind a password or login). Only the chosen page decides that, so a section is shown or
+left out in every language alike, as the tab says. Each links to its page's published translation
+in the language being read, else to the chosen page, and the current page and section are marked for
 screen readers (`{% main_menu %}`, `core/templatetags/navigation_tags.py`, with the sections in
 `core/menu.py`). With no section shown there's no menu at all. "Show in menus" adds nothing to it
 yet.

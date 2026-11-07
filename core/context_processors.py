@@ -31,21 +31,23 @@ def chosen_pages(request):
         }
         for section in SECTIONS:
             chosen[section.setting] = getattr(site_settings, f"{section.setting}_id")
-        found = find_in_reading_language(chosen)
+        found, by_id = find_in_reading_language(chosen)
         sections = [section.setting for section in SECTIONS]
-        in_menu = {name: found.pop(name) for name in sections}
+        in_menu = {name: by_id.get(chosen[name]) for name in sections}
+        links = {name: found.pop(name) for name in sections}
         private = private_paths() if any(page is not None for page in in_menu.values()) else []
         found["menu_sections"] = [
             section
-            for section in menu_sections(site_settings, in_menu, private)
+            for section in menu_sections(site_settings, in_menu, links, private)
             if section.status == SHOWN
         ]
         return found
 
     def find_in_reading_language(chosen):
+        """Each chosen page in the language being read, and the chosen pages by id."""
         ids = {pk for pk in chosen.values() if pk is not None}
         if not ids:
-            return dict.fromkeys(chosen)
+            return dict.fromkeys(chosen), {}
         language = reading_language()
         pages = Page.objects.filter(
             Q(pk__in=ids)
@@ -68,7 +70,7 @@ def chosen_pages(request):
         for name in ("privacy_page", "donate_page_link"):
             if found[name] is not None and not found[name].live:
                 found[name] = None
-        return found
+        return found, by_id
 
     pages = SimpleLazyObject(find)
     names = ("privacy_page", "donate_page_link", "banner_link_page", "menu_sections")

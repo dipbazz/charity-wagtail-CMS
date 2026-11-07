@@ -159,6 +159,18 @@ class TestMenuSections:
 
         assert ("हाम्रो बारेमा", about.url, None) in menu_links(client, "/ne/")
 
+    def test_a_section_is_left_out_in_every_language_while_its_chosen_page_isnt_published(
+        self, client, site, home_page, nepali_home_page
+    ):
+        """As the Menu tab says, which reads only the chosen page."""
+        about = add_page(home_page, "Who we are")
+        hamro_barema = about.copy_for_translation(nepali_home_page.locale)
+        hamro_barema.save_revision().publish()
+        about.unpublish()
+        choose(site, about_page=about, contact_page=add_page(home_page, "Reach us"))
+
+        assert [text for text, _href, _current in menu_links(client, "/ne/")] == ["सम्पर्क"]
+
 
 def test_the_sections_are_the_standards_in_its_order_and_names():
     """The menu drifts from `docs/site/standard.md`'s table of sections only if this fails."""

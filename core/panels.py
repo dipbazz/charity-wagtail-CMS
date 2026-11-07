@@ -38,7 +38,8 @@ class MenuNoticesPanel(HelpPanel):
             found = {
                 section.setting: pages.get(pk) for section, pk in zip(SECTIONS, ids, strict=True)
             }
-            sections = menu_sections(self.instance, found, private_paths() if pages else [])
+            private = private_paths() if pages else []
+            sections = menu_sections(self.instance, found, found, private)
             lines = []
             for status, (one, several) in MENU_NOTICES.items():
                 names = [str(each.name) for each in sections if each.status == status]

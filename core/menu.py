@@ -76,17 +76,19 @@ def private_paths():
     return list(PageViewRestriction.objects.values_list("page__path", flat=True))
 
 
-def menu_sections(site_settings, found, private):
+def menu_sections(site_settings, chosen, found, private):
     """Each section, in the standard's order, with the page it links to and its status.
 
-    `found` maps a section's setting to its chosen page in the language being read (its published
-    translation, else the chosen page), or None. `private` is `private_paths()`, read only when a
-    section has a page. A section is shown only when its page is live and public, as public
-    listings are (`.live().public()`).
+    `chosen` maps a section's setting to its chosen page, or None, and `found` to the page it
+    links to in the language being read: its published translation, else the chosen page.
+    `private` is `private_paths()`, read only when a section has a page. Only the chosen page
+    decides whether a section is shown, in every language, so the Menu tab, which reads only the
+    chosen pages, says what each language's menu does. It's shown when its chosen page is live and
+    public, as public listings are (`.live().public()`).
     """
     sections = []
     for section in SECTIONS:
-        page = found.get(section.setting)
+        page = chosen.get(section.setting)
         if getattr(site_settings, f"{section.setting}_id") is None:
             status = NOT_SET
         elif page is None or not page.live:
@@ -95,7 +97,8 @@ def menu_sections(site_settings, found, private):
             status = NOT_PUBLIC
         else:
             status = SHOWN
-        sections.append(MenuSection(section, page if status == SHOWN else None, status))
+        link = found.get(section.setting) if status == SHOWN else None
+        sections.append(MenuSection(section, link, status))
     return sections
 
 
