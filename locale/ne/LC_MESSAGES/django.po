@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: trayi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-05 07:17+0000\n"
+"POT-Creation-Date: 2026-11-06 22:28+0000\n"
 "PO-Revision-Date: 2026-10-08 00:00+0000\n"
 "Last-Translator: Trayi\n"
 "Language-Team: Nepali\n"
@@ -802,6 +802,21 @@ msgstr "५ MB सम्मको JPEG, PNG वा WebP तस्बिर अ�
 msgid "This picture is too large: upload a smaller one."
 msgstr "यो तस्बिर धेरै ठूलो छ: अझ सानो तस्बिर अपलोड गर्नुहोस्।"
 
+msgid "About us"
+msgstr "हाम्रो बारेमा"
+
+msgid "Appeals"
+msgstr "सहयोग अपिल"
+
+msgid "Stories"
+msgstr "कथाहरू"
+
+msgid "Get involved"
+msgstr "सहभागी हुनुहोस्"
+
+msgid "Contact"
+msgstr "सम्पर्क"
+
 #, python-format
 msgid "Enter a mobile number, like %(example)s."
 msgstr "मोबाइल नम्बर लेख्नुहोस्, जस्तै %(example)s।"
@@ -849,20 +864,11 @@ msgstr "[लेख्नुहोस्: दानले के गर्छ, �
 msgid "<p>[Write: what happens next, and when you'll be in touch.]</p>"
 msgstr "<p>[लेख्नुहोस्: अब के हुन्छ, र तपाईंले कहिले सम्पर्क गर्नुहुन्छ।]</p>"
 
-msgid "About us"
-msgstr "हाम्रो बारेमा"
-
 msgid "[Write: who you are, where you work and who you help.]"
 msgstr "[लेख्नुहोस्: तपाईं को हुनुहुन्छ, कहाँ काम गर्नुहुन्छ र कसलाई सहयोग गर्नुहुन्छ।]"
 
-msgid "Appeals"
-msgstr "सहयोग अपिल"
-
 msgid "[Write: one sentence on what your appeals pay for.]"
 msgstr "[लेख्नुहोस्: तपाईंका अपिलले के-केमा खर्च गर्छन्, एक वाक्यमा।]"
-
-msgid "Stories"
-msgstr "कथाहरू"
 
 msgid "[Write: one sentence on the stories you share here.]"
 msgstr "[लेख्नुहोस्: यहाँ कस्ता कथा सेयर गर्नुहुन्छ, एक वाक्यमा।]"

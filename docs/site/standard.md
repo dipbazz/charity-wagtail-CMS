@@ -30,8 +30,8 @@ announcement banner, when it's on, sits above the bar.
 
 ## The menu
 
-The standard sections come first, always in this order and with these names. The Nepali names are
-still to be checked with charities.
+The menu is the standard sections and nothing else, always in this order and with these names. The
+Nepali names are still to be checked with charities.
 
 | Section | नेपाली | What it holds |
 |---|---|---|
@@ -43,10 +43,15 @@ still to be checked with charities.
 | **Donate** (the button) | दान दिनुहोस् | Every way to give, what a gift does, where the money goes, tax relief |
 
 - The names come from the standard and are translated in `locale/ne`, not taken from page titles,
-  so an editor can't rename, reorder or remove a standard section.
-- **A charity can add its own pages** after the standard sections, or under one of them. How many
-  extra menu items fit is decided in
-  [#171](https://github.com/dipbazz/trayi/issues/171).
+  so an editor can't rename, reorder or add a section.
+- **Which page each section links to** is chosen in **Site settings → Menu**. Appeals takes only
+  the appeals page and Stories only the stories page; one page can't be two sections, and the home
+  page can't be one, since the site's name links to it. A section
+  with no page chosen, or whose page isn't published or is behind a password or login, is left
+  out, and the others keep their order. The Menu tab names each one left out, and why.
+- **A charity's own pages go under About us or Get involved** and show in that section's list, at
+  most 8 ([#171](https://github.com/dipbazz/trayi/issues/171)'s second pull request builds the
+  lists).
 
 ## The footer
 
@@ -117,7 +122,7 @@ Delete this section once [#191](https://github.com/dipbazz/trayi/issues/191) is 
 | Part | Today | Issue |
 |---|---|---|
 | Header | The name on a row of its own above the controls row; it scrolls away | [#176](https://github.com/dipbazz/trayi/issues/176), [#139](https://github.com/dipbazz/trayi/issues/139) |
-| Menu | Whichever pages an editor ticks "Show in menus" for, in tree order, named by their titles | [#171](https://github.com/dipbazz/trayi/issues/171) |
+| Menu | The five sections, each linking to the page chosen in Site settings → Menu; no lists under About us or Get involved yet | [#171](https://github.com/dipbazz/trayi/issues/171) |
 | Footer | Name, the registration line the charity types, address, contact details, social links and privacy link | [#172](https://github.com/dipbazz/trayi/issues/172), [#167](https://github.com/dipbazz/trayi/issues/167), [#170](https://github.com/dipbazz/trayi/issues/170) |
 | About us | A standard page, written freely | [#169](https://github.com/dipbazz/trayi/issues/169), [#170](https://github.com/dipbazz/trayi/issues/170) |
 | Appeals and Stories | Built | |
@@ -130,7 +135,8 @@ Delete this section once [#191](https://github.com/dipbazz/trayi/issues/191) is 
 ## Where the code is
 
 The header and footer are in `charity/templates/base.html` and its includes, the menu is
-`{% main_menu %}` (`core/templatetags/navigation_tags.py`), the footer's details are Site settings
+`{% main_menu %}` (`core/templatetags/navigation_tags.py`) with its sections in `core/menu.py`
+(a test fails if they drift from the table above), the footer's details are Site settings
 (`core/models.py`), and the page types are in `home`, `campaigns`, `news` and `contact`, each with
 its own rules on where it may go ([Overview](overview.md#the-page-tree)).
 

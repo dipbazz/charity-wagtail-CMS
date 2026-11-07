@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from wagtail import hooks
 from wagtail.admin.ui.components import Component
-from wagtail.models import Locale, PageLogEntry, Site
+from wagtail.models import Locale, Page, PageLogEntry, Site
 from wagtail.permissions import page_permission_policy
 
 from core.models import SiteSettings
@@ -48,10 +48,20 @@ def settings_link(user, site):
     return None
 
 
-def find_page(standard, site, site_settings):
+def chosen_in_settings(site_settings):
+    """The pages chosen for the standard pages' settings, by id, in one query."""
+    ids = [
+        getattr(site_settings, f"{standard.setting}_id")
+        for standard in STANDARD_PAGES
+        if standard.setting
+    ]
+    return Page.objects.in_bulk([pk for pk in ids if pk is not None])
+
+
+def find_page(standard, site, site_settings, chosen):
     """The standard page in the site's main language, or None if the site doesn't have it."""
     if standard.setting:
-        page = getattr(site_settings, standard.setting)
+        page = chosen.get(getattr(site_settings, f"{standard.setting}_id"))
         return page and page.get_translation_or_none(site.root_page.locale)
     return site.root_page.get_children().filter(slug=standard.slug).first()
 
@@ -105,7 +115,10 @@ def still_to_write(user, site):
     codes = [code for code, _name in settings.WAGTAIL_CONTENT_LANGUAGES]
     others = [locale for locale in Locale.objects.filter(language_code__in=codes) if locale != main]
 
-    pages = [(standard, find_page(standard, site, site_settings)) for standard in STANDARD_PAGES]
+    chosen = chosen_in_settings(site_settings)
+    pages = [
+        (standard, find_page(standard, site, site_settings, chosen)) for standard in STANDARD_PAGES
+    ]
     main_rows = [row_for_main_page(standard, page, user, site) for standard, page in pages]
     groups = [Group(main.get_display_name(), [row for row in main_rows if row])]
     translations = []

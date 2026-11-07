@@ -21,9 +21,16 @@ Every page shares one layout (`charity/templates/base.html`):
   description, social sharing tags and links to its translations
   ([SEO and sharing](#seo-and-sharing)).
 
-The **main menu** is the home page's children with "Show in menus" ticked, in the language being
-read, marking the current page and section for screen readers (`{% main_menu %}`,
-`core/templatetags/navigation_tags.py`).
+The **main menu** is the standard's five sections, About us, Appeals, Stories, Get involved and
+Contact, named by the standard in the language being read, never by page titles
+([Standard](standard.md#the-menu)). A moderator chooses the page each one links to in **Site
+settings → Menu**, which names each section the menu leaves out: not set, not published, or not
+public (behind a password or login). Only the chosen page decides that, so a section is shown or
+left out in every language alike, as the tab says. Each links to its page's published, public
+translation in the language being read, else to the chosen page, and the current page and section are marked for
+screen readers (`{% main_menu %}`, `core/templatetags/navigation_tags.py`, with the sections in
+`core/menu.py`). With no section shown there's no menu at all. "Show in menus" adds nothing to it
+yet.
 
 ## A new site's home page
 
@@ -32,8 +39,8 @@ only the charity's name, "Our new website is on its way." and the main email and
 and it stays out of search results. A hero image alone doesn't end this. Writing any of the three
 does, at once. `new_site` leaves both home pages this way ([Hosting](../hosting.md#management-commands)).
 
-The other standard pages start as drafts, so the menu starts empty and fills as each is published,
-and the header has no Donate button until the Donate page is live.
+The other standard pages start as drafts, so the menu starts empty and fills as About us, Appeals
+and Stories are published, and the header has no Donate button until the Donate page is live.
 
 ## Pages still to write
 
@@ -43,9 +50,9 @@ standard page with a page type today once per language. Rows are grouped by lang
 language first: the privacy notice, Donate, the menu sections in the standard's order. Each is the
 page's title, linked to edit it if you may, and one status: **Not set**, **Draft**, **Has [Write:
 …] text**, **Not translated yet** with a Translate link, or **Translate after publishing** while
-the main page isn't set or live. The privacy notice and Donate are the pages chosen in Site settings (Not
-set links there); the others are found by their address under the home page until they have
-choosers of their own. A line above the list asks for the registration details while Site
+the main page isn't set or live. The privacy notice, Donate, About us, Appeals and Stories are the
+pages chosen in Site settings (Not set links there); the volunteer form is found by its address
+under the home page until it has a chooser of its own. A line above the list asks for the registration details while Site
 settings' registration line is blank in any language.
 
 Only someone who can change a page or Site settings sees the panel; a pledges-only user can do

@@ -203,21 +203,35 @@ class TestWhoCanFollowTheLinks:
 
 
 class TestAHandBuiltSite:
-    def test_finds_its_pages_by_slug_under_the_home_page(self, home_page, admin):
-        about = StandardPage(title="Who we are", slug="about", introduction="Written.")
+    def test_finds_a_menu_section_by_its_chooser_in_site_settings(self, home_page, admin, site):
+        about = StandardPage(title="Who we are", slug="who-we-are", introduction="Written.")
         home_page.add_child(instance=about)
+        settings = SiteSettings.for_site(site)
+        settings.about_page = about
+        settings.save()
 
-        result = panel(admin, Site.objects.get(is_default_site=True))
+        result = panel(admin, site)
 
         titles = [row.title for row in result.groups[0].rows]
         assert "Who we are" not in titles
         assert "About us" not in titles
         assert ("Appeals", "Not set") in statuses(result.groups[0])
 
-    def test_a_missing_section_has_no_link_as_no_setting_chooses_it(self, home_page, admin, site):
+    def test_a_section_not_chosen_links_to_site_settings(self, home_page, admin, site):
         row = next(r for r in panel(admin, site).groups[0].rows if r.title == "Appeals")
 
-        assert row.settings_url is None
+        assert row.settings_url == reverse(
+            "wagtailsettings:edit", args=["core", "sitesettings", site.pk]
+        )
+
+    def test_finds_a_page_with_no_chooser_by_its_slug_under_the_home_page(self, home_page, admin):
+        volunteer = StandardPage(title="Help us", slug="volunteer", introduction="Written.")
+        home_page.add_child(instance=volunteer)
+
+        # A fresh Site: the `site` fixture's home page still counts no children.
+        titles = [row.title for row in panel(admin, Site.objects.get()).groups[0].rows]
+
+        assert "Help us" not in titles and "Volunteer with us" not in titles
 
     def test_nothing_left_never_claims_the_site_is_done(self, home_page, admin):
         site = built_site(home_page)
@@ -248,8 +262,9 @@ class TestWhenEveryPageIsDone:
         site = self.finished(home_page)
 
         # 40 when the done check looked each translation up again; one more since the
-        # registration line is read from each language's row (#172).
-        with django_assert_max_num_queries(35):
+        # registration line is read from each language's row (#172), one fewer since the pages
+        # chosen in Site settings are read in one query (#171).
+        with django_assert_max_num_queries(34):
             panel(admin, site)
 
     def test_the_line_goes_seven_days_after_the_last_page_went_live(self, home_page, admin):

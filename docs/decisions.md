@@ -82,9 +82,9 @@ anyone.
 Every public listing filters `.live().public()`: search, the sitemap, the API, the news listings
 and feed, the appeals page and the homepage. Tests check each one.
 
-The main menu is the exception. It shows whatever editors tick "Show in menus" for, because an
-editor may want a members-only page in the menu, and the page itself still asks for its password
-or login.
+The main menu was the exception: it showed whatever editors ticked "Show in menus" for, because an
+editor might want a members-only page in it. Since #171 the menu is the standard's sections, and a
+section whose page isn't public is left out like any other listing.
 
 **Consequences**
 

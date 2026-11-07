@@ -11,8 +11,8 @@ password, login or group restriction leak into listings, feeds and the homepage 
 Search, the sitemap, the API, the news listings and feed, the appeals page and the homepage all
 do. `.public()` costs one query (it reads the restrictions), which the query budgets allow for.
 
-The main menu is the exception: it shows whatever editors tick "Show in menus" for, which may be
-a members-only page. See [the decision record](../decisions.md#public-listings-filter-livepublic).
+The main menu follows the same rule: a section whose page is behind a password or login is left
+out of it (#171). See [the decision record](../decisions.md#public-listings-filter-livepublic).
 
 ## Documents are only served through Wagtail's document view
 

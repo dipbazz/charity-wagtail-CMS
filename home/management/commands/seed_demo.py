@@ -241,7 +241,6 @@ class Command(BaseCommand):
             StandardPage(
                 title="About us",
                 slug="about",
-                show_in_menus=True,
                 introduction=(
                     "Brightwell is a fictional charity created to demonstrate Wagtail. "
                     "We help communities build and look after their own water supplies."
@@ -402,7 +401,6 @@ class Command(BaseCommand):
             CampaignIndexPage(
                 title="Appeals",
                 slug="appeals",
-                show_in_menus=True,
                 introduction="Choose an appeal and see exactly what your gift will do.",
             ),
         )
@@ -496,7 +494,6 @@ class Command(BaseCommand):
             NewsIndexPage(
                 title="Stories",
                 slug="stories",
-                show_in_menus=True,
                 introduction=(
                     "Stories from the communities your gifts reach, and updates from our work."
                 ),
@@ -535,7 +532,6 @@ class Command(BaseCommand):
         volunteer = FormPage(
             title="Volunteer with us",
             slug="volunteer",
-            show_in_menus=True,
             intro="<p>Give a few hours a month at events, in our shops or from home.</p>",
             thank_you_text="<p>Thank you! Our volunteer team will be in touch within a week.</p>",
             to_address="volunteers@brightwell.example",
@@ -608,6 +604,12 @@ class Command(BaseCommand):
         settings.phone = "0123 456 7890"
         settings.takes_gifts_in_person = True
         settings.donate_page = donate
+        # The menu's sections. The volunteer form stands in for Get involved until #168 builds it;
+        # the demo has no Contact page yet (#167), so the menu leaves it out.
+        settings.about_page = about
+        settings.appeals_page = campaigns
+        settings.stories_page = news
+        settings.get_involved_page = volunteer
         settings.logo = make_charity_logo()
         settings.currency = "NPR"
         settings.phone_country = "NP"

@@ -4,10 +4,12 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.validators import validate_email
 from django.db import transaction
 from django.utils import translation
+from django.utils.text import get_text_list
 from django.utils.translation import get_language_info
 from wagtail.log_actions import log
 from wagtail.models import Locale, Site
 
+from core.menu import SECTIONS
 from core.models import SiteSettings, SiteSettingsText
 from home.models import HomePage
 from home.standard_site import NEW_SITE_BUILT, STANDARD_PAGES
@@ -30,11 +32,25 @@ def still_to_do():
     In English, like the rest of what the command prints."""
     with translation.override("en"):
         first = [f"{standard.name}: {standard.why}." for standard in STANDARD_PAGES if standard.why]
-        menu = [str(standard.name) for standard in STANDARD_PAGES if not standard.why]
+        menu = [str(standard.name) for standard in STANDARD_PAGES if standard.in_menu]
+        others = [
+            str(standard.name)
+            for standard in STANDARD_PAGES
+            if not standard.why and not standard.in_menu
+        ]
+        built = {standard.setting for standard in STANDARD_PAGES}
+        unbuilt = [str(section.name) for section in SECTIONS if section.setting not in built]
+        in_menu = [f"{get_text_list(menu, 'and')}: each joins the menu once it's live."]
+        if unbuilt:
+            in_menu.append(
+                f"{get_text_list(unbuilt, 'and')}: write a page for each, then choose it in Site "
+                "settings → Menu."
+            )
     return [
         "Site settings: the registration line in every language, the address and payment details.",
         *first,
-        f"{', '.join(menu[:-1])} and {menu[-1]}: each joins the menu once it's live.",
+        *in_menu,
+        *(f"{name}: write it and publish it." for name in others),
         "DNS: point the charity's domain at this server.",
         "Email: set up sending, and add each form's address to send messages to.",
     ]
@@ -178,8 +194,9 @@ class Command(BaseCommand):
         settings_ = SiteSettings.for_site(site)
         settings_.contact_email = email
         settings_.phone = phone
-        settings_.donate_page = by_slug["donate"]
-        settings_.privacy_page = by_slug["privacy"]
+        for standard in STANDARD_PAGES:
+            if standard.setting:
+                setattr(settings_, standard.setting, by_slug[standard.slug])
         settings_.save()
         for code, name in names.items():
             SiteSettingsText.objects.update_or_create(

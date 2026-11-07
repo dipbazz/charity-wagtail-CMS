@@ -13,6 +13,7 @@ from django.utils import translation
 
 from core.models import SiteSettings
 from core.money import format_money
+from home.models import StandardPage
 from news.tests.factories import NewsIndexPageFactory
 
 pytestmark = pytest.mark.django_db
@@ -39,13 +40,20 @@ class TestEnglishIsUnchanged:
 
 
 class TestPagesInNepali:
-    def test_the_header_in_nepali(self, client, nepali_home_page, privacy_notice):
+    def test_the_header_in_nepali(self, client, site, home_page, nepali_home_page, privacy_notice):
+        about = StandardPage(title="About us")
+        home_page.add_child(instance=about)
+        site_settings = SiteSettings.for_site(site)
+        site_settings.about_page = about
+        site_settings.save()
+
         html = client.get("/ne/").content.decode()
 
         assert ">मेनु</button>" in html
         assert "मुख्य सामग्रीमा जानुहोस्" in html
         assert 'placeholder="खोज्नुहोस्"' in html
         assert 'aria-label="मुख्य"' in html
+        assert ">हाम्रो बारेमा</a>" in html
 
     def test_the_footer_in_nepali(self, client, nepali_home_page, privacy_notice, home_page):
         """The registration line is the charity's own words in each language (#172)."""

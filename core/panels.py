@@ -1,6 +1,65 @@
 """Admin panels for the site's own models."""
 
-from wagtail.admin.panels import TabbedInterface
+from django.utils import translation
+from django.utils.html import format_html, format_html_join
+from django.utils.text import get_text_list
+from wagtail.admin.panels import HelpPanel, TabbedInterface
+from wagtail.models import Page
+
+from core.menu import NOT_PUBLIC, NOT_PUBLISHED, NOT_SET, SECTIONS, menu_sections, with_privacy
+
+# What the Menu tab says about the sections the menu leaves out, by status: for one, for several.
+MENU_NOTICES = {
+    NOT_SET: (
+        "The menu leaves it out until you choose a published page.",
+        "The menu leaves them out until you choose a published page for each.",
+    ),
+    NOT_PUBLISHED: (
+        "The menu leaves it out until it's published.",
+        "The menu leaves them out until they're published.",
+    ),
+    NOT_PUBLIC: (
+        "The menu leaves it out while it's behind a password or a login.",
+        "The menu leaves them out while they're behind a password or a login.",
+    ),
+}
+
+
+class MenuNoticesPanel(HelpPanel):
+    """Site settings → Menu's notices: each section the menu leaves out, and why (#171)."""
+
+    class BoundPanel(HelpPanel.BoundPanel):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.content = self.notices()
+
+        def notices(self):
+            saved = self.saved_settings()
+            ids = [getattr(saved, f"{section.setting}_id") for section in SECTIONS]
+            pages = with_privacy(Page.objects.all()).in_bulk([pk for pk in ids if pk is not None])
+            found = {
+                section.setting: pages.get(pk) for section, pk in zip(SECTIONS, ids, strict=True)
+            }
+            sections = menu_sections(saved, found, found)
+            lines = []
+            for status, (one, several) in MENU_NOTICES.items():
+                names = [each.section.admin_name for each in sections if each.status == status]
+                if names:
+                    label = status[0].upper() + status[1:]
+                    why = one if len(names) == 1 else several
+                    with translation.override("en"):
+                        listed = get_text_list(names, "and")
+                    lines.append((label, listed, why))
+            return format_html_join(
+                "", '<p class="help-block help-warning">{}: {}. {}</p>', lines
+            ) or format_html("<p>{}</p>", "Every section is in the menu.")
+
+        def saved_settings(self):
+            """The settings as stored: a refused save has already put its choices on the
+            instance, and the notices describe the menu the public sees."""
+            if self.form is None or not self.form.is_bound or self.instance.pk is None:
+                return self.instance
+            return type(self.instance).objects.get(pk=self.instance.pk)
 
 
 class TabsOpeningOnErrors(TabbedInterface):

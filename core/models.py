@@ -1,10 +1,17 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import translation
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
-from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel, ObjectList
+from wagtail.admin.panels import (
+    FieldPanel,
+    InlinePanel,
+    MultiFieldPanel,
+    ObjectList,
+    PageChooserPanel,
+)
 from wagtail.contrib.settings.models import BaseSiteSetting, register_setting
 from wagtail.images.models import AbstractImage, AbstractRendition, Image
 from wagtail.models import (
@@ -37,8 +44,9 @@ from core.brand import (
 )
 from core.forms import TextInEachLanguageForm
 from core.languages import language_codes, main_language, reading_language
+from core.menu import DONATE, SECTIONS, wrong_choices
 from core.money import CURRENCY_CHOICES
-from core.panels import TabsOpeningOnErrors
+from core.panels import MenuNoticesPanel, TabsOpeningOnErrors
 from core.phone import phone_country_choices
 
 
@@ -175,6 +183,51 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         related_name="+",
         help_text="Linked from the Donate button in the site header.",
     )
+    about_page = models.ForeignKey(
+        "wagtailcore.Page",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="About us",
+        help_text="What you do and where, who runs the charity, and your reports and accounts.",
+    )
+    appeals_page = models.ForeignKey(
+        "wagtailcore.Page",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Appeals",
+        help_text="The page listing your appeals.",
+    )
+    stories_page = models.ForeignKey(
+        "wagtailcore.Page",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Stories",
+        help_text="The page listing your news and stories.",
+    )
+    get_involved_page = models.ForeignKey(
+        "wagtailcore.Page",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Get involved",
+        help_text="Volunteering, fundraising, partnering, and giving goods or time.",
+    )
+    contact_page = models.ForeignKey(
+        "wagtailcore.Page",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        verbose_name="Contact",
+        help_text="Your address, phone, email and a message form.",
+    )
     privacy_page = models.ForeignKey(
         "wagtailcore.Page",
         null=True,
@@ -268,7 +321,7 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
             ],
             heading="Organisation",
         ),
-        FieldPanel("donate_page"),
+        PageChooserPanel("donate_page", page_type=DONATE.page_type),
         FieldPanel("privacy_page"),
         MultiFieldPanel(
             [FieldPanel("facebook_url"), FieldPanel("instagram_url"), FieldPanel("linkedin_url")],
@@ -310,9 +363,22 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
         ),
         FieldPanel("font_style", widget=forms.RadioSelect),
     ]
+    menu_panels = [
+        MenuNoticesPanel(heading="What the menu leaves out"),
+        MultiFieldPanel(
+            [
+                PageChooserPanel(section.setting, page_type=section.page_type or None)
+                for section in SECTIONS
+            ],
+            heading="Sections",
+            help_text="The menu shows these sections in this order and with these names. Choose "
+            "the page each one links to; your other pages go under About us or Get involved.",
+        ),
+    ]
     edit_handler = TabsOpeningOnErrors(
         [
             ObjectList(organisation_panels, heading="Organisation"),
+            ObjectList(menu_panels, heading="Menu"),
             ObjectList(brand_panels, heading="Brand"),
         ]
     )
@@ -320,6 +386,12 @@ class SiteSettings(TextInEachLanguageMixin, PreviewableMixin, ClusterableModel, 
 
     class Meta:
         verbose_name = "Site settings"
+
+    def clean(self):
+        super().clean()
+        errors = wrong_choices(self)
+        if errors:
+            raise ValidationError(errors)
 
     @property
     def preview_modes(self):
