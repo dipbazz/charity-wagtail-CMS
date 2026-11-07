@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 from django.db.models import CharField, Exists, ExpressionWrapper, F, OuterRef
 from django.utils import translation
+from django.utils.text import get_text_list
 from django.utils.translation import gettext_lazy as _
 from wagtail.models import PageViewRestriction
 
@@ -127,10 +128,11 @@ HOME_DEPTH = 2
 
 
 def wrong_choices(site_settings):
-    """Errors for SiteSettings.clean(), by field: a page chosen for two sections, on the later
-    one, a home page, and a page of the wrong kind for a chooser that takes one kind."""
+    """Errors for SiteSettings.clean(), by field: a page chosen for two sections, on each of
+    them, a home page, and a page of the wrong kind for a chooser that takes one kind."""
     errors = {}
-    earlier = {}
+    # By translation key: a page and its translations are one page in each language.
+    by_page = {}
     for section in (*SECTIONS, DONATE):
         page = getattr(site_settings, section.setting)
         if page is None:
@@ -142,10 +144,15 @@ def wrong_choices(site_settings):
             errors[section.setting] = (
                 "Choose a page under the home page: the site's name links to it already."
             )
-        elif section is not DONATE and page.translation_key in earlier:
-            name = earlier[page.translation_key].admin_name
-            errors[section.setting] = f"This page is already {name}. Choose another one."
-        if section is not DONATE:
-            # By translation key: a page and its translations are one page in each language.
-            earlier.setdefault(page.translation_key, section)
+        elif section is not DONATE:
+            by_page.setdefault(page.translation_key, []).append(section)
+    for sections in by_page.values():
+        if len(sections) < 2:
+            continue
+        names = get_text_list([section.admin_name for section in sections], "and")
+        rest = "another page for the other" if len(sections) == 2 else "other pages for the others"
+        for section in sections:
+            errors[section.setting] = (
+                f"{names} link to the same page. Keep it on one and choose {rest}."
+            )
     return errors

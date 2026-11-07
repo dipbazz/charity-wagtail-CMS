@@ -247,10 +247,28 @@ class TestMenuInTheAdmin:
         response = self.save(client, moderator, site, about_page=page, contact_page=page)
 
         assert response.status_code == 200
-        assert "This page is already About us. Choose another one." in str(
-            self.errors(response).get("contact_page")
+        # On both sections, so the editor sees which two clash and chooses which keeps it.
+        wanted = [
+            "About us and Contact link to the same page. Keep it on one and choose another page "
+            "for the other."
+        ]
+        assert self.errors(response)["about_page"] == wanted
+        assert self.errors(response)["contact_page"] == wanted
+
+    def test_a_page_in_three_sections_names_all_three(self, client, moderator, site, home_page):
+        page = add_page(home_page, "Who we are")
+
+        response = self.save(
+            client, moderator, site, about_page=page, get_involved_page=page, contact_page=page
         )
-        assert "about_page" not in self.errors(response)
+
+        wanted = [
+            "About us, Get involved and Contact link to the same page. Keep it on one and choose "
+            "other pages for the others."
+        ]
+        errors = self.errors(response)
+        assert errors["about_page"] == errors["get_involved_page"] == errors["contact_page"]
+        assert errors["contact_page"] == wanted
 
     def test_the_admin_names_sections_in_english_on_a_site_that_opens_in_nepali(
         self, client, moderator, site, home_page, settings
@@ -262,7 +280,8 @@ class TestMenuInTheAdmin:
         response = self.save(client, moderator, site, about_page=page, contact_page=page)
 
         assert self.errors(response)["contact_page"] == [
-            "This page is already About us. Choose another one."
+            "About us and Contact link to the same page. Keep it on one and choose another page "
+            "for the other."
         ]
         choose(site, about_page=page)
         assert "Not set: Appeals, Stories, Get involved and Contact." in self.menu_tab(
@@ -280,9 +299,12 @@ class TestMenuInTheAdmin:
         )
 
         assert response.status_code == 200
-        assert self.errors(response)["get_involved_page"] == [
-            "This page is already About us. Choose another one."
+        wanted = [
+            "About us and Get involved link to the same page. Keep it on one and choose another "
+            "page for the other."
         ]
+        assert self.errors(response)["about_page"] == wanted
+        assert self.errors(response)["get_involved_page"] == wanted
 
     def test_the_home_page_cant_be_a_section(self, client, moderator, site, home_page):
         response = self.save(client, moderator, site, about_page=home_page)
