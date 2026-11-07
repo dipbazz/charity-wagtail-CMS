@@ -34,12 +34,13 @@ class MenuNoticesPanel(HelpPanel):
             self.content = self.notices()
 
         def notices(self):
-            ids = [getattr(self.instance, f"{section.setting}_id") for section in SECTIONS]
+            saved = self.saved_settings()
+            ids = [getattr(saved, f"{section.setting}_id") for section in SECTIONS]
             pages = with_privacy(Page.objects.all()).in_bulk([pk for pk in ids if pk is not None])
             found = {
                 section.setting: pages.get(pk) for section, pk in zip(SECTIONS, ids, strict=True)
             }
-            sections = menu_sections(self.instance, found, found)
+            sections = menu_sections(saved, found, found)
             lines = []
             for status, (one, several) in MENU_NOTICES.items():
                 names = [each.section.admin_name for each in sections if each.status == status]
@@ -52,6 +53,13 @@ class MenuNoticesPanel(HelpPanel):
             return format_html_join(
                 "", '<p class="help-block help-warning">{}: {}. {}</p>', lines
             ) or format_html("<p>{}</p>", "Every section is in the menu.")
+
+        def saved_settings(self):
+            """The settings as stored: a refused save has already put its choices on the
+            instance, and the notices describe the menu the public sees."""
+            if self.form is None or not self.form.is_bound or self.instance.pk is None:
+                return self.instance
+            return type(self.instance).objects.get(pk=self.instance.pk)
 
 
 class TabsOpeningOnErrors(TabbedInterface):

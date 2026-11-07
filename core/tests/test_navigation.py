@@ -356,6 +356,19 @@ class TestMenuInTheAdmin:
             "Not public: About us. The menu leaves it out while it's behind a password or a login."
         ) in tab
 
+    def test_the_menu_tab_names_the_saved_menu_after_a_refused_save(
+        self, client, moderator, site, home_page
+    ):
+        choose(site, about_page=add_page(home_page, "Who we are"))
+
+        response = self.save(client, moderator, site, contact_page=home_page)
+
+        assert self.errors(response)["contact_page"]
+        tab = BeautifulSoup(response.content, "html.parser").select_one("#tab-menu")
+        assert "Not set: Appeals, Stories, Get involved and Contact." in tab.get_text(
+            " ", strip=True
+        )
+
     def test_the_menu_tab_says_nothing_when_every_section_is_shown(
         self, client, moderator, site, every_section
     ):
