@@ -170,20 +170,36 @@ def test_a_pledges_page_in_the_admin_fits_and_can_be_tapped_at_every_width(
     assert not problems, "\n".join(problems)
 
 
-# Each text in the name bar and the footer, its colour, and the fill behind it: its own, or the
-# nearest ancestor's.
-TEXT_AND_FILL = """
-(selector) => [...document.querySelectorAll(selector)].map((el) => {
-    let filled = el;
-    while (getComputedStyle(filled).backgroundColor === "rgba(0, 0, 0, 0)") {
-        filled = filled.parentElement;
+# The fill the eye sees where `layers` (topmost first) overlap: each one's background laid over
+# those below it and the white page, so a see-through fill counts as the colour it shows.
+SEEN_FILL = r"""
+const seenFill = (layers) => {
+    let [r, g, b] = [255, 255, 255];
+    for (const el of [...layers].reverse()) {
+        const [lr, lg, lb, a = 1] = getComputedStyle(el).backgroundColor.match(/[\d.]+/g)
+            .map(Number);
+        [r, g, b] = [r + (lr - r) * a, g + (lg - g) * a, b + (lb - b) * a];
     }
-    return [
-        `${el.tagName.toLowerCase()} "${el.textContent.trim().slice(0, 30)}"`,
-        getComputedStyle(el).color,
-        getComputedStyle(filled).backgroundColor,
-    ];
-})
+    return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+};
+const withAncestors = (el) => {
+    const all = [];
+    for (; el; el = el.parentElement) all.push(el);
+    return all;
+};
+const named = (el) => `${el.tagName.toLowerCase()}.${el.className}`.trim()
+    + ` "${el.textContent.trim().slice(0, 30)}"`;
+"""
+
+# Each text in the name bar and the footer, its colour, and the fill behind it: its own laid over
+# its ancestors'.
+TEXT_AND_FILL = f"""
+(selector) => {{
+    {SEEN_FILL}
+    return [...document.querySelectorAll(selector)].map((el) => [
+        named(el), getComputedStyle(el).color, seenFill(withAncestors(el)),
+    ]);
+}}
 """
 NAME_BAR_AND_FOOTER_TEXT = ".brand, .site-footer :is(p, address, li, a)"
 
@@ -231,5 +247,94 @@ def test_each_font_style_fits_and_can_be_tapped_at_every_width(site_page, demo_s
         first = FONT_STACKS[font_style].split(",")[0]
         if not font.startswith(first) or "Devanagari" not in font:
             problems.append(f"{path} is drawn in {font}, not the {font_style} style")
+
+    assert not problems, "\n".join(problems)
+
+
+# The ring round what has the keyboard's focus, and the fills it's drawn on: what's on screen
+# under the middle of each side of the ring, so a control placed over another area, such as the
+# skip link over the name bar, is checked on that area. An amount card draws the ring for its
+# hidden radio button. Nothing once Tab has gone past the last control, back to the page or to a
+# control it has already reached (two can share a name, such as two Donate buttons), unless
+# `again` asks for that control a second time. `opens` is true for a closed Menu button.
+FOCUS_RING = f"""
+(again) => {{
+    {SEEN_FILL}
+    const focused = document.activeElement;
+    window.ringed ??= new WeakSet();
+    if (focused === document.body || (window.ringed.has(focused) && !again)) return null;
+    window.ringed.add(focused);
+    const ringed = focused.closest(".amount-option") || focused;
+    const ring = getComputedStyle(ringed);
+    const box = ringed.getBoundingClientRect();
+    const out = parseFloat(ring.outlineOffset) + parseFloat(ring.outlineWidth) / 2;
+    const [x, y] = [box.left + box.width / 2, box.top + box.height / 2];
+    const fills = [[box.left - out, y], [box.right + out, y], [x, box.top - out],
+                   [x, box.bottom + out]]
+        .filter(([px, py]) => px >= 0 && py >= 0 && px < innerWidth && py < innerHeight)
+        .map(([px, py]) => seenFill(document.elementsFromPoint(px, py)));
+    return {{
+        name: named(ringed), style: ring.outlineStyle, colour: ring.outlineColor, fills,
+        opens: focused.matches(".menu-toggle[aria-expanded=false]"),
+    }};
+}}
+"""
+
+
+def ring_problems(path, ring):
+    """The ring found by FOCUS_RING, as a problem if it's missing or under 3:1 on a fill."""
+    ratio, fill = min(
+        (contrast(hex_colour(ring["colour"]), hex_colour(fill)), fill) for fill in ring["fills"]
+    )
+    if ring["style"] == "none" or ratio < 3:
+        return [
+            f"{path} {ring['name']}: ring {ring['style']} {ring['colour']} on {fill}, {ratio:.1f}:1"
+        ]
+    return []
+
+
+def focus_ring_problems(site_page, path):
+    """Each link, button and field on `path` that Tab reaches with no ring, or a ring under 3:1
+    on a fill it's drawn on. A phone's Menu button is opened, so the menu is checked too, and
+    the button again once it shows as open."""
+    site_page.goto(SITE + path)
+    problems = []
+    for _ in range(300):
+        site_page.keyboard.press("Tab")
+        ring = site_page.evaluate(FOCUS_RING, False)
+        if ring is None:
+            break
+        problems += ring_problems(path, ring)
+        if ring["opens"]:
+            site_page.keyboard.press("Enter")
+            problems += ring_problems(path, site_page.evaluate(FOCUS_RING, True))
+    return problems
+
+
+# The ring that shows where the keyboard is (#211) can be seen on every page, on whatever it
+# sits on, with the name bar and footer dark and again light, on a phone (with its menu) and a
+# wide screen. A dark area added later that doesn't set --colour-focus fails here.
+@pytest.mark.parametrize("width", [320, 1440])
+@pytest.mark.parametrize("style", ["dark", "light"])
+def test_the_focus_ring_can_be_seen_on_everything_tab_reaches(site_page, demo_site, style, width):
+    site_settings = SiteSettings.for_site(demo_site)
+    site_settings.name_bar_style = style
+    site_settings.footer_style = style
+    site_settings.save()
+    site_page.set_viewport_size({"width": width, "height": 800})
+    problems = []
+    for path in PATHS:
+        problems += focus_ring_problems(site_page, path)
+
+    assert not problems, "\n".join(problems)
+
+
+# And on each pay page: the amount cards on the QR step and the steps' links.
+@pytest.mark.parametrize("width", [320, 1440])
+def test_the_focus_ring_can_be_seen_on_each_pay_page(site_page, pay_pages, width):
+    site_page.set_viewport_size({"width": width, "height": 800})
+    problems = []
+    for path in pay_pages:
+        problems += focus_ring_problems(site_page, path)
 
     assert not problems, "\n".join(problems)

@@ -7,6 +7,9 @@
     /* Text on the fills above: white on both teals, the body text colour on the amber. */
     --colour-on-dark: #fff;
     --colour-on-accent: var(--colour-text);
+    /* The ring round what has the keyboard's focus: the text colour of the area it sits in, which
+       passes on that area's fill for any brand. The areas are listed after :focus-visible. */
+    --colour-focus: var(--colour-text);
     --colour-muted: #5b6b72;
     --colour-background: #fff;
     --colour-surface: #f4f7f6;
@@ -142,11 +145,26 @@ body:lang(ne) {
     z-index: 100;
     padding: 0.5rem 1rem;
     background: var(--colour-background);
+    /* It sits over the name bar, dark or light: the ring goes inside its own white box. */
+    outline-offset: -3px;
 }
 
 :focus-visible {
-    outline: 3px solid var(--colour-accent);
+    outline: 3px solid var(--colour-focus);
     outline-offset: 2px;
+}
+
+/* Each dark or coloured area's ring, in the text colour it takes. A new one joins this list. */
+:is(.brand-bar, .hero, .block-cta, .site-footer) {
+    --colour-focus: var(--colour-on-dark);
+}
+
+:is(.brand-bar, .site-footer).is-light {
+    --colour-focus: var(--colour-text);
+}
+
+.announcement {
+    --colour-focus: var(--colour-on-accent);
 }
 
 /* Buttons */
@@ -459,6 +477,16 @@ body:lang(ne) {
 
     .language-switcher li + li a {
         margin-inline-start: -2px;
+    }
+
+    /* The halves touch, so a ring outside one would run over the other: it goes just inside the
+       focused half's border, on that half's own fill. */
+    .language-switcher a:focus-visible {
+        outline-offset: -0.375rem;
+    }
+
+    .language-switcher a[aria-current] {
+        --colour-focus: var(--colour-on-dark);
     }
 }
 

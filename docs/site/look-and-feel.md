@@ -47,11 +47,12 @@ replace.
 |---|---|---|
 | `--colour-primary` | teal `#0b5563` | Links, outlined buttons, selected filters |
 | `--colour-primary-dark` | dark teal `#073b45` | Headings, the name bar at the top and the footer when they're dark, the name on a light name bar |
-| `--colour-accent` | amber `#f2b134` | Main buttons (Donate, Give), progress bars, the banner, the focus outline |
+| `--colour-accent` | amber `#f2b134` | Main buttons (Donate, Give), progress bars, the banner |
 | `--colour-accent-hover` | darker amber `#e09a12` | A main button under the pointer |
 | `--colour-text` | `#1d2a30` | Body text |
 | `--colour-on-dark` | white | Text on the teals: the name bar, filled buttons and filters, footer links, the home page banner |
 | `--colour-on-accent` | the text colour | Text on amber: main buttons and the announcement banner |
+| `--colour-focus` | the text colour | The focus outline. Each dark or coloured area sets it to its own text colour, in one list after `:focus-visible` in `charity.css`: `--colour-on-dark` on a dark name bar, a dark footer, the home page banner and the call-to-action block, `--colour-on-accent` on the announcement banner |
 | `--colour-muted` | `#5b6b72` | Dates, counts, help text |
 | `--colour-background` | white | The page, the header's controls row, a light name bar, cards, the Menu button |
 | `--colour-surface` | `#f4f7f6` | Unselected filter pills, quiet panels, a light footer |
@@ -312,7 +313,10 @@ A requirement, not a polish step. Every page has:
 - `aria-current` on the menu item for the current page or section, and on the selected filter;
 - the language switch named in each language's own script, with `lang` and `hreflang` on each
   link, inside a `<nav>` labelled "Language";
-- a visible focus outline (3px, in the accent colour) on everything you can tab to;
+- a visible focus outline (3px, in the text colour of the area it sits on, at least 3:1 on every
+  side, checked by CI on every kind of page and pay page, on a phone with its menu open and on a
+  wide screen) on everything you can tab to. Where the outline would sit over another area or
+  control, as on the skip link and the joined language switch, it goes just inside the control;
 - tap targets of at least 44px (2.75rem), checked by CI on every kind of page;
 - alt text on every image, taken from the image's description in the admin;
 - text that passes WCAG AA contrast, whatever [brand colours](#brand-colours) are chosen.
