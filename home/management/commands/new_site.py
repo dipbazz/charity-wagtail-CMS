@@ -4,10 +4,12 @@ from django.core.management.base import BaseCommand, CommandError
 from django.core.validators import validate_email
 from django.db import transaction
 from django.utils import translation
+from django.utils.text import get_text_list
 from django.utils.translation import get_language_info
 from wagtail.log_actions import log
 from wagtail.models import Locale, Site
 
+from core.menu import SECTIONS
 from core.models import SiteSettings, SiteSettingsText
 from home.models import HomePage
 from home.standard_site import NEW_SITE_BUILT, STANDARD_PAGES
@@ -36,10 +38,18 @@ def still_to_do():
             for standard in STANDARD_PAGES
             if not standard.why and not standard.in_menu
         ]
+        built = {standard.setting for standard in STANDARD_PAGES}
+        unbuilt = [str(section.name) for section in SECTIONS if section.setting not in built]
+        in_menu = [f"{get_text_list(menu, 'and')}: each joins the menu once it's live."]
+        if unbuilt:
+            in_menu.append(
+                f"{get_text_list(unbuilt, 'and')}: write a page for each, then choose it in Site "
+                "settings → Menu."
+            )
     return [
         "Site settings: the registration line in every language, the address and payment details.",
         *first,
-        f"{', '.join(menu[:-1])} and {menu[-1]}: each joins the menu once it's live.",
+        *in_menu,
         *(f"{name}: write it and publish it." for name in others),
         "DNS: point the charity's domain at this server.",
         "Email: set up sending, and add each form's address to send messages to.",

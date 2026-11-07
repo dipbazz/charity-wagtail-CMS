@@ -429,6 +429,14 @@ class TestWhatItPrints:
 
         assert "1. Site settings: the registration line" in printed
 
+    def test_names_the_menu_sections_it_builds_no_page_for(self):
+        printed = new_site()
+
+        assert (
+            "Get involved and Contact: write a page for each, then choose it in Site settings → "
+            "Menu."
+        ) in printed
+
     def test_says_to_restart_the_site_first(self):
         printed = new_site()
 
