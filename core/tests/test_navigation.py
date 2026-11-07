@@ -159,6 +159,18 @@ class TestMenuSections:
 
         assert ("हाम्रो बारेमा", about.url, None) in menu_links(client, "/ne/")
 
+    def test_with_a_translation_behind_a_login_links_to_the_chosen_page(
+        self, client, every_section, nepali_home_page
+    ):
+        about = every_section["about_page"]
+        hamro_barema = about.copy_for_translation(nepali_home_page.locale)
+        hamro_barema.save_revision().publish()
+        PageViewRestriction.objects.create(
+            page=hamro_barema, restriction_type=PageViewRestriction.LOGIN
+        )
+
+        assert ("हाम्रो बारेमा", about.url, None) in menu_links(client, "/ne/")
+
     def test_a_section_is_left_out_in_every_language_while_its_chosen_page_isnt_published(
         self, client, site, home_page, nepali_home_page
     ):

@@ -80,7 +80,7 @@ def menu_sections(site_settings, chosen, found, private):
     """Each section, in the standard's order, with the page it links to and its status.
 
     `chosen` maps a section's setting to its chosen page, or None, and `found` to the page it
-    links to in the language being read: its published translation, else the chosen page.
+    links to in the language being read: its published, public translation, else the chosen page.
     `private` is `private_paths()`, read only when a section has a page. Only the chosen page
     decides whether a section is shown, in every language, so the Menu tab, which reads only the
     chosen pages, says what each language's menu does. It's shown when its chosen page is live and
@@ -93,13 +93,23 @@ def menu_sections(site_settings, chosen, found, private):
             status = NOT_SET
         elif page is None or not page.live:
             status = NOT_PUBLISHED
-        elif any(page.path.startswith(path) for path in private):
+        elif is_private(page, private):
             status = NOT_PUBLIC
         else:
             status = SHOWN
-        link = found.get(section.setting) if status == SHOWN else None
+        link = None
+        if status == SHOWN:
+            link = found.get(section.setting)
+            # A translation behind a password or login falls back to the chosen page, as a draft
+            # translation does.
+            if link is None or is_private(link, private):
+                link = page
         sections.append(MenuSection(section, link, status))
     return sections
+
+
+def is_private(page, private):
+    return any(page.path.startswith(path) for path in private)
 
 
 # A home page's depth in the tree, under the root: a section's page is below one, since the
